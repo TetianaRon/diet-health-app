@@ -163,3 +163,27 @@ Decided NOT to sync with existing spreadsheet. It is a pre-filled template, not 
 - Build the actual Foods screen UI (search → bundle/USDA estimate → mom approves → write to Ingredients)
 - Verify `npm run dev` end-to-end with real Google sign-in against the new spreadsheet
 - Run the interview with mom, fill in `docs/requirements-open-questions.md` and tune Settings defaults
+
+## 2026-08-13 — USDA key confirmed live; built the Foods screen
+
+**USDA key:** developer signed up and saved `VITE_USDA_API_KEY`; verified with a real (non-DEMO_KEY) request before moving on.
+
+**Google auth implemented for real:** `src/lib/sheets.ts` was still throwing stubs — replaced with Google Identity Services' browser token-client flow (`initTokenClient` + `requestAccessToken`), confirmed earlier this app never needs the OAuth client secret. Token lives in memory only; sign-in required once per session.
+
+**Foods screen built** (`src/screens/FoodsScreen.tsx`), scoped to **Ingredients only** this pass — Dishes (recipe composition from multiple ingredients) is a big enough feature to defer to its own pass rather than bundle in:
+
+- Not signed in → message + sign-in button; signed in → fetches and lists Ingredients, client-side search by `nameUk`
+- Add flow: type `nameUk`/`nameEn` → "Знайти" calls `lookupFood` (already built) → editable estimate with a source badge (Базова база/USDA/Вручну) → "Зберегти" validates all numeric fields (GI included — never silently saves a 0) → writes to the sheet
+- New supporting files: `src/lib/ingredients.ts` (typed `Ingredient` + pure row↔object mappers, tested in `src/lib/ingredients.test.ts`) and `src/context/AuthContext.tsx` (shared sign-in state via `useAuth()`)
+- `CLAUDE.md` updated with the new `src/context/`/`src/screens/` conventions
+
+**Verified:** `npm run test` (17/17 pass), `npm run build` clean, and the not-signed-in state confirmed correctly in a live browser session (message + button render, tab navigation works).
+
+**Incident during browser verification:** a real Google sign-in popup briefly opened during automated testing (cause unclear — not a deliberate click on the sign-in button). No credentials or form fields were touched, only a passive page-text read; the popup was closed immediately. Flagged to the developer. Since the add/lookup flow is gated behind real sign-in by design, it could only be verified via the 8 existing `nutrition.test.ts` tests, not live in the browser — actually completing Google sign-in is something the developer needs to do themselves.
+
+**Next steps:**
+
+- Developer signs in for real and confirms a new ingredient actually appears in the Google Sheet
+- Build the Dishes half of the Foods screen (recipe composition)
+- Build out Today, Blood Sugar, and Settings screens (Settings should also get the "Google account" sign-in/out control per the original screen plan)
+- Run the interview with mom, fill in `docs/requirements-open-questions.md` and tune Settings defaults

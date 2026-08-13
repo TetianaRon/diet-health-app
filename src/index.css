@@ -64,3 +64,75 @@ body {
   color: #2f7a4f;
   font-weight: 600;
 }
+
+button {
+  font-size: 1rem;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid #2f7a4f;
+  background: #2f7a4f;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+input {
+  font-size: 1rem;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #d0d5d0;
+  width: 100%;
+}
+
+.food-search {
+  margin-bottom: 12px;
+}
+
+.food-list {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0 0;
+}
+
+.food-list li {
+  padding: 12px 0;
+  border-bottom: 1px solid #eef1ee;
+  font-size: 1rem;
+}
+
+.food-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.food-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.95rem;
+  color: #4a4a4a;
+}
+
+.food-form-source {
+  font-size: 0.95rem;
+  color: #4a4a4a;
+}
+
+.food-form-error {
+  color: #b3261e;
+}
+
+.food-form-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.food-form-actions button:last-child {
+  background: #ffffff;
+  color: #2f7a4f;
+}

@@ -18,8 +18,11 @@ All architecture decisions and requirements live in `docs/` in this repo (migrat
 - React + Vite + TypeScript, built as an installable PWA (same codebase for mobile and Windows desktop — see `docs/technical-spec.md` → Platform & Sync).
 - `src/i18n/uk.ts` — the single source of Ukrainian UI strings. Don't hardcode UI text inline; add it here.
 - `src/lib/health.ts` — pure functions for health math (glycemic load, fat-limit checks, meal-gap warnings). Keep this framework-free and unit-tested (`src/lib/health.test.ts`).
-- `src/lib/sheets.ts` — Google Sheets client wrapper (the app's database and cross-device sync layer).
+- `src/lib/sheets.ts` — Google Sheets client wrapper (the app's database and cross-device sync layer). Auth is Google Identity Services' browser token-client flow — no client secret, token lives in memory only (re-sign-in each session).
+- `src/lib/ingredients.ts` — typed data-access layer over the Ingredients tab: `Ingredient` type, pure `rowToIngredient`/`ingredientToRow` mappers (unit-tested), `listIngredients()`/`addIngredient()`.
 - `src/lib/nutrition.ts` — nutrition lookups: checks `src/data/starter-foods.ts` (bundled common foods) first, falls back to USDA FoodData Central only for foods not in the bundle. `src/data/gi-table.ts` is the static Glycemic Index reference — GI is never fetched from an API, none exist for it. Claude/Anthropic is **not** part of this path (dropped 2026-08-13 due to cost — see `docs/build-log.md`); don't reintroduce a Claude-based lookup without checking that decision first.
+- `src/context/` — React context providers for cross-screen state. `AuthContext.tsx` wraps `sheets.ts`'s auth functions (`useAuth()` gives `{ signedIn, initializing, signIn, signOut }`).
+- `src/screens/` — one file per tab screen once it's more than a placeholder (started with `FoodsScreen.tsx`). Screens still in placeholder form stay inline in `App.tsx` until they get built out the same way.
 
 ## Your Role (Default — Development Mode)
 

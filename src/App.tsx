@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { uk } from "./i18n/uk";
+import { AuthProvider } from "./context/AuthContext";
+import FoodsScreen from "./screens/FoodsScreen";
 
 type TabId = "today" | "foods" | "bloodSugar" | "settings";
 
@@ -23,29 +25,31 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<TabId>("today");
 
   return (
-    <div className="app">
-      <main className="app-content">
-        {activeTab === "today" && <ScreenPlaceholder title={uk.today.title} placeholder={uk.today.placeholder} />}
-        {activeTab === "foods" && <ScreenPlaceholder title={uk.foods.title} placeholder={uk.foods.placeholder} />}
-        {activeTab === "bloodSugar" && (
-          <ScreenPlaceholder title={uk.bloodSugar.title} placeholder={uk.bloodSugar.placeholder} />
-        )}
-        {activeTab === "settings" && (
-          <ScreenPlaceholder title={uk.settings.title} placeholder={uk.settings.placeholder} />
-        )}
-      </main>
+    <AuthProvider>
+      <div className="app">
+        <main className="app-content">
+          {activeTab === "today" && <ScreenPlaceholder title={uk.today.title} placeholder={uk.today.placeholder} />}
+          {activeTab === "foods" && <FoodsScreen />}
+          {activeTab === "bloodSugar" && (
+            <ScreenPlaceholder title={uk.bloodSugar.title} placeholder={uk.bloodSugar.placeholder} />
+          )}
+          {activeTab === "settings" && (
+            <ScreenPlaceholder title={uk.settings.title} placeholder={uk.settings.placeholder} />
+          )}
+        </main>
 
-      <nav className="tab-bar">
-        {TABS.map((tab) => (
-          <button
-            key={tab.id}
-            className={tab.id === activeTab ? "tab-button active" : "tab-button"}
-            onClick={() => setActiveTab(tab.id)}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </nav>
-    </div>
+        <nav className="tab-bar">
+          {TABS.map((tab) => (
+            <button
+              key={tab.id}
+              className={tab.id === activeTab ? "tab-button active" : "tab-button"}
+              onClick={() => setActiveTab(tab.id)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </nav>
+      </div>
+    </AuthProvider>
   );
 }
