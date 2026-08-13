@@ -10,15 +10,14 @@ The architecture below doesn't depend on mom's interview answers (those only tun
 ┌─────────────────────────────┐
 │   PWA (React + Vite + TS)   │  installable on mobile + Windows desktop
 │   src/lib/sheets.ts  ───────┼──► Google Sheets API v4 (user's own OAuth token)
-│   src/lib/claude.ts  ───────┼──► /api/lookup-food (serverless proxy)
-└─────────────────────────────┘                │
-                                                ▼
-                                  Anthropic API (server-side key only)
+│   src/lib/nutrition.ts ─────┼──► 1. bundled starter data (src/data/starter-foods.ts) — checked first
+│                             │    2. USDA FoodData Central API — only if not in the bundle
+└─────────────────────────────┘
 ```
 
 - Single codebase serves phone browser, "Add to Home Screen" (mobile), and "Install app" (Windows desktop) — same PWA, no separate native build.
 - Google Sheets is both the database and the sync layer: any signed-in device reads/writes the same spreadsheet.
-- The Anthropic API key never ships to the browser — it lives only in the serverless function's environment.
+- No serverless proxy needed for nutrition lookup: USDA FoodData Central is a free public-data API with no billing risk, so it's safe to call directly from the browser with its API key (unlike the Anthropic key, which the earlier design had to hide server-side).
 
 ## Google Sheets structure
 
@@ -30,16 +29,16 @@ Raw foods, values per 100g.
 | Column | Notes |
 |---|---|
 | NameUk | Ukrainian name (shown to mom) |
-| NameEn | English name (used for AI lookup consistency) |
+| NameEn | English name (used to query USDA — never shown to mom) |
 | Carbs_g | |
-| GI | Glycemic Index |
+| GI | Glycemic Index — from the bundled static table, not an API (see below) |
 | Fiber_g | |
 | Sugars_g | |
 | Protein_g | |
 | Fat_g | |
 | Calories_kcal | |
 | Sodium_mg | |
-| Source | `manual` or `ai` |
+| Source | `starter` (bundled), `usda` (fetched), or `manual` |
 | DateAdded | ISO date |
 
 ### Dishes
@@ -101,11 +100,18 @@ Client-side only — no custom backend for data storage. Uses Google Identity Se
 
 `src/lib/sheets.ts` wraps: `initGoogleAuth()`, `signIn()`, `signOut()`, `readRange(tab, range)`, `writeRange(tab, range, values)` — thin wrappers over the Sheets REST API using the OAuth access token.
 
-## Claude API integration (nutrition lookup)
+## Nutrition lookup: bundled data + USDA FoodData Central
 
-- Frontend calls `POST /api/lookup-food { nameEn: string }` (`src/lib/claude.ts`).
-- The serverless function (`api/lookup-food.ts`) calls the Anthropic API with web search server-side, using `ANTHROPIC_API_KEY` (never exposed to the client), and returns a structured nutrient estimate (per 100g, matching the Ingredients columns).
-- Flow: mom searches a food → not found locally → app calls the proxy → shows the AI estimate → mom approves → app writes the row to the Ingredients tab (`Source = ai`).
+Lookup order, implemented in `src/lib/nutrition.ts`:
+
+1. **Bundled starter dataset** (`src/data/starter-foods.ts`) — ~150–200 common Ukrainian/Eastern European staples (grains, dairy, common proteins, vegetables, fruits), each with both `nameUk`/`nameEn` and full nutrient values including GI. Curated once, shipped with the app, not fetched at runtime. Covers the large majority of mom's actual day-to-day foods (per the health context, her diet leans toward simple home-cooked staples, not a huge rotating variety).
+2. **Static GI reference table** (`src/data/gi-table.ts`) — since no free API provides Glycemic Index at all (it comes from academic studies, not nutrition labels), GI is always looked up locally, never fetched. Covers the same ~150–200 foods as the starter dataset, plus any commonly-needed extras.
+3. **USDA FoodData Central API** — only called when a food isn't in the bundle. Free, no cost, requires a free API key (`api.data.gov`, no card needed) stored as `VITE_USDA_API_KEY`. Query by `nameEn`; returns carbs/protein/fat/fiber/sugar/calories/sodium per 100g (no GI — falls back to a manual GI entry or a reasonable default with a note).
+4. **Manual entry** — always available regardless of the above; mom or the developer can type values in directly (`Source = manual`).
+
+Only USDA FoodData Central is wired up initially — Open Food Facts (better for packaged/branded goods via barcode) was considered but deferred since mom's diet is mostly whole/home-cooked foods; add it later only if real usage shows gaps.
+
+Flow: mom searches a food → checked against the bundle first → if not found, query USDA → show the estimate (GI filled from the static table if available, else flagged for manual entry) → mom approves → app writes the row to the Ingredients tab.
 
 ## Glycemic Load calculation
 
@@ -124,7 +130,7 @@ Track time since the last logged meal; warn when approaching `Settings.MaxGapHou
 
 ## New product validation flow
 
-App suggests (via Claude lookup) → mom reviews the estimate → mom approves → row saved to Ingredients with `Source = ai`. Never auto-saves without approval.
+App suggests (bundle match or USDA lookup) → mom reviews the estimate → mom approves → row saved to Ingredients with `Source = starter`/`usda`/`manual` as appropriate. Never auto-saves without approval.
 
 ## Daily summary and progress indicators
 
@@ -141,6 +147,6 @@ Today screen shows: running totals vs. Settings targets (carbs, calories), time-
 
 ## Deployment and access
 
-- Hosted on Vercel (static PWA + `api/` serverless functions in one deploy).
+- Hosted on Vercel as a static PWA — no serverless functions needed now that nutrition lookup doesn't require hiding a paid API key.
 - Mom opens the same URL in her phone browser and installs it to her home screen; on Windows, the developer (or mom) installs it from the browser's "Install app" menu.
 - No app store, no separate installer.

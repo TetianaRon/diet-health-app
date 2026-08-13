@@ -18,7 +18,7 @@ npm run dev
 
 Other scripts: `npm run test` (unit tests), `npm run build` (production + PWA build), `npm run lint`.
 
-The app runs without `.env` values filled in, but Google Sheets sync and AI food lookup won't work until the Google OAuth client and `ANTHROPIC_API_KEY` are set up — see [docs/technical-spec.md](docs/technical-spec.md).
+The app runs without `.env` values filled in, but Google Sheets sync won't work until the Google OAuth client is set up, and USDA food lookup needs a free `VITE_USDA_API_KEY` — see [docs/technical-spec.md](docs/technical-spec.md).
 
 ## Docs
 
