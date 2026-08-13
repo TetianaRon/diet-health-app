@@ -250,3 +250,32 @@ Decided NOT to sync with existing spreadsheet. It is a pre-filled template, not 
 - Build the Dishes half of the Foods screen
 - Build Blood Sugar screen
 - Run the interview with mom, fill in `docs/requirements-open-questions.md` and tune Settings defaults
+
+## 2026-08-13 — Built Dishes: cooked/prepared foods no longer live in Ingredients
+
+**Developer's insight:** yesterday's raw-vs-cooked fix (stating prep state explicitly in Ukrainian names) was a patch, not the right home — it correctly pointed out that `docs/project-brief.md` already defined Ingredients as *raw* foods and Dishes as things *auto-calculated from* ingredients. Cooked buckwheat is a preparation, not a raw ingredient, so it belonged in Dishes all along.
+
+**Schema change:** Dishes gains a `YieldGrams` column (total finished weight from the listed raw ingredients) and drops `Servings` — nutrient columns are now per 100g of the *finished* product, matching Ingredients' per-100g convention exactly, so mom logs a dish by portion grams just like an ingredient (no separate "servings" concept to reconcile). GI is computed as a carb-contribution-weighted average across ingredients (an approximation — true GI isn't additive — but the standard practical simplification; reduces to the single ingredient's own GI for a one-ingredient dish). Documented in `docs/technical-spec.md`.
+
+**`src/lib/dishes.ts`** (new): `computeDishNutrition()` — pure, takes ingredient refs + yield weight + a lookup function, returns per-100g totals. `Dish` type, row↔object mapping (ingredients round-trip through the `IngredientsJson` column), `listDishes()`/`addDish()`.
+
+**Scope boundary, deliberately drawn:** applied the raw/Dish split fully to **grains and legumes**, where cooking changes carb density 2-5x (dry buckwheat 71.5g→19.9g carbs/100g cooked; dry beans/lentils/chickpeas roughly triple in weight). **Left as directly-labeled cooked Ingredients rows:** meat/fish/eggs (~0 carbs regardless of cooking, the primary metric this app cares about) and lightly-boiled vegetables — potato, beet, pumpkin, corn (carb content barely changes when boiled). Extending the Dish model to those later is possible but wasn't worth the added entries for the accuracy gained. `src/data/starter-foods.ts` now has raw counterparts for every grain/legume moved out (e.g. `Гречка суха`, `Квасоля суха`), each with a code comment explaining the scope boundary.
+
+**`src/data/starter-dishes.ts`** (new): the 12 moved items (buckwheat, both rices, oats, millet, pearl barley, semolina, cornmeal, pasta, 3 legumes), computed via `computeDishNutrition` at module load — never hand-typed nutrient values, true to "auto-calculated from ingredients." `YieldGrams` for each was derived from independently-sourced raw/cooked reference pairs (e.g. buckwheat's raw-343kcal and cooked-92kcal figures — both real USDA values fetched earlier this session — imply ~360g cooked yield per 100g dry). Sanity-checked in `src/data/starter-dishes.test.ts`: computed buckwheat and rice land within rounding of the real published cooked-form figures.
+
+**`gi-table.ts`:** moving grains out of Ingredients broke GI matching for USDA queries phrased with "cooked" (the derived table only had "raw"-phrased keys after the move) — added explicit base-word entries (`"buckwheat": 54`, etc.) so lookups resolve regardless of exact phrasing.
+
+**`FoodsScreen.tsx`:** added a Продукти/Страви sub-tab. Dishes browsing is intentionally minimal — search the precomputed starter bundle, add one as-is to the sheet. Composing a custom multi-ingredient recipe (picking several ingredients, entering grams and a yield weight) is a bigger form-building task, deferred to its own pass, same as Ingredients-only was deferred from the original Foods screen build.
+
+**Verified:** `npm run test` (38/38 pass, including new `dishes.test.ts` and `starter-dishes.test.ts`), `npm run build` clean. Not yet live-tested with real sign-in (same constraint as always — that requires the developer).
+
+**Needs a manual edit to the real spreadsheet** (small, not doing this via automation again after the earlier incident): rename the Dishes tab's `Servings` header (column C) to `YieldGrams`, and add `DateAdded` as a new column L.
+
+**Next steps:**
+
+- Developer renames the Dishes sheet header and adds the DateAdded column
+- Developer retries the Ingredients write-failure repro from the previous entry now that it's fixed, and tests adding a starter dish
+- Build Today screen
+- Build Blood Sugar screen
+- Custom multi-ingredient dish composition (the deferred "real" Dishes feature)
+- Run the interview with mom, fill in `docs/requirements-open-questions.md` and tune Settings defaults

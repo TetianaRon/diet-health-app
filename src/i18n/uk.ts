@@ -13,6 +13,10 @@ export const uk = {
   },
   foods: {
     title: "Продукти",
+    subTabs: {
+      ingredients: "Продукти",
+      dishes: "Страви",
+    },
     searchPlaceholder: "Пошук продукту...",
     addButton: "Додати продукт",
     cancelButton: "Скасувати",
@@ -48,6 +52,17 @@ export const uk = {
         caloriesKcal: "Калорії (ккал)",
         sodiumMg: "Натрій (мг)",
       },
+    },
+  },
+  dishes: {
+    addButton: "Додати страву",
+    empty: "Страв ще немає.",
+    noResults: "Нічого не знайдено.",
+    form: {
+      searchLabel: "Пошук готової страви",
+      searchPlaceholder: "напр. гречка варена",
+      addButton: "Додати",
+      hint: "Тут поки що можна додати лише готові страви з базової бази. Створення власних рецептів з кількох продуктів буде додано пізніше.",
     },
   },
   bloodSugar: {

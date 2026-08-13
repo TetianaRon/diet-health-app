@@ -104,6 +104,32 @@ input {
   font-size: 1rem;
 }
 
+.food-list-item-with-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.food-subtabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.food-subtab {
+  flex: 1;
+  background: #ffffff;
+  color: #4a4a4a;
+  border: 1px solid #d0d5d0;
+}
+
+.food-subtab.active {
+  background: #2f7a4f;
+  color: #ffffff;
+  border-color: #2f7a4f;
+}
+
 .food-form {
   display: flex;
   flex-direction: column;

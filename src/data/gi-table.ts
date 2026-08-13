@@ -23,6 +23,25 @@ const EXTRA_GI: Record<string, number> = {
   "raisins": 64,
   "cornflakes": 81,
   "spaghetti, al dente": 50,
+  // Grains/legumes moved to starter-dishes.ts are stored there only as
+  // "raw"/"dry" in starter-foods.ts (see that file's scope note), so the
+  // GI_TABLE below no longer has a "cooked"-phrased key for them — but GI
+  // is a property of the cooked/eaten form and USDA descriptions commonly
+  // say "cooked". These base-word entries catch that regardless of exact
+  // phrasing (substring match), duplicating the same published GI values.
+  "buckwheat": 54,
+  "white rice": 73,
+  "brown rice": 68,
+  "oatmeal": 55,
+  "rolled oats": 55,
+  "millet": 71,
+  "pearl barley": 25,
+  "semolina": 55,
+  "cornmeal": 68,
+  "pasta": 50,
+  "kidney beans": 29,
+  "lentils": 32,
+  "chickpeas": 28,
 };
 
 const GI_TABLE: Record<string, number> = {

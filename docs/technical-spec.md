@@ -24,7 +24,7 @@ The architecture below doesn't depend on mom's interview answers (those only tun
 Spreadsheet ID stored in `VITE_SPREADSHEET_ID`. Tabs:
 
 ### Ingredients
-Raw foods, values per 100g.
+Raw foods only — always the uncooked/unprepared state, values per 100g. Anything requiring cooking or preparation belongs in Dishes instead (see below), even a single-ingredient one like cooked rice — cooking changes carbs/100g too much (water dilution) to treat as the same row. `GI` here is carried over from the food's published GI (which is normally measured on the cooked/eaten form) purely so Dishes has a value to pull from when computing a prepared dish's GI — it's not claiming the raw form itself has been measured.
 
 | Column | Notes |
 |---|---|
@@ -42,14 +42,18 @@ Raw foods, values per 100g.
 | DateAdded | ISO date |
 
 ### Dishes
-Mom's recipes, auto-totaled from Ingredients.
+Anything requiring preparation — from a single cooked ingredient (e.g. "Гречка варена") to a real multi-ingredient recipe (e.g. borscht) — auto-computed from Ingredients, never hand-typed. This is the counterpart to Ingredients being *always raw*: a food that changes meaningfully when cooked (grains/legumes absorbing several times their dry weight in water) belongs here, not as a separate "cooked" Ingredients row. Values are **per 100g of the finished/cooked product**, matching Ingredients' per-100g convention — mom logs a dish by portion grams exactly like an ingredient.
 
 | Column | Notes |
 |---|---|
-| DishName | |
-| IngredientsJson | `[{name, grams}]` |
-| Servings | |
-| Carbs_g … Sodium_mg | computed totals, same columns as Ingredients |
+| DishName | Ukrainian, shown to mom |
+| IngredientsJson | `[{nameUk, grams}]` — raw ingredient names (must match an Ingredients row) and the raw grams used |
+| YieldGrams | Total finished weight after cooking (e.g. 100g dry buckwheat → ~360g cooked). This is what makes per-100g values correct — cooking water adds mass but no calories |
+| Carbs_g … Sodium_mg | Computed: `Σ(ingredient_nutrient_per_100g × grams_used / 100) / YieldGrams × 100` |
+| GI | Computed as a **carb-contribution-weighted average** of the ingredients' GI (`Σ(carb_contribution_i × GI_i) / Σ(carb_contribution_i)`) — an approximation, not a lab-measured value (true GI isn't simply additive), but the standard practical simplification when no GI database entry exists for the exact prepared dish. For a single-ingredient dish this reduces to that ingredient's own GI. |
+| DateAdded | ISO date |
+
+Implemented in `src/lib/dishes.ts` (`computeDishNutrition`, pure and unit-tested).
 
 ### DailyLog
 Every meal entry.

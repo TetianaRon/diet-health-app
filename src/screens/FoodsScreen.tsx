@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import { uk } from "../i18n/uk";
 import { useAuth } from "../context/AuthContext";
 import { addIngredient, listIngredients, type Ingredient, type IngredientSource } from "../lib/ingredients";
+import { addDish, listDishes, type Dish } from "../lib/dishes";
 import { lookupFood } from "../lib/nutrition";
+import { STARTER_DISHES } from "../data/starter-dishes";
 
 const NUMERIC_FIELDS = ["carbsG", "gi", "fiberG", "sugarsG", "proteinG", "fatG", "caloriesKcal", "sodiumMg"] as const;
 type NumericField = (typeof NUMERIC_FIELDS)[number];
@@ -142,9 +144,74 @@ function AddFoodForm({ onSaved, onCancel }: { onSaved: (ingredient: Ingredient) 
   );
 }
 
+// Dishes browsing/adding is intentionally minimal for now: search the
+// pre-computed starter bundle and add one as-is. Composing a custom
+// multi-ingredient recipe (the real "Dishes" feature per the tech spec) is
+// a bigger form-building task, deferred to its own pass.
+function AddDishForm({ onSaved, onCancel }: { onSaved: (dish: Dish) => void; onCancel: () => void }) {
+  const [search, setSearch] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const matches = STARTER_DISHES.filter((d) => d.dishName.toLowerCase().includes(search.toLowerCase()));
+
+  const handleAdd = async (dish: Omit<Dish, "dateAdded">) => {
+    setSaving(true);
+    setError(null);
+    try {
+      await addDish(dish);
+      onSaved({ ...dish, dateAdded: new Date().toISOString().slice(0, 10) });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="food-form">
+      <label>
+        {uk.dishes.form.searchLabel}
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder={uk.dishes.form.searchPlaceholder}
+        />
+      </label>
+      <p className="food-form-hint">{uk.dishes.form.hint}</p>
+
+      {error && <p className="food-form-error">{error}</p>}
+
+      <ul className="food-list">
+        {matches.map((dish) => (
+          <li key={dish.dishName} className="food-list-item-with-action">
+            <span>
+              <strong>{dish.dishName}</strong> — {dish.carbsG} г вуглеводів, ГІ {dish.gi}
+            </span>
+            <button type="button" onClick={() => void handleAdd(dish)} disabled={saving}>
+              {uk.dishes.form.addButton}
+            </button>
+          </li>
+        ))}
+      </ul>
+      {search && matches.length === 0 && <p>{uk.dishes.noResults}</p>}
+
+      <div className="food-form-actions">
+        <button type="button" onClick={onCancel} disabled={saving}>
+          {uk.foods.cancelButton}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+type FoodsSubTab = "ingredients" | "dishes";
+
 export default function FoodsScreen() {
   const { signedIn, initializing, signIn } = useAuth();
+  const [subTab, setSubTab] = useState<FoodsSubTab>("ingredients");
   const [ingredients, setIngredients] = useState<Ingredient[] | null>(null);
+  const [dishes, setDishes] = useState<Dish[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [showAddForm, setShowAddForm] = useState(false);
@@ -154,7 +221,16 @@ export default function FoodsScreen() {
     listIngredients()
       .then(setIngredients)
       .catch((err: unknown) => setLoadError(err instanceof Error ? err.message : String(err)));
+    listDishes()
+      .then(setDishes)
+      .catch((err: unknown) => setLoadError(err instanceof Error ? err.message : String(err)));
   }, [signedIn]);
+
+  const switchSubTab = (tab: FoodsSubTab) => {
+    setSubTab(tab);
+    setShowAddForm(false);
+    setSearch("");
+  };
 
   if (initializing) {
     return (
@@ -177,13 +253,33 @@ export default function FoodsScreen() {
     );
   }
 
-  const filtered = (ingredients ?? []).filter((i) => i.nameUk.toLowerCase().includes(search.toLowerCase()));
+  const filteredIngredients = (ingredients ?? []).filter((i) =>
+    i.nameUk.toLowerCase().includes(search.toLowerCase()),
+  );
+  const filteredDishes = (dishes ?? []).filter((d) => d.dishName.toLowerCase().includes(search.toLowerCase()));
 
   return (
     <section className="screen">
       <h1>{uk.foods.title}</h1>
 
-      {showAddForm ? (
+      <div className="food-subtabs">
+        <button
+          type="button"
+          className={subTab === "ingredients" ? "food-subtab active" : "food-subtab"}
+          onClick={() => switchSubTab("ingredients")}
+        >
+          {uk.foods.subTabs.ingredients}
+        </button>
+        <button
+          type="button"
+          className={subTab === "dishes" ? "food-subtab active" : "food-subtab"}
+          onClick={() => switchSubTab("dishes")}
+        >
+          {uk.foods.subTabs.dishes}
+        </button>
+      </div>
+
+      {showAddForm && subTab === "ingredients" && (
         <AddFoodForm
           onSaved={(ingredient) => {
             setIngredients((prev) => [...(prev ?? []), ingredient]);
@@ -191,7 +287,19 @@ export default function FoodsScreen() {
           }}
           onCancel={() => setShowAddForm(false)}
         />
-      ) : (
+      )}
+
+      {showAddForm && subTab === "dishes" && (
+        <AddDishForm
+          onSaved={(dish) => {
+            setDishes((prev) => [...(prev ?? []), dish]);
+            setShowAddForm(false);
+          }}
+          onCancel={() => setShowAddForm(false)}
+        />
+      )}
+
+      {!showAddForm && subTab === "ingredients" && (
         <>
           <input
             className="food-search"
@@ -206,12 +314,41 @@ export default function FoodsScreen() {
           {loadError && <p className="food-form-error">{loadError}</p>}
           {ingredients === null && !loadError && <p>{uk.foods.loading}</p>}
           {ingredients !== null && ingredients.length === 0 && <p>{uk.foods.empty}</p>}
-          {ingredients !== null && ingredients.length > 0 && filtered.length === 0 && <p>{uk.foods.noResults}</p>}
+          {ingredients !== null && ingredients.length > 0 && filteredIngredients.length === 0 && (
+            <p>{uk.foods.noResults}</p>
+          )}
 
           <ul className="food-list">
-            {filtered.map((ingredient) => (
+            {filteredIngredients.map((ingredient) => (
               <li key={ingredient.nameUk}>
                 <strong>{ingredient.nameUk}</strong> — {ingredient.carbsG} г вуглеводів, ГІ {ingredient.gi}
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+
+      {!showAddForm && subTab === "dishes" && (
+        <>
+          <input
+            className="food-search"
+            placeholder={uk.foods.searchPlaceholder}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <button type="button" onClick={() => setShowAddForm(true)}>
+            {uk.dishes.addButton}
+          </button>
+
+          {loadError && <p className="food-form-error">{loadError}</p>}
+          {dishes === null && !loadError && <p>{uk.foods.loading}</p>}
+          {dishes !== null && dishes.length === 0 && <p>{uk.dishes.empty}</p>}
+          {dishes !== null && dishes.length > 0 && filteredDishes.length === 0 && <p>{uk.dishes.noResults}</p>}
+
+          <ul className="food-list">
+            {filteredDishes.map((dish) => (
+              <li key={dish.dishName}>
+                <strong>{dish.dishName}</strong> — {dish.carbsG} г вуглеводів, ГІ {dish.gi} (на 100г)
               </li>
             ))}
           </ul>

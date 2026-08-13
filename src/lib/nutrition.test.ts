@@ -3,20 +3,20 @@ import { findInStarterData, lookupFood, lookupUsda, translateUkToEn } from "./nu
 
 describe("findInStarterData", () => {
   it("matches the full Ukrainian name exactly, case-insensitively", () => {
-    const result = findInStarterData("гречка варена");
-    expect(result?.nameEn).toBe("buckwheat, cooked");
+    const result = findInStarterData("кефір");
+    expect(result?.nameEn).toBe("kefir, low-fat");
   });
 
   it("matches by English name", () => {
-    const result = findInStarterData("Buckwheat, Cooked");
-    expect(result?.nameUk).toBe("Гречка варена");
+    const result = findInStarterData("Kefir, Low-Fat");
+    expect(result?.nameUk).toBe("Кефір");
   });
 
-  it("falls back to a substring match when the state qualifier is omitted", () => {
-    // "гречка" alone shouldn't require typing "варена" too — but note this
-    // picks whichever buckwheat entry comes first (cooked), not raw.
+  it("falls back to a substring match for a partial name", () => {
+    // "гречка" alone should still find "Гречка суха" (the raw ingredient —
+    // cooked buckwheat is a Dish now, see starter-dishes.ts).
     const result = findInStarterData("гречка");
-    expect(result?.nameEn).toBe("buckwheat, cooked");
+    expect(result?.nameEn).toBe("buckwheat, raw");
   });
 
   it("returns null for foods not in the bundle", () => {
@@ -70,10 +70,10 @@ describe("lookupFood", () => {
     const fetchSpy = vi.fn();
     vi.stubGlobal("fetch", fetchSpy);
 
-    const result = await lookupFood("Гречка варена");
+    const result = await lookupFood("Кефір");
 
     expect(result?.source).toBe("starter");
-    expect(result?.carbsG).toBe(19.9);
+    expect(result?.carbsG).toBe(4.0);
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
