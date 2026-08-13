@@ -298,3 +298,18 @@ Decided NOT to sync with existing spreadsheet. It is a pre-filled template, not 
 - Build Blood Sugar screen
 - Custom multi-ingredient dish composition (the deferred "real" Dishes feature)
 - Run the interview with mom, fill in `docs/requirements-open-questions.md` and tune Settings defaults
+
+## 2026-08-13 — Another instance of the same naming gap: dairy fat %
+
+**Live testing paid off again:** developer noticed the browsable suggestion list also surfaced a pre-existing bug fixed for free — `findInStarterData` used to return only the first match, so multiple rice/etc. variants were invisible; the new list shows all of them. Then spotted a real data-accuracy gap: "Молоко" doesn't say it's 2.5% fat milk — that detail only lived in `nameEn` ("milk, 2.5%"), invisible to mom since she never sees English. Same class of bug as the raw-vs-cooked one fixed earlier today: any detail the nutrient values depend on must be stated in `nameUk`, not just carried in `nameEn`.
+
+**Audited the whole bundle for the same pattern, found 3 more:** `Кефір` → `Кефір знежирений` (low-fat), `Йогурт натуральний` → `Йогурт натуральний знежирений` (low-fat), `Яловичина (варена)` → `Яловичина пісна (варена)` (lean) — all had a fat-content/cut qualifier in `nameEn` not reflected in `nameUk`. Added a comment above the dairy section flagging this as a pattern to keep checking for as the bundle grows.
+
+**Verified:** `npm run test` (38/38 pass, updated `nutrition.test.ts` assertions for the renamed kefir entry), `npm run build` clean.
+
+**Next steps:**
+
+- Build Today screen
+- Build Blood Sugar screen
+- Custom multi-ingredient dish composition (the deferred "real" Dishes feature)
+- Run the interview with mom, fill in `docs/requirements-open-questions.md` and tune Settings defaults

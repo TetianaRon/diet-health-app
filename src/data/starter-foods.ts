@@ -50,10 +50,14 @@ export const STARTER_FOODS: StarterFood[] = [
   { nameUk: "Хліб житній", nameEn: "rye bread", carbsG: 48, gi: 58, fiberG: 6, sugarsG: 4, proteinG: 8.5, fatG: 1.7, caloriesKcal: 250, sodiumMg: 660 },
   { nameUk: "Хліб білий", nameEn: "white bread", carbsG: 49, gi: 75, fiberG: 2.7, sugarsG: 5, proteinG: 9, fatG: 3.2, caloriesKcal: 265, sodiumMg: 490 },
 
-  // Dairy
-  { nameUk: "Кефір", nameEn: "kefir, low-fat", carbsG: 4.0, gi: 32, fiberG: 0, sugarsG: 4.0, proteinG: 3.4, fatG: 1.0, caloriesKcal: 41, sodiumMg: 40 },
-  { nameUk: "Молоко", nameEn: "milk, 2.5%", carbsG: 4.7, gi: 30, fiberG: 0, sugarsG: 4.7, proteinG: 3.2, fatG: 2.5, caloriesKcal: 52, sodiumMg: 44 },
-  { nameUk: "Йогурт натуральний", nameEn: "plain yogurt, low-fat", carbsG: 4.7, gi: 35, fiberG: 0, sugarsG: 4.7, proteinG: 5.3, fatG: 1.5, caloriesKcal: 56, sodiumMg: 46 },
+  // Dairy — every variant-dependent detail (fat %) that the nutrient values
+  // actually reflect must be stated in nameUk too, not just nameEn, or mom
+  // has no way to know the numbers assume a specific fat content (found via
+  // a real gap: "Молоко" alone didn't say 2.5%, could cause miscalculation
+  // for someone drinking a different fat %).
+  { nameUk: "Кефір знежирений", nameEn: "kefir, low-fat", carbsG: 4.0, gi: 32, fiberG: 0, sugarsG: 4.0, proteinG: 3.4, fatG: 1.0, caloriesKcal: 41, sodiumMg: 40 },
+  { nameUk: "Молоко 2.5%", nameEn: "milk, 2.5%", carbsG: 4.7, gi: 30, fiberG: 0, sugarsG: 4.7, proteinG: 3.2, fatG: 2.5, caloriesKcal: 52, sodiumMg: 44 },
+  { nameUk: "Йогурт натуральний знежирений", nameEn: "plain yogurt, low-fat", carbsG: 4.7, gi: 35, fiberG: 0, sugarsG: 4.7, proteinG: 5.3, fatG: 1.5, caloriesKcal: 56, sodiumMg: 46 },
   { nameUk: "Сир кисломолочний нежирний", nameEn: "cottage cheese, low-fat", carbsG: 3.4, gi: 30, fiberG: 0, sugarsG: 3.4, proteinG: 18, fatG: 1.8, caloriesKcal: 98, sodiumMg: 405 },
   { nameUk: "Сир твердий", nameEn: "hard cheese", carbsG: 1.3, gi: 0, fiberG: 0, sugarsG: 1.3, proteinG: 25, fatG: 27, caloriesKcal: 356, sodiumMg: 620 },
   { nameUk: "Сметана 15%", nameEn: "sour cream 15%", carbsG: 3.0, gi: 0, fiberG: 0, sugarsG: 3.0, proteinG: 2.6, fatG: 15, caloriesKcal: 158, sodiumMg: 32 },
@@ -62,7 +66,7 @@ export const STARTER_FOODS: StarterFood[] = [
   // Proteins: meat, fish, eggs — kept as directly-labeled cooked Ingredients
   // (see scope note above: ~0 carbs regardless of cooking state).
   { nameUk: "Курка (грудка, варена)", nameEn: "chicken breast, cooked", carbsG: 0, gi: 0, fiberG: 0, sugarsG: 0, proteinG: 31, fatG: 3.6, caloriesKcal: 165, sodiumMg: 74 },
-  { nameUk: "Яловичина (варена)", nameEn: "beef, cooked, lean", carbsG: 0, gi: 0, fiberG: 0, sugarsG: 0, proteinG: 26, fatG: 15, caloriesKcal: 250, sodiumMg: 60 },
+  { nameUk: "Яловичина пісна (варена)", nameEn: "beef, cooked, lean", carbsG: 0, gi: 0, fiberG: 0, sugarsG: 0, proteinG: 26, fatG: 15, caloriesKcal: 250, sodiumMg: 60 },
   { nameUk: "Індичка (варена)", nameEn: "turkey, cooked", carbsG: 0, gi: 0, fiberG: 0, sugarsG: 0, proteinG: 29, fatG: 2, caloriesKcal: 135, sodiumMg: 60 },
   { nameUk: "Тріска (варена)", nameEn: "cod, cooked", carbsG: 0, gi: 0, fiberG: 0, sugarsG: 0, proteinG: 23, fatG: 0.9, caloriesKcal: 105, sodiumMg: 78 },
   { nameUk: "Лосось (варений)", nameEn: "salmon, cooked", carbsG: 0, gi: 0, fiberG: 0, sugarsG: 0, proteinG: 25, fatG: 13, caloriesKcal: 208, sodiumMg: 59 },

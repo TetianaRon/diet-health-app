@@ -3,13 +3,13 @@ import { findInStarterData, lookupFood, lookupUsda, translateUkToEn } from "./nu
 
 describe("findInStarterData", () => {
   it("matches the full Ukrainian name exactly, case-insensitively", () => {
-    const result = findInStarterData("кефір");
+    const result = findInStarterData("кефір знежирений");
     expect(result?.nameEn).toBe("kefir, low-fat");
   });
 
   it("matches by English name", () => {
     const result = findInStarterData("Kefir, Low-Fat");
-    expect(result?.nameUk).toBe("Кефір");
+    expect(result?.nameUk).toBe("Кефір знежирений");
   });
 
   it("falls back to a substring match for a partial name", () => {
@@ -70,7 +70,7 @@ describe("lookupFood", () => {
     const fetchSpy = vi.fn();
     vi.stubGlobal("fetch", fetchSpy);
 
-    const result = await lookupFood("Кефір");
+    const result = await lookupFood("Кефір знежирений");
 
     expect(result?.source).toBe("starter");
     expect(result?.carbsG).toBe(4.0);
