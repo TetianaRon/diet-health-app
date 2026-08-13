@@ -313,3 +313,18 @@ Decided NOT to sync with existing spreadsheet. It is a pre-filled template, not 
 - Build Blood Sugar screen
 - Custom multi-ingredient dish composition (the deferred "real" Dishes feature)
 - Run the interview with mom, fill in `docs/requirements-open-questions.md` and tune Settings defaults
+
+## 2026-08-13 — Bring NameEn back, as a subtle fallback label
+
+Rather than keep chasing every instance of the "detail only in nameEn" bug one at a time (dairy fat %, cooking state before that), developer suggested showing NameEn again — not for mom to read, but as a quiet secondary label wherever a food is listed, so any detail that didn't make it into the Ukrainian name is still visible to whoever's reviewing (the developer, later a translator) instead of silently missing.
+
+Added `.food-name-en` (small, muted gray) next to the Ukrainian name in: the Ingredients list, the add-food suggestion list, and the post-lookup review line in `FoodsScreen.tsx`. Updated `docs/project-brief.md` and `docs/technical-spec.md`'s "never shown to mom" language — the constraint was always "never asked to *supply* or *read* English," not "never displayed anywhere."
+
+**Verified:** `npm run test` (38/38 pass), `npm run build` clean.
+
+**Next steps:**
+
+- Build Today screen
+- Build Blood Sugar screen
+- Custom multi-ingredient dish composition (the deferred "real" Dishes feature)
+- Run the interview with mom, fill in `docs/requirements-open-questions.md` and tune Settings defaults

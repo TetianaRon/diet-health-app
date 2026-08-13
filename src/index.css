@@ -111,6 +111,12 @@ input {
   gap: 12px;
 }
 
+.food-name-en {
+  font-size: 0.85em;
+  color: #9a9a9a;
+  font-weight: normal;
+}
+
 .food-subtabs {
   display: flex;
   gap: 8px;

@@ -33,9 +33,11 @@ function AddFoodForm({ onSaved, onCancel }: { onSaved: (ingredient: Ingredient) 
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  // Only nameUk is user-facing — English (needed for the USDA query) is
-  // resolved automatically inside lookupFood, from the bundle or via
-  // translation, so mom never has to type or see it.
+  // nameUk is the only field mom types — English (needed for the USDA
+  // query) is resolved automatically inside lookupFood, from the bundle or
+  // via translation. It's still shown afterward as a subtle secondary label
+  // (see .food-name-en) — a fallback cross-check, not something she needs
+  // to read or supply herself.
   const applyEstimate = (estimate: NutritionEstimate | null) => {
     setLookupAttempted(true);
     if (estimate) {
@@ -144,7 +146,8 @@ function AddFoodForm({ onSaved, onCancel }: { onSaved: (ingredient: Ingredient) 
             {suggestions.map((food) => (
               <li key={food.nameUk} className="food-list-item-with-action">
                 <span>
-                  <strong>{food.nameUk}</strong> — {food.carbsG} г вуглеводів, ГІ {food.gi}
+                  <strong>{food.nameUk}</strong> <span className="food-name-en">({food.nameEn})</span> —{" "}
+                  {food.carbsG} г вуглеводів, ГІ {food.gi}
                 </span>
                 <button type="button" onClick={() => handlePickSuggestion(food)}>
                   {uk.foods.form.pickButton}
@@ -159,6 +162,7 @@ function AddFoodForm({ onSaved, onCancel }: { onSaved: (ingredient: Ingredient) 
       {lookupAttempted && (
         <p className="food-form-source">
           {uk.foods.form.sourceLabel}: {uk.foods.form.source[source]}
+          {resolvedNameEn && <span className="food-name-en"> ({resolvedNameEn})</span>}
           {source === "manual" && ` — ${uk.foods.form.notFound}`}
         </p>
       )}
@@ -367,7 +371,8 @@ export default function FoodsScreen() {
           <ul className="food-list">
             {filteredIngredients.map((ingredient) => (
               <li key={ingredient.nameUk}>
-                <strong>{ingredient.nameUk}</strong> — {ingredient.carbsG} г вуглеводів, ГІ {ingredient.gi}
+                <strong>{ingredient.nameUk}</strong> <span className="food-name-en">({ingredient.nameEn})</span> —{" "}
+                {ingredient.carbsG} г вуглеводів, ГІ {ingredient.gi}
               </li>
             ))}
           </ul>

@@ -28,8 +28,8 @@ Raw foods only — always the uncooked/unprepared state, values per 100g. Anythi
 
 | Column | Notes |
 |---|---|
-| NameUk | Ukrainian name (shown to mom) |
-| NameEn | English name (used to query USDA — never shown to mom) |
+| NameUk | Ukrainian name — the primary label, always shown to mom |
+| NameEn | English name (used to query USDA). Also shown in the UI as a subtle, secondary line next to NameUk — not something mom needs to read, but a visible fallback/cross-check so any variant detail (fat %, cut, etc.) that didn't make it into the Ukrainian name is still there for the developer or a translator to catch, per the dairy fat-% gap found in testing |
 | Carbs_g | |
 | GI | Glycemic Index — from the bundled static table, not an API (see below) |
 | Fiber_g | |
@@ -110,7 +110,7 @@ Lookup order, implemented in `src/lib/nutrition.ts`:
 
 1. **Bundled starter dataset** (`src/data/starter-foods.ts`) — 60 common Ukrainian/Eastern European staples (grains, dairy, common proteins, vegetables, fruits), each with both `nameUk`/`nameEn` and full nutrient values including GI. Curated once, shipped with the app, not fetched at runtime. Covers the large majority of mom's actual day-to-day foods (per the health context, her diet leans toward simple home-cooked staples, not a huge rotating variety).
 2. **Static GI reference table** (`src/data/gi-table.ts`) — since no free API provides Glycemic Index at all (it comes from academic studies, not nutrition labels), GI is always looked up locally, never fetched. Covers the same foods as the starter dataset, plus any commonly-needed extras.
-3. **Translation** (`translateUkToEn` in `src/lib/nutrition.ts`) — only when a food isn't in the bundle. Mom only ever types a Ukrainian name; it's translated via [MyMemory](https://mymemory.translated.net/) (free, no API key) before querying USDA. She's never shown or asked for an English name — confirmed necessary after live testing showed she doesn't speak English and the earlier "supply both names" design was a real gap, not just friction.
+3. **Translation** (`translateUkToEn` in `src/lib/nutrition.ts`) — only when a food isn't in the bundle. Mom only ever *types* a Ukrainian name (she's never asked to supply or understand English — confirmed necessary after live testing showed she doesn't speak English); it's translated via [MyMemory](https://mymemory.translated.net/) (free, no API key) before querying USDA. The resolved English name is displayed afterward as a subtle secondary line next to the Ukrainian name wherever foods are listed — not something she needs to read, but a visible fallback in case a detail the numbers depend on (fat %, cut, etc.) didn't make it into the Ukrainian name.
 4. **USDA FoodData Central API** — queried with the translated name. Free, no cost, requires a free API key (`api.data.gov`, no card needed) stored as `VITE_USDA_API_KEY`. Returns carbs/protein/fat/fiber/sugar/calories/sodium per 100g (no GI — falls back to a manual GI entry).
 5. **Manual entry** — always available regardless of the above, if nothing is found anywhere (translation unavailable, or USDA has no match); mom or the developer can type values in directly (`Source = manual`).
 
