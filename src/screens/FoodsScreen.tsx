@@ -22,7 +22,7 @@ const EMPTY_FORM_VALUES: FormValues = {
 
 function AddFoodForm({ onSaved, onCancel }: { onSaved: (ingredient: Ingredient) => void; onCancel: () => void }) {
   const [nameUk, setNameUk] = useState("");
-  const [nameEn, setNameEn] = useState("");
+  const [resolvedNameEn, setResolvedNameEn] = useState("");
   const [values, setValues] = useState<FormValues>(EMPTY_FORM_VALUES);
   const [source, setSource] = useState<IngredientSource>("manual");
   const [lookupLoading, setLookupLoading] = useState(false);
@@ -30,11 +30,14 @@ function AddFoodForm({ onSaved, onCancel }: { onSaved: (ingredient: Ingredient) 
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
+  // Only nameUk is user-facing — English (needed for the USDA query) is
+  // resolved automatically inside lookupFood, from the bundle or via
+  // translation, so mom never has to type or see it.
   const handleLookup = async () => {
     setLookupLoading(true);
     setError(null);
     try {
-      const estimate = await lookupFood(nameUk, nameEn);
+      const estimate = await lookupFood(nameUk);
       setLookupAttempted(true);
       if (estimate) {
         setValues({
@@ -48,9 +51,11 @@ function AddFoodForm({ onSaved, onCancel }: { onSaved: (ingredient: Ingredient) 
           sodiumMg: String(estimate.sodiumMg),
         });
         setSource(estimate.source);
+        setResolvedNameEn(estimate.nameEn);
       } else {
         setValues(EMPTY_FORM_VALUES);
         setSource("manual");
+        setResolvedNameEn("");
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -65,9 +70,7 @@ function AddFoodForm({ onSaved, onCancel }: { onSaved: (ingredient: Ingredient) 
     ) as Record<NumericField, number>;
 
     const allValid =
-      nameUk.trim() !== "" &&
-      nameEn.trim() !== "" &&
-      NUMERIC_FIELDS.every((field) => Number.isFinite(parsed[field]) && parsed[field] >= 0);
+      nameUk.trim() !== "" && NUMERIC_FIELDS.every((field) => Number.isFinite(parsed[field]) && parsed[field] >= 0);
 
     if (!allValid) {
       setError(uk.foods.form.validationError);
@@ -79,7 +82,7 @@ function AddFoodForm({ onSaved, onCancel }: { onSaved: (ingredient: Ingredient) 
     try {
       const ingredient: Omit<Ingredient, "dateAdded"> = {
         nameUk: nameUk.trim(),
-        nameEn: nameEn.trim(),
+        nameEn: resolvedNameEn,
         source,
         ...parsed,
       };
@@ -98,11 +101,7 @@ function AddFoodForm({ onSaved, onCancel }: { onSaved: (ingredient: Ingredient) 
         {uk.foods.form.nameUkLabel}
         <input value={nameUk} onChange={(e) => setNameUk(e.target.value)} />
       </label>
-      <label>
-        {uk.foods.form.nameEnLabel}
-        <input value={nameEn} onChange={(e) => setNameEn(e.target.value)} />
-      </label>
-      <button type="button" onClick={handleLookup} disabled={lookupLoading || !nameUk || !nameEn}>
+      <button type="button" onClick={handleLookup} disabled={lookupLoading || !nameUk}>
         {lookupLoading ? uk.foods.form.lookupLoading : uk.foods.form.lookupButton}
       </button>
 

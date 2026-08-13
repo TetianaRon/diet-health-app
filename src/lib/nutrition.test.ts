@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { findInStarterData, lookupFood, lookupUsda } from "./nutrition";
+import { findInStarterData, lookupFood, lookupUsda, translateUkToEn } from "./nutrition";
 
 describe("findInStarterData", () => {
   it("matches by Ukrainian name, case-insensitively", () => {
@@ -17,45 +17,93 @@ describe("findInStarterData", () => {
   });
 });
 
+describe("translateUkToEn", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("returns the translated text on success", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ responseData: { translatedText: "Buckwheat", match: 1 } }),
+      }),
+    );
+
+    expect(await translateUkToEn("гречка")).toBe("Buckwheat");
+  });
+
+  it("returns null when the API is unreachable", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false }));
+    expect(await translateUkToEn("гречка")).toBeNull();
+  });
+
+  it("returns null on a quota-exceeded warning instead of passing it through as a translation", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          responseData: { translatedText: "MYMEMORY WARNING: YOU USED ALL AVAILABLE FREE TRANSLATIONS" },
+        }),
+      }),
+    );
+
+    expect(await translateUkToEn("гречка")).toBeNull();
+  });
+});
+
 describe("lookupFood", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
   });
 
-  it("returns the starter match without calling fetch", async () => {
+  it("returns the starter match by Ukrainian name alone, without calling fetch", async () => {
     const fetchSpy = vi.fn();
     vi.stubGlobal("fetch", fetchSpy);
 
-    const result = await lookupFood("Гречка", "buckwheat");
+    const result = await lookupFood("Гречка");
 
     expect(result?.source).toBe("starter");
     expect(result?.carbsG).toBe(19.9);
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
-  it("falls back to USDA when the food isn't in the bundle", async () => {
+  it("translates and falls back to USDA when the food isn't in the bundle", async () => {
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          foods: [
-            {
-              foodNutrients: [
-                { nutrientNumber: "205", value: 10 },
-                { nutrientNumber: "203", value: 2 },
-              ],
-            },
-          ],
-        }),
+      vi.fn(async (url: string) => {
+        if (url.includes("mymemory")) {
+          return { ok: true, json: async () => ({ responseData: { translatedText: "unknown food" } }) };
+        }
+        return {
+          ok: true,
+          json: async () => ({
+            foods: [
+              {
+                foodNutrients: [
+                  { nutrientNumber: "205", value: 10 },
+                  { nutrientNumber: "203", value: 2 },
+                ],
+              },
+            ],
+          }),
+        };
       }),
     );
 
-    const result = await lookupFood("Незнайомий продукт", "unknown food");
+    const result = await lookupFood("Незнайомий продукт");
 
     expect(result?.source).toBe("usda");
+    expect(result?.nameEn).toBe("unknown food");
     expect(result?.carbsG).toBe(10);
     expect(result?.proteinG).toBe(2);
+  });
+
+  it("returns null when translation is unavailable, so the caller falls back to manual entry", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false }));
+    expect(await lookupFood("Незнайомий продукт")).toBeNull();
   });
 });
 

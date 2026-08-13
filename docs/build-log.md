@@ -207,3 +207,23 @@ Decided NOT to sync with existing spreadsheet. It is a pre-filled template, not 
 - Build the Dishes half of the Foods screen
 - Build Blood Sugar screen
 - Run the interview with mom, fill in `docs/requirements-open-questions.md` and tune Settings defaults
+
+## 2026-08-13 — End-to-end verification, and a real gap found + fixed: mom doesn't speak English
+
+**Google sign-in and full round-trip confirmed working by the developer**, live: Settings loaded the real sheet values (140/18/1500/5/3/4/7.8, matching the template), a Settings save round-tripped correctly, and Foods successfully looked up "Гречка" against the bundle and displayed the estimate.
+
+**Root cause of the earlier sign-in trouble, for the record:** not a config problem — the developer's browser tab was a stale leftover from an earlier dev-server session on a different port than the one actually running, so it kept reporting the old port as its origin to Google no matter what was registered. Also added `http://localhost:5174` alongside `5173` as a second authorized JavaScript origin on the OAuth client, since dev-server ports drift across sessions.
+
+**Real gap found during that live test:** the add-food form required typing *both* a Ukrainian and an English name (`nameEn` was a manual field, per the original design in the 2026-08-13 "dropped Claude" entry, which assumed "whoever adds a food supplies both names"). The developer pointed out mom doesn't speak English and has no way to supply that field herself. This wasn't a minor friction point — it would have made the core add-food feature unusable for its actual primary user.
+
+**Fix:** `lookupFood()` now takes only `nameUk`. When a food isn't in the bundle, `translateUkToEn()` (new, in `src/lib/nutrition.ts`) translates it via [MyMemory](https://mymemory.translated.net/) — free, no API key, verified live (`гречка` → "Buckwheat", `куряча грудка` → "Chicken Breast", `квашена капуста` → "sauerkraut", all high-confidence) — before querying USDA. `FoodsScreen.tsx`'s add form now has a single name field; the resolved English name is stored automatically, never shown to mom. Updated `docs/project-brief.md` (Language compatibility) and `docs/technical-spec.md` (Nutrition lookup) to match — the earlier "no translation service needed" framing was wrong given a non-English-speaking user, not just incomplete.
+
+**Verified:** `npm run test` (26/26 pass, including new `translateUkToEn` tests and updated `lookupFood` tests for the translate-then-USDA path), `npm run build` clean.
+
+**Next steps:**
+
+- Developer re-tests the add-food flow end-to-end for a food not in the bundle (e.g. something needing real USDA + translation, not just a bundle hit)
+- Build Today screen
+- Build the Dishes half of the Foods screen
+- Build Blood Sugar screen
+- Run the interview with mom, fill in `docs/requirements-open-questions.md` and tune Settings defaults

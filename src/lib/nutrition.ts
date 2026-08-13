@@ -2,8 +2,28 @@
 // for foods not in the bundle. No serverless proxy needed — USDA's key is
 // free/public-data with no billing risk, unlike the Anthropic key this
 // replaced (see docs/build-log.md, 2026-08-13).
+//
+// Mom only ever types Ukrainian. English (needed for the USDA query) is
+// resolved automatically — from the bundle when it's a known food, or via
+// a free translation API when it's not — she is never asked to supply or
+// understand an English name (see docs/build-log.md, 2026-08-13 fix).
 import { STARTER_FOODS, type StarterFood } from "../data/starter-foods";
 import { lookupGI } from "../data/gi-table";
+
+const TRANSLATE_URL = "https://api.mymemory.translated.net/get";
+
+/** Translates a Ukrainian food name to English via a free, no-key API. Returns null if unavailable. */
+export async function translateUkToEn(textUk: string): Promise<string | null> {
+  const params = new URLSearchParams({ q: textUk, langpair: "uk|en" });
+  const response = await fetch(`${TRANSLATE_URL}?${params}`);
+  if (!response.ok) return null;
+
+  const data = await response.json();
+  const translated: string | undefined = data?.responseData?.translatedText;
+  if (!translated || translated.toUpperCase().includes("MYMEMORY WARNING")) return null;
+
+  return translated;
+}
 
 export interface NutritionEstimate {
   nameEn: string;
@@ -102,13 +122,17 @@ export async function lookupUsda(nameEn: string): Promise<NutritionEstimate | nu
 }
 
 /**
- * Full lookup order: bundled starter data (by Ukrainian or English name) first,
- * then USDA FoodData Central by English name. Returns null if neither has it —
+ * Full lookup order, from a Ukrainian name alone: bundled starter data first;
+ * if not found, translate to English (mom never types or sees English herself)
+ * and query USDA FoodData Central. Returns null if nothing turns up anywhere —
  * caller should fall back to manual entry.
  */
-export async function lookupFood(nameUk: string, nameEn: string): Promise<NutritionEstimate | null> {
-  const starterMatch = findInStarterData(nameUk) ?? findInStarterData(nameEn);
+export async function lookupFood(nameUk: string): Promise<NutritionEstimate | null> {
+  const starterMatch = findInStarterData(nameUk);
   if (starterMatch) return toEstimate(starterMatch);
+
+  const nameEn = await translateUkToEn(nameUk);
+  if (!nameEn) return null;
 
   return lookupUsda(nameEn);
 }

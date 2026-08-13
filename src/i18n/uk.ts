@@ -24,8 +24,7 @@ export const uk = {
       button: "Увійти через Google",
     },
     form: {
-      nameUkLabel: "Назва (українською)",
-      nameEnLabel: "Назва (англійською, для пошуку)",
+      nameUkLabel: "Назва продукту",
       lookupButton: "Знайти",
       lookupLoading: "Пошук...",
       saveButton: "Зберегти",

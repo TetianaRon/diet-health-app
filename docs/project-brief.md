@@ -64,7 +64,7 @@ A single responsive web app, installable on both mobile (Add to Home Screen) and
 - **Platform:** Installable PWA — works in the browser and installs to home screen (mobile) or desktop (Windows)
 - **Database:** Google Sheets (familiar to mom, already in use; also doubles as the cross-device sync layer)
 - **Nutritional lookup:** bundled starter dataset (common foods + GI table) first; [USDA FoodData Central](https://fdc.nal.usda.gov/) (free, no cost) for anything not in the bundle. Claude API dropped from the required path — it costs money per lookup and USDA covers whole/home-cooked foods well, which is most of mom's diet. May revisit Claude later as an optional fallback for obscure/homemade dishes.
-- **Language compatibility:** USDA is English-only, but the UI is Ukrainian-only. Solved by the Ingredients schema already having both `NameUk` (shown to mom) and `NameEn` (used for the API query) — no translation service needed, since whoever adds a food supplies both names.
+- **Language compatibility:** USDA is English-only, but the UI is Ukrainian-only, and mom doesn't speak English. She only ever types a Ukrainian food name; `NameEn` (used for the API query) is resolved automatically — from the bundle when it's a known food, or via a free translation API (MyMemory, no key needed) when it's not. She's never asked to supply, see, or understand an English name.
 - **Blood sugar units:** mmol/L (Canada/Ukraine standard)
 - **New product validation:** App suggests (from bundle or USDA) → mom approves → saved to Ingredients tab
 
