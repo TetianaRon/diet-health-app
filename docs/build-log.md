@@ -279,3 +279,22 @@ Decided NOT to sync with existing spreadsheet. It is a pre-filled template, not 
 - Build Blood Sugar screen
 - Custom multi-ingredient dish composition (the deferred "real" Dishes feature)
 - Run the interview with mom, fill in `docs/requirements-open-questions.md` and tune Settings defaults
+
+## 2026-08-13 — Root cause found (Office-format file); two UX fixes
+
+**Root cause of every silent-write failure, finally:** with error surfacing now in place (previous entry), the real message came through: `"Sheets API request failed: 400 — This operation is not supported for this document. The document must not be an Office file."` The spreadsheet was still an Office file (the uploaded `.xlsx`, edited via Google's Office-compatibility mode) — the Sheets API doesn't support write operations on files in that state, even though the Sheets website lets you edit them interactively. This explains both the original "food doesn't persist" report and (retroactively) why the earlier Settings-save "confirmation" didn't actually land either — same failure, silently swallowed until the previous entry's fix.
+
+**Fix:** developer converted it via File → Save as Google Sheets, producing a true native file. Confirmed by checking the new file directly: no more `.xlsx` badge in the title bar, all 5 tabs and headers carried over correctly (including the two manual Dishes-tab edits from the last entry, already present). `VITE_SPREADSHEET_ID` updated to the new file's ID. Sign-in, Settings save, and adding an Ingredient/Dish all confirmed working end-to-end by the developer for the first time this session.
+
+**UX fix 1 — added items appeared to vanish until switching tabs:** real bug, not perception. `FoodsScreen`'s search box is shared across the Ingredients/Dishes sub-tabs but was never cleared after a successful save — if any text was in the search box when a food was added (e.g. from checking whether it already existed), the new item was silently filtered out of view by that leftover query. Switching sub-tabs happened to "fix" it only because `switchSubTab` clears search as a side effect. Now both save handlers clear `search` directly.
+
+**UX fix 2 — browsable/narrowing suggestion list, requested by developer:** they liked that Dishes' add form shows the full starter bundle up front and narrows as you type, and asked for the same on Ingredients (which previously required typing a full name and clicking "Знайти" with no visual browsing). `AddFoodForm` now shows a live-filtered list of `STARTER_FOODS` below the name field before a lookup is attempted; clicking an entry populates all fields immediately (no network round-trip needed, the full entry is already in hand client-side) via a new shared `applyEstimate()` helper (also used by the async `handleLookup` path, removing duplication). "Знайти" remains for anything not visible in the bundle list (triggers the USDA/translation fallback as before).
+
+**Verified:** `npm run test` (38/38 pass), `npm run build` clean.
+
+**Next steps:**
+
+- Build Today screen
+- Build Blood Sugar screen
+- Custom multi-ingredient dish composition (the deferred "real" Dishes feature)
+- Run the interview with mom, fill in `docs/requirements-open-questions.md` and tune Settings defaults

@@ -31,6 +31,7 @@ export const uk = {
       nameUkLabel: "Назва продукту",
       nameUkPlaceholder: "напр. гречка варена",
       nameUkHint: "Якщо важливо, вкажіть спосіб приготування (варене, смажене, сире тощо) — це впливає на калорійність.",
+      pickButton: "Обрати",
       lookupButton: "Знайти",
       lookupLoading: "Пошук...",
       saveButton: "Зберегти",

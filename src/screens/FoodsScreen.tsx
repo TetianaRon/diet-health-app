@@ -3,8 +3,9 @@ import { uk } from "../i18n/uk";
 import { useAuth } from "../context/AuthContext";
 import { addIngredient, listIngredients, type Ingredient, type IngredientSource } from "../lib/ingredients";
 import { addDish, listDishes, type Dish } from "../lib/dishes";
-import { lookupFood } from "../lib/nutrition";
+import { lookupFood, type NutritionEstimate } from "../lib/nutrition";
 import { STARTER_DISHES } from "../data/starter-dishes";
+import { STARTER_FOODS } from "../data/starter-foods";
 
 const NUMERIC_FIELDS = ["carbsG", "gi", "fiberG", "sugarsG", "proteinG", "fatG", "caloriesKcal", "sodiumMg"] as const;
 type NumericField = (typeof NUMERIC_FIELDS)[number];
@@ -35,36 +36,61 @@ function AddFoodForm({ onSaved, onCancel }: { onSaved: (ingredient: Ingredient) 
   // Only nameUk is user-facing — English (needed for the USDA query) is
   // resolved automatically inside lookupFood, from the bundle or via
   // translation, so mom never has to type or see it.
+  const applyEstimate = (estimate: NutritionEstimate | null) => {
+    setLookupAttempted(true);
+    if (estimate) {
+      setValues({
+        carbsG: String(estimate.carbsG),
+        gi: estimate.gi === null ? "" : String(estimate.gi),
+        fiberG: String(estimate.fiberG),
+        sugarsG: String(estimate.sugarsG),
+        proteinG: String(estimate.proteinG),
+        fatG: String(estimate.fatG),
+        caloriesKcal: String(estimate.caloriesKcal),
+        sodiumMg: String(estimate.sodiumMg),
+      });
+      setSource(estimate.source);
+      setResolvedNameEn(estimate.nameEn);
+    } else {
+      setValues(EMPTY_FORM_VALUES);
+      setSource("manual");
+      setResolvedNameEn("");
+    }
+  };
+
   const handleLookup = async () => {
     setLookupLoading(true);
     setError(null);
     try {
-      const estimate = await lookupFood(nameUk);
-      setLookupAttempted(true);
-      if (estimate) {
-        setValues({
-          carbsG: String(estimate.carbsG),
-          gi: estimate.gi === null ? "" : String(estimate.gi),
-          fiberG: String(estimate.fiberG),
-          sugarsG: String(estimate.sugarsG),
-          proteinG: String(estimate.proteinG),
-          fatG: String(estimate.fatG),
-          caloriesKcal: String(estimate.caloriesKcal),
-          sodiumMg: String(estimate.sodiumMg),
-        });
-        setSource(estimate.source);
-        setResolvedNameEn(estimate.nameEn);
-      } else {
-        setValues(EMPTY_FORM_VALUES);
-        setSource("manual");
-        setResolvedNameEn("");
-      }
+      applyEstimate(await lookupFood(nameUk));
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLookupLoading(false);
     }
   };
+
+  // Clicking a suggestion from the browsable bundle list below skips the
+  // lookup round-trip entirely — we already have the full entry in hand.
+  const handlePickSuggestion = (food: (typeof STARTER_FOODS)[number]) => {
+    setNameUk(food.nameUk);
+    applyEstimate({
+      nameEn: food.nameEn,
+      carbsG: food.carbsG,
+      gi: food.gi,
+      fiberG: food.fiberG,
+      sugarsG: food.sugarsG,
+      proteinG: food.proteinG,
+      fatG: food.fatG,
+      caloriesKcal: food.caloriesKcal,
+      sodiumMg: food.sodiumMg,
+      source: "starter",
+    });
+  };
+
+  const suggestions = lookupAttempted
+    ? []
+    : STARTER_FOODS.filter((food) => food.nameUk.toLowerCase().includes(nameUk.toLowerCase()));
 
   const handleSave = async () => {
     const parsed = Object.fromEntries(
@@ -111,6 +137,24 @@ function AddFoodForm({ onSaved, onCancel }: { onSaved: (ingredient: Ingredient) 
       <button type="button" onClick={handleLookup} disabled={lookupLoading || !nameUk}>
         {lookupLoading ? uk.foods.form.lookupLoading : uk.foods.form.lookupButton}
       </button>
+
+      {!lookupAttempted && (
+        <>
+          <ul className="food-list">
+            {suggestions.map((food) => (
+              <li key={food.nameUk} className="food-list-item-with-action">
+                <span>
+                  <strong>{food.nameUk}</strong> — {food.carbsG} г вуглеводів, ГІ {food.gi}
+                </span>
+                <button type="button" onClick={() => handlePickSuggestion(food)}>
+                  {uk.foods.form.pickButton}
+                </button>
+              </li>
+            ))}
+          </ul>
+          {suggestions.length === 0 && <p>{uk.dishes.noResults}</p>}
+        </>
+      )}
 
       {lookupAttempted && (
         <p className="food-form-source">
@@ -284,6 +328,7 @@ export default function FoodsScreen() {
           onSaved={(ingredient) => {
             setIngredients((prev) => [...(prev ?? []), ingredient]);
             setShowAddForm(false);
+            setSearch("");
           }}
           onCancel={() => setShowAddForm(false)}
         />
@@ -294,6 +339,7 @@ export default function FoodsScreen() {
           onSaved={(dish) => {
             setDishes((prev) => [...(prev ?? []), dish]);
             setShowAddForm(false);
+            setSearch("");
           }}
           onCancel={() => setShowAddForm(false)}
         />
