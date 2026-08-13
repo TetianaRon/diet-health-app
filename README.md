@@ -4,7 +4,19 @@ A Ukrainian-language nutrition and health tracking web app, built for a Type 2 d
 
 ## Status
 
-Skeleton app scaffolded; the requirements interview with the end user (mom) hasn't happened yet, so exact targets and food lists are still open. See [docs/build-log.md](docs/build-log.md) for the current state and next steps.
+**Working and verified live (real Google Sheets, real sign-in):**
+- Google sign-in (`AuthContext` + `sheets.ts`, Google Identity Services token client)
+- **Продукти → Продукти** (Ingredients): browsable/narrowing bundle suggestions, USDA + auto-translation fallback for anything not in the bundle, manual entry, add/list all confirmed writing to and reading from the real sheet
+- **Продукти → Страви** (Dishes): browse/add pre-computed starter dishes (cooked grains/legumes, yield-weight model); composing a *custom* multi-ingredient recipe is not built yet
+- **Налаштування** (Settings): load/edit the 7 daily targets, Google account sign-in/out
+
+**Not built yet:** Сьогодні (Today — daily log, quick-add, progress bars), Цукор (Blood Sugar screen). Both are still placeholders in `App.tsx`.
+
+**Not started:** the interview with mom (`docs/requirements-open-questions.md` is still empty) — the app is usable and being dogfooded by the developer ahead of that; exact targets/food lists are still open pending her answers.
+
+**Credentials:** all three are set up and confirmed working in the developer's local `.env` (Google OAuth client, spreadsheet ID, USDA API key) — see `docs/technical-spec.md` for setup steps if starting fresh elsewhere.
+
+For the detailed, chronological account of decisions and fixes, see [docs/build-log.md](docs/build-log.md) — the most recent entries are most relevant for picking up where things left off.
 
 ## Getting started
 

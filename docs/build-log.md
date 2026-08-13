@@ -348,3 +348,28 @@ Since the real Dishes tab was still empty (safe to restructure losslessly), redi
 - Build Blood Sugar screen
 - Custom multi-ingredient dish composition (the deferred "real" Dishes feature)
 - Run the interview with mom, fill in `docs/requirements-open-questions.md` and tune Settings defaults
+
+## 2026-08-13 — Session wrap-up (context handoff)
+
+Developer's context was at 83% — recording a clean snapshot here so a fresh session can pick up without re-reading the whole chronological log above. (`README.md`'s Status section now has the same summary, kept short, for a faster first read than this log.)
+
+**Confirmed working end-to-end, live, by the developer** (not just unit-tested): Google sign-in; adding an Ingredient (bundle match, USDA+translation fallback, and manual entry all reachable); adding a starter Dish; editing and saving Settings; the real Dishes tab header row was manually updated to match the new 14-column schema and independently verified by re-reading it back from the sheet.
+
+**Repo state:** working tree clean, all commits pushed, `main` at `1becc51`. Local `.env` has all three credentials filled in and working (`VITE_GOOGLE_CLIENT_ID`, `VITE_SPREADSHEET_ID`, `VITE_USDA_API_KEY` — not committed, as expected).
+
+**Architecture, settled this session (see docs/technical-spec.md and docs/project-brief.md for the full current versions, these are just pointers):**
+- PWA, one codebase for mobile + Windows desktop, Google Sheets as both database and cross-device sync layer
+- Nutrition lookup: bundled starter data (`src/data/starter-foods.ts` = raw only, `src/data/starter-dishes.ts` = cooked/prepared, computed via `src/lib/dishes.ts`'s `computeDishNutrition`) → USDA FoodData Central fallback, translated from Ukrainian automatically (`translateUkToEn` in `src/lib/nutrition.ts`, MyMemory API) — mom never types or reads English to use the app, though NameEn is shown as a subtle secondary label as a fallback cross-check
+- Ingredients and Dishes schemas are deliberately field-consistent (NameUk/NameEn first, Source/DateAdded last, same nutrient column names)
+- `src/lib/sheets.ts`'s `authorizedFetch` checks `response.ok` and throws with the parsed API error — this was a real bug (silent failures) until fixed mid-session, worth knowing if anything seems to "not save" again
+
+**Immediate next steps, roughly in order of what unblocks the most:**
+1. Build Сьогодні (Today) screen — daily log, quick-add meal, progress vs. Settings targets, meal-gap warning using the already-built `src/lib/health.ts`
+2. Build Цукор (Blood Sugar) screen
+3. Custom multi-ingredient dish composition (Dishes currently only supports adding pre-computed starter dishes as-is)
+4. Run the interview with mom (trigger phrase in `CLAUDE.md`) — the architecture doesn't depend on her answers, but exact targets/food lists do
+
+**Known rough edges, not yet addressed:**
+- No offline support beyond the PWA app-shell cache (data reads/writes need connectivity)
+- Dishes' GI is a carb-weighted approximation, not lab-measured — documented, not a bug
+- Starter bundle is a first pass (~50 ingredients, 12 dishes) — expected to grow as real usage surfaces gaps, per the "mom reviews before saving" design
