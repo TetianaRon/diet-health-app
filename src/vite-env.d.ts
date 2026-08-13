@@ -3,6 +3,7 @@
 interface ImportMetaEnv {
   readonly VITE_GOOGLE_CLIENT_ID: string;
   readonly VITE_SPREADSHEET_ID: string;
+  readonly VITE_USDA_API_KEY: string;
 }
 
 interface ImportMeta {
