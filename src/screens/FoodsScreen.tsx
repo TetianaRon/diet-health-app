@@ -201,7 +201,7 @@ function AddDishForm({ onSaved, onCancel }: { onSaved: (dish: Dish) => void; onC
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const matches = STARTER_DISHES.filter((d) => d.dishName.toLowerCase().includes(search.toLowerCase()));
+  const matches = STARTER_DISHES.filter((d) => d.nameUk.toLowerCase().includes(search.toLowerCase()));
 
   const handleAdd = async (dish: Omit<Dish, "dateAdded">) => {
     setSaving(true);
@@ -232,9 +232,10 @@ function AddDishForm({ onSaved, onCancel }: { onSaved: (dish: Dish) => void; onC
 
       <ul className="food-list">
         {matches.map((dish) => (
-          <li key={dish.dishName} className="food-list-item-with-action">
+          <li key={dish.nameUk} className="food-list-item-with-action">
             <span>
-              <strong>{dish.dishName}</strong> — {dish.carbsG} г вуглеводів, ГІ {dish.gi}
+              <strong>{dish.nameUk}</strong> <span className="food-name-en">({dish.nameEn})</span> — {dish.carbsG} г
+              вуглеводів, ГІ {dish.gi}
             </span>
             <button type="button" onClick={() => void handleAdd(dish)} disabled={saving}>
               {uk.dishes.form.addButton}
@@ -304,7 +305,7 @@ export default function FoodsScreen() {
   const filteredIngredients = (ingredients ?? []).filter((i) =>
     i.nameUk.toLowerCase().includes(search.toLowerCase()),
   );
-  const filteredDishes = (dishes ?? []).filter((d) => d.dishName.toLowerCase().includes(search.toLowerCase()));
+  const filteredDishes = (dishes ?? []).filter((d) => d.nameUk.toLowerCase().includes(search.toLowerCase()));
 
   return (
     <section className="screen">
@@ -398,8 +399,9 @@ export default function FoodsScreen() {
 
           <ul className="food-list">
             {filteredDishes.map((dish) => (
-              <li key={dish.dishName}>
-                <strong>{dish.dishName}</strong> — {dish.carbsG} г вуглеводів, ГІ {dish.gi} (на 100г)
+              <li key={dish.nameUk}>
+                <strong>{dish.nameUk}</strong> <span className="food-name-en">({dish.nameEn})</span> —{" "}
+                {dish.carbsG} г вуглеводів, ГІ {dish.gi} (на 100г)
               </li>
             ))}
           </ul>

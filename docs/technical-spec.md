@@ -44,13 +44,17 @@ Raw foods only — always the uncooked/unprepared state, values per 100g. Anythi
 ### Dishes
 Anything requiring preparation — from a single cooked ingredient (e.g. "Гречка варена") to a real multi-ingredient recipe (e.g. borscht) — auto-computed from Ingredients, never hand-typed. This is the counterpart to Ingredients being *always raw*: a food that changes meaningfully when cooked (grains/legumes absorbing several times their dry weight in water) belongs here, not as a separate "cooked" Ingredients row. Values are **per 100g of the finished/cooked product**, matching Ingredients' per-100g convention — mom logs a dish by portion grams exactly like an ingredient.
 
+Schema is deliberately kept consistent with Ingredients: `NameUk`/`NameEn` first and `Source`/`DateAdded` last match exactly, same nutrient column names in between — only `IngredientsJson`/`YieldGrams` are Dish-specific, inserted in the middle.
+
 | Column | Notes |
 |---|---|
-| DishName | Ukrainian, shown to mom |
+| NameUk | Ukrainian, shown to mom |
+| NameEn | English label — like Ingredients, shown as a subtle secondary line in the UI, not something mom needs to read |
 | IngredientsJson | `[{nameUk, grams}]` — raw ingredient names (must match an Ingredients row) and the raw grams used |
 | YieldGrams | Total finished weight after cooking (e.g. 100g dry buckwheat → ~360g cooked). This is what makes per-100g values correct — cooking water adds mass but no calories |
 | Carbs_g … Sodium_mg | Computed: `Σ(ingredient_nutrient_per_100g × grams_used / 100) / YieldGrams × 100` |
 | GI | Computed as a **carb-contribution-weighted average** of the ingredients' GI (`Σ(carb_contribution_i × GI_i) / Σ(carb_contribution_i)`) — an approximation, not a lab-measured value (true GI isn't simply additive), but the standard practical simplification when no GI database entry exists for the exact prepared dish. For a single-ingredient dish this reduces to that ingredient's own GI. |
+| Source | `starter` (bundled) or `manual` (custom-composed, once that feature exists) |
 | DateAdded | ISO date |
 
 Implemented in `src/lib/dishes.ts` (`computeDishNutrition`, pure and unit-tested).

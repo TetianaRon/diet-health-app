@@ -3,7 +3,13 @@
 // from a single cooked ingredient to a real multi-ingredient recipe —
 // auto-computed from Ingredients per 100g of the finished product, never
 // hand-typed. Counterpart to Ingredients being always-raw.
+//
+// Schema is deliberately kept consistent with Ingredient: NameUk/NameEn
+// first, Source/DateAdded last, same nutrient column names in between —
+// only IngredientsJson/YieldGrams are Dish-specific, inserted in the middle.
 import { readRange, writeRange } from "./sheets";
+
+export type DishSource = "starter" | "manual";
 
 export interface DishIngredientRef {
   nameUk: string;
@@ -22,9 +28,11 @@ export interface IngredientNutrition {
 }
 
 export interface Dish extends IngredientNutrition {
-  dishName: string;
+  nameUk: string;
+  nameEn: string;
   ingredients: DishIngredientRef[];
   yieldGrams: number;
+  source: DishSource;
   dateAdded: string;
 }
 
@@ -100,6 +108,10 @@ function toNumber(value: unknown): number {
   return Number.isFinite(n) ? n : 0;
 }
 
+function toDishSource(value: unknown): DishSource {
+  return value === "starter" ? "starter" : "manual";
+}
+
 function parseIngredientsJson(value: unknown): DishIngredientRef[] {
   try {
     const parsed = JSON.parse(String(value ?? "[]"));
@@ -112,26 +124,32 @@ function parseIngredientsJson(value: unknown): DishIngredientRef[] {
   }
 }
 
+// Column order: NameUk, NameEn, IngredientsJson, YieldGrams, Carbs_g, GI,
+// Fiber_g, Sugars_g, Protein_g, Fat_g, Calories_kcal, Sodium_mg, Source,
+// DateAdded (A-N) — see docs/technical-spec.md "Dishes" for the full table.
 export function rowToDish(row: unknown[]): Dish {
   return {
-    dishName: String(row[0] ?? ""),
-    ingredients: parseIngredientsJson(row[1]),
-    yieldGrams: toNumber(row[2]),
-    carbsG: toNumber(row[3]),
-    gi: toNumber(row[4]),
-    fiberG: toNumber(row[5]),
-    sugarsG: toNumber(row[6]),
-    proteinG: toNumber(row[7]),
-    fatG: toNumber(row[8]),
-    caloriesKcal: toNumber(row[9]),
-    sodiumMg: toNumber(row[10]),
-    dateAdded: String(row[11] ?? ""),
+    nameUk: String(row[0] ?? ""),
+    nameEn: String(row[1] ?? ""),
+    ingredients: parseIngredientsJson(row[2]),
+    yieldGrams: toNumber(row[3]),
+    carbsG: toNumber(row[4]),
+    gi: toNumber(row[5]),
+    fiberG: toNumber(row[6]),
+    sugarsG: toNumber(row[7]),
+    proteinG: toNumber(row[8]),
+    fatG: toNumber(row[9]),
+    caloriesKcal: toNumber(row[10]),
+    sodiumMg: toNumber(row[11]),
+    source: toDishSource(row[12]),
+    dateAdded: String(row[13] ?? ""),
   };
 }
 
 export function dishToRow(dish: Dish): unknown[] {
   return [
-    dish.dishName,
+    dish.nameUk,
+    dish.nameEn,
     JSON.stringify(dish.ingredients.map((i) => ({ name: i.nameUk, grams: i.grams }))),
     dish.yieldGrams,
     dish.carbsG,
@@ -142,16 +160,17 @@ export function dishToRow(dish: Dish): unknown[] {
     dish.fatG,
     dish.caloriesKcal,
     dish.sodiumMg,
+    dish.source,
     dish.dateAdded,
   ];
 }
 
 export async function listDishes(): Promise<Dish[]> {
-  const rows = await readRange("Dishes", "A2:L1000");
+  const rows = await readRange("Dishes", "A2:N1000");
   return rows.filter((row) => row.length > 0).map(rowToDish);
 }
 
 export async function addDish(dish: Omit<Dish, "dateAdded">): Promise<void> {
   const withDate: Dish = { ...dish, dateAdded: new Date().toISOString().slice(0, 10) };
-  await writeRange("Dishes", "A:L", [dishToRow(withDate)]);
+  await writeRange("Dishes", "A:N", [dishToRow(withDate)]);
 }

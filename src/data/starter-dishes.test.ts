@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { STARTER_DISHES } from "./starter-dishes";
 
-function find(dishName: string) {
-  const dish = STARTER_DISHES.find((d) => d.dishName === dishName);
-  if (!dish) throw new Error(`missing starter dish: ${dishName}`);
+function find(nameUk: string) {
+  const dish = STARTER_DISHES.find((d) => d.nameUk === nameUk);
+  if (!dish) throw new Error(`missing starter dish: ${nameUk}`);
   return dish;
 }
 
@@ -14,6 +14,8 @@ describe("STARTER_DISHES", () => {
       // caloriesKcal > 0 confirms lookupStarterFood actually found the raw
       // ingredient — a broken name reference would silently compute to 0.
       expect(dish.caloriesKcal).toBeGreaterThan(0);
+      expect(dish.nameEn).not.toBe("");
+      expect(dish.source).toBe("starter");
     }
   });
 

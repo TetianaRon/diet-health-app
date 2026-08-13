@@ -328,3 +328,23 @@ Added `.food-name-en` (small, muted gray) next to the Ukrainian name in: the Ing
 - Build Blood Sugar screen
 - Custom multi-ingredient dish composition (the deferred "real" Dishes feature)
 - Run the interview with mom, fill in `docs/requirements-open-questions.md` and tune Settings defaults
+
+## 2026-08-13 — Made Dish schema consistent with Ingredient
+
+Developer asked for the NameEn treatment on Dishes too, and pointed out the schemas should be consistent generally — a fair catch: `Dish` used `dishName` instead of `nameUk`, had no `nameEn` at all (dropped when grains/legumes moved out of Ingredients earlier today), and no `source` field.
+
+**`src/lib/dishes.ts`:** `Dish.dishName` → `nameUk`; added `nameEn: string` and `source: "starter" | "manual"`. Column layout now mirrors Ingredients at both ends — `NameUk`/`NameEn` first, `Source`/`DateAdded` last, identical nutrient column names in between — with the two Dish-only fields (`IngredientsJson`, `YieldGrams`) inserted in the middle rather than tacked on wherever was convenient.
+
+**`src/data/starter-dishes.ts`:** restored the `nameEn` values that existed before the raw/Dish split (`"buckwheat, cooked"`, `"white rice, cooked"`, etc. — these were simply dropped, not researched fresh) and added `source: "starter"` to each computed entry.
+
+Since the real Dishes tab was still empty (safe to restructure losslessly), redid the column layout to match rather than just append the two new columns at the end — cheaper to do now than migrate later. **Needs the developer to replace the Dishes tab's header row** with, in order: `NameUk, NameEn, IngredientsJson, YieldGrams, Carbs_g, GI, Fiber_g, Sugars_g, Protein_g, Fat_g, Calories_kcal, Sodium_mg, Source, DateAdded`.
+
+**Verified:** `npm run test` (39/39 pass), `npm run build` clean.
+
+**Next steps:**
+
+- Developer replaces the Dishes tab header row
+- Build Today screen
+- Build Blood Sugar screen
+- Custom multi-ingredient dish composition (the deferred "real" Dishes feature)
+- Run the interview with mom, fill in `docs/requirements-open-questions.md` and tune Settings defaults

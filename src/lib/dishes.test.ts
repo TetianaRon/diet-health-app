@@ -96,7 +96,8 @@ describe("computeDishNutrition", () => {
 describe("rowToDish / dishToRow", () => {
   it("round-trips through JSON-encoded ingredients", () => {
     const dish: Dish = {
-      dishName: "Гречка варена",
+      nameUk: "Гречка варена",
+      nameEn: "buckwheat, cooked",
       ingredients: [{ nameUk: "Гречка суха", grams: 100 }],
       yieldGrams: 360,
       carbsG: 19.86,
@@ -107,14 +108,50 @@ describe("rowToDish / dishToRow", () => {
       fatG: 0.94,
       caloriesKcal: 95.28,
       sodiumMg: 0.28,
+      source: "starter",
       dateAdded: "2026-08-13",
     };
 
     expect(rowToDish(dishToRow(dish))).toEqual(dish);
   });
 
+  it("defaults an unrecognized Source to manual", () => {
+    const dish: Dish = {
+      nameUk: "Борщ",
+      nameEn: "borscht",
+      ingredients: [],
+      yieldGrams: 1000,
+      carbsG: 5,
+      gi: 40,
+      fiberG: 1,
+      sugarsG: 1,
+      proteinG: 1,
+      fatG: 1,
+      caloriesKcal: 50,
+      sodiumMg: 100,
+      source: "manual",
+      dateAdded: "2026-08-13",
+    };
+    expect(rowToDish(dishToRow(dish)).source).toBe("manual");
+  });
+
   it("tolerates malformed IngredientsJson", () => {
-    const row = ["Зіпсована страва", "not json", "100", "10", "50", "1", "1", "1", "1", "50", "5", "2026-08-13"];
+    const row = [
+      "Зіпсована страва",
+      "broken dish",
+      "not json",
+      "100",
+      "10",
+      "50",
+      "1",
+      "1",
+      "1",
+      "1",
+      "50",
+      "5",
+      "starter",
+      "2026-08-13",
+    ];
     expect(rowToDish(row).ingredients).toEqual([]);
   });
 });
