@@ -123,6 +123,12 @@ input {
   color: #4a4a4a;
 }
 
+.food-form-hint {
+  font-size: 0.85rem;
+  color: #6b6b6b;
+  margin: -6px 0 0;
+}
+
 .food-form-error {
   color: #b3261e;
 }

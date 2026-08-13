@@ -1,11 +1,14 @@
 // Bundled starter dataset — common Ukrainian staple foods, checked before any
-// USDA lookup (see src/lib/nutrition.ts). Values are per 100g, raw/base
-// ingredients only (composite dishes belong in the Dishes tab, built from
-// these). Figures are typical reference values (USDA-style macros; GI from
-// published glycemic-index research) meant as sensible defaults — mom
-// reviews and approves before anything is saved, same as a USDA-sourced
-// estimate. First-pass list (~60 items) covering the most common staples;
-// expand over time as real usage surfaces gaps.
+// USDA lookup (see src/lib/nutrition.ts). Values are per 100g of the food as
+// eaten — not a generic "ingredient" (composite dishes belong in the Dishes
+// tab, built from these). Cooking changes carbs/100g substantially (water
+// absorption), so nameUk always states the prep state explicitly
+// (варена/сира/etc.) rather than leaving it implicit — a bare "Гречка" was
+// found ambiguous in testing. Figures are typical reference values
+// (USDA-style macros; GI from published glycemic-index research) meant as
+// sensible defaults — mom reviews and approves before anything is saved,
+// same as a USDA-sourced estimate. First-pass list covering the most common
+// staples; expand over time as real usage surfaces gaps.
 
 export interface StarterFood {
   nameUk: string;
@@ -21,16 +24,19 @@ export interface StarterFood {
 }
 
 export const STARTER_FOODS: StarterFood[] = [
-  // Grains & cereals (cooked unless noted)
-  { nameUk: "Гречка", nameEn: "buckwheat, cooked", carbsG: 19.9, gi: 54, fiberG: 2.7, sugarsG: 0.9, proteinG: 3.4, fatG: 0.6, caloriesKcal: 92, sodiumMg: 4 },
-  { nameUk: "Рис білий", nameEn: "white rice, cooked", carbsG: 28, gi: 73, fiberG: 0.4, sugarsG: 0.1, proteinG: 2.7, fatG: 0.3, caloriesKcal: 130, sodiumMg: 1 },
-  { nameUk: "Рис бурий", nameEn: "brown rice, cooked", carbsG: 23, gi: 68, fiberG: 1.8, sugarsG: 0.4, proteinG: 2.6, fatG: 0.9, caloriesKcal: 111, sodiumMg: 5 },
-  { nameUk: "Вівсянка", nameEn: "oatmeal, cooked with water", carbsG: 12, gi: 55, fiberG: 1.7, sugarsG: 0.3, proteinG: 2.5, fatG: 1.5, caloriesKcal: 71, sodiumMg: 4 },
-  { nameUk: "Пшоно", nameEn: "millet, cooked", carbsG: 23, gi: 71, fiberG: 1.3, sugarsG: 0.2, proteinG: 3.5, fatG: 1.0, caloriesKcal: 119, sodiumMg: 2 },
-  { nameUk: "Перлова крупа", nameEn: "pearl barley, cooked", carbsG: 28.2, gi: 25, fiberG: 3.8, sugarsG: 0.4, proteinG: 2.3, fatG: 0.4, caloriesKcal: 123, sodiumMg: 3 },
-  { nameUk: "Манна крупа", nameEn: "semolina, cooked", carbsG: 15, gi: 55, fiberG: 0.8, sugarsG: 0.1, proteinG: 3.5, fatG: 0.4, caloriesKcal: 79, sodiumMg: 6 },
-  { nameUk: "Кукурудзяна крупа", nameEn: "cornmeal, cooked", carbsG: 21, gi: 68, fiberG: 1.5, sugarsG: 0.3, proteinG: 2.5, fatG: 0.7, caloriesKcal: 97, sodiumMg: 4 },
-  { nameUk: "Макарони", nameEn: "pasta, cooked", carbsG: 25, gi: 50, fiberG: 1.3, sugarsG: 0.6, proteinG: 5.8, fatG: 0.9, caloriesKcal: 131, sodiumMg: 1 },
+  // Grains & cereals — Ukrainian name always states the state (варена/сира/
+  // etc.) explicitly, matching nameEn, since cooking changes carbs per 100g
+  // by ~3x (water absorption) and this matters a lot for a diabetes app.
+  { nameUk: "Гречка варена", nameEn: "buckwheat, cooked", carbsG: 19.9, gi: 54, fiberG: 2.7, sugarsG: 0.9, proteinG: 3.4, fatG: 0.6, caloriesKcal: 92, sodiumMg: 4 },
+  { nameUk: "Гречка суха (сира крупа)", nameEn: "buckwheat, raw", carbsG: 71.5, gi: 54, fiberG: 10, sugarsG: 0, proteinG: 13.2, fatG: 3.4, caloriesKcal: 343, sodiumMg: 1 },
+  { nameUk: "Рис білий варений", nameEn: "white rice, cooked", carbsG: 28, gi: 73, fiberG: 0.4, sugarsG: 0.1, proteinG: 2.7, fatG: 0.3, caloriesKcal: 130, sodiumMg: 1 },
+  { nameUk: "Рис бурий варений", nameEn: "brown rice, cooked", carbsG: 23, gi: 68, fiberG: 1.8, sugarsG: 0.4, proteinG: 2.6, fatG: 0.9, caloriesKcal: 111, sodiumMg: 5 },
+  { nameUk: "Вівсяна каша на воді", nameEn: "oatmeal, cooked with water", carbsG: 12, gi: 55, fiberG: 1.7, sugarsG: 0.3, proteinG: 2.5, fatG: 1.5, caloriesKcal: 71, sodiumMg: 4 },
+  { nameUk: "Пшоно варене", nameEn: "millet, cooked", carbsG: 23, gi: 71, fiberG: 1.3, sugarsG: 0.2, proteinG: 3.5, fatG: 1.0, caloriesKcal: 119, sodiumMg: 2 },
+  { nameUk: "Перлова крупа варена", nameEn: "pearl barley, cooked", carbsG: 28.2, gi: 25, fiberG: 3.8, sugarsG: 0.4, proteinG: 2.3, fatG: 0.4, caloriesKcal: 123, sodiumMg: 3 },
+  { nameUk: "Манна каша варена", nameEn: "semolina, cooked", carbsG: 15, gi: 55, fiberG: 0.8, sugarsG: 0.1, proteinG: 3.5, fatG: 0.4, caloriesKcal: 79, sodiumMg: 6 },
+  { nameUk: "Кукурудзяна каша варена", nameEn: "cornmeal, cooked", carbsG: 21, gi: 68, fiberG: 1.5, sugarsG: 0.3, proteinG: 2.5, fatG: 0.7, caloriesKcal: 97, sodiumMg: 4 },
+  { nameUk: "Макарони варені", nameEn: "pasta, cooked", carbsG: 25, gi: 50, fiberG: 1.3, sugarsG: 0.6, proteinG: 5.8, fatG: 0.9, caloriesKcal: 131, sodiumMg: 1 },
   { nameUk: "Хліб житній", nameEn: "rye bread", carbsG: 48, gi: 58, fiberG: 6, sugarsG: 4, proteinG: 8.5, fatG: 1.7, caloriesKcal: 250, sodiumMg: 660 },
   { nameUk: "Хліб білий", nameEn: "white bread", carbsG: 49, gi: 75, fiberG: 2.7, sugarsG: 5, proteinG: 9, fatG: 3.2, caloriesKcal: 265, sodiumMg: 490 },
 
@@ -55,7 +61,7 @@ export const STARTER_FOODS: StarterFood[] = [
   { nameUk: "Квасоля варена", nameEn: "kidney beans, cooked", carbsG: 22.8, gi: 29, fiberG: 7.4, sugarsG: 0.3, proteinG: 8.7, fatG: 0.5, caloriesKcal: 127, sodiumMg: 2 },
   { nameUk: "Сочевиця варена", nameEn: "lentils, cooked", carbsG: 20, gi: 32, fiberG: 7.9, sugarsG: 1.8, proteinG: 9, fatG: 0.4, caloriesKcal: 116, sodiumMg: 2 },
   { nameUk: "Нут варений", nameEn: "chickpeas, cooked", carbsG: 27, gi: 28, fiberG: 7.6, sugarsG: 4.8, proteinG: 9, fatG: 2.6, caloriesKcal: 164, sodiumMg: 7 },
-  { nameUk: "Горошок зелений", nameEn: "green peas", carbsG: 14, gi: 51, fiberG: 5.5, sugarsG: 5.9, proteinG: 5.4, fatG: 0.4, caloriesKcal: 81, sodiumMg: 5 },
+  { nameUk: "Горошок зелений варений", nameEn: "green peas, cooked", carbsG: 14, gi: 51, fiberG: 5.5, sugarsG: 5.9, proteinG: 5.4, fatG: 0.4, caloriesKcal: 81, sodiumMg: 5 },
 
   // Vegetables (raw unless noted)
   { nameUk: "Капуста білокачанна", nameEn: "cabbage", carbsG: 5.8, gi: 15, fiberG: 2.5, sugarsG: 3.2, proteinG: 1.3, fatG: 0.1, caloriesKcal: 25, sodiumMg: 18 },
@@ -69,7 +75,7 @@ export const STARTER_FOODS: StarterFood[] = [
   { nameUk: "Кабачок", nameEn: "zucchini", carbsG: 3.1, gi: 15, fiberG: 1, sugarsG: 2.5, proteinG: 1.2, fatG: 0.3, caloriesKcal: 17, sodiumMg: 8 },
   { nameUk: "Броколі", nameEn: "broccoli", carbsG: 6.6, gi: 15, fiberG: 2.6, sugarsG: 1.7, proteinG: 2.8, fatG: 0.4, caloriesKcal: 34, sodiumMg: 33 },
   { nameUk: "Перець солодкий", nameEn: "bell pepper", carbsG: 6, gi: 15, fiberG: 2.1, sugarsG: 4.2, proteinG: 1, fatG: 0.3, caloriesKcal: 31, sodiumMg: 4 },
-  { nameUk: "Гарбуз", nameEn: "pumpkin, cooked", carbsG: 6.5, gi: 75, fiberG: 0.5, sugarsG: 2.8, proteinG: 1, fatG: 0.1, caloriesKcal: 26, sodiumMg: 1 },
+  { nameUk: "Гарбуз варений", nameEn: "pumpkin, cooked", carbsG: 6.5, gi: 75, fiberG: 0.5, sugarsG: 2.8, proteinG: 1, fatG: 0.1, caloriesKcal: 26, sodiumMg: 1 },
   { nameUk: "Шпинат", nameEn: "spinach", carbsG: 3.6, gi: 15, fiberG: 2.2, sugarsG: 0.4, proteinG: 2.9, fatG: 0.4, caloriesKcal: 23, sodiumMg: 79 },
   { nameUk: "Салат листовий", nameEn: "lettuce", carbsG: 2.9, gi: 15, fiberG: 1.3, sugarsG: 0.8, proteinG: 1.4, fatG: 0.2, caloriesKcal: 15, sodiumMg: 28 },
   { nameUk: "Редис", nameEn: "radish", carbsG: 3.4, gi: 15, fiberG: 1.6, sugarsG: 1.9, proteinG: 0.7, fatG: 0.1, caloriesKcal: 16, sodiumMg: 39 },

@@ -97,10 +97,27 @@ async function authorizedFetch(path: string, init?: RequestInit): Promise<Respon
   if (!accessToken) {
     throw new Error("Not signed in — call signIn() first");
   }
-  return fetch(`${SHEETS_API_BASE}/${path}`, {
+  const response = await fetch(`${SHEETS_API_BASE}/${path}`, {
     ...init,
     headers: { ...init?.headers, Authorization: `Bearer ${accessToken}` },
   });
+
+  if (!response.ok) {
+    // fetch() only rejects on network failure, not HTTP error status — without
+    // this check, a failed Sheets API call (bad range, permission error, etc.)
+    // silently does nothing and callers proceed as if it had succeeded.
+    const body = await response.text().catch(() => "");
+    let message = `Sheets API request failed: ${response.status}`;
+    try {
+      const parsed = JSON.parse(body);
+      if (parsed?.error?.message) message += ` — ${parsed.error.message}`;
+    } catch {
+      if (body) message += ` — ${body}`;
+    }
+    throw new Error(message);
+  }
+
+  return response;
 }
 
 /** Reads a range, e.g. readRange("Ingredients", "A1:L200"). */

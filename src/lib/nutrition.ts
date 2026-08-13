@@ -59,15 +59,24 @@ interface UsdaSearchResponse {
   foods: { foodNutrients: UsdaFoodNutrient[] }[];
 }
 
-/** Checks the bundled starter dataset by either name — no network call. */
+/**
+ * Checks the bundled starter dataset by either name — no network call. Tries
+ * an exact match first (e.g. "гречка варена"), then falls back to a substring
+ * match (e.g. bare "гречка") so mom doesn't have to type the full state
+ * qualifier to hit the bundle. On a substring match with multiple candidates
+ * (e.g. "рис" matching both rice variants), picks the first — she reviews
+ * and can correct any field before saving either way.
+ */
 export function findInStarterData(query: string): StarterFood | null {
   const key = query.trim().toLowerCase();
   if (!key) return null;
-  return (
-    STARTER_FOODS.find(
-      (food) => food.nameUk.toLowerCase() === key || food.nameEn.toLowerCase() === key,
-    ) ?? null
+
+  const exact = STARTER_FOODS.find(
+    (food) => food.nameUk.toLowerCase() === key || food.nameEn.toLowerCase() === key,
   );
+  if (exact) return exact;
+
+  return STARTER_FOODS.find((food) => food.nameUk.toLowerCase().includes(key)) ?? null;
 }
 
 function toEstimate(food: StarterFood): NutritionEstimate {

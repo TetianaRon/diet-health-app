@@ -99,8 +99,13 @@ function AddFoodForm({ onSaved, onCancel }: { onSaved: (ingredient: Ingredient) 
     <div className="food-form">
       <label>
         {uk.foods.form.nameUkLabel}
-        <input value={nameUk} onChange={(e) => setNameUk(e.target.value)} />
+        <input
+          value={nameUk}
+          onChange={(e) => setNameUk(e.target.value)}
+          placeholder={uk.foods.form.nameUkPlaceholder}
+        />
       </label>
+      <p className="food-form-hint">{uk.foods.form.nameUkHint}</p>
       <button type="button" onClick={handleLookup} disabled={lookupLoading || !nameUk}>
         {lookupLoading ? uk.foods.form.lookupLoading : uk.foods.form.lookupButton}
       </button>

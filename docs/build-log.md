@@ -227,3 +227,26 @@ Decided NOT to sync with existing spreadsheet. It is a pre-filled template, not 
 - Build the Dishes half of the Foods screen
 - Build Blood Sugar screen
 - Run the interview with mom, fill in `docs/requirements-open-questions.md` and tune Settings defaults
+
+## 2026-08-13 — Two more real gaps from live testing: silent write failures, raw-vs-cooked ambiguity
+
+**Bug found: adding a food didn't actually persist.** Developer tested the translation fix (worked correctly), but reported the food list doesn't survive navigating away. Checked the live sheet directly — Ingredients tab had only the header row, nothing written, despite the app showing the item as saved.
+
+**Root cause:** `readRange`/`writeRange`/`batchUpdateRanges` in `src/lib/sheets.ts` never checked `response.ok`. `fetch()` only rejects on network failure, not HTTP error status — so any failed Sheets API call (permission issue, bad request, anything) was silently swallowed, and callers (including `FoodsScreen`'s save handler and `SettingsScreen`'s save handler) proceeded as if it had succeeded. This means the Settings save "confirmation" screenshotted earlier in this session may also not have actually persisted — not yet independently re-verified against the sheet.
+
+**Fix:** `authorizedFetch()` now checks `response.ok` and throws a descriptive error (including the parsed Google API error message when available) on failure. This is a single fix point covering all three functions. The underlying reason the actual POST was failing is still unknown — this fix makes it visible (surfaces in the existing error UI) rather than fixing a specific cause, since the real error message wasn't observable before. Developer needs to retry and report what error (if any) now shows.
+
+**Second gap: raw vs. cooked matters a lot and wasn't represented.** Developer pointed out the ingredient database doesn't distinguish preparation state, and it matters significantly — e.g. raw buckwheat is ~71g carbs/100g vs. ~20g/100g cooked (water absorption), a >3x difference that would badly skew carb counting for a diabetes app.
+
+**Fix:** `src/data/starter-foods.ts` — Ukrainian names now always state the prep qualifier explicitly (варена/сира/etc.) instead of leaving it implicit (e.g. `Гречка` → `Гречка варена`, plus added a `Гречка суха (сира крупа)` raw entry to show the pattern). `findInStarterData()` in `src/lib/nutrition.ts` was exact-match only, which would have broken lookups for anyone typing the old bare names — added a substring fallback so "гречка" still finds "Гречка варена" without requiring the full phrase. Also added a hint under the add-food name field nudging toward specifying preparation when it matters — the deeper issue (auto-detecting intended prep state for USDA/translation-sourced foods) isn't solvable automatically, so this is a mitigation, not a full fix; documented as a known limitation.
+
+**Verified:** `npm run test` (27/27 pass), `npm run build` clean.
+
+**Next steps:**
+
+- Developer retries adding a food and reports the actual Sheets API error now surfaced, so the real write failure can be root-caused
+- Once writes are confirmed working: re-verify Settings save actually persisted, re-verify a food add persists across a refresh
+- Build Today screen
+- Build the Dishes half of the Foods screen
+- Build Blood Sugar screen
+- Run the interview with mom, fill in `docs/requirements-open-questions.md` and tune Settings defaults

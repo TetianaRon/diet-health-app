@@ -2,14 +2,21 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { findInStarterData, lookupFood, lookupUsda, translateUkToEn } from "./nutrition";
 
 describe("findInStarterData", () => {
-  it("matches by Ukrainian name, case-insensitively", () => {
-    const result = findInStarterData("гречка");
+  it("matches the full Ukrainian name exactly, case-insensitively", () => {
+    const result = findInStarterData("гречка варена");
     expect(result?.nameEn).toBe("buckwheat, cooked");
   });
 
   it("matches by English name", () => {
     const result = findInStarterData("Buckwheat, Cooked");
-    expect(result?.nameUk).toBe("Гречка");
+    expect(result?.nameUk).toBe("Гречка варена");
+  });
+
+  it("falls back to a substring match when the state qualifier is omitted", () => {
+    // "гречка" alone shouldn't require typing "варена" too — but note this
+    // picks whichever buckwheat entry comes first (cooked), not raw.
+    const result = findInStarterData("гречка");
+    expect(result?.nameEn).toBe("buckwheat, cooked");
   });
 
   it("returns null for foods not in the bundle", () => {
@@ -63,7 +70,7 @@ describe("lookupFood", () => {
     const fetchSpy = vi.fn();
     vi.stubGlobal("fetch", fetchSpy);
 
-    const result = await lookupFood("Гречка");
+    const result = await lookupFood("Гречка варена");
 
     expect(result?.source).toBe("starter");
     expect(result?.carbsG).toBe(19.9);
