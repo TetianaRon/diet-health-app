@@ -1,0 +1,66 @@
+:root {
+  color-scheme: light;
+  font-family: "Segoe UI", system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #f5f7f5;
+  color: #1a1a1a;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  max-width: 480px;
+  margin: 0 auto;
+  background: #ffffff;
+}
+
+.app-content {
+  flex: 1;
+  padding: 24px 20px 96px;
+}
+
+.screen h1 {
+  font-size: 1.5rem;
+  margin: 0 0 12px;
+}
+
+.screen p {
+  font-size: 1.1rem;
+  line-height: 1.5;
+  color: #4a4a4a;
+}
+
+.tab-bar {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  border-top: 1px solid #e2e6e2;
+  background: #ffffff;
+}
+
+.tab-button {
+  flex: 1;
+  padding: 14px 4px;
+  border: none;
+  background: none;
+  font-size: 0.95rem;
+  color: #6b6b6b;
+  cursor: pointer;
+}
+
+.tab-button.active {
+  color: #2f7a4f;
+  font-weight: 600;
+}

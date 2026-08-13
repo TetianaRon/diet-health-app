@@ -81,3 +81,32 @@ Decided NOT to sync with existing spreadsheet. It is a pre-filled template, not 
 - Run the interview with mom (Ukrainian, trigger phrase `МАМА: ПОЧАТИ ОПИТУВАННЯ`)
 - Fill in `docs/requirements-open-questions.md` → Mom's Answers
 - Fill in `docs/technical-spec.md` and begin scaffolding the actual app
+
+## 2026-08-12 — Cross-platform architecture + skeleton
+
+**Context:** Developer wants the app usable on both mobile and Windows desktop, with data synced between them, and wants to start building before mom's interview is done (the interview only affects specific numbers/food lists, not the architecture).
+
+**Key decisions:**
+
+- **Desktop delivery:** one responsive codebase, installable as a PWA on both mobile and Windows — no separate native/Electron build.
+- **Sync:** kept Google Sheets as the database. Since it's already cloud-hosted, every device reading/writing the same spreadsheet via the Sheets API gives cross-device sync for free — no extra sync layer needed.
+- **Frontend stack:** React + Vite + TypeScript.
+- **Nutrition lookup security:** Claude/Anthropic API key must never ship to the browser — added a serverless proxy (`api/lookup-food.ts`) instead of calling the API client-side.
+- **Hosting target:** Vercel (static PWA + serverless function in one deploy) — not deployed yet, local dev only for now.
+
+**Completed:**
+
+- Updated `docs/project-brief.md` with a Platform & Sync section
+- Wrote a first-draft `docs/technical-spec.md`: architecture diagram, Google Sheets schema, OAuth setup steps, Claude proxy contract, screen structure, deployment plan
+- Scaffolded the React + Vite + TS PWA skeleton: 4-tab app shell (Сьогодні / Продукти / Цукор / Налаштування), `src/lib/health.ts` (GL calc, fat-limit check, meal-gap warning) with unit tests, `src/lib/sheets.ts` and `src/lib/claude.ts` client stubs, `api/lookup-food.ts` proxy stub
+
+**Blocked / needs developer action:**
+
+- Node.js isn't installed on the dev machine — couldn't run `npm install`/`npm run dev` to verify the skeleton boots. All files were hand-written; verification is pending Node install.
+- Google Cloud OAuth setup and Anthropic API key are still needed before Sheets sync or AI lookup actually work (see `docs/technical-spec.md` → Google Sheets API integration).
+
+**Next steps:**
+
+- Install Node.js, then verify `npm run dev` / `npm run test` / `npm run build`
+- Set up the Google Cloud OAuth client + test users, and the Anthropic API key
+- Run the interview with mom, fill in `docs/requirements-open-questions.md` and tune Settings defaults

@@ -45,17 +45,25 @@ Mom's existing file, restructured into clean tabs:
 - **Blood Sugar** — timestamped glucose readings in mmol/L
 - **Settings** — daily targets, meal schedule, per-meal fat limit
 
-### Component 2 — Claude Web App (interface)
+### Component 2 — Web App (interface)
 
-Opens in the phone browser. Mom only interacts with this — it reads and writes to Sheets automatically. She never needs to open the spreadsheet directly.
+A single responsive web app, installable on both mobile (Add to Home Screen) and Windows desktop (browser "Install app"). Mom only interacts with this — it reads and writes to Sheets automatically. She never needs to open the spreadsheet directly.
+
+## Platform & Sync
+
+- **One codebase, two install targets:** a Progressive Web App (PWA) built with React + Vite + TypeScript. The same app is installable on mobile (home screen) and Windows (desktop/taskbar via Edge or Chrome) — no separate native or Electron build.
+- **Sync across devices:** Google Sheets is the shared database. Every device (phone, desktop, plain browser) reads and writes the same spreadsheet via the Sheets API using the signed-in Google account, so data is automatically in sync — no separate sync layer needed.
+- **Offline:** the PWA service worker caches the app shell so it opens without a network connection; reading/writing data still requires connectivity since Sheets is the source of truth. Full offline data entry is a possible future iteration, not part of the initial build.
+- **Nutrition lookups stay server-side:** the Claude API key must never live in the browser. A small serverless function proxies lookup requests so the key stays private.
+- **Hosting:** Vercel — serves the static PWA and the serverless proxy from one deploy.
 
 ## Technical Decisions
 
 - **UI language:** Ukrainian
 - **Backend search language:** English (more reliable nutritional data)
-- **Platform:** Web app, opens in phone browser (no install required)
-- **Database:** Google Sheets (familiar to mom, already in use)
-- **Nutritional lookup:** Claude API with web search
+- **Platform:** Installable PWA — works in the browser and installs to home screen (mobile) or desktop (Windows)
+- **Database:** Google Sheets (familiar to mom, already in use; also doubles as the cross-device sync layer)
+- **Nutritional lookup:** Claude API with web search, called through a serverless proxy (never directly from the browser)
 - **Blood sugar units:** mmol/L (Canada/Ukraine standard)
 - **New product validation:** App suggests → mom approves → saved to Ingredients tab
 

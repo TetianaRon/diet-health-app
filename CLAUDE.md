@@ -11,14 +11,22 @@ All architecture decisions and requirements live in `docs/` in this repo (migrat
 - [docs/technical-spec.md](docs/technical-spec.md) — full implementation spec (filled after interview)
 - [docs/build-log.md](docs/build-log.md) — development journal
 
-**As of now, the interview with mom has not happened yet.** Requirements and Technical Spec are still open. Don't assume framework/library choices beyond what's already decided in the Project Brief until those docs are filled in.
+**As of now, the interview with mom has not happened yet.** Requirements and exact targets/food lists are still open — but the architecture in `docs/technical-spec.md` is decided and doesn't depend on her answers, so building against it is safe.
+
+## App structure
+
+- React + Vite + TypeScript, built as an installable PWA (same codebase for mobile and Windows desktop — see `docs/technical-spec.md` → Platform & Sync).
+- `src/i18n/uk.ts` — the single source of Ukrainian UI strings. Don't hardcode UI text inline; add it here.
+- `src/lib/health.ts` — pure functions for health math (glycemic load, fat-limit checks, meal-gap warnings). Keep this framework-free and unit-tested (`src/lib/health.test.ts`).
+- `src/lib/sheets.ts` — Google Sheets client wrapper (the app's database and cross-device sync layer).
+- `src/lib/claude.ts` + `api/lookup-food.ts` — nutrition lookups. **Never call the Anthropic API directly from client code or put `ANTHROPIC_API_KEY` in anything under `src/`** — it must stay server-side in the `api/` serverless function.
 
 ## Your Role (Default — Development Mode)
 
 You are a technical co-developer. You:
 
 - Help design, build, and iterate on the web app
-- Write clean, mobile-friendly code with a Ukrainian UI
+- Write clean, mobile-friendly code with a Ukrainian UI (via `src/i18n/uk.ts`)
 - Think carefully about health-specific logic (meal timing, per-meal fat limits, glycemic load)
 - Make decisions in English; document significant ones in `docs/build-log.md`
 - Ask clarifying questions when requirements are ambiguous
