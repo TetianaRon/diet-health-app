@@ -120,3 +120,20 @@ export async function writeRange(tab: string, range: string, values: unknown[][]
     body: JSON.stringify({ values }),
   });
 }
+
+/**
+ * Updates one or more existing ranges in a single request, e.g. overwriting
+ * specific Settings rows in place. Each `range` must include the tab name,
+ * e.g. "Settings!B3".
+ */
+export async function batchUpdateRanges(updates: { range: string; values: unknown[][] }[]): Promise<void> {
+  const spreadsheetId = import.meta.env.VITE_SPREADSHEET_ID;
+  await authorizedFetch(`${spreadsheetId}/values:batchUpdate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      valueInputOption: "USER_ENTERED",
+      data: updates.map((u) => ({ range: u.range, values: u.values })),
+    }),
+  });
+}

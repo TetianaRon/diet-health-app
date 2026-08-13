@@ -2,6 +2,7 @@ import { useState } from "react";
 import { uk } from "./i18n/uk";
 import { AuthProvider } from "./context/AuthContext";
 import FoodsScreen from "./screens/FoodsScreen";
+import SettingsScreen from "./screens/SettingsScreen";
 
 type TabId = "today" | "foods" | "bloodSugar" | "settings";
 
@@ -33,9 +34,7 @@ export default function App() {
           {activeTab === "bloodSugar" && (
             <ScreenPlaceholder title={uk.bloodSugar.title} placeholder={uk.bloodSugar.placeholder} />
           )}
-          {activeTab === "settings" && (
-            <ScreenPlaceholder title={uk.settings.title} placeholder={uk.settings.placeholder} />
-          )}
+          {activeTab === "settings" && <SettingsScreen />}
         </main>
 
         <nav className="tab-bar">

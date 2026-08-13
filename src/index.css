@@ -136,3 +136,28 @@ input {
   background: #ffffff;
   color: #2f7a4f;
 }
+
+.settings-account {
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #eef1ee;
+}
+
+.settings-account h2 {
+  font-size: 1.1rem;
+  margin: 0 0 8px;
+}
+
+.settings-targets {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.settings-targets label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.95rem;
+  color: #4a4a4a;
+}

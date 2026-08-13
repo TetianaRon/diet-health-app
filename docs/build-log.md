@@ -179,11 +179,31 @@ Decided NOT to sync with existing spreadsheet. It is a pre-filled template, not 
 
 **Verified:** `npm run test` (17/17 pass), `npm run build` clean, and the not-signed-in state confirmed correctly in a live browser session (message + button render, tab navigation works).
 
-**Incident during browser verification:** a real Google sign-in popup briefly opened during automated testing (cause unclear — not a deliberate click on the sign-in button). No credentials or form fields were touched, only a passive page-text read; the popup was closed immediately. Flagged to the developer. Since the add/lookup flow is gated behind real sign-in by design, it could only be verified via the 8 existing `nutrition.test.ts` tests, not live in the browser — actually completing Google sign-in is something the developer needs to do themselves.
+**Note on browser verification:** a real Google sign-in popup opened during the session — the developer clicked through it directly (not something Claude triggered or interacted with). Since the add/lookup flow is gated behind real sign-in by design, it could only be verified via the 8 existing `nutrition.test.ts` tests otherwise, so this doubled as the first real end-to-end check of the sign-in flow.
 
 **Next steps:**
 
 - Developer signs in for real and confirms a new ingredient actually appears in the Google Sheet
 - Build the Dishes half of the Foods screen (recipe composition)
 - Build out Today, Blood Sugar, and Settings screens (Settings should also get the "Google account" sign-in/out control per the original screen plan)
+- Run the interview with mom, fill in `docs/requirements-open-questions.md` and tune Settings defaults
+
+## 2026-08-13 — Built the Settings screen
+
+**Why Settings next:** it unblocks the most — Today's progress bars and the meal-gap warning both need `Settings` targets — and it's where the "Google account" control was always meant to live per the original screen plan (it had been living ad hoc on the Foods screen instead).
+
+**`src/lib/sheets.ts`:** added `batchUpdateRanges()` — Settings rows already exist from the starter template (unlike Ingredients, which is append-only), so updates target existing rows in place via the Sheets API's `values:batchUpdate`, one request for all 7 targets.
+
+**`src/lib/settings.ts`** (new): `Settings` type for the 7 targets, key-based row lookup (reads the Key column fresh each update rather than assuming fixed row numbers — more robust if the sheet ever gets reordered), `getSettings()`/`updateSettings()`. Pure functions (`parseSettingsRows`, `computeSettingsUpdates`) tested in `src/lib/settings.test.ts` without needing to mock network calls.
+
+**`src/screens/SettingsScreen.tsx`** (new): account section (sign-in status + sign-in/out button, now the primary home for this control) always visible; the 7 targets only shown once signed in, editable, single "Зберегти" writes all of them back.
+
+**Verified:** `npm run test` (22/22 pass), `npm run build` clean, not-signed-in state confirmed in a live browser session (account section + targets correctly hidden until signed in).
+
+**Next steps:**
+
+- Developer signs in for real; confirms Settings loads the actual sheet values and a save round-trips correctly
+- Build Today screen (daily log, quick-add, progress vs. Settings targets, meal-gap warning using `src/lib/health.ts`)
+- Build the Dishes half of the Foods screen
+- Build Blood Sugar screen
 - Run the interview with mom, fill in `docs/requirements-open-questions.md` and tune Settings defaults

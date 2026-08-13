@@ -55,6 +55,25 @@ export const uk = {
   },
   settings: {
     title: "Налаштування",
-    placeholder: "Тут з'являться цілі та розклад харчування.",
+    loading: "Завантаження...",
+    saveButton: "Зберегти",
+    saved: "Збережено!",
+    validationError: "Заповніть усі поля коректними числовими значеннями.",
+    account: {
+      title: "Обліковий запис Google",
+      notSignedIn: "Не увійшли",
+      signedIn: "Увійшли",
+      signInButton: "Увійти через Google",
+      signOutButton: "Вийти",
+    },
+    fields: {
+      dailyCarbsTarget: "Денна норма вуглеводів (г)",
+      fatPerMealLimit: "Ліміт жиру на прийом їжі (г)",
+      dailyCaloriesTarget: "Денна норма калорій (ккал)",
+      mealsPerDay: "Прийомів їжі на день",
+      maxGapHours: "Макс. проміжок між прийомами їжі (год)",
+      bloodSugarMin: "Мінімальний цукор (ммоль/л)",
+      bloodSugarMax: "Максимальний цукор (ммоль/л)",
+    },
   },
 } as const;
