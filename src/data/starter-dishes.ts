@@ -62,3 +62,22 @@ export const STARTER_DISHES: Omit<Dish, "dateAdded">[] = STARTER_DISH_SPECS.map(
     ...nutrition,
   };
 });
+
+/**
+ * Merges the bundled starter dishes with the personal Dishes sheet, so the
+ * whole bundle is browsable/pickable (Dishes list, meal logging) without
+ * first requiring each one to be individually saved — same principle as
+ * mergeWithStarterFoods in lib/ingredients.ts. Sheet rows take precedence
+ * for the same name. Lives here rather than in lib/dishes.ts to avoid a
+ * circular import (this file already depends on lib/dishes.ts).
+ */
+export function mergeWithStarterDishes(sheetDishes: Dish[]): Dish[] {
+  const byKey = new Map<string, Dish>();
+  for (const dish of STARTER_DISHES) {
+    byKey.set(dish.nameUk.trim().toLowerCase(), { ...dish, dateAdded: "" });
+  }
+  for (const dish of sheetDishes) {
+    byKey.set(dish.nameUk.trim().toLowerCase(), dish);
+  }
+  return [...byKey.values()];
+}

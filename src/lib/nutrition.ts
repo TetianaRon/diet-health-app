@@ -1,13 +1,13 @@
-// Nutrition lookup: bundled starter data first, USDA FoodData Central only
-// for foods not in the bundle. No serverless proxy needed — USDA's key is
-// free/public-data with no billing risk, unlike the Anthropic key this
-// replaced (see docs/build-log.md, 2026-08-13).
+// External nutrition lookup: translation + USDA FoodData Central, for foods
+// not covered by the bundle (src/data/starter-foods.ts — checked directly by
+// the UI's browsable suggestion list, not by this module; see lookupExternal
+// below for why). No serverless proxy needed — USDA's key is free/public-data
+// with no billing risk, unlike the Anthropic key this replaced (see
+// docs/build-log.md, 2026-08-13).
 //
 // Mom only ever types Ukrainian. English (needed for the USDA query) is
-// resolved automatically — from the bundle when it's a known food, or via
-// a free translation API when it's not — she is never asked to supply or
-// understand an English name (see docs/build-log.md, 2026-08-13 fix).
-import { STARTER_FOODS, type StarterFood } from "../data/starter-foods";
+// resolved automatically via a free translation API — she is never asked to
+// supply or understand an English name (see docs/build-log.md, 2026-08-13 fix).
 import { lookupGI } from "../data/gi-table";
 
 const TRANSLATE_URL = "https://api.mymemory.translated.net/get";
@@ -40,6 +40,13 @@ export interface NutritionEstimate {
 
 const USDA_SEARCH_URL = "https://api.nal.usda.gov/fdc/v1/foods/search";
 
+// USDA's search returns multiple ranked matches per query (its API supports
+// up to 200 per page) — fetching a generous batch up front, in one request,
+// lets the UI list every reasonable candidate for picking from directly,
+// rather than "literally all" (often hundreds, mostly irrelevant for a
+// generic query) or a slow one-at-a-time cycle.
+const USDA_CANDIDATE_COUNT = 20;
+
 const NUTRIENT_NUMBER = {
   protein: "203",
   fat: "204",
@@ -55,52 +62,55 @@ interface UsdaFoodNutrient {
   value: number;
 }
 
+interface UsdaFood {
+  description: string;
+  foodNutrients: UsdaFoodNutrient[];
+}
+
 interface UsdaSearchResponse {
-  foods: { foodNutrients: UsdaFoodNutrient[] }[];
+  foods: UsdaFood[];
 }
 
-/**
- * Checks the bundled starter dataset by either name — no network call. Tries
- * an exact match first (e.g. "гречка варена"), then falls back to a substring
- * match (e.g. bare "гречка") so mom doesn't have to type the full state
- * qualifier to hit the bundle. On a substring match with multiple candidates
- * (e.g. "рис" matching both rice variants), picks the first — she reviews
- * and can correct any field before saving either way.
- */
-export function findInStarterData(query: string): StarterFood | null {
-  const key = query.trim().toLowerCase();
-  if (!key) return null;
+// USDA's own description (e.g. "Beans, kidney, red, mature seeds, canned")
+// is more specific than our translated query and is what distinguishes one
+// candidate from another, so it's used as the estimate's nameEn — and, on
+// purpose, as the *only* thing GI is looked up against. An earlier version
+// also fell back to the original query when the description didn't match
+// (to catch USDA's comma-led phrasing missing our "kidney beans"-style GI
+// table keys), but that was too permissive: a short query word like "рис"
+// -> "rice" could substring-match "white rice" in the table and get applied
+// to a completely unrelated candidate like "Rice crackers". A blank GI that
+// forces a deliberate manual entry is safer than a value that looks
+// authoritative but doesn't actually belong to the food in front of you.
+function usdaFoodToEstimate(food: UsdaFood): NutritionEstimate {
+  const valueFor = (nutrientNumber: string) =>
+    food.foodNutrients.find((n) => n.nutrientNumber === nutrientNumber)?.value ?? 0;
 
-  const exact = STARTER_FOODS.find(
-    (food) => food.nameUk.toLowerCase() === key || food.nameEn.toLowerCase() === key,
-  );
-  if (exact) return exact;
-
-  return STARTER_FOODS.find((food) => food.nameUk.toLowerCase().includes(key)) ?? null;
-}
-
-function toEstimate(food: StarterFood): NutritionEstimate {
   return {
-    nameEn: food.nameEn,
-    carbsG: food.carbsG,
-    gi: food.gi,
-    fiberG: food.fiberG,
-    sugarsG: food.sugarsG,
-    proteinG: food.proteinG,
-    fatG: food.fatG,
-    caloriesKcal: food.caloriesKcal,
-    sodiumMg: food.sodiumMg,
-    source: "starter",
+    nameEn: food.description,
+    carbsG: valueFor(NUTRIENT_NUMBER.carbs),
+    fiberG: valueFor(NUTRIENT_NUMBER.fiber),
+    sugarsG: valueFor(NUTRIENT_NUMBER.sugars),
+    proteinG: valueFor(NUTRIENT_NUMBER.protein),
+    fatG: valueFor(NUTRIENT_NUMBER.fat),
+    caloriesKcal: valueFor(NUTRIENT_NUMBER.energy),
+    sodiumMg: valueFor(NUTRIENT_NUMBER.sodium),
+    gi: lookupGI(food.description),
+    source: "usda",
   };
 }
 
-/** Queries USDA FoodData Central directly — safe client-side, it's a free public-data API. */
-export async function lookupUsda(nameEn: string): Promise<NutritionEstimate | null> {
+/**
+ * Queries USDA FoodData Central and returns up to USDA_CANDIDATE_COUNT
+ * ranked matches — safe client-side, it's a free public-data API. An empty
+ * array means USDA had no matches at all.
+ */
+export async function searchUsda(nameEn: string): Promise<NutritionEstimate[]> {
   const apiKey = import.meta.env.VITE_USDA_API_KEY;
   const params = new URLSearchParams({
     query: nameEn,
     api_key: apiKey,
-    pageSize: "1",
+    pageSize: String(USDA_CANDIDATE_COUNT),
     dataType: "Foundation,SR Legacy",
   });
 
@@ -110,38 +120,20 @@ export async function lookupUsda(nameEn: string): Promise<NutritionEstimate | nu
   }
 
   const data: UsdaSearchResponse = await response.json();
-  const food = data.foods[0];
-  if (!food) return null;
-
-  const valueFor = (nutrientNumber: string) =>
-    food.foodNutrients.find((n) => n.nutrientNumber === nutrientNumber)?.value ?? 0;
-
-  return {
-    nameEn,
-    carbsG: valueFor(NUTRIENT_NUMBER.carbs),
-    fiberG: valueFor(NUTRIENT_NUMBER.fiber),
-    sugarsG: valueFor(NUTRIENT_NUMBER.sugars),
-    proteinG: valueFor(NUTRIENT_NUMBER.protein),
-    fatG: valueFor(NUTRIENT_NUMBER.fat),
-    caloriesKcal: valueFor(NUTRIENT_NUMBER.energy),
-    sodiumMg: valueFor(NUTRIENT_NUMBER.sodium),
-    gi: lookupGI(nameEn),
-    source: "usda",
-  };
+  return data.foods.map(usdaFoodToEstimate);
 }
 
 /**
- * Full lookup order, from a Ukrainian name alone: bundled starter data first;
- * if not found, translate to English (mom never types or sees English herself)
- * and query USDA FoodData Central. Returns null if nothing turns up anywhere —
- * caller should fall back to manual entry.
+ * Resolves a Ukrainian name to a list of USDA candidates via translation —
+ * deliberately skips the bundle. The bundle is already covered by the
+ * browsable suggestion list shown while typing; re-checking it here, behind
+ * the "Знайти" button, would just be a second, redundant way to reach the
+ * same items. Returns [] if translation is unavailable or USDA has no
+ * matches — caller should fall back to manual entry.
  */
-export async function lookupFood(nameUk: string): Promise<NutritionEstimate | null> {
-  const starterMatch = findInStarterData(nameUk);
-  if (starterMatch) return toEstimate(starterMatch);
-
+export async function lookupExternalCandidates(nameUk: string): Promise<NutritionEstimate[]> {
   const nameEn = await translateUkToEn(nameUk);
-  if (!nameEn) return null;
+  if (!nameEn) return [];
 
-  return lookupUsda(nameEn);
+  return searchUsda(nameEn);
 }

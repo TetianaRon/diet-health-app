@@ -1,6 +1,7 @@
 // Typed data-access layer over the Ingredients tab (see docs/technical-spec.md
 // -> "Google Sheets structure" for the column order this maps to).
-import { readRange, writeRange } from "./sheets";
+import { batchUpdateRanges, readRange, writeRange } from "./sheets";
+import { STARTER_FOODS } from "../data/starter-foods";
 
 export type IngredientSource = "starter" | "usda" | "manual";
 
@@ -17,10 +18,11 @@ export interface Ingredient {
   sodiumMg: number;
   source: IngredientSource;
   dateAdded: string;
+  favorite: boolean;
 }
 
-const INGREDIENTS_RANGE = "A2:L1000"; // header row is A1:L1
-const INGREDIENTS_APPEND_RANGE = "A:L";
+const INGREDIENTS_RANGE = "A2:M1000"; // header row is A1:M1
+const INGREDIENTS_APPEND_RANGE = "A:M";
 
 function toNumber(value: unknown): number {
   const n = Number(value);
@@ -29,6 +31,10 @@ function toNumber(value: unknown): number {
 
 function toSource(value: unknown): IngredientSource {
   return value === "starter" || value === "usda" || value === "manual" ? value : "manual";
+}
+
+function toBoolean(value: unknown): boolean {
+  return value === true || String(value).trim().toUpperCase() === "TRUE";
 }
 
 /** Maps a raw Sheets row (as returned by readRange) to a typed Ingredient. */
@@ -46,6 +52,7 @@ export function rowToIngredient(row: unknown[]): Ingredient {
     sodiumMg: toNumber(row[9]),
     source: toSource(row[10]),
     dateAdded: String(row[11] ?? ""),
+    favorite: toBoolean(row[12]),
   };
 }
 
@@ -64,7 +71,39 @@ export function ingredientToRow(ingredient: Ingredient): unknown[] {
     ingredient.sodiumMg,
     ingredient.source,
     ingredient.dateAdded,
+    ingredient.favorite,
   ];
+}
+
+/** Stable sort, favorites first — used wherever ingredients are browsed or picked from. */
+export function sortFavoritesFirst<T extends { favorite: boolean }>(items: T[]): T[] {
+  return [...items].sort((a, b) => Number(b.favorite) - Number(a.favorite));
+}
+
+function starterFoodToIngredient(food: (typeof STARTER_FOODS)[number]): Ingredient {
+  return { ...food, source: "starter", dateAdded: "", favorite: false };
+}
+
+/**
+ * Merges the bundled starter foods with the personal Ingredients sheet, so
+ * the whole bundle is browsable/pickable (main list, dish composition, meal
+ * logging) without first requiring each one to be individually saved —
+ * "saving" an ingredient is only needed to customize its values, add
+ * something outside the bundle, or mark it favorite (which does save it,
+ * see setIngredientFavorite). Sheet rows take precedence over the bundle
+ * default for the same name, since they may hold edits or a favorite flag.
+ * A bundle entry not (yet) in the sheet has dateAdded: "" — a signal, not
+ * a schema field of its own, that it isn't a real saved row.
+ */
+export function mergeWithStarterFoods(sheetIngredients: Ingredient[]): Ingredient[] {
+  const byKey = new Map<string, Ingredient>();
+  for (const food of STARTER_FOODS) {
+    byKey.set(food.nameUk.trim().toLowerCase(), starterFoodToIngredient(food));
+  }
+  for (const ingredient of sheetIngredients) {
+    byKey.set(ingredient.nameUk.trim().toLowerCase(), ingredient);
+  }
+  return [...byKey.values()];
 }
 
 export async function listIngredients(): Promise<Ingredient[]> {
@@ -72,7 +111,21 @@ export async function listIngredients(): Promise<Ingredient[]> {
   return rows.filter((row) => row.length > 0).map(rowToIngredient);
 }
 
-export async function addIngredient(ingredient: Omit<Ingredient, "dateAdded">): Promise<void> {
-  const withDate: Ingredient = { ...ingredient, dateAdded: new Date().toISOString().slice(0, 10) };
+export async function addIngredient(
+  ingredient: Omit<Ingredient, "dateAdded" | "favorite">,
+  favorite = false,
+): Promise<void> {
+  const withDate: Ingredient = { ...ingredient, dateAdded: new Date().toISOString().slice(0, 10), favorite };
   await writeRange("Ingredients", INGREDIENTS_APPEND_RANGE, [ingredientToRow(withDate)]);
+}
+
+/** Toggles the Favorite column for an existing Ingredients row, found by exact nameUk match. */
+export async function setIngredientFavorite(nameUk: string, favorite: boolean): Promise<void> {
+  const rows = await readRange("Ingredients", INGREDIENTS_RANGE);
+  const rowIndex = rows.findIndex((row) => String(row[0] ?? "").trim().toLowerCase() === nameUk.trim().toLowerCase());
+  if (rowIndex === -1) {
+    throw new Error(`setIngredientFavorite: "${nameUk}" not found in Ingredients`);
+  }
+  const rowNumber = rowIndex + 2; // +2: 1-based rows, plus the header row
+  await batchUpdateRanges([{ range: `Ingredients!M${rowNumber}`, values: [[favorite]] }]);
 }

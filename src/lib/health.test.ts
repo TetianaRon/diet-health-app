@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calcGlycemicLoad, checkFatLimit, mealGapWarning } from "./health";
+import { calcGlycemicLoad, checkBloodSugarRange, checkFatLimit, mealGapWarning } from "./health";
 
 describe("calcGlycemicLoad", () => {
   it("computes GI × carbs / 100", () => {
@@ -36,5 +36,24 @@ describe("mealGapWarning", () => {
     const result = mealGapWarning(lastMeal, now, 3);
     expect(result.shouldWarn).toBe(true);
     expect(result.hoursSinceLastMeal).toBeCloseTo(3);
+  });
+});
+
+describe("checkBloodSugarRange", () => {
+  it("flags a value within the range as in range", () => {
+    expect(checkBloodSugarRange(6.0, 4.0, 7.8)).toEqual({ tooLow: false, tooHigh: false, inRange: true });
+  });
+
+  it("flags a value below the minimum", () => {
+    expect(checkBloodSugarRange(3.5, 4.0, 7.8)).toEqual({ tooLow: true, tooHigh: false, inRange: false });
+  });
+
+  it("flags a value above the maximum", () => {
+    expect(checkBloodSugarRange(8.2, 4.0, 7.8)).toEqual({ tooLow: false, tooHigh: true, inRange: false });
+  });
+
+  it("treats the exact boundary values as in range", () => {
+    expect(checkBloodSugarRange(4.0, 4.0, 7.8).inRange).toBe(true);
+    expect(checkBloodSugarRange(7.8, 4.0, 7.8).inRange).toBe(true);
   });
 });

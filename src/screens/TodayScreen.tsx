@@ -1,0 +1,326 @@
+import { useEffect, useMemo, useState } from "react";
+import { uk } from "../i18n/uk";
+import { useAuth } from "../context/AuthContext";
+import { checkBloodSugarRange, checkFatLimit, mealGapWarning } from "../lib/health";
+import { listIngredients, mergeWithStarterFoods, type Ingredient } from "../lib/ingredients";
+import { listDishes, type Dish, type IngredientNutrition } from "../lib/dishes";
+import { mergeWithStarterDishes } from "../data/starter-dishes";
+import { getSettings, type Settings } from "../lib/settings";
+import { latestBloodSugarEntry, listBloodSugarEntries, type BloodSugarEntry } from "../lib/bloodSugar";
+import {
+  MEAL_TYPES,
+  addLogEntry,
+  buildLogEntry,
+  computePortionNutrition,
+  isSameLocalDate,
+  listLogEntries,
+  localDateKey,
+  suggestMealType,
+  type DailyLogEntry,
+  type MealType,
+} from "../lib/dailyLog";
+
+interface PickableFood {
+  nameUk: string;
+  nameEn: string;
+  per100g: IngredientNutrition;
+}
+
+function toPickable(item: { nameUk: string; nameEn: string } & IngredientNutrition): PickableFood {
+  const { nameUk, nameEn, carbsG, gi, fiberG, sugarsG, proteinG, fatG, caloriesKcal, sodiumMg } = item;
+  return { nameUk, nameEn, per100g: { carbsG, gi, fiberG, sugarsG, proteinG, fatG, caloriesKcal, sodiumMg } };
+}
+
+function ProgressBar({ label, value, target, unit }: { label: string; value: number; target: number; unit: string }) {
+  const pct = target > 0 ? Math.min(100, Math.round((value / target) * 100)) : 0;
+  return (
+    <div className="progress-row">
+      <div className="progress-label">
+        <span>{label}</span>
+        <span>
+          {Math.round(value)} / {target} {unit}
+        </span>
+      </div>
+      <div className="progress-track">
+        <div className={pct > 100 ? "progress-fill over" : "progress-fill"} style={{ width: `${pct}%` }} />
+      </div>
+    </div>
+  );
+}
+
+function AddLogEntryForm({
+  foods,
+  onSaved,
+  onCancel,
+}: {
+  foods: PickableFood[];
+  onSaved: (entry: DailyLogEntry) => void;
+  onCancel: () => void;
+}) {
+  const [mealType, setMealType] = useState<MealType>(() => suggestMealType(new Date()));
+  const [search, setSearch] = useState("");
+  const [selected, setSelected] = useState<PickableFood | null>(null);
+  const [portionGrams, setPortionGrams] = useState("");
+  const [notes, setNotes] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const matches =
+    !selected || search !== selected.nameUk
+      ? foods.filter((f) => f.nameUk.toLowerCase().includes(search.toLowerCase()))
+      : [];
+
+  const handlePick = (food: PickableFood) => {
+    setSelected(food);
+    setSearch(food.nameUk);
+  };
+
+  const parsedPortion = Number(portionGrams);
+  const previewNutrition =
+    selected && Number.isFinite(parsedPortion) && parsedPortion > 0
+      ? computePortionNutrition(selected.per100g, parsedPortion)
+      : null;
+  const previewGl =
+    previewNutrition && selected ? Math.round(((selected.per100g.gi * previewNutrition.carbsG) / 100) * 100) / 100 : 0;
+
+  const handleSave = async () => {
+    if (!selected || !Number.isFinite(parsedPortion) || parsedPortion <= 0) {
+      setError(uk.today.form.validationError);
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+    try {
+      const entry = buildLogEntry(mealType, selected.nameUk, parsedPortion, selected.per100g, notes.trim());
+      await addLogEntry(entry);
+      onSaved(entry);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="food-form">
+      <label>
+        {uk.today.form.mealTypeLabel}
+        <select value={mealType} onChange={(e) => setMealType(e.target.value as MealType)}>
+          {MEAL_TYPES.map((type) => (
+            <option key={type} value={type}>
+              {type}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <label>
+        {uk.today.form.itemLabel}
+        <input
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setSelected(null);
+          }}
+          placeholder={uk.today.form.itemPlaceholder}
+        />
+      </label>
+
+      {matches.length > 0 && (
+        <ul className="food-list">
+          {matches.slice(0, 20).map((food) => (
+            <li key={food.nameUk} className="food-list-item-with-action">
+              <span>
+                <strong>{food.nameUk}</strong> <span className="food-name-en">({food.nameEn})</span> —{" "}
+                {food.per100g.carbsG} г вуглеводів/100г
+              </span>
+              <button type="button" onClick={() => handlePick(food)}>
+                {uk.foods.form.pickButton}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {search && matches.length === 0 && !selected && <p>{uk.today.form.noMatches}</p>}
+
+      <label>
+        {uk.today.form.portionLabel}
+        <input type="number" value={portionGrams} onChange={(e) => setPortionGrams(e.target.value)} />
+      </label>
+
+      {previewNutrition && <p className="food-form-source">{uk.today.form.preview(previewNutrition.carbsG, previewNutrition.caloriesKcal, previewGl)}</p>}
+
+      <label>
+        {uk.today.form.notesLabel}
+        <input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={uk.today.form.notesPlaceholder} />
+      </label>
+
+      {error && <p className="food-form-error">{error}</p>}
+
+      <div className="food-form-actions">
+        <button type="button" onClick={() => void handleSave()} disabled={saving}>
+          {uk.today.form.saveButton}
+        </button>
+        <button type="button" onClick={onCancel} disabled={saving}>
+          {uk.today.cancelButton}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export default function TodayScreen() {
+  const { signedIn, initializing, signIn } = useAuth();
+  const [ingredients, setIngredients] = useState<Ingredient[] | null>(null);
+  const [dishes, setDishes] = useState<Dish[] | null>(null);
+  const [settings, setSettings] = useState<Settings | null>(null);
+  const [entries, setEntries] = useState<DailyLogEntry[] | null>(null);
+  const [bloodSugarEntries, setBloodSugarEntries] = useState<BloodSugarEntry[] | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [showAddForm, setShowAddForm] = useState(false);
+
+  useEffect(() => {
+    if (!signedIn) return;
+    listIngredients()
+      .then(setIngredients)
+      .catch((err: unknown) => setLoadError(err instanceof Error ? err.message : String(err)));
+    listDishes()
+      .then(setDishes)
+      .catch((err: unknown) => setLoadError(err instanceof Error ? err.message : String(err)));
+    getSettings()
+      .then(setSettings)
+      .catch((err: unknown) => setLoadError(err instanceof Error ? err.message : String(err)));
+    listLogEntries()
+      .then(setEntries)
+      .catch((err: unknown) => setLoadError(err instanceof Error ? err.message : String(err)));
+    listBloodSugarEntries()
+      .then(setBloodSugarEntries)
+      .catch((err: unknown) => setLoadError(err instanceof Error ? err.message : String(err)));
+  }, [signedIn]);
+
+  // Meal logging picks from the whole bundle, not just what's been saved to
+  // the personal sheet — same principle as the Foods screen: nothing needs
+  // to be individually "added" first just to be loggable for a meal.
+  const foods = useMemo<PickableFood[]>(
+    () => [
+      ...mergeWithStarterFoods(ingredients ?? []).map(toPickable),
+      ...mergeWithStarterDishes(dishes ?? []).map(toPickable),
+    ],
+    [ingredients, dishes],
+  );
+
+  const todayKey = localDateKey(new Date());
+  const todayEntries = (entries ?? []).filter((e) => isSameLocalDate(e.timestamp, todayKey));
+
+  const totalCarbs = todayEntries.reduce((sum, e) => sum + e.carbsG, 0);
+  const totalCalories = todayEntries.reduce((sum, e) => sum + e.caloriesKcal, 0);
+
+  const fatWarnings = MEAL_TYPES.map((mealType) => {
+    const fat = todayEntries.filter((e) => e.mealType === mealType).reduce((sum, e) => sum + e.fatG, 0);
+    const check = settings ? checkFatLimit(fat, settings.fatPerMealLimit) : null;
+    return check?.exceeded ? uk.today.fatWarning(mealType, check.overByGrams) : null;
+  }).filter((w): w is string => w !== null);
+
+  const lastEntry = (entries ?? []).reduce<DailyLogEntry | null>(
+    (latest, e) => (!latest || e.timestamp > latest.timestamp ? e : latest),
+    null,
+  );
+  const gapWarning =
+    lastEntry && settings ? mealGapWarning(new Date(lastEntry.timestamp), new Date(), settings.maxGapHours) : null;
+
+  const latestBloodSugar = bloodSugarEntries ? latestBloodSugarEntry(bloodSugarEntries) : null;
+  const bloodSugarStatus =
+    latestBloodSugar && settings
+      ? checkBloodSugarRange(latestBloodSugar.valueMmolL, settings.bloodSugarMin, settings.bloodSugarMax)
+      : null;
+
+  if (initializing) {
+    return (
+      <section className="screen">
+        <h1>{uk.today.title}</h1>
+        <p>{uk.today.loading}</p>
+      </section>
+    );
+  }
+
+  if (!signedIn) {
+    return (
+      <section className="screen">
+        <h1>{uk.today.title}</h1>
+        <p>{uk.today.signIn.message}</p>
+        <button type="button" onClick={() => void signIn()}>
+          {uk.today.signIn.button}
+        </button>
+      </section>
+    );
+  }
+
+  return (
+    <section className="screen">
+      <h1>{uk.today.title}</h1>
+
+      {loadError && <p className="food-form-error">{loadError}</p>}
+
+      {settings && (
+        <div className="progress-block">
+          <ProgressBar label={uk.today.progress.carbs} value={totalCarbs} target={settings.dailyCarbsTarget} unit="г" />
+          <ProgressBar
+            label={uk.today.progress.calories}
+            value={totalCalories}
+            target={settings.dailyCaloriesTarget}
+            unit="ккал"
+          />
+        </div>
+      )}
+
+      {latestBloodSugar && (
+        <p className={bloodSugarStatus?.inRange ? "blood-sugar-latest" : "blood-sugar-latest out-of-range"}>
+          {uk.bloodSugar.latestLabel}: {uk.today.latestBloodSugar(latestBloodSugar.valueMmolL, uk.bloodSugar.context[latestBloodSugar.context])}
+        </p>
+      )}
+
+      {gapWarning?.shouldWarn && <p className="today-warning">{uk.today.mealGapWarning(gapWarning.hoursSinceLastMeal)}</p>}
+      {fatWarnings.map((w) => (
+        <p key={w} className="today-warning">
+          {w}
+        </p>
+      ))}
+
+      {showAddForm ? (
+        <AddLogEntryForm
+          foods={foods}
+          onSaved={(entry) => {
+            setEntries((prev) => [...(prev ?? []), entry]);
+            setShowAddForm(false);
+          }}
+          onCancel={() => setShowAddForm(false)}
+        />
+      ) : (
+        <button type="button" onClick={() => setShowAddForm(true)}>
+          {uk.today.addButton}
+        </button>
+      )}
+
+      {entries === null && !loadError && <p>{uk.today.loading}</p>}
+      {entries !== null && todayEntries.length === 0 && !showAddForm && <p>{uk.today.empty}</p>}
+
+      {MEAL_TYPES.map((mealType) => {
+        const items = todayEntries.filter((e) => e.mealType === mealType);
+        if (items.length === 0) return null;
+        return (
+          <div key={mealType} className="today-meal-group">
+            <h2>{mealType}</h2>
+            <ul className="food-list">
+              {items.map((entry, i) => (
+                <li key={`${entry.timestamp}-${i}`}>
+                  <strong>{entry.itemName}</strong> — {uk.today.entryMeta(entry.portionGrams, entry.carbsG, entry.caloriesKcal)}
+                </li>
+              ))}
+            </ul>
+          </div>
+        );
+      })}
+    </section>
+  );
+}

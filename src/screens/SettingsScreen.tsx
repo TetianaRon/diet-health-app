@@ -38,7 +38,10 @@ export default function SettingsScreen() {
       SettingsField,
       number
     >;
-    const allValid = FIELDS.every((field) => Number.isFinite(parsed[field]));
+    // Number("") is 0, not NaN — checking for a blank string first is
+    // required, otherwise a field left empty would silently pass as 0
+    // instead of being caught by validation.
+    const allValid = FIELDS.every((field) => (values[field] ?? "").trim() !== "" && Number.isFinite(parsed[field]));
 
     if (!allValid) {
       setSaveError(uk.settings.validationError);

@@ -1,9 +1,24 @@
 import { describe, expect, it } from "vitest";
-import { ingredientToRow, rowToIngredient, type Ingredient } from "./ingredients";
+import { ingredientToRow, mergeWithStarterFoods, rowToIngredient, sortFavoritesFirst, type Ingredient } from "./ingredients";
+import { STARTER_FOODS } from "../data/starter-foods";
 
 describe("rowToIngredient", () => {
   it("maps a full row in column order", () => {
-    const row = ["Гречка", "buckwheat, cooked", "19.9", "54", "2.7", "0.9", "3.4", "0.6", "92", "4", "starter", "2026-08-13"];
+    const row = [
+      "Гречка",
+      "buckwheat, cooked",
+      "19.9",
+      "54",
+      "2.7",
+      "0.9",
+      "3.4",
+      "0.6",
+      "92",
+      "4",
+      "starter",
+      "2026-08-13",
+      "TRUE",
+    ];
 
     expect(rowToIngredient(row)).toEqual({
       nameUk: "Гречка",
@@ -18,10 +33,11 @@ describe("rowToIngredient", () => {
       sodiumMg: 4,
       source: "starter",
       dateAdded: "2026-08-13",
+      favorite: true,
     });
   });
 
-  it("defaults unparseable numbers to 0 and unknown source to manual", () => {
+  it("defaults unparseable numbers to 0, unknown source to manual, and missing favorite to false", () => {
     const row = ["Тест", "test", "", undefined, "n/a", "0.9", "3.4", "0.6", "92", "4", "weird", "2026-08-13"];
 
     const result = rowToIngredient(row);
@@ -30,6 +46,7 @@ describe("rowToIngredient", () => {
     expect(result.gi).toBe(0);
     expect(result.fiberG).toBe(0);
     expect(result.source).toBe("manual");
+    expect(result.favorite).toBe(false);
   });
 });
 
@@ -48,8 +65,99 @@ describe("ingredientToRow", () => {
       sodiumMg: 40,
       source: "starter",
       dateAdded: "2026-08-13",
+      favorite: false,
     };
 
     expect(rowToIngredient(ingredientToRow(ingredient))).toEqual(ingredient);
+  });
+});
+
+describe("sortFavoritesFirst", () => {
+  const base = {
+    nameEn: "",
+    carbsG: 0,
+    gi: 0,
+    fiberG: 0,
+    sugarsG: 0,
+    proteinG: 0,
+    fatG: 0,
+    caloriesKcal: 0,
+    sodiumMg: 0,
+    source: "manual" as const,
+    dateAdded: "2026-08-13",
+  };
+
+  it("moves favorites to the front, preserving relative order within each group", () => {
+    const items: Ingredient[] = [
+      { ...base, nameUk: "A", favorite: false },
+      { ...base, nameUk: "B", favorite: true },
+      { ...base, nameUk: "C", favorite: false },
+      { ...base, nameUk: "D", favorite: true },
+    ];
+
+    expect(sortFavoritesFirst(items).map((i) => i.nameUk)).toEqual(["B", "D", "A", "C"]);
+  });
+
+  it("does not mutate the input array", () => {
+    const items: Ingredient[] = [
+      { ...base, nameUk: "A", favorite: false },
+      { ...base, nameUk: "B", favorite: true },
+    ];
+    sortFavoritesFirst(items);
+    expect(items.map((i) => i.nameUk)).toEqual(["A", "B"]);
+  });
+});
+
+describe("mergeWithStarterFoods", () => {
+  it("includes the whole bundle when the personal sheet is empty", () => {
+    const merged = mergeWithStarterFoods([]);
+    expect(merged).toHaveLength(STARTER_FOODS.length);
+    expect(merged.every((i) => i.source === "starter" && i.dateAdded === "" && i.favorite === false)).toBe(true);
+  });
+
+  it("lets a sheet row override the bundle default for the same name (e.g. a favorited or edited entry)", () => {
+    const bundleEntry = STARTER_FOODS[0];
+    const savedVersion: Ingredient = {
+      nameUk: bundleEntry.nameUk,
+      nameEn: bundleEntry.nameEn,
+      carbsG: bundleEntry.carbsG,
+      gi: bundleEntry.gi,
+      fiberG: bundleEntry.fiberG,
+      sugarsG: bundleEntry.sugarsG,
+      proteinG: bundleEntry.proteinG,
+      fatG: bundleEntry.fatG,
+      caloriesKcal: bundleEntry.caloriesKcal,
+      sodiumMg: bundleEntry.sodiumMg,
+      source: "starter",
+      dateAdded: "2026-08-13",
+      favorite: true,
+    };
+
+    const merged = mergeWithStarterFoods([savedVersion]);
+    const result = merged.find((i) => i.nameUk === bundleEntry.nameUk);
+    expect(result?.favorite).toBe(true);
+    expect(result?.dateAdded).toBe("2026-08-13");
+    expect(merged).toHaveLength(STARTER_FOODS.length);
+  });
+
+  it("includes sheet-only ingredients not in the bundle", () => {
+    const custom: Ingredient = {
+      nameUk: "Дуже рідкісний продукт",
+      nameEn: "rare food",
+      carbsG: 1,
+      gi: 1,
+      fiberG: 1,
+      sugarsG: 1,
+      proteinG: 1,
+      fatG: 1,
+      caloriesKcal: 1,
+      sodiumMg: 1,
+      source: "manual",
+      dateAdded: "2026-08-13",
+      favorite: false,
+    };
+    const merged = mergeWithStarterFoods([custom]);
+    expect(merged).toHaveLength(STARTER_FOODS.length + 1);
+    expect(merged.some((i) => i.nameUk === "Дуже рідкісний продукт")).toBe(true);
   });
 });

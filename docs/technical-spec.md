@@ -40,6 +40,7 @@ Raw foods only — always the uncooked/unprepared state, values per 100g. Anythi
 | Sodium_mg | |
 | Source | `starter` (bundled), `usda` (fetched), or `manual` |
 | DateAdded | ISO date |
+| Favorite | `TRUE`/`FALSE` — marks an ingredient for quick access; favorited ingredients sort to the top wherever Ingredients are browsed or picked from (the main Foods list, and the ingredient picker when composing a custom Dish). Appended as the last column rather than inserted mid-schema, so existing rows need no migration — a blank cell reads as not-favorited |
 
 ### Dishes
 Anything requiring preparation — from a single cooked ingredient (e.g. "Гречка варена") to a real multi-ingredient recipe (e.g. borscht) — auto-computed from Ingredients, never hand-typed. This is the counterpart to Ingredients being *always raw*: a food that changes meaningfully when cooked (grains/legumes absorbing several times their dry weight in water) belongs here, not as a separate "cooked" Ingredients row. Values are **per 100g of the finished/cooked product**, matching Ingredients' per-100g convention — mom logs a dish by portion grams exactly like an ingredient.
@@ -121,6 +122,16 @@ Lookup order, implemented in `src/lib/nutrition.ts`:
 Only USDA FoodData Central is wired up initially — Open Food Facts (better for packaged/branded goods via barcode) was considered but deferred since mom's diet is mostly whole/home-cooked foods; add it later only if real usage shows gaps.
 
 Flow: mom types a Ukrainian name → checked against the bundle first → if not found, translated to English and queried against USDA → show the estimate (GI filled from the static table if available, else flagged for manual entry) → mom approves → app writes the row to the Ingredients tab.
+
+## Ingredient & Dish availability: bundle merge
+
+The bundled starter data (`src/data/starter-foods.ts`, `src/data/starter-dishes.ts`) is usable everywhere ingredients or dishes are browsed or picked from — the Продукти tab's lists, the Dish composer's ingredient picker, and the Today screen's meal-logging picker — **without first being individually saved to the Ingredients/Dishes sheet**. `mergeWithStarterFoods()` (`src/lib/ingredients.ts`) and `mergeWithStarterDishes()` (`src/data/starter-dishes.ts`, to avoid a circular import with `lib/dishes.ts`) merge the bundle with whatever's actually in the personal sheet at read time, keyed by name — a sheet row (an edit, or a favorited entry) always overrides the bundle default for the same name. Nothing needs "approval" to be *used* this way; approval (the flow above) is only needed for a genuinely new food not in the bundle, or to make a bundle item's row permanent — e.g. to edit its values, or to favorite it (see below).
+
+A Dish composed from a bundle-only ingredient (never saved to the Ingredients sheet) is allowed — its `IngredientsJson` reference may not resolve to an actual Ingredients row if read back later, but nothing re-resolves it after the Dish is saved (its nutrition is computed once, at save time, and stored as static columns), so this is a harmless, accepted gap rather than a bug.
+
+## Favorites
+
+`Ingredient.favorite` (Ingredients tab column M, `TRUE`/`FALSE`) marks an ingredient for quick access — favorited ingredients sort to the top wherever Ingredients are listed (`sortFavoritesFirst()` in `src/lib/ingredients.ts`). Only an actual sheet row can hold the flag, so favoriting a bundle-only ingredient (one that only exists via the merge above) saves it to the sheet as a side effect — the *only* implicit "add" the app performs, and only in response to that explicit favorite action, never automatically.
 
 ## Glycemic Load calculation
 

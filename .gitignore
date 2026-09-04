@@ -20,3 +20,6 @@ build/
 *.log
 .vercel/
 *.tsbuildinfo
+
+# Local Claude Code settings (machine-specific)
+.claude/settings.local.json

@@ -373,3 +373,242 @@ Developer's context was at 83% — recording a clean snapshot here so a fresh se
 - No offline support beyond the PWA app-shell cache (data reads/writes need connectivity)
 - Dishes' GI is a carb-weighted approximation, not lab-measured — documented, not a bug
 - Starter bundle is a first pass (~50 ingredients, 12 dishes) — expected to grow as real usage surfaces gaps, per the "mom reviews before saving" design
+
+## 2026-08-13 — Built the Today screen
+
+**Why now:** unblocks the most per the standing next-steps list above — it's the app's main daily-use screen, and everything it depends on (Settings, Ingredients, Dishes) was already built.
+
+**`src/lib/dailyLog.ts`** (new): typed data-access layer over the DailyLog tab, following the same column-order/row-mapper pattern as `ingredients.ts`/`dishes.ts`. Column order: `Timestamp, MealType, ItemName, PortionGrams, Carbs_g, GI, Fiber_g, Sugars_g, Protein_g, Fat_g, Calories_kcal, Sodium_mg, GL, Notes` (A–N), matching `docs/technical-spec.md`. Key pure functions (unit-tested in `dailyLog.test.ts`, 12 tests, no network mocking needed):
+- `computePortionNutrition` — scales an item's per-100g values to a logged portion; GI itself doesn't scale.
+- `buildLogEntry` — builds a full entry including GL (`calcGlycemicLoad` from `health.ts`), reusing the existing `IngredientNutrition` shape from `dishes.ts` so Ingredients and Dishes are both directly loggable without a translation layer.
+- `suggestMealType(now)` — defaults the quick-add form's meal type from time of day (morning→Сніданок, midday→Обід, evening→Вечеря, else→Перекус); UI convenience, not health logic.
+- `isSameLocalDate`/`localDateKey` — local-calendar-date filtering for "today", since `Timestamp` is stored as ISO/UTC.
+
+**`src/screens/TodayScreen.tsx`** (new): sign-in gate (same pattern as Foods/Settings) → fetches Settings, Ingredients, Dishes, and the full DailyLog on sign-in. Renders:
+- Two progress bars (carbs, calories) — today's totals vs. `Settings` targets, red fill past 100%.
+- Meal-gap warning (`mealGapWarning` from `health.ts`, against the most recent log entry overall, not just today's — a late-night entry should still count against tomorrow morning's gap) and a per-meal-type fat warning (`checkFatLimit`, since the no-gallbladder constraint is per-meal, not daily) — both shown only when triggered.
+- Quick-add form: meal-type dropdown, a live-narrowing combined Ingredients+Dishes search reusing the same "browsable list, click to pick" pattern from `FoodsScreen`'s `AddFoodForm`, a portion-grams field with a live preview (carbs/calories/GL) before saving, optional notes.
+- Today's entries grouped under meal-type headers.
+
+**Scope cut, deliberate:** the tech spec's "most recent blood sugar reading vs. target range" for the Today summary is deferred until the Blood Sugar screen/data-access layer exists (next on the list) — nothing to read yet.
+
+**`.claude/launch.json`** added (new) so the dev server can be previewed via the browser tool going forward — didn't exist before this session.
+
+**Verified:** `npm run test` (51/51 pass), `npm run build` clean, not-signed-in state confirmed in a live browser session (Today screen renders the sign-in gate correctly; Foods screen re-checked too since this touched the shared `uk.ts`/`index.css` files, no regression).
+
+**Needs the developer to check:** the real spreadsheet's DailyLog tab header row should already match the column order above (it was part of the same original template built from this technical-spec.md column list, unlike Dishes which needed a later migration) — not independently re-verified against the live sheet this session, worth a quick check before the first real add.
+
+**Next steps:**
+
+- Developer signs in for real and adds a log entry; confirms it persists in the DailyLog tab and the progress bars/warnings react correctly
+- Build Blood Sugar screen; once built, wire its most-recent-reading into the Today screen's summary
+- Custom multi-ingredient dish composition (the deferred "real" Dishes feature)
+- Run the interview with mom, fill in `docs/requirements-open-questions.md` and tune Settings defaults
+
+## 2026-08-13 — Built the Blood Sugar screen; wired it into Today
+
+**Why now:** last of the four tabs to get built, and it unblocked the Today screen's deferred "most recent blood sugar reading vs. target range" summary line from the tech spec.
+
+**`src/lib/health.ts`:** added `checkBloodSugarRange(valueMmolL, min, max)` — pure, returns `{tooLow, tooHigh, inRange}`, boundary values count as in range. Unit-tested in `health.test.ts` (4 new tests, 10 total).
+
+**`src/lib/bloodSugar.ts`** (new): typed data-access layer over the BloodSugar tab, same pattern as the other tabs. Column order: `Timestamp, ValueMmolL, Context, Notes` (A–D), matching `docs/technical-spec.md`. `Context` stores English keys (`fasting`/`after-meal`/`other`), mapped to Ukrainian labels via `uk.ts` — same convention as `Ingredient.source`, not the "store the Ukrainian text directly" convention `MealType` uses, since Context reads more like an internal category than freeform-ish UI text. `latestBloodSugarEntry()` picks the most recent by timestamp. Tested in `bloodSugar.test.ts` (5 tests, no network mocking).
+
+**`src/screens/BloodSugarScreen.tsx`** (new): same sign-in-gate/fetch-on-signin pattern as the other three screens. Shows the latest reading with an in-range/out-of-range status line, a quick-add form (value, context dropdown, optional notes), and full history newest-first with an inline flag on any out-of-range past reading.
+
+**`src/screens/TodayScreen.tsx`:** now also fetches `listBloodSugarEntries()` and shows the latest reading + status next to the progress bars, using `uk.today.latestBloodSugar()` — fulfills the tech spec's Today-summary requirement that was deferred in the previous entry pending this screen existing.
+
+**`App.tsx`:** wired in `BloodSugarScreen`, replacing the last placeholder; removed the now-unused `ScreenPlaceholder` helper since nothing renders through it anymore.
+
+**Verified:** `npm run test` (60/60 pass), `npm run build` clean, live browser check of both Today and Blood Sugar in the not-signed-in state (correct sign-in gates, no console/network errors on either — the app's dev-server module graph loads cleanly with the new files included).
+
+**Needs the developer to check:** the real spreadsheet's BloodSugar tab header row should match `Timestamp, ValueMmolL, Context, Notes` — from the same original template as DailyLog, not independently re-verified against the live sheet this session.
+
+**Status:** all four tabs (Сьогодні, Продукти, Цукор, Налаштування) are now built. Remaining work is real-world verification of the two newest screens, the deferred custom-dish-composition feature, and mom's interview.
+
+**Next steps:**
+
+- Developer signs in for real; adds a blood sugar reading and a log entry, confirms both persist and the Today screen's summary (progress bars, blood sugar line, warnings) reacts correctly
+- Custom multi-ingredient dish composition (the deferred "real" Dishes feature — still the only major feature gap now that all four tabs exist)
+- Run the interview with mom, fill in `docs/requirements-open-questions.md` and tune Settings defaults
+
+## 2026-08-13 — Custom multi-ingredient dish composition
+
+**Why now:** the last major feature gap flagged since the Foods screen was first built — Dishes could only add pre-computed starter dishes as-is, not a real recipe (e.g. borscht) composed from whatever's in Ingredients.
+
+**`src/screens/FoodsScreen.tsx`:** added `ComposeDishForm`, alongside the existing starter-bundle `AddDishForm` behind a new mode toggle ("З бази" / "Власний рецепт") in the Dishes add flow. `ComposeDishForm`:
+- Dish name field, plus a repeatable ingredient row (name + raw grams) — "Додати інгредієнт" appends a row, each row past the first can be removed.
+- Each row's name field must resolve to an *existing* Ingredients-tab entry (exact match, case/whitespace-insensitive) — reuses the same browsable-suggestions-while-typing pattern as `AddFoodForm`/`AddLogEntryForm`. An unresolved name that doesn't match anything shows a hint pointing back to the Ingredients tab, rather than silently allowing a recipe that references a nonexistent food.
+- A yield-grams field (total finished weight) with the same water-dilution explanation used elsewhere in the app.
+- Live preview (per-100g carbs/calories/GI) once every filled row resolves and has valid grams and yield is set — computed via the existing `computeDishNutrition` (`dishes.ts`, already pure and unit-tested), never hand-typed, same principle as the starter dishes.
+- On save: resolves `nameEn` via the already-built `translateUkToEn` (`nutrition.ts`) so mom never has to supply an English name for her own recipes either, consistent with the rest of the app; falls back to `""` if translation is unavailable rather than blocking the save. `Source = "manual"`.
+
+No new data-access-layer code needed — `computeDishNutrition`, `addDish`, and `translateUkToEn` all already existed and are reused as-is; this was purely a UI-composition task on top of them.
+
+**Verified:** `npm run test` (60/60 pass, unchanged — the new logic is UI state built entirely on already-tested pure functions, so no new unit tests were needed), `npm run build` clean, live browser check confirmed no regressions on the Foods tab's not-signed-in state (the compose form itself is gated behind sign-in like the rest of Foods, so its actual rendering — not just the toggle — still needs the developer's live sign-in to verify, same limitation as every other form in this app).
+
+**Status:** all four tabs are built, including the previously-deferred custom-Dish feature. The only remaining planned work is real-world verification of the newer screens/forms and mom's interview.
+
+**Next steps:**
+
+- Developer signs in for real; tries composing a custom dish (e.g. a simple 2-3 ingredient recipe), confirms it saves correctly and the computed per-100g values look right, and re-confirms the blood sugar + daily log flows from the last two entries
+- Run the interview with mom, fill in `docs/requirements-open-questions.md` and tune Settings defaults
+
+## 2026-08-13 — UX fix: browse-first ingredient picking, plus favorites
+
+**The flaw, as reported:** when composing a custom dish, each ingredient row required typing something before any suggestions appeared at all — you had to already half-know the name to find it, for a picker whose entire job is picking from an existing list. Developer's framing: "I do not see the point of hiding them — they are needed for composing dishes." Distinct from `AddFoodForm`'s bundle-suggestion list (a nutrition-lookup helper for creating a *new* Ingredients row from a template), which was correctly left alone — the fix is scoped to *picking an already-saved ingredient*, not to the add-new flow.
+
+**`src/screens/FoodsScreen.tsx` — `ComposeDishForm`:** the ingredient-row picker now shows the full Ingredients list by default (empty search matches everything, same pattern already used by `TodayScreen`'s meal-item picker), narrowing as you type, and hides again once the row already matches a picked item — so the list doesn't linger under a finished selection. Wrapped in a `max-height`/`overflow-y: auto` container (`.compose-suggestions` in `index.css`) since the full list can now be 50+ items.
+
+**Favorites, to make the now-always-visible list actually useful for a full bundle:** added `favorite: boolean` to `Ingredient` (`src/lib/ingredients.ts`), as a new trailing `Favorite` column (M) on the Ingredients tab — appended rather than inserted mid-schema, so no existing column shifts and no data migration, just a new header cell. `TRUE`/`FALSE`-style boolean parsing (`toBoolean`), defaults to `false` for any pre-existing row missing the column. New `setIngredientFavorite(nameUk, favorite)` updates a single cell in place via the existing `batchUpdateRanges` (same mechanism `settings.ts` uses), found by exact-match row lookup. New `sortFavoritesFirst()` — pure, stable, favorites-first — unit-tested in `ingredients.test.ts` (2 new tests; 5 total for the file, up from 3, including a `rowToIngredient`/`ingredientToRow` round-trip update for the new column).
+
+Applied `sortFavoritesFirst` in both places ingredients are browsed: the main Ingredients list in `FoodsScreen` (now with a ★/☆ toggle button per row — optimistic update, reverts and surfaces the Sheets error if the write fails, same pattern as everywhere else `authorizedFetch` can throw) and `ComposeDishForm`'s row picker (favorited items marked with a ★ prefix in the suggestion list, so they're recognizable while browsing, not just sorted to the top).
+
+**`addIngredient()` signature changed:** now takes `Omit<Ingredient, "dateAdded" | "favorite">` — new ingredients always start unfavorited (`false`); marking one favorite is a deliberate action from the main list afterward, not a decision forced at creation time.
+
+**Deliberately left alone (per the developer's "add-ingredient will be a genuine add-new" framing):** `AddFoodForm`'s bundle-suggestion list is a different thing — a template for filling in a *new* row's nutrition values, not a picker over already-saved ingredients — so it keeps its own "type first, then match" behavior. No change there.
+
+**Verified:** `npm run test` (62/62 pass), `npm run build` clean, live browser check confirmed no regressions on the not-signed-in state across all screens (the changed forms are gated behind sign-in, so the actual browsing/favoriting UX still needs the developer's live sign-in to see, same limitation as every form in this app).
+
+**Needs a manual edit to the real spreadsheet** (small, single header cell — same category of change as the Dishes header migration earlier): add `Favorite` as the header in the Ingredients tab's column M1. Existing rows don't need anything filled in — a blank cell reads as `false` (not favorited) automatically.
+
+**Next steps:**
+
+- Developer adds the `Favorite` header cell to the Ingredients tab, then signs in for real and confirms: the full ingredient list appears immediately when composing a dish, favoriting an ingredient from the main list persists and sorts it to the top, and composing/saving a dish still works end-to-end
+- Run the interview with mom, fill in `docs/requirements-open-questions.md` and tune Settings defaults
+
+## 2026-08-13 — Correction: the actual ask was bundle availability, not a picker-UI tweak
+
+The previous entry's fix (browse-first `ComposeDishForm` picker) was a real improvement but missed the developer's actual point, confirmed after they had to restate it a second time: **"the main ingredients tab should just include the whole list of available ingredients by default — not require [adding] them to the personal list to make them available for dish composing or choosing for a meal."**
+
+This traces back to the original design intent in `docs/project-brief.md` ("a curated starter set... ships in the Ingredients tab from day one") — somewhere during implementation, the bundle became client-side reference data that had to be individually searched-and-saved into the real Ingredients sheet via `AddFoodForm` before it was usable anywhere else (dish composition, meal logging). That per-item save step was the actual friction, not the picker's search-vs-browse framing — that earlier fix only made the *typing* unnecessary, not the *saving*.
+
+**The real fix — `mergeWithStarterFoods()` (`src/lib/ingredients.ts`) and `mergeWithStarterDishes()` (`src/data/starter-dishes.ts`, kept out of `lib/dishes.ts` to avoid a circular import since `starter-dishes.ts` already depends on it):** both merge the bundle with the personal sheet at read time, keyed by name, sheet rows winning ties (so an edit or a favorite always overrides the bundle default). Wired into every place ingredients/dishes are browsed or picked:
+- `FoodsScreen`'s main Продукти/Страви lists — now show the full bundle immediately, merged with whatever's actually saved, not just saved rows
+- `ComposeDishForm`'s ingredient picker — same merged list (previous entry's browse-first UI fix stays, now operating on the right data)
+- `TodayScreen`'s meal-logging picker — same merge applied to both Ingredients and Dishes, so a bundle item is loggable for a meal without ever being saved (a `DailyLog` row stores its own scaled nutrition values directly, so nothing downstream needs the ingredient to exist as a sheet row)
+
+**Favorites now double as the save mechanism for bundle items:** since a bare bundle entry has no sheet row for `setIngredientFavorite` to update, `FoodsScreen`'s `handleToggleFavorite` now branches — an already-saved ingredient gets its Favorite cell updated in place as before; a bundle-only one gets `addIngredient(..., favorite: true)` in a single write, which both saves and favorites it in one action. This is now the *only* implicit "add" the app performs, and only as a direct consequence of the developer/mom explicitly starring something — never silent, never automatic otherwise. Lines up with the developer's original phrasing: "add-ingredient will be a genuine add-new" (reserved for real new foods) + "I would only have an option to save favorite ingredients."
+
+**Dish composition accepts referencing a bundle-only ingredient** (its `IngredientsJson` name won't resolve to an actual Ingredients row if read back later) — harmless, since a Dish's nutrition is computed once at save time and stored as static columns, never re-resolved. Documented as an accepted gap in `docs/technical-spec.md`'s new "Ingredient & Dish availability" section, along with the merge/favorites mechanics.
+
+**`docs/project-brief.md` and `docs/technical-spec.md` updated** to describe the merge-at-read-time model (not "ships pre-populated in the sheet," which was the original but impractical framing — updating ~60+ rows in the live spreadsheet every time the bundle changes would be exactly the kind of manual Sheets busywork this app is supposed to spare mom from; merging client-side ships bundle updates via ordinary code deploys instead).
+
+**Verified:** `npm run test` (68/68 pass — 6 new tests for `mergeWithStarterFoods`/`mergeWithStarterDishes`), `npm run build` clean, live browser check confirmed no regressions on the not-signed-in state (bundle browsing itself is still gated behind sign-in like everything else in Foods/Today, since favoriting and meal-logging both need to write to the sheet regardless — so the merged-list UX still needs the developer's live sign-in to see for real).
+
+**Next steps:**
+
+- Developer adds the `Favorite` header cell to the Ingredients tab (still pending from the previous entry), signs in for real, and confirms: the full bundle (not just previously-saved items) appears immediately in the Foods lists, the dish composer, and the Today meal picker; favoriting a never-saved bundle ingredient saves it in one step; composing a dish from an unsaved bundle ingredient still saves correctly
+- Run the interview with mom, fill in `docs/requirements-open-questions.md` and tune Settings defaults
+
+## 2026-08-14 — UX fix: custom-recipe ingredients no longer a peer tab to browsing dishes
+
+**The flaw, as reported:** "The dishes tab right now equally displays dishes and ingredients. Ingredients should not be there — they should be available when creating custom dish." Confirmed via a clarifying question: not a bug in the plain browse list (that already only ever showed dishes), but the add-dish flow's "З бази" / "Власний рецепт" toggle — styled with the exact same `food-subtabs` classes as the top-level Продукти/Страви switcher — made "compose a custom recipe from ingredients" look like a co-equal browsing mode sitting next to "browse starter dishes," when it should read as something you deliberately step into.
+
+**`src/screens/FoodsScreen.tsx`:** replaced the tab-style toggle with a linear flow — opening "Додати страву" goes straight into `AddDishForm` (browse/add from the bundle), with a subordinate text link below it ("Створити власний рецепт з кількох продуктів →") that switches to `ComposeDishForm`; a matching "← Назад до готових страв" link goes back. New `.link-button` style in `index.css` (underlined text, no button chrome) makes the visual hierarchy clear: one primary path, one clearly-secondary escape hatch — not two equal tabs.
+
+**Verified:** `npm run test` (68/68 pass, no logic changed so no new tests needed), `npm run build` clean, live browser check confirmed no regressions on the not-signed-in state.
+
+**Next steps:**
+
+- Developer adds the `Favorite` header cell to the Ingredients tab (still pending), signs in for real, and confirms the restructured add-dish flow reads correctly and both paths (bundle add, custom compose) still save
+- Run the interview with mom, fill in `docs/requirements-open-questions.md` and tune Settings defaults
+
+## 2026-08-14 — Fixed "Знайти" silently guessing among multiple bundle matches
+
+**The bug, spotted live:** developer typed "рис" in the add-ingredient form and clicked "Знайти" — got back "Базова база (white rice, raw)" with no indication that "Рис бурий сирий" (brown rice) also matched. Root cause: `findInStarterData` (`src/lib/nutrition.ts`) does an exact-then-substring match and, on multiple substring candidates, silently returns the first one in array order — fine as an internal helper, but "Знайти" surfaced that arbitrary pick as if it were the only match, when the *browsable suggestion list* shown while typing (before clicking "Знайти") already lists every match and lets you pick the right one directly.
+
+**Fix — `src/lib/nutrition.ts`:** removed `lookupFood()` (bundle-first, then translate+USDA) and its private `toEstimate()` helper, replacing both call sites with a new `lookupExternal()` that only translates + queries USDA, never touches the bundle. `findInStarterData()` was also removed — it existed solely to support `lookupFood()`, and had no other caller once that was gone (confirmed via search before deleting, not just assumed). `AddFoodForm`'s "Знайти" button (`src/screens/FoodsScreen.tsx`) now calls `lookupExternal`, so a bundle name with multiple candidates is *only* ever resolved by picking from the visible list — "Знайти" can no longer silently guess.
+
+**Verified:** `npm run test` (63/63 pass — 5 fewer than before, from deleting the now-pointless `findInStarterData` tests rather than keeping dead-code coverage), `npm run build` clean, live browser check confirmed no regressions on the not-signed-in state.
+
+**Next steps:**
+
+- Developer adds the `Favorite` header cell to the Ingredients tab (still pending), signs in for real, and tries "Знайти" on an ambiguous bundle name (e.g. "рис") to confirm it now goes to USDA instead of guessing
+- Run the interview with mom, fill in `docs/requirements-open-questions.md` and tune Settings defaults
+
+## 2026-08-14 — USDA-side ambiguity: "next match" cycling
+
+**Still guessing, just now on the USDA side:** the previous entry stopped "Знайти" from silently picking one of several *bundle* matches, but live testing (screenshots: "червона квасоля" → a red-beans-shaped USDA hit with 0g carbs; bare "квасоля" → a 2.8g-carb "bean" match, clearly the wrong item for dry/cooked beans) showed the same problem still happens on the USDA side — `lookupUsda` requested `pageSize: "1"`, so it always silently committed to USDA's single top-ranked result.
+
+**Correction to something I said:** this was framed as a USDA API limitation in the prior response — it isn't. USDA's search endpoint already returns multiple ranked matches per query; `pageSize: "1"` was our own code choosing to only ask for one.
+
+**Fix — `src/lib/nutrition.ts`:** `lookupUsda()` (single result) replaced with `searchUsda()`, requesting `USDA_CANDIDATE_COUNT = 5` results in one request and returning all of them as `NutritionEstimate[]`. `lookupExternal()` → `lookupExternalCandidates()`, same shape (translate, then delegate to `searchUsda`), also now returning an array (`[]` instead of `null` when nothing turns up). Each candidate's `nameEn` is now USDA's own `description` field (e.g. "Beans, kidney, red, mature seeds, canned") rather than the translated query — the query text is identical across all candidates and can't distinguish them, but each item's own description can, and it's also just a more specific/useful record than before. GI lookup tries the original query first, then falls back to the candidate's description — USDA's comma-led phrasing ("Beans, kidney, ...") doesn't substring-match the GI table's "kidney beans"-style keys as reliably as the plain translated query does, so trying the query first avoids losing GI matches that used to work.
+
+**`src/screens/FoodsScreen.tsx` — `AddFoodForm`:** "Знайти" now fetches and stores all candidates (one request), applies the first, and shows "Інший варіант" ("Variant N of M") whenever there's more than one — clicking it cycles through the already-fetched list with no extra network call. Candidates are cleared whenever the name field is edited, so a stale cycle-through doesn't linger after the query changes.
+
+**Verified:** `npm run test` (64/64 pass — `nutrition.test.ts` rewritten around `searchUsda`/`lookupExternalCandidates`, including a new case confirming the GI query-then-description fallback), `npm run build` clean, live browser check confirmed no regressions on the not-signed-in state.
+
+**Next steps:**
+
+- Developer adds the `Favorite` header cell to the Ingredients tab (still pending across a few entries now), signs in for real, and retries "червона квасоля"/"квасоля" to confirm "Інший варіант" surfaces a better match than the first guess
+- Run the interview with mom, fill in `docs/requirements-open-questions.md` and tune Settings defaults
+
+## 2026-08-14 — Removed a real bug from the previous entry: GI borrowed from the query, not the actual match
+
+**Spotted live, immediately:** searching "рис" (rice) surfaced "Rice crackers" as a USDA candidate — a completely different, processed product — with GI 73 pre-filled, as if that were a verified value for rice crackers specifically.
+
+**Root cause:** the query-based GI fallback added in the previous entry (`lookupGI(queryNameEn) ?? lookupGI(food.description)`) was too permissive. "рис" translates to "rice," which substring-matches "white rice" in the GI table — and that value then got applied to *whichever* USDA candidate the query happened to surface, including ones with no real relationship to plain rice. The fallback was added to handle USDA's comma-led phrasing (e.g. "Beans, kidney, red, ...") not matching table keys like "kidney beans," but it couldn't distinguish "this candidate is actually the food the query implies" from "this candidate merely came up in a search for that query" — those aren't the same thing.
+
+**Fix — `src/lib/nutrition.ts`:** `usdaFoodToEstimate()` now looks up GI *only* against the candidate's own `description`, never the original query. Traded off deliberately: a few more legitimate matches (like comma-phrased USDA beans entries) will now show a blank GI requiring manual entry, instead of a plausible-looking but unverified guess. For a diabetes-tracking app, a blank field that visibly demands attention is safer than a wrong one that looks authoritative and might get missed during review — same reasoning as why the app has never auto-defaulted GI to 0 or skipped validation on it.
+
+**Verified:** `npm run test` (65/65 pass — the `searchUsda` GI test updated to expect `null` for the comma-phrased case, plus a new regression test reproducing the exact "рис" → "Rice crackers" scenario), `npm run build` clean, live browser check confirmed no regressions on the not-signed-in state.
+
+**Next steps:**
+
+- Developer adds the `Favorite` header cell to the Ingredients tab (still pending across several entries now), signs in for real, and confirms GI now comes back blank rather than wrong for USDA matches unrelated to the search term
+- Run the interview with mom, fill in `docs/requirements-open-questions.md` and tune Settings defaults
+
+## 2026-08-14 — USDA candidates as a browsable list; a validation bug found along the way
+
+**UX change requested:** the previous entries' "Інший варіант" one-at-a-time cycling through USDA candidates was itself an inconsistency — everywhere else in the app (bundle suggestions, dish-composer ingredient picker) already shows a full browsable list up front rather than paging through hidden options one at a time. Developer asked for the same treatment here, plus asked whether more than 5 candidates could be pulled.
+
+**Clarification given:** USDA's search API isn't capped at 5 — that was our own `pageSize` choice. Literally "all" isn't practical or useful though (a generic query can have hundreds of low-relevance hits); settled on a larger fixed batch instead.
+
+**`src/lib/nutrition.ts`:** `USDA_CANDIDATE_COUNT` raised from 5 to 20.
+
+**`src/screens/FoodsScreen.tsx` — `AddFoodForm`:** removed `candidateIndex`/`handleNextCandidate` cycling. "Знайти" now fetches all candidates and lists them directly (`food-list food-list-scroll`, same scrollable-list pattern as the dish composer's ingredient picker — the `.compose-suggestions` CSS class was renamed to `.food-list-scroll` since it's now shared by both), each with an "Обрати" button. Nothing is auto-applied anymore; a result is only ever shown once explicitly picked — same "browse, don't guess" principle behind every other list in this app. The "Джерело" confirmation line now only appears once something's actually been picked (or once a search comes back with zero candidates, prompting manual entry) — showing it before a pick would have misleadingly read "Вручну — Не знайдено" while matches were sitting right there unpicked.
+
+**Bug found while touching this code, unrelated to the ask:** `AddFoodForm`'s save validation (`NUMERIC_FIELDS.every((field) => Number.isFinite(parsed[field]) && parsed[field] >= 0)`) doesn't actually require a field to be filled — `Number("")` evaluates to `0` in JS, not `NaN`, so a blank field (e.g. an intentionally-left-blank GI, per the last two entries' whole point) would silently pass validation as a real `0` instead of blocking the save. This directly undermined the safety reasoning from the last two entries — a blank GI was supposed to force a deliberate manual entry, but the validation never actually enforced that. Fixed by checking `values[field].trim() !== ""` before the numeric checks. Audited for the same pattern elsewhere per the project's "fix the whole class of issue, not just the reported instance" precedent: found and fixed the identical bug in `SettingsScreen.tsx`'s save validation (`FIELDS.every((field) => Number.isFinite(parsed[field]))`, missing the same blank check) — a blank Settings field (e.g. `BloodSugarMin`) would have silently saved as `0` instead of being rejected.
+
+**Verified:** `npm run test` (65/65 pass, unchanged — both validation fixes are UI-layer logic with no corresponding pure-function tests to update), `npm run build` clean, live browser check confirmed no regressions on the not-signed-in state.
+
+**Next steps:**
+
+- Developer adds the `Favorite` header cell to the Ingredients tab (still pending across several entries now), signs in for real, and confirms: the USDA candidate list shows all ~20 results for a query like "квасоля," picking one still works, and leaving a numeric field blank now correctly blocks saving in both the add-ingredient form and Settings
+- Run the interview with mom, fill in `docs/requirements-open-questions.md` and tune Settings defaults
+
+## 2026-08-14 — Nudge toward more specific search terms
+
+**Follow-up to the previous entry's noisy-results problem** (e.g. "квасоля" surfacing bean cooking liquid or "рис" surfacing rice crackers): discussed a few options (better hint text, clickable qualifier chips, real autocomplete) — went with the cheapest one, since a more specific *Ukrainian* query is what actually narrows USDA's own search results, and the browsable candidate list from the previous entry already covers picking the right one once results come back.
+
+**`src/i18n/uk.ts`:** `foods.form.nameUkHint` (shown under the add-ingredient name field) now also suggests a type/variety qualifier (сухий, консервований, свіжий, морожений), not just preparation method as before — e.g. "квасоля суха" instead of bare "квасоля" both feeds a more specific USDA query and matches the bundle's own naming convention (which already qualifies by prep state, per the 2026-08-13 raw-vs-cooked entry).
+
+**Verified:** `npm run test` (65/65 pass, text-only change), `npm run build` clean, live browser check confirmed no regressions on the not-signed-in state (the hint itself is behind sign-in like the rest of the add-ingredient form, so its actual wording still needs the developer's live sign-in to see rendered).
+
+**Next steps:**
+
+- Developer adds the `Favorite` header cell to the Ingredients tab (still pending across several entries), signs in for real, and works through the outstanding verification list from the last several entries: USDA candidate list, favorites, custom dish composition, blank-field validation
+- Run the interview with mom, fill in `docs/requirements-open-questions.md` and tune Settings defaults
+
+## 2026-08-14 — Session wrap-up
+
+**Repo state:** working tree has substantial uncommitted changes from today (see `git status`) — nothing from this session has been committed yet, last commit is still `ae40f48` from 2026-08-13. Every change today passed `npm run test` and `npm run build` at the time it was made; not re-verified as one combined diff.
+
+**Built today, all four tabs now complete:**
+- Цукор (Blood Sugar) screen — log a reading, latest-reading status, history with out-of-range flags — and wired its latest reading into Today's summary
+- Custom multi-ingredient dish composition (`ComposeDishForm`) — the last major feature gap from `docs/technical-spec.md`
+- Bundle availability fix: the starter bundle (Ingredients + Dishes) is now merged with the personal sheet at read time (`mergeWithStarterFoods`/`mergeWithStarterDishes`) and usable everywhere — Foods lists, dish composition, meal logging — without first being individually saved; favoriting a bundle-only item saves it as a side effect (the only implicit save left in the app)
+- Add-dish flow restructured so composing a custom recipe reads as a deliberate secondary path, not a peer tab to browsing the starter bundle
+- USDA lookup reworked twice today after live testing caught real problems: "Знайти" no longer re-guesses among bundle matches (skips straight to USDA); GI is only trusted from a candidate's own USDA description, never borrowed from the search query (was silently misapplying rice's GI to "Rice crackers"); results now list up to 20 candidates for direct picking instead of cycling one at a time
+- Found and fixed a real validation bug (not from a bug report — surfaced while touching adjacent code): `Number("")` is `0` in JS, so blank numeric fields were silently passing validation as real zeros in both the add-ingredient form and Settings; fixed in both places
+- Nudged the add-ingredient hint text toward more specific search terms, to reduce USDA result noise at the source
+
+**Needs a manual spreadsheet edit, still pending:** add `Favorite` as the header in the Ingredients tab's column M1 (blank existing rows are fine, default to not-favorited).
+
+**Nothing from today has been live-tested with a real sign-in yet** — everything above is unit-tested and build-clean, but the actual Sheets read/write round-trip for each new/changed flow (Blood Sugar, custom dish composition, favorites, the reworked USDA lookup, both validation fixes) still needs the developer's confirmation, same limitation as every session before this one.
+
+**Immediate next steps:**
+1. Add the `Favorite` header cell, then sign in for real and work through today's changes end-to-end
+2. Decide whether to commit today's work (nothing committed yet — ask before committing, per standing instructions)
+3. Run the interview with mom, fill in `docs/requirements-open-questions.md` and tune Settings defaults
+4. No other known feature gaps remain — everything in `docs/technical-spec.md` is now built

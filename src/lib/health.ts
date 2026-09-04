@@ -26,3 +26,16 @@ export function mealGapWarning(lastMealTime: Date, now: Date, maxGapHours: numbe
   const hoursSinceLastMeal = (now.getTime() - lastMealTime.getTime()) / (1000 * 60 * 60);
   return { hoursSinceLastMeal, shouldWarn: hoursSinceLastMeal >= maxGapHours };
 }
+
+export interface BloodSugarRangeCheck {
+  tooLow: boolean;
+  tooHigh: boolean;
+  inRange: boolean;
+}
+
+/** Checks a blood sugar reading (mmol/L) against the Settings target range. */
+export function checkBloodSugarRange(valueMmolL: number, minMmolL: number, maxMmolL: number): BloodSugarRangeCheck {
+  const tooLow = valueMmolL < minMmolL;
+  const tooHigh = valueMmolL > maxMmolL;
+  return { tooLow, tooHigh, inRange: !tooLow && !tooHigh };
+}

@@ -9,7 +9,38 @@ export const uk = {
   },
   today: {
     title: "Сьогодні",
-    placeholder: "Тут з'явиться щоденний журнал харчування.",
+    loading: "Завантаження...",
+    signIn: {
+      message: "Увійдіть через Google, щоб вести щоденний журнал харчування.",
+      button: "Увійти через Google",
+    },
+    progress: {
+      carbs: "Вуглеводи",
+      calories: "Калорії",
+    },
+    mealGapWarning: (hours: number) =>
+      `Минуло ${hours.toFixed(1)} год з останнього прийому їжі — час перекусити.`,
+    fatWarning: (mealType: string, overByGrams: number) =>
+      `${mealType}: жиру забагато на ${overByGrams.toFixed(1)} г понад ліміт на прийом їжі.`,
+    addButton: "Додати прийом їжі",
+    cancelButton: "Скасувати",
+    empty: "Сьогодні ще немає записів.",
+    latestBloodSugar: (valueMmolL: number, contextLabel: string) => `${valueMmolL} ммоль/л (${contextLabel})`,
+    entryMeta: (portionGrams: number, carbsG: number, caloriesKcal: number) =>
+      `${portionGrams} г — ${carbsG} г вуглеводів, ${caloriesKcal} ккал`,
+    form: {
+      mealTypeLabel: "Прийом їжі",
+      itemLabel: "Продукт або страва",
+      itemPlaceholder: "Пошук продукту...",
+      portionLabel: "Порція (г)",
+      notesLabel: "Примітка",
+      notesPlaceholder: "необов'язково",
+      noMatches: "Нічого не знайдено. Спочатку додайте продукт на вкладці «Продукти».",
+      preview: (carbsG: number, caloriesKcal: number, gl: number) =>
+        `${carbsG} г вуглеводів, ${caloriesKcal} ккал, ГЛ ${gl}`,
+      saveButton: "Зберегти",
+      validationError: "Оберіть продукт і вкажіть порцію у грамах.",
+    },
   },
   foods: {
     title: "Продукти",
@@ -21,8 +52,9 @@ export const uk = {
     addButton: "Додати продукт",
     cancelButton: "Скасувати",
     loading: "Завантаження...",
-    empty: "Продуктів ще немає.",
     noResults: "Нічого не знайдено.",
+    favoriteLabel: "Додати в обране",
+    unfavoriteLabel: "Прибрати з обраного",
     signIn: {
       message: "Увійдіть через Google, щоб переглянути та додати продукти.",
       button: "Увійти через Google",
@@ -30,7 +62,8 @@ export const uk = {
     form: {
       nameUkLabel: "Назва продукту",
       nameUkPlaceholder: "напр. гречка варена",
-      nameUkHint: "Якщо важливо, вкажіть спосіб приготування (варене, смажене, сире тощо) — це впливає на калорійність.",
+      nameUkHint:
+        "Якщо важливо, вкажіть спосіб приготування (варене, смажене, сире тощо) та тип продукту (сухий, консервований, свіжий, морожений тощо) — це впливає на калорійність і допомагає пошуку знайти точніший варіант.",
       pickButton: "Обрати",
       lookupButton: "Знайти",
       lookupLoading: "Пошук...",
@@ -57,18 +90,61 @@ export const uk = {
   },
   dishes: {
     addButton: "Додати страву",
-    empty: "Страв ще немає.",
     noResults: "Нічого не знайдено.",
+    composeLinkLabel: "Створити власний рецепт з кількох продуктів →",
+    backToStarterLabel: "← Назад до готових страв",
     form: {
       searchLabel: "Пошук готової страви",
       searchPlaceholder: "напр. гречка варена",
       addButton: "Додати",
-      hint: "Тут поки що можна додати лише готові страви з базової бази. Створення власних рецептів з кількох продуктів буде додано пізніше.",
+      hint: "Готові страви з базової бази — додаються одразу. Для власного рецепту з кількох продуктів скористайтесь вкладкою «Власний рецепт».",
+    },
+    composeForm: {
+      nameLabel: "Назва страви",
+      namePlaceholder: "напр. борщ",
+      ingredientLabel: "Інгредієнт",
+      ingredientPlaceholder: "Пошук продукту...",
+      gramsLabel: "Грамів (сирих)",
+      addIngredientButton: "Додати інгредієнт",
+      removeIngredientButton: "Прибрати",
+      yieldLabel: "Вага готової страви (г)",
+      yieldHint: "Загальна вага після приготування — вода додає вагу, але не калорії.",
+      unresolvedIngredient: "Такого продукту немає в базі — спочатку додайте його на вкладці «Продукти».",
+      preview: (carbsG: number, caloriesKcal: number, gi: number) =>
+        `На 100г готової страви: ${carbsG} г вуглеводів, ${caloriesKcal} ккал, ГІ ${gi}`,
+      saveButton: "Зберегти",
+      validationError: "Заповніть назву страви, оберіть інгредієнти з бази з коректними грамами та вкажіть вагу готової страви.",
     },
   },
   bloodSugar: {
     title: "Цукор у крові",
-    placeholder: "Тут з'явиться журнал вимірювань цукру.",
+    loading: "Завантаження...",
+    signIn: {
+      message: "Увійдіть через Google, щоб вести журнал вимірювань цукру.",
+      button: "Увійти через Google",
+    },
+    addButton: "Додати вимірювання",
+    cancelButton: "Скасувати",
+    empty: "Записів ще немає.",
+    latestLabel: "Останнє вимірювання",
+    status: {
+      inRange: "У межах норми",
+      tooLow: "Нижче норми",
+      tooHigh: "Вище норми",
+    },
+    context: {
+      fasting: "Натщесерце",
+      "after-meal": "Після їжі",
+      other: "Інше",
+    },
+    form: {
+      valueLabel: "Рівень цукру (ммоль/л)",
+      contextLabel: "Коли",
+      notesLabel: "Примітка",
+      notesPlaceholder: "необов'язково",
+      saveButton: "Зберегти",
+      validationError: "Вкажіть коректне значення цукру.",
+    },
   },
   settings: {
     title: "Налаштування",

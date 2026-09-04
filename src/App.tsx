@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { uk } from "./i18n/uk";
 import { AuthProvider } from "./context/AuthContext";
+import TodayScreen from "./screens/TodayScreen";
 import FoodsScreen from "./screens/FoodsScreen";
+import BloodSugarScreen from "./screens/BloodSugarScreen";
 import SettingsScreen from "./screens/SettingsScreen";
 
 type TabId = "today" | "foods" | "bloodSugar" | "settings";
@@ -13,15 +15,6 @@ const TABS: { id: TabId; label: string }[] = [
   { id: "settings", label: uk.tabs.settings },
 ];
 
-function ScreenPlaceholder({ title, placeholder }: { title: string; placeholder: string }) {
-  return (
-    <section className="screen">
-      <h1>{title}</h1>
-      <p>{placeholder}</p>
-    </section>
-  );
-}
-
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabId>("today");
 
@@ -29,11 +22,9 @@ export default function App() {
     <AuthProvider>
       <div className="app">
         <main className="app-content">
-          {activeTab === "today" && <ScreenPlaceholder title={uk.today.title} placeholder={uk.today.placeholder} />}
+          {activeTab === "today" && <TodayScreen />}
           {activeTab === "foods" && <FoodsScreen />}
-          {activeTab === "bloodSugar" && (
-            <ScreenPlaceholder title={uk.bloodSugar.title} placeholder={uk.bloodSugar.placeholder} />
-          )}
+          {activeTab === "bloodSugar" && <BloodSugarScreen />}
           {activeTab === "settings" && <SettingsScreen />}
         </main>
 

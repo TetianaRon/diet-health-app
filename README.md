@@ -4,13 +4,15 @@ A Ukrainian-language nutrition and health tracking web app, built for a Type 2 d
 
 ## Status
 
-**Working and verified live (real Google Sheets, real sign-in):**
-- Google sign-in (`AuthContext` + `sheets.ts`, Google Identity Services token client)
-- **Продукти → Продукти** (Ingredients): browsable/narrowing bundle suggestions, USDA + auto-translation fallback for anything not in the bundle, manual entry, add/list all confirmed writing to and reading from the real sheet
-- **Продукти → Страви** (Dishes): browse/add pre-computed starter dishes (cooked grains/legumes, yield-weight model); composing a *custom* multi-ingredient recipe is not built yet
-- **Налаштування** (Settings): load/edit the 7 daily targets, Google account sign-in/out
+**All four tabs and every feature from `docs/technical-spec.md` are now built** — Сьогодні, Продукти (Ingredients + Dishes, including custom multi-ingredient recipes), Цукор, Налаштування, plus favorites and a merged starter-bundle+personal-sheet model so the bundle is usable without individually saving each item first. What's left is real-world verification and mom's interview, not more building.
 
-**Not built yet:** Сьогодні (Today — daily log, quick-add, progress bars), Цукор (Blood Sugar screen). Both are still placeholders in `App.tsx`.
+**Verified live before today's session** (real Google Sheets, real sign-in): Google sign-in, basic Ingredients add/list, Settings load/save.
+
+**Built today (2026-08-14), not yet live-tested:** Blood Sugar screen; custom dish composition; the bundle-merge behavior (Ingredients/Dishes browsing, dish composition, and meal logging all reworked to pull from the bundle + personal sheet together); favorites; a reworked USDA lookup (candidate list instead of one guess, GI accuracy fix, "Знайти" no longer re-guesses bundle matches); two validation bugs fixed (blank numeric fields were silently saving as `0` in the add-ingredient form and Settings). See `docs/build-log.md`'s 2026-08-14 entries, especially the session wrap-up at the end, for the full list and reasoning behind each.
+
+**Repo state:** nothing from today is committed yet — last commit is `ae40f48` (2026-08-13). Every change passed `npm run test`/`npm run build` individually; not re-verified as one combined diff.
+
+**Needs a manual spreadsheet edit before the next sign-in:** add `Favorite` as the header in the Ingredients tab's column M1 — blank existing rows are fine, they default to "not favorited".
 
 **Not started:** the interview with mom (`docs/requirements-open-questions.md` is still empty) — the app is usable and being dogfooded by the developer ahead of that; exact targets/food lists are still open pending her answers.
 

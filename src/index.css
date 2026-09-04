@@ -80,12 +80,14 @@ button:disabled {
   cursor: default;
 }
 
-input {
+input,
+select {
   font-size: 1rem;
   padding: 10px 12px;
   border-radius: 8px;
   border: 1px solid #d0d5d0;
   width: 100%;
+  background: #ffffff;
 }
 
 .food-search {
@@ -170,6 +172,45 @@ input {
   gap: 12px;
 }
 
+.compose-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid #eef1ee;
+  border-radius: 8px;
+}
+
+.food-list-scroll {
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.favorite-toggle {
+  background: none;
+  border: none;
+  color: #d0d5d0;
+  font-size: 1.3rem;
+  line-height: 1;
+  padding: 4px 8px;
+  flex-shrink: 0;
+}
+
+.favorite-toggle.active {
+  color: #e0a800;
+}
+
+.link-button {
+  display: block;
+  background: none;
+  border: none;
+  color: #2f7a4f;
+  font-size: 0.9rem;
+  padding: 8px 0;
+  text-decoration: underline;
+  text-align: left;
+}
+
 .food-form-actions button:last-child {
   background: #ffffff;
   color: #2f7a4f;
@@ -198,4 +239,71 @@ input {
   gap: 4px;
   font-size: 0.95rem;
   color: #4a4a4a;
+}
+
+.progress-block {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  color: #4a4a4a;
+  margin-bottom: 4px;
+}
+
+.progress-track {
+  height: 10px;
+  border-radius: 6px;
+  background: #eef1ee;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: #2f7a4f;
+  border-radius: 6px;
+}
+
+.progress-fill.over {
+  background: #b3261e;
+}
+
+.today-warning {
+  background: #fdecea;
+  color: #8a1f18;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  margin: 0 0 10px;
+}
+
+.today-meal-group {
+  margin-top: 16px;
+}
+
+.today-meal-group h2 {
+  font-size: 1.05rem;
+  margin: 0 0 4px;
+  color: #2f7a4f;
+}
+
+.blood-sugar-latest {
+  font-size: 0.95rem;
+  color: #2f7a4f;
+  font-weight: 600;
+  margin: 0 0 10px;
+}
+
+.blood-sugar-latest.out-of-range {
+  color: #b3261e;
+}
+
+.blood-sugar-flag {
+  color: #b3261e;
+  font-weight: 600;
 }
