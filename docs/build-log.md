@@ -612,3 +612,27 @@ This traces back to the original design intent in `docs/project-brief.md` ("a cu
 2. Decide whether to commit today's work (nothing committed yet — ask before committing, per standing instructions)
 3. Run the interview with mom, fill in `docs/requirements-open-questions.md` and tune Settings defaults
 4. No other known feature gaps remain — everything in `docs/technical-spec.md` is now built
+
+## 2026-09-07 — Ran the interview with mom; health-context corrections and new feature requests
+
+**Interview completed**, conducted live in Ukrainian per `CLAUDE.md`'s Interview Mode. Full structured answers (bilingual) are in `docs/requirements-open-questions.md` → Mom's Answers; checklist items there are now marked off against her actual answers.
+
+**Health context corrected** — her answers surfaced a real discrepancy and two undocumented conditions:
+- Gastritis is **Stage 2**, not Stage 3 as `CLAUDE.md`/`docs/project-brief.md`/`README.md` had said since the project's start — corrected in all three.
+- She also has **fatty liver (hepatic steatosis)** and **elevated cholesterol**, not previously recorded anywhere. Added to `docs/project-brief.md`'s health-context table — both reinforce the existing fat-avoidance guidance (gallbladder) rather than introducing a new numeric constraint; no separate target was given for either.
+
+**Settings defaults updated to match her stated targets:** `DEFAULT_SETTINGS` in `src/lib/settings.ts` — `dailyCaloriesTarget` 1500 → 1800, `mealsPerDay` 5 → 6 (she said minimum 6: 3 main + 3 snacks). These are only the fallback used when a key is missing from the sheet — the live spreadsheet already has all 7 Settings keys filled from the original template, so **the developer still needs to manually update the real Settings tab** (DailyCaloriesTarget → 1800, MealsPerDay → 6) for the change to actually show up in the app. `npm run test` (65/65) and `npm run build` still clean after the change.
+
+**New wishes captured, not yet built:**
+- Body-weight-over-time tracking (no `Weight` tab/schema exists yet)
+- Blood-sugar-over-time statistics (current Blood Sugar screen only shows a plain history list, not a trend view)
+- Longer-term: correlate blood sugar readings against what she ate, to identify specific foods to avoid. She independently proposed logging fasting *and* post-meal readings to support this — the `BloodSugar` sheet's existing `Context` field (fasting/after-meal/other) already models exactly that distinction, so the data model doesn't need to change; the actual correlation/analysis view is new work and not scoped yet. Treating as a future milestone, not immediate scope — logged in `docs/requirements-open-questions.md` → Open Questions.
+
+**Unrelated but worth recording: Node.js is now installed on this dev machine.** `npm install`/`npm run test`/`npm run build` all ran successfully for the first time locally in this session (464 packages, 65/65 tests, clean build) — this had been a standing blocker noted all the way back in the 2026-08-12 entry ("Node.js isn't installed on the dev machine"). Worth re-verifying `npm run dev` too, since it's never been run on this machine either.
+
+**Next steps:**
+- Developer updates the live Settings sheet (1800 kcal, 6 meals/day) to match the new code defaults
+- Add the `Favorite` header cell to the Ingredients tab (still pending from 2026-08-14) and work through that session's end-to-end verification backlog
+- Scope weight tracking and blood-sugar statistics as small, well-defined features; treat food/blood-sugar correlation as a separate, larger future milestone
+- Review mom's previously-shared Google Sheet (link in `docs/requirements-open-questions.md`) for real food/dish data to expand the starter bundle
+- A few interview items are still open (see `docs/requirements-open-questions.md` → Open Questions): home-screen install preference, medication-logging scope, a full 10–20-item common-foods list

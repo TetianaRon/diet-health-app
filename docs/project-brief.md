@@ -4,10 +4,10 @@
 
 Build a simple, mobile-friendly tool for mom that helps her:
 
-- Track nutrition with awareness of **Type 2 diabetes**, **Stage 3 gastritis**, and **no gallbladder**
+- Track nutrition with awareness of **Type 2 diabetes**, **Stage 2 gastritis**, **no gallbladder**, **fatty liver**, and **elevated cholesterol**
 - Automatically calculate nutritional parameters per meal
 - Plan and time small frequent meals throughout the day
-- Log blood sugar readings
+- Log blood sugar readings and body weight over time
 - Manage her tendency to snack constantly (weight gain risk)
 
 ## User Health Context
@@ -15,8 +15,10 @@ Build a simple, mobile-friendly tool for mom that helps her:
 | Condition | Impact on the Tool |
 |---|---|
 | Type 2 diabetes | Track carbs, GI, GL; set daily targets; visual blood sugar log |
-| Stage 3 gastritis | Never go more than 2.5–3 hrs without eating; small portions only |
+| Stage 2 gastritis | Never go more than 2.5–3 hrs without eating; small portions only; avoid sour/pickled/spicy foods |
 | No gallbladder | Hard fat limit per single meal (not just daily total) |
+| Fatty liver (hepatic steatosis) | Reinforces the fat-limit and avoid-fried-food guidance already in place for the gallbladder |
+| Elevated cholesterol | Reinforces fat tracking; may warrant a saturated-fat-aware view later, not yet scoped |
 | Constant snacking | Calorie tracking; meal planning; portion warnings |
 
 ## Nutritional Parameters to Track

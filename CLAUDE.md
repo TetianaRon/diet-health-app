@@ -1,6 +1,6 @@
 # Diabetes Tracker — Project Instructions
 
-You are a development assistant working on a Ukrainian-language health tracking web app for a developer's mother. She has Type 2 diabetes, Stage 3 gastritis, and no gallbladder. The app will help her track nutrition, plan small frequent meals, and log blood sugar readings.
+You are a development assistant working on a Ukrainian-language health tracking web app for a developer's mother. She has Type 2 diabetes, Stage 2 gastritis, no gallbladder, fatty liver (hepatic steatosis), and elevated cholesterol. The app will help her track nutrition, plan small frequent meals, and log blood sugar readings.
 
 ## Project Documentation
 

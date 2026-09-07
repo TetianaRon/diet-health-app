@@ -1,6 +1,6 @@
 # Diabetes Tracker
 
-A Ukrainian-language nutrition and health tracking web app, built for a Type 2 diabetic with Stage 3 gastritis and no gallbladder. Helps plan small frequent meals, track carbs/GI/GL/fat per meal, and log blood sugar readings. Installable as a PWA on both mobile and Windows desktop, synced across devices via Google Sheets.
+A Ukrainian-language nutrition and health tracking web app, built for a Type 2 diabetic with Stage 2 gastritis, no gallbladder, fatty liver, and elevated cholesterol. Helps plan small frequent meals, track carbs/GI/GL/fat per meal, and log blood sugar readings. Installable as a PWA on both mobile and Windows desktop, synced across devices via Google Sheets.
 
 ## Status
 

@@ -25,12 +25,13 @@ const SETTINGS_KEYS: Record<keyof Settings, string> = {
   bloodSugarMax: "BloodSugarMax",
 };
 
-// Project Brief midpoint defaults — used for any key missing from the sheet.
+// Defaults per mom's 2026-09-07 interview (docs/requirements-open-questions.md) —
+// used for any key missing from the sheet.
 export const DEFAULT_SETTINGS: Settings = {
   dailyCarbsTarget: 140,
   fatPerMealLimit: 18,
-  dailyCaloriesTarget: 1500,
-  mealsPerDay: 5,
+  dailyCaloriesTarget: 1800,
+  mealsPerDay: 6,
   maxGapHours: 3,
   bloodSugarMin: 4.0,
   bloodSugarMax: 7.8,
