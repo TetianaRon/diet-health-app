@@ -78,6 +78,7 @@ describe("mergeWithStarterDishes", () => {
       sodiumMg: 100,
       source: "manual",
       dateAdded: "2026-08-13",
+      glycemicFlag: "none",
     };
     const merged = mergeWithStarterDishes([custom]);
     expect(merged).toHaveLength(STARTER_DISHES.length + 1);

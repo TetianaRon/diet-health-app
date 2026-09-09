@@ -1,6 +1,6 @@
 // Single source of Ukrainian UI strings — don't hardcode UI text elsewhere.
 export const uk = {
-  appName: "Трекер Діабету",
+  appName: "Трекер харчування",
   tabs: {
     today: "Сьогодні",
     foods: "Продукти",
@@ -55,6 +55,15 @@ export const uk = {
     noResults: "Нічого не знайдено.",
     favoriteLabel: "Додати в обране",
     unfavoriteLabel: "Прибрати з обраного",
+    glycemicFlag: {
+      none: "Без позначки",
+      watch: "Обережно",
+      avoid: "Уникати",
+      toggleLabel: (state: "none" | "watch" | "avoid") =>
+        `Позначка: ${
+          state === "none" ? "без позначки" : state === "watch" ? "обережно" : "уникати"
+        }. Натисніть, щоб змінити.`,
+    },
     signIn: {
       message: "Увійдіть через Google, щоб переглянути та додати продукти.",
       button: "Увійти через Google",
@@ -93,6 +102,10 @@ export const uk = {
     noResults: "Нічого не знайдено.",
     composeLinkLabel: "Створити власний рецепт з кількох продуктів →",
     backToStarterLabel: "← Назад до готових страв",
+    containsFlaggedIngredientHint: "△ Містить продукт із позначкою — можливо, варто перевірити склад",
+    flagIngredientsPrompt: {
+      title: "Позначити окремі продукти цієї страви? (необов'язково)",
+    },
     form: {
       searchLabel: "Пошук готової страви",
       searchPlaceholder: "напр. гречка варена",
@@ -144,6 +157,12 @@ export const uk = {
       notesPlaceholder: "необов'язково",
       saveButton: "Зберегти",
       validationError: "Вкажіть коректне значення цукру.",
+    },
+    mealsBefore: {
+      toggleLabel: "Прийоми їжі перед цим вимірюванням",
+      empty: "Немає записів прийомів їжі перед цим вимірюванням.",
+      lessThanHourAgo: "менше години тому",
+      hoursAgo: (hours: number) => `${hours.toFixed(1)} год тому`,
     },
   },
   settings: {

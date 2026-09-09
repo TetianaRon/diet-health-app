@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { checkBloodSugarRange, checkFatLimit, mealGapWarning } from "../lib/health";
 import { listIngredients, mergeWithStarterFoods, type Ingredient } from "../lib/ingredients";
 import { listDishes, type Dish, type IngredientNutrition } from "../lib/dishes";
+import { GLYCEMIC_FLAG_SYMBOL, type GlycemicFlag } from "../lib/glycemicFlag";
 import { mergeWithStarterDishes } from "../data/starter-dishes";
 import { getSettings, type Settings } from "../lib/settings";
 import { latestBloodSugarEntry, listBloodSugarEntries, type BloodSugarEntry } from "../lib/bloodSugar";
@@ -23,12 +24,15 @@ import {
 interface PickableFood {
   nameUk: string;
   nameEn: string;
+  glycemicFlag: GlycemicFlag;
   per100g: IngredientNutrition;
 }
 
-function toPickable(item: { nameUk: string; nameEn: string } & IngredientNutrition): PickableFood {
-  const { nameUk, nameEn, carbsG, gi, fiberG, sugarsG, proteinG, fatG, caloriesKcal, sodiumMg } = item;
-  return { nameUk, nameEn, per100g: { carbsG, gi, fiberG, sugarsG, proteinG, fatG, caloriesKcal, sodiumMg } };
+function toPickable(
+  item: { nameUk: string; nameEn: string; glycemicFlag: GlycemicFlag } & IngredientNutrition,
+): PickableFood {
+  const { nameUk, nameEn, glycemicFlag, carbsG, gi, fiberG, sugarsG, proteinG, fatG, caloriesKcal, sodiumMg } = item;
+  return { nameUk, nameEn, glycemicFlag, per100g: { carbsG, gi, fiberG, sugarsG, proteinG, fatG, caloriesKcal, sodiumMg } };
 }
 
 function ProgressBar({ label, value, target, unit }: { label: string; value: number; target: number; unit: string }) {
@@ -132,6 +136,11 @@ function AddLogEntryForm({
           {matches.slice(0, 20).map((food) => (
             <li key={food.nameUk} className="food-list-item-with-action">
               <span>
+                {food.glycemicFlag !== "none" && (
+                  <span aria-hidden="true" className={`glycemic-inline ${food.glycemicFlag}`}>
+                    {GLYCEMIC_FLAG_SYMBOL[food.glycemicFlag]}{" "}
+                  </span>
+                )}
                 <strong>{food.nameUk}</strong> <span className="food-name-en">({food.nameEn})</span> —{" "}
                 {food.per100g.carbsG} г вуглеводів/100г
               </span>

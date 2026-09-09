@@ -59,6 +59,7 @@ export const STARTER_DISHES: Omit<Dish, "dateAdded">[] = STARTER_DISH_SPECS.map(
     ingredients,
     yieldGrams: spec.yieldGrams,
     source: "starter",
+    glycemicFlag: "none",
     ...nutrition,
   };
 });

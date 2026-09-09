@@ -7,7 +7,8 @@
 // Schema is deliberately kept consistent with Ingredient: NameUk/NameEn
 // first, Source/DateAdded last, same nutrient column names in between —
 // only IngredientsJson/YieldGrams are Dish-specific, inserted in the middle.
-import { readRange, writeRange } from "./sheets";
+import { batchUpdateRanges, readRange, writeRange } from "./sheets";
+import { toGlycemicFlag, type GlycemicFlag } from "./glycemicFlag";
 
 export type DishSource = "starter" | "manual";
 
@@ -34,6 +35,7 @@ export interface Dish extends IngredientNutrition {
   yieldGrams: number;
   source: DishSource;
   dateAdded: string;
+  glycemicFlag: GlycemicFlag;
 }
 
 function round2(value: number): number {
@@ -103,6 +105,25 @@ export function computeDishNutrition(
   };
 }
 
+/**
+ * Derived, non-persisted hint: does this dish contain an ingredient
+ * currently flagged watch/avoid? Computed live from the dish's stored
+ * ingredient references cross-referenced against current ingredient flags —
+ * never overrides the dish's own explicit `glycemicFlag`, since other
+ * ingredients can compensate for one flagged one, or the dish's own
+ * combination/cooking method can be the actual problem even when every
+ * ingredient is individually fine.
+ */
+export function dishContainsFlaggedIngredient(
+  dish: Dish,
+  lookupIngredientFlag: (nameUk: string) => GlycemicFlag | null,
+): boolean {
+  return dish.ingredients.some((ref) => {
+    const flag = lookupIngredientFlag(ref.nameUk);
+    return flag === "watch" || flag === "avoid";
+  });
+}
+
 function toNumber(value: unknown): number {
   const n = Number(value);
   return Number.isFinite(n) ? n : 0;
@@ -126,7 +147,7 @@ function parseIngredientsJson(value: unknown): DishIngredientRef[] {
 
 // Column order: NameUk, NameEn, IngredientsJson, YieldGrams, Carbs_g, GI,
 // Fiber_g, Sugars_g, Protein_g, Fat_g, Calories_kcal, Sodium_mg, Source,
-// DateAdded (A-N) — see docs/technical-spec.md "Dishes" for the full table.
+// DateAdded, GlycemicFlag (A-O) — see docs/technical-spec.md "Dishes".
 export function rowToDish(row: unknown[]): Dish {
   return {
     nameUk: String(row[0] ?? ""),
@@ -143,6 +164,7 @@ export function rowToDish(row: unknown[]): Dish {
     sodiumMg: toNumber(row[11]),
     source: toDishSource(row[12]),
     dateAdded: String(row[13] ?? ""),
+    glycemicFlag: toGlycemicFlag(row[14]),
   };
 }
 
@@ -162,15 +184,30 @@ export function dishToRow(dish: Dish): unknown[] {
     dish.sodiumMg,
     dish.source,
     dish.dateAdded,
+    dish.glycemicFlag,
   ];
 }
 
 export async function listDishes(): Promise<Dish[]> {
-  const rows = await readRange("Dishes", "A2:N1000");
+  const rows = await readRange("Dishes", "A2:O1000");
   return rows.filter((row) => row.length > 0).map(rowToDish);
 }
 
-export async function addDish(dish: Omit<Dish, "dateAdded">): Promise<void> {
-  const withDate: Dish = { ...dish, dateAdded: new Date().toISOString().slice(0, 10) };
-  await writeRange("Dishes", "A:N", [dishToRow(withDate)]);
+export async function addDish(
+  dish: Omit<Dish, "dateAdded" | "glycemicFlag">,
+  glycemicFlag: GlycemicFlag = "none",
+): Promise<void> {
+  const withDate: Dish = { ...dish, dateAdded: new Date().toISOString().slice(0, 10), glycemicFlag };
+  await writeRange("Dishes", "A:O", [dishToRow(withDate)]);
+}
+
+/** Sets the GlycemicFlag column for an existing Dishes row, found by exact nameUk match. */
+export async function setDishGlycemicFlag(nameUk: string, glycemicFlag: GlycemicFlag): Promise<void> {
+  const rows = await readRange("Dishes", "A2:O1000");
+  const rowIndex = rows.findIndex((row) => String(row[0] ?? "").trim().toLowerCase() === nameUk.trim().toLowerCase());
+  if (rowIndex === -1) {
+    throw new Error(`"${nameUk}" not found in Dishes`);
+  }
+  const rowNumber = rowIndex + 2; // +2: 1-based rows, plus the header row
+  await batchUpdateRanges([{ range: `Dishes!O${rowNumber}`, values: [[glycemicFlag]] }]);
 }

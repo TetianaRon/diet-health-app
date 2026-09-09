@@ -3,6 +3,7 @@ import { uk } from "../i18n/uk";
 import { useAuth } from "../context/AuthContext";
 import { checkBloodSugarRange } from "../lib/health";
 import { getSettings, type Settings } from "../lib/settings";
+import { listLogEntries, mealsBeforeTimestamp, type DailyLogEntry } from "../lib/dailyLog";
 import {
   BLOOD_SUGAR_CONTEXTS,
   addBloodSugarEntry,
@@ -23,6 +24,11 @@ function formatTimestamp(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
   return d.toLocaleString("uk-UA", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+}
+
+function formatTimeBefore(mealTimestamp: string, readingTimestamp: string): string {
+  const hours = (new Date(readingTimestamp).getTime() - new Date(mealTimestamp).getTime()) / (1000 * 60 * 60);
+  return hours < 1 ? uk.bloodSugar.mealsBefore.lessThanHourAgo : uk.bloodSugar.mealsBefore.hoursAgo(hours);
 }
 
 function AddBloodSugarForm({
@@ -103,8 +109,10 @@ export default function BloodSugarScreen() {
   const { signedIn, initializing, signIn } = useAuth();
   const [entries, setEntries] = useState<BloodSugarEntry[] | null>(null);
   const [settings, setSettings] = useState<Settings | null>(null);
+  const [logEntries, setLogEntries] = useState<DailyLogEntry[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [expandedEntryKey, setExpandedEntryKey] = useState<string | null>(null);
 
   useEffect(() => {
     if (!signedIn) return;
@@ -113,6 +121,9 @@ export default function BloodSugarScreen() {
       .catch((err: unknown) => setLoadError(err instanceof Error ? err.message : String(err)));
     getSettings()
       .then(setSettings)
+      .catch((err: unknown) => setLoadError(err instanceof Error ? err.message : String(err)));
+    listLogEntries()
+      .then(setLogEntries)
       .catch((err: unknown) => setLoadError(err instanceof Error ? err.message : String(err)));
   }, [signedIn]);
 
@@ -177,16 +188,42 @@ export default function BloodSugarScreen() {
       {entries !== null && entries.length === 0 && !showAddForm && <p>{uk.bloodSugar.empty}</p>}
 
       <ul className="food-list">
-        {sortedEntries.map((entry, i) => (
-          <li key={`${entry.timestamp}-${i}`}>
-            {formatTimestamp(entry.timestamp)} — <strong>{entry.valueMmolL} ммоль/л</strong> (
-            {uk.bloodSugar.context[entry.context]})
-            {settings && !checkBloodSugarRange(entry.valueMmolL, settings.bloodSugarMin, settings.bloodSugarMax).inRange && (
-              <span className="blood-sugar-flag"> — {statusLabel(entry, settings)}</span>
-            )}
-            {entry.notes && <span className="food-name-en"> — {entry.notes}</span>}
-          </li>
-        ))}
+        {sortedEntries.map((entry, i) => {
+          const key = `${entry.timestamp}-${i}`;
+          const isExpanded = expandedEntryKey === key;
+          const meals = logEntries ? mealsBeforeTimestamp(logEntries, entry.timestamp) : [];
+          return (
+            <li key={key}>
+              {formatTimestamp(entry.timestamp)} — <strong>{entry.valueMmolL} ммоль/л</strong> (
+              {uk.bloodSugar.context[entry.context]})
+              {settings &&
+                !checkBloodSugarRange(entry.valueMmolL, settings.bloodSugarMin, settings.bloodSugarMax).inRange && (
+                  <span className="blood-sugar-flag"> — {statusLabel(entry, settings)}</span>
+                )}
+              {entry.notes && <span className="food-name-en"> — {entry.notes}</span>}
+              <button
+                type="button"
+                className="link-button"
+                onClick={() => setExpandedEntryKey(isExpanded ? null : key)}
+              >
+                {isExpanded ? "▾ " : "▸ "}
+                {uk.bloodSugar.mealsBefore.toggleLabel}
+              </button>
+              {isExpanded &&
+                (meals.length === 0 ? (
+                  <p className="food-form-hint">{uk.bloodSugar.mealsBefore.empty}</p>
+                ) : (
+                  <ul className="food-list meals-before-list">
+                    {meals.map((meal, j) => (
+                      <li key={`${meal.timestamp}-${j}`}>
+                        <strong>{meal.itemName}</strong> — {meal.mealType}, {formatTimeBefore(meal.timestamp, entry.timestamp)}
+                      </li>
+                    ))}
+                  </ul>
+                ))}
+            </li>
+          );
+        })}
       </ul>
     </section>
   );

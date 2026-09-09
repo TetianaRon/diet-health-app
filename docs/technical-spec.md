@@ -41,6 +41,7 @@ Raw foods only — always the uncooked/unprepared state, values per 100g. Anythi
 | Source | `starter` (bundled), `usda` (fetched), or `manual` |
 | DateAdded | ISO date |
 | Favorite | `TRUE`/`FALSE` — marks an ingredient for quick access; favorited ingredients sort to the top wherever Ingredients are browsed or picked from (the main Foods list, and the ingredient picker when composing a custom Dish). Appended as the last column rather than inserted mid-schema, so existing rows need no migration — a blank cell reads as not-favorited |
+| GlycemicFlag | `none` / `watch` / `avoid` — mom's own manual "should I be careful with this" marker, independent of GI/GL. See "Glycemic flag (watch/avoid)" below. Appended as column N, same additive pattern as Favorite — a blank cell reads as `none` |
 
 ### Dishes
 Anything requiring preparation — from a single cooked ingredient (e.g. "Гречка варена") to a real multi-ingredient recipe (e.g. borscht) — auto-computed from Ingredients, never hand-typed. This is the counterpart to Ingredients being *always raw*: a food that changes meaningfully when cooked (grains/legumes absorbing several times their dry weight in water) belongs here, not as a separate "cooked" Ingredients row. Values are **per 100g of the finished/cooked product**, matching Ingredients' per-100g convention — mom logs a dish by portion grams exactly like an ingredient.
@@ -57,6 +58,7 @@ Schema is deliberately kept consistent with Ingredients: `NameUk`/`NameEn` first
 | GI | Computed as a **carb-contribution-weighted average** of the ingredients' GI (`Σ(carb_contribution_i × GI_i) / Σ(carb_contribution_i)`) — an approximation, not a lab-measured value (true GI isn't simply additive), but the standard practical simplification when no GI database entry exists for the exact prepared dish. For a single-ingredient dish this reduces to that ingredient's own GI. |
 | Source | `starter` (bundled) or `manual` (custom-composed, once that feature exists) |
 | DateAdded | ISO date |
+| GlycemicFlag | `none` / `watch` / `avoid` — same three states as Ingredients, but set **independently**: a dish's own flag is never overwritten by its ingredients' flags. Appended as column O. See "Glycemic flag (watch/avoid)" below |
 
 Implemented in `src/lib/dishes.ts` (`computeDishNutrition`, pure and unit-tested).
 
@@ -132,6 +134,18 @@ A Dish composed from a bundle-only ingredient (never saved to the Ingredients sh
 ## Favorites
 
 `Ingredient.favorite` (Ingredients tab column M, `TRUE`/`FALSE`) marks an ingredient for quick access — favorited ingredients sort to the top wherever Ingredients are listed (`sortFavoritesFirst()` in `src/lib/ingredients.ts`). Only an actual sheet row can hold the flag, so favoriting a bundle-only ingredient (one that only exists via the merge above) saves it to the sheet as a side effect — the *only* implicit "add" the app performs, and only in response to that explicit favorite action, never automatically.
+
+## Glycemic flag (watch/avoid)
+
+`glycemicFlag: "none" | "watch" | "avoid"` (`src/lib/glycemicFlag.ts`) is a manual "should mom be careful with this" marker, set independently on `Ingredient` (Ingredients column N) and `Dish` (Dishes column O) — separate from GI/GL, which are computed. Shown as a small cycling badge (○ → △ → ✕, `cycleGlycemicFlag()`) wherever ingredients/dishes are listed, same interaction as the ★/☆ favorite toggle; flagging a bundle-only item implicitly saves it first, reusing the favorite mechanism above.
+
+**No automatic propagation in either direction:**
+- **Ingredient → Dish** is a *derived, non-persisted* hint only: `dishContainsFlaggedIngredient()` (`src/lib/dishes.ts`) checks a dish's stored `IngredientsJson` against current ingredient flags at read time and surfaces a separate "contains a flagged ingredient" note in the Foods screen — it never overwrites the dish's own explicit `glycemicFlag`. Other ingredients in a dish can compensate for one flagged one, and sometimes the combination or cooking method is the actual problem even when every ingredient is individually fine, so the dish's flag stays independently settable.
+- **Dish → Ingredient** is a manual suggestion, not automatic: flagging a dish (watch/avoid) surfaces its ingredient list right there in the Foods screen, with an optional (not forced) prompt to also flag specific ones.
+
+## Meals-before-reading review
+
+The Blood Sugar screen lets mom expand any reading to see the last 6 `DailyLog` entries at or before that reading's timestamp, most-recent-first, with time-before-reading shown per item (`mealsBeforeTimestamp()` in `src/lib/dailyLog.ts`). Pure timestamp filter/sort — ISO strings already sort correctly lexically — with no correlation or statistics computed; mom reviews the list herself to spot patterns. Deliberately scoped down from a full food/blood-sugar analytics feature (see `docs/build-log.md`'s 2026-09-07 design entry).
 
 ## Glycemic Load calculation
 

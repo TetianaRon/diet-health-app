@@ -2,6 +2,7 @@
 // -> "Google Sheets structure" for the column order this maps to).
 import { batchUpdateRanges, readRange, writeRange } from "./sheets";
 import { STARTER_FOODS } from "../data/starter-foods";
+import { toGlycemicFlag, type GlycemicFlag } from "./glycemicFlag";
 
 export type IngredientSource = "starter" | "usda" | "manual";
 
@@ -19,10 +20,11 @@ export interface Ingredient {
   source: IngredientSource;
   dateAdded: string;
   favorite: boolean;
+  glycemicFlag: GlycemicFlag;
 }
 
-const INGREDIENTS_RANGE = "A2:M1000"; // header row is A1:M1
-const INGREDIENTS_APPEND_RANGE = "A:M";
+const INGREDIENTS_RANGE = "A2:N1000"; // header row is A1:N1
+const INGREDIENTS_APPEND_RANGE = "A:N";
 
 function toNumber(value: unknown): number {
   const n = Number(value);
@@ -53,6 +55,7 @@ export function rowToIngredient(row: unknown[]): Ingredient {
     source: toSource(row[10]),
     dateAdded: String(row[11] ?? ""),
     favorite: toBoolean(row[12]),
+    glycemicFlag: toGlycemicFlag(row[13]),
   };
 }
 
@@ -72,6 +75,7 @@ export function ingredientToRow(ingredient: Ingredient): unknown[] {
     ingredient.source,
     ingredient.dateAdded,
     ingredient.favorite,
+    ingredient.glycemicFlag,
   ];
 }
 
@@ -81,7 +85,7 @@ export function sortFavoritesFirst<T extends { favorite: boolean }>(items: T[]):
 }
 
 function starterFoodToIngredient(food: (typeof STARTER_FOODS)[number]): Ingredient {
-  return { ...food, source: "starter", dateAdded: "", favorite: false };
+  return { ...food, source: "starter", dateAdded: "", favorite: false, glycemicFlag: "none" };
 }
 
 /**
@@ -112,20 +116,36 @@ export async function listIngredients(): Promise<Ingredient[]> {
 }
 
 export async function addIngredient(
-  ingredient: Omit<Ingredient, "dateAdded" | "favorite">,
+  ingredient: Omit<Ingredient, "dateAdded" | "favorite" | "glycemicFlag">,
   favorite = false,
+  glycemicFlag: GlycemicFlag = "none",
 ): Promise<void> {
-  const withDate: Ingredient = { ...ingredient, dateAdded: new Date().toISOString().slice(0, 10), favorite };
+  const withDate: Ingredient = {
+    ...ingredient,
+    dateAdded: new Date().toISOString().slice(0, 10),
+    favorite,
+    glycemicFlag,
+  };
   await writeRange("Ingredients", INGREDIENTS_APPEND_RANGE, [ingredientToRow(withDate)]);
+}
+
+async function findIngredientRowNumber(nameUk: string): Promise<number> {
+  const rows = await readRange("Ingredients", INGREDIENTS_RANGE);
+  const rowIndex = rows.findIndex((row) => String(row[0] ?? "").trim().toLowerCase() === nameUk.trim().toLowerCase());
+  if (rowIndex === -1) {
+    throw new Error(`"${nameUk}" not found in Ingredients`);
+  }
+  return rowIndex + 2; // +2: 1-based rows, plus the header row
 }
 
 /** Toggles the Favorite column for an existing Ingredients row, found by exact nameUk match. */
 export async function setIngredientFavorite(nameUk: string, favorite: boolean): Promise<void> {
-  const rows = await readRange("Ingredients", INGREDIENTS_RANGE);
-  const rowIndex = rows.findIndex((row) => String(row[0] ?? "").trim().toLowerCase() === nameUk.trim().toLowerCase());
-  if (rowIndex === -1) {
-    throw new Error(`setIngredientFavorite: "${nameUk}" not found in Ingredients`);
-  }
-  const rowNumber = rowIndex + 2; // +2: 1-based rows, plus the header row
+  const rowNumber = await findIngredientRowNumber(nameUk);
   await batchUpdateRanges([{ range: `Ingredients!M${rowNumber}`, values: [[favorite]] }]);
+}
+
+/** Sets the GlycemicFlag column for an existing Ingredients row, found by exact nameUk match. */
+export async function setIngredientGlycemicFlag(nameUk: string, glycemicFlag: GlycemicFlag): Promise<void> {
+  const rowNumber = await findIngredientRowNumber(nameUk);
+  await batchUpdateRanges([{ range: `Ingredients!N${rowNumber}`, values: [[glycemicFlag]] }]);
 }

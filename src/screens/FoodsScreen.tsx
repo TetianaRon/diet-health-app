@@ -6,11 +6,21 @@ import {
   listIngredients,
   mergeWithStarterFoods,
   setIngredientFavorite,
+  setIngredientGlycemicFlag,
   sortFavoritesFirst,
   type Ingredient,
   type IngredientSource,
 } from "../lib/ingredients";
-import { addDish, computeDishNutrition, listDishes, type Dish, type DishIngredientRef } from "../lib/dishes";
+import {
+  addDish,
+  computeDishNutrition,
+  dishContainsFlaggedIngredient,
+  listDishes,
+  setDishGlycemicFlag,
+  type Dish,
+  type DishIngredientRef,
+} from "../lib/dishes";
+import { cycleGlycemicFlag, GLYCEMIC_FLAG_SYMBOL, type GlycemicFlag } from "../lib/glycemicFlag";
 import { lookupExternalCandidates, translateUkToEn, type NutritionEstimate } from "../lib/nutrition";
 import { STARTER_DISHES, mergeWithStarterDishes } from "../data/starter-dishes";
 import { STARTER_FOODS } from "../data/starter-foods";
@@ -141,14 +151,14 @@ function AddFoodForm({ onSaved, onCancel }: { onSaved: (ingredient: Ingredient) 
     setSaving(true);
     setError(null);
     try {
-      const ingredient: Omit<Ingredient, "dateAdded" | "favorite"> = {
+      const ingredient: Omit<Ingredient, "dateAdded" | "favorite" | "glycemicFlag"> = {
         nameUk: nameUk.trim(),
         nameEn: resolvedNameEn,
         source,
         ...parsed,
       };
       await addIngredient(ingredient);
-      onSaved({ ...ingredient, dateAdded: new Date().toISOString().slice(0, 10), favorite: false });
+      onSaved({ ...ingredient, dateAdded: new Date().toISOString().slice(0, 10), favorite: false, glycemicFlag: "none" });
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -384,7 +394,7 @@ function ComposeDishForm({
       }));
       const nutrition = computeDishNutrition(refs, parsedYield, (name) => findIngredient(name));
       const nameEn = (await translateUkToEn(nameUk.trim())) ?? "";
-      const dish: Omit<Dish, "dateAdded"> = {
+      const dish: Omit<Dish, "dateAdded" | "glycemicFlag"> = {
         nameUk: nameUk.trim(),
         nameEn,
         ingredients: refs,
@@ -393,7 +403,7 @@ function ComposeDishForm({
         source: "manual",
       };
       await addDish(dish);
-      onSaved({ ...dish, dateAdded: new Date().toISOString().slice(0, 10) });
+      onSaved({ ...dish, dateAdded: new Date().toISOString().slice(0, 10), glycemicFlag: "none" });
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -435,6 +445,11 @@ function ComposeDishForm({
                   <li key={ingredient.nameUk} className="food-list-item-with-action">
                     <span>
                       {ingredient.favorite && <span aria-hidden="true">★ </span>}
+                      {ingredient.glycemicFlag !== "none" && (
+                        <span aria-hidden="true" className={`glycemic-inline ${ingredient.glycemicFlag}`}>
+                          {GLYCEMIC_FLAG_SYMBOL[ingredient.glycemicFlag]}{" "}
+                        </span>
+                      )}
                       <strong>{ingredient.nameUk}</strong>{" "}
                       <span className="food-name-en">({ingredient.nameEn})</span>
                     </span>
@@ -532,7 +547,7 @@ export default function FoodsScreen() {
 
     if (!isSaved) {
       try {
-        const toSave: Omit<Ingredient, "dateAdded" | "favorite"> = {
+        const toSave: Omit<Ingredient, "dateAdded" | "favorite" | "glycemicFlag"> = {
           nameUk: ingredient.nameUk,
           nameEn: ingredient.nameEn,
           carbsG: ingredient.carbsG,
@@ -545,7 +560,7 @@ export default function FoodsScreen() {
           sodiumMg: ingredient.sodiumMg,
           source: ingredient.source,
         };
-        await addIngredient(toSave, nextFavorite);
+        await addIngredient(toSave, nextFavorite, ingredient.glycemicFlag);
         setIngredients((prev) => [
           ...(prev ?? []),
           { ...ingredient, dateAdded: new Date().toISOString().slice(0, 10), favorite: nextFavorite },
@@ -564,6 +579,98 @@ export default function FoodsScreen() {
     } catch (err) {
       setIngredients((prev) =>
         (prev ?? []).map((i) => (i.nameUk === ingredient.nameUk ? { ...i, favorite: ingredient.favorite } : i)),
+      );
+      setLoadError(err instanceof Error ? err.message : String(err));
+    }
+  };
+
+  // Same implicit-save pattern as handleToggleFavorite, but cycling the
+  // three-state glycemicFlag instead of toggling a boolean.
+  const handleCycleIngredientFlag = async (ingredient: Ingredient) => {
+    const nextFlag = cycleGlycemicFlag(ingredient.glycemicFlag);
+    const isSaved = (ingredients ?? []).some(
+      (i) => i.nameUk.trim().toLowerCase() === ingredient.nameUk.trim().toLowerCase(),
+    );
+
+    if (!isSaved) {
+      try {
+        const toSave: Omit<Ingredient, "dateAdded" | "favorite" | "glycemicFlag"> = {
+          nameUk: ingredient.nameUk,
+          nameEn: ingredient.nameEn,
+          carbsG: ingredient.carbsG,
+          gi: ingredient.gi,
+          fiberG: ingredient.fiberG,
+          sugarsG: ingredient.sugarsG,
+          proteinG: ingredient.proteinG,
+          fatG: ingredient.fatG,
+          caloriesKcal: ingredient.caloriesKcal,
+          sodiumMg: ingredient.sodiumMg,
+          source: ingredient.source,
+        };
+        await addIngredient(toSave, ingredient.favorite, nextFlag);
+        setIngredients((prev) => [
+          ...(prev ?? []),
+          { ...ingredient, dateAdded: new Date().toISOString().slice(0, 10), glycemicFlag: nextFlag },
+        ]);
+      } catch (err) {
+        setLoadError(err instanceof Error ? err.message : String(err));
+      }
+      return;
+    }
+
+    setIngredients((prev) =>
+      (prev ?? []).map((i) => (i.nameUk === ingredient.nameUk ? { ...i, glycemicFlag: nextFlag } : i)),
+    );
+    try {
+      await setIngredientGlycemicFlag(ingredient.nameUk, nextFlag);
+    } catch (err) {
+      setIngredients((prev) =>
+        (prev ?? []).map((i) => (i.nameUk === ingredient.nameUk ? { ...i, glycemicFlag: ingredient.glycemicFlag } : i)),
+      );
+      setLoadError(err instanceof Error ? err.message : String(err));
+    }
+  };
+
+  // Mirrors handleCycleIngredientFlag for Dishes: a bundle-only dish (never
+  // saved) is implicitly saved on first flag, same principle as Favorites.
+  const handleCycleDishFlag = async (dish: Dish) => {
+    const nextFlag = cycleGlycemicFlag(dish.glycemicFlag);
+    const isSaved = (dishes ?? []).some((d) => d.nameUk.trim().toLowerCase() === dish.nameUk.trim().toLowerCase());
+
+    if (!isSaved) {
+      try {
+        const toSave: Omit<Dish, "dateAdded" | "glycemicFlag"> = {
+          nameUk: dish.nameUk,
+          nameEn: dish.nameEn,
+          ingredients: dish.ingredients,
+          yieldGrams: dish.yieldGrams,
+          carbsG: dish.carbsG,
+          gi: dish.gi,
+          fiberG: dish.fiberG,
+          sugarsG: dish.sugarsG,
+          proteinG: dish.proteinG,
+          fatG: dish.fatG,
+          caloriesKcal: dish.caloriesKcal,
+          sodiumMg: dish.sodiumMg,
+          source: dish.source,
+        };
+        await addDish(toSave, nextFlag);
+        setDishes((prev) => [
+          ...(prev ?? []),
+          { ...dish, dateAdded: new Date().toISOString().slice(0, 10), glycemicFlag: nextFlag },
+        ]);
+      } catch (err) {
+        setLoadError(err instanceof Error ? err.message : String(err));
+      }
+      return;
+    }
+
+    setDishes((prev) => (prev ?? []).map((d) => (d.nameUk === dish.nameUk ? { ...d, glycemicFlag: nextFlag } : d)));
+    try {
+      await setDishGlycemicFlag(dish.nameUk, nextFlag);
+    } catch (err) {
+      setDishes((prev) =>
+        (prev ?? []).map((d) => (d.nameUk === dish.nameUk ? { ...d, glycemicFlag: dish.glycemicFlag } : d)),
       );
       setLoadError(err instanceof Error ? err.message : String(err));
     }
@@ -601,6 +708,14 @@ export default function FoodsScreen() {
     availableIngredients.filter((i) => i.nameUk.toLowerCase().includes(search.toLowerCase())),
   );
   const filteredDishes = availableDishes.filter((d) => d.nameUk.toLowerCase().includes(search.toLowerCase()));
+
+  // Live cross-reference for the derived "contains a flagged ingredient"
+  // hint — see dishContainsFlaggedIngredient in lib/dishes.ts.
+  const ingredientFlagByName = new Map(
+    availableIngredients.map((i) => [i.nameUk.trim().toLowerCase(), i.glycemicFlag]),
+  );
+  const lookupIngredientFlag = (nameUk: string): GlycemicFlag | null =>
+    ingredientFlagByName.get(nameUk.trim().toLowerCase()) ?? null;
 
   return (
     <section className="screen">
@@ -689,15 +804,26 @@ export default function FoodsScreen() {
                   <strong>{ingredient.nameUk}</strong> <span className="food-name-en">({ingredient.nameEn})</span> —{" "}
                   {ingredient.carbsG} г вуглеводів, ГІ {ingredient.gi}
                 </span>
-                <button
-                  type="button"
-                  className={ingredient.favorite ? "favorite-toggle active" : "favorite-toggle"}
-                  onClick={() => void handleToggleFavorite(ingredient)}
-                  aria-label={ingredient.favorite ? uk.foods.unfavoriteLabel : uk.foods.favoriteLabel}
-                  title={ingredient.favorite ? uk.foods.unfavoriteLabel : uk.foods.favoriteLabel}
-                >
-                  {ingredient.favorite ? "★" : "☆"}
-                </button>
+                <div className="food-list-actions">
+                  <button
+                    type="button"
+                    className={`glycemic-badge ${ingredient.glycemicFlag}`}
+                    onClick={() => void handleCycleIngredientFlag(ingredient)}
+                    aria-label={uk.foods.glycemicFlag.toggleLabel(ingredient.glycemicFlag)}
+                    title={uk.foods.glycemicFlag.toggleLabel(ingredient.glycemicFlag)}
+                  >
+                    {GLYCEMIC_FLAG_SYMBOL[ingredient.glycemicFlag]}
+                  </button>
+                  <button
+                    type="button"
+                    className={ingredient.favorite ? "favorite-toggle active" : "favorite-toggle"}
+                    onClick={() => void handleToggleFavorite(ingredient)}
+                    aria-label={ingredient.favorite ? uk.foods.unfavoriteLabel : uk.foods.favoriteLabel}
+                    title={ingredient.favorite ? uk.foods.unfavoriteLabel : uk.foods.favoriteLabel}
+                  >
+                    {ingredient.favorite ? "★" : "☆"}
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
@@ -720,12 +846,58 @@ export default function FoodsScreen() {
           {filteredDishes.length === 0 && <p>{uk.dishes.noResults}</p>}
 
           <ul className="food-list">
-            {filteredDishes.map((dish) => (
-              <li key={dish.nameUk}>
-                <strong>{dish.nameUk}</strong> <span className="food-name-en">({dish.nameEn})</span> —{" "}
-                {dish.carbsG} г вуглеводів, ГІ {dish.gi} (на 100г)
-              </li>
-            ))}
+            {filteredDishes.map((dish) => {
+              const containsFlagged = dishContainsFlaggedIngredient(dish, lookupIngredientFlag);
+              return (
+                <li key={dish.nameUk}>
+                  <div className="food-list-item-with-action">
+                    <span>
+                      <strong>{dish.nameUk}</strong> <span className="food-name-en">({dish.nameEn})</span> —{" "}
+                      {dish.carbsG} г вуглеводів, ГІ {dish.gi} (на 100г)
+                    </span>
+                    <button
+                      type="button"
+                      className={`glycemic-badge ${dish.glycemicFlag}`}
+                      onClick={() => void handleCycleDishFlag(dish)}
+                      aria-label={uk.foods.glycemicFlag.toggleLabel(dish.glycemicFlag)}
+                      title={uk.foods.glycemicFlag.toggleLabel(dish.glycemicFlag)}
+                    >
+                      {GLYCEMIC_FLAG_SYMBOL[dish.glycemicFlag]}
+                    </button>
+                  </div>
+
+                  {containsFlagged && <p className="glycemic-hint">{uk.dishes.containsFlaggedIngredientHint}</p>}
+
+                  {dish.glycemicFlag !== "none" && dish.ingredients.length > 0 && (
+                    <div className="dish-ingredient-flags">
+                      <p className="food-form-hint">{uk.dishes.flagIngredientsPrompt.title}</p>
+                      <ul className="food-list">
+                        {dish.ingredients.map((ref) => {
+                          const ingredient = availableIngredients.find(
+                            (i) => i.nameUk.trim().toLowerCase() === ref.nameUk.trim().toLowerCase(),
+                          );
+                          if (!ingredient) return null;
+                          return (
+                            <li key={ref.nameUk} className="food-list-item-with-action">
+                              <span>{ingredient.nameUk}</span>
+                              <button
+                                type="button"
+                                className={`glycemic-badge ${ingredient.glycemicFlag}`}
+                                onClick={() => void handleCycleIngredientFlag(ingredient)}
+                                aria-label={uk.foods.glycemicFlag.toggleLabel(ingredient.glycemicFlag)}
+                                title={uk.foods.glycemicFlag.toggleLabel(ingredient.glycemicFlag)}
+                              >
+                                {GLYCEMIC_FLAG_SYMBOL[ingredient.glycemicFlag]}
+                              </button>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         </>
       )}

@@ -307,3 +307,70 @@ select {
   color: #b3261e;
   font-weight: 600;
 }
+
+.food-list-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.glycemic-badge {
+  background: none;
+  border: none;
+  color: #d0d5d0;
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 4px 6px;
+  flex-shrink: 0;
+}
+
+.glycemic-badge.watch {
+  color: #e0a800;
+}
+
+.glycemic-badge.avoid {
+  color: #b3261e;
+}
+
+.glycemic-inline {
+  font-size: 0.9em;
+}
+
+.glycemic-inline.watch {
+  color: #e0a800;
+}
+
+.glycemic-inline.avoid {
+  color: #b3261e;
+}
+
+.glycemic-hint {
+  font-size: 0.85rem;
+  color: #b3261e;
+  margin: 4px 0 0;
+}
+
+.dish-ingredient-flags {
+  margin: 8px 0 0;
+  padding: 10px 12px;
+  background: #fbf8f1;
+  border-radius: 8px;
+}
+
+.dish-ingredient-flags .food-list {
+  margin: 8px 0 0;
+}
+
+.dish-ingredient-flags .food-list li {
+  padding: 6px 0;
+}
+
+.meals-before-list.food-list {
+  margin: 8px 0 0;
+}
+
+.meals-before-list.food-list li {
+  padding: 8px 0;
+  font-size: 0.9rem;
+}

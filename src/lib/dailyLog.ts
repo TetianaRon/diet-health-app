@@ -93,6 +93,20 @@ export function localDateKey(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
+/**
+ * Last `limit` DailyLog entries at or before a given ISO timestamp,
+ * most-recent-first — powers the Blood Sugar screen's "meals before this
+ * reading" review. ISO strings already sort correctly lexically, so no
+ * date-parsing logic is needed. Pure timestamp filter/sort, no correlation
+ * or statistics — mom reviews the list herself.
+ */
+export function mealsBeforeTimestamp(entries: DailyLogEntry[], timestamp: string, limit = 6): DailyLogEntry[] {
+  return entries
+    .filter((e) => e.timestamp <= timestamp)
+    .sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1))
+    .slice(0, limit);
+}
+
 // Column order: Timestamp, MealType, ItemName, PortionGrams, Carbs_g, GI,
 // Fiber_g, Sugars_g, Protein_g, Fat_g, Calories_kcal, Sodium_mg, GL, Notes (A-N).
 export function rowToLogEntry(row: unknown[]): DailyLogEntry {

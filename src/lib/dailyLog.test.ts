@@ -6,6 +6,7 @@ import {
   isSameLocalDate,
   localDateKey,
   logEntryToRow,
+  mealsBeforeTimestamp,
   rowToLogEntry,
   suggestMealType,
   type DailyLogEntry,
@@ -101,5 +102,50 @@ describe("rowToLogEntry / logEntryToRow", () => {
   it("defaults an unrecognized MealType to Перекус", () => {
     const row = ["2026-08-13T12:00:00.000Z", "Weird", "Тест", "10", "1", "1", "1", "1", "1", "1", "1", "1", "1", ""];
     expect(rowToLogEntry(row).mealType).toBe("Перекус");
+  });
+});
+
+describe("mealsBeforeTimestamp", () => {
+  const entryAt = (timestamp: string, itemName: string): DailyLogEntry => ({
+    timestamp,
+    mealType: "Перекус",
+    itemName,
+    portionGrams: 100,
+    carbsG: 0,
+    gi: 0,
+    fiberG: 0,
+    sugarsG: 0,
+    proteinG: 0,
+    fatG: 0,
+    caloriesKcal: 0,
+    sodiumMg: 0,
+    gl: 0,
+    notes: "",
+  });
+
+  const entries: DailyLogEntry[] = [
+    entryAt("2026-08-13T07:00:00.000Z", "Сніданок"),
+    entryAt("2026-08-13T09:00:00.000Z", "Перекус 1"),
+    entryAt("2026-08-13T12:00:00.000Z", "Обід"),
+    entryAt("2026-08-13T15:00:00.000Z", "Після вимірювання"),
+  ];
+
+  it("returns entries at or before the given timestamp, most-recent-first", () => {
+    const result = mealsBeforeTimestamp(entries, "2026-08-13T12:00:00.000Z");
+    expect(result.map((e) => e.itemName)).toEqual(["Обід", "Перекус 1", "Сніданок"]);
+  });
+
+  it("excludes entries after the given timestamp", () => {
+    const result = mealsBeforeTimestamp(entries, "2026-08-13T10:00:00.000Z");
+    expect(result.map((e) => e.itemName)).toEqual(["Перекус 1", "Сніданок"]);
+  });
+
+  it("caps the result at the given limit", () => {
+    const result = mealsBeforeTimestamp(entries, "2026-08-13T12:00:00.000Z", 2);
+    expect(result.map((e) => e.itemName)).toEqual(["Обід", "Перекус 1"]);
+  });
+
+  it("returns an empty list when nothing precedes the timestamp", () => {
+    expect(mealsBeforeTimestamp(entries, "2026-08-13T00:00:00.000Z")).toEqual([]);
   });
 });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeDishNutrition, dishToRow, rowToDish, type Dish, type IngredientNutrition } from "./dishes";
+import { computeDishNutrition, dishContainsFlaggedIngredient, dishToRow, rowToDish, type Dish, type IngredientNutrition } from "./dishes";
 
 const BUCKWHEAT_RAW: IngredientNutrition = {
   carbsG: 71.5,
@@ -110,6 +110,7 @@ describe("rowToDish / dishToRow", () => {
       sodiumMg: 0.28,
       source: "starter",
       dateAdded: "2026-08-13",
+      glycemicFlag: "watch",
     };
 
     expect(rowToDish(dishToRow(dish))).toEqual(dish);
@@ -131,6 +132,7 @@ describe("rowToDish / dishToRow", () => {
       sodiumMg: 100,
       source: "manual",
       dateAdded: "2026-08-13",
+      glycemicFlag: "none",
     };
     expect(rowToDish(dishToRow(dish)).source).toBe("manual");
   });
@@ -153,5 +155,46 @@ describe("rowToDish / dishToRow", () => {
       "2026-08-13",
     ];
     expect(rowToDish(row).ingredients).toEqual([]);
+  });
+});
+
+describe("dishContainsFlaggedIngredient", () => {
+  const baseDish: Dish = {
+    nameUk: "Борщ",
+    nameEn: "borscht",
+    ingredients: [
+      { nameUk: "Буряк", grams: 100 },
+      { nameUk: "Картопля", grams: 100 },
+    ],
+    yieldGrams: 500,
+    carbsG: 5,
+    gi: 40,
+    fiberG: 1,
+    sugarsG: 1,
+    proteinG: 1,
+    fatG: 1,
+    caloriesKcal: 50,
+    sodiumMg: 100,
+    source: "manual",
+    dateAdded: "2026-08-13",
+    glycemicFlag: "none",
+  };
+
+  it("is true when any referenced ingredient currently resolves to watch or avoid", () => {
+    const lookup = (name: string) => (name === "Картопля" ? "avoid" : "none");
+    expect(dishContainsFlaggedIngredient(baseDish, lookup)).toBe(true);
+  });
+
+  it("is false when no referenced ingredient is flagged", () => {
+    expect(dishContainsFlaggedIngredient(baseDish, () => "none")).toBe(false);
+  });
+
+  it("is false when a referenced ingredient no longer resolves at all", () => {
+    expect(dishContainsFlaggedIngredient(baseDish, () => null)).toBe(false);
+  });
+
+  it("does not depend on the dish's own explicit glycemicFlag", () => {
+    const flaggedDish: Dish = { ...baseDish, glycemicFlag: "avoid" };
+    expect(dishContainsFlaggedIngredient(flaggedDish, () => "none")).toBe(false);
   });
 });

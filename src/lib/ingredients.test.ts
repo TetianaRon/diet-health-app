@@ -18,6 +18,7 @@ describe("rowToIngredient", () => {
       "starter",
       "2026-08-13",
       "TRUE",
+      "watch",
     ];
 
     expect(rowToIngredient(row)).toEqual({
@@ -34,6 +35,7 @@ describe("rowToIngredient", () => {
       source: "starter",
       dateAdded: "2026-08-13",
       favorite: true,
+      glycemicFlag: "watch",
     });
   });
 
@@ -47,6 +49,7 @@ describe("rowToIngredient", () => {
     expect(result.fiberG).toBe(0);
     expect(result.source).toBe("manual");
     expect(result.favorite).toBe(false);
+    expect(result.glycemicFlag).toBe("none");
   });
 });
 
@@ -66,6 +69,7 @@ describe("ingredientToRow", () => {
       source: "starter",
       dateAdded: "2026-08-13",
       favorite: false,
+      glycemicFlag: "none",
     };
 
     expect(rowToIngredient(ingredientToRow(ingredient))).toEqual(ingredient);
@@ -85,6 +89,7 @@ describe("sortFavoritesFirst", () => {
     sodiumMg: 0,
     source: "manual" as const,
     dateAdded: "2026-08-13",
+    glycemicFlag: "none" as const,
   };
 
   it("moves favorites to the front, preserving relative order within each group", () => {
@@ -131,6 +136,7 @@ describe("mergeWithStarterFoods", () => {
       source: "starter",
       dateAdded: "2026-08-13",
       favorite: true,
+      glycemicFlag: "none",
     };
 
     const merged = mergeWithStarterFoods([savedVersion]);
@@ -155,6 +161,7 @@ describe("mergeWithStarterFoods", () => {
       source: "manual",
       dateAdded: "2026-08-13",
       favorite: false,
+      glycemicFlag: "none",
     };
     const merged = mergeWithStarterFoods([custom]);
     expect(merged).toHaveLength(STARTER_FOODS.length + 1);
