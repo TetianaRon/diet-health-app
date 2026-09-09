@@ -9,7 +9,7 @@ export default defineConfig({
       registerType: "autoUpdate",
       includeAssets: ["icon.svg"],
       manifest: {
-        name: "Трекер Діабету",
+        name: "Трекер харчування",
         short_name: "Трекер",
         description: "Харчування, глікемічне навантаження та цукор у крові",
         lang: "uk",
