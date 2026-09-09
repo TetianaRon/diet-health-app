@@ -10,6 +10,7 @@ All architecture decisions and requirements live in `docs/` in this repo (migrat
 - [docs/requirements-open-questions.md](docs/requirements-open-questions.md) — pending items from mom's interview (filled after interview)
 - [docs/technical-spec.md](docs/technical-spec.md) — full implementation spec (filled after interview)
 - [docs/build-log.md](docs/build-log.md) — development journal
+- [docs/automation-candidates.md](docs/automation-candidates.md) — mechanics/workflows from building this app flagged as candidates for future Claude Code skills/agents/plugins
 
 **As of now, the interview with mom has not happened yet.** Requirements and exact targets/food lists are still open — but the architecture in `docs/technical-spec.md` is decided and doesn't depend on her answers, so building against it is safe.
 

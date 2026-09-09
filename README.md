@@ -4,17 +4,21 @@ A Ukrainian-language nutrition and health tracking web app, built for a Type 2 d
 
 ## Status
 
-**All four tabs and every feature from `docs/technical-spec.md` are now built** — Сьогодні, Продукти (Ingredients + Dishes, including custom multi-ingredient recipes), Цукор, Налаштування, plus favorites and a merged starter-bundle+personal-sheet model so the bundle is usable without individually saving each item first. What's left is real-world verification and mom's interview, not more building.
+**All four tabs and every feature from `docs/technical-spec.md` are built**, plus a later addition: a `glycemicFlag` ("none"/"watch"/"avoid") on both Ingredients and Dishes with a derived "this dish contains a flagged ingredient" hint, and a "meals before this reading" expandable review on the Blood Sugar screen. Mom's interview is complete — health context and Settings defaults (1800 kcal, 6 meals/day) are corrected in code and docs.
 
-**Verified live before today's session** (real Google Sheets, real sign-in): Google sign-in, basic Ingredients add/list, Settings load/save.
+**Built and unit-tested this session, not yet live-verified signed-in:** the glycemic-flag/blood-sugar-review feature above (`npm run test` 76/76, `npm run build` clean). Verification is blocked the same way it was before — Google's sign-in popup can't be completed by browser automation — so a manual click-through is still needed: cycle a flag on an ingredient and a dish, confirm the derived hint and dish→ingredient prompt behave, expand a Blood Sugar entry's meals-before list. See `docs/build-log.md`'s 2026-09-07 "Built the food/blood-sugar review feature" entry.
 
-**Built today (2026-08-14), not yet live-tested:** Blood Sugar screen; custom dish composition; the bundle-merge behavior (Ingredients/Dishes browsing, dish composition, and meal logging all reworked to pull from the bundle + personal sheet together); favorites; a reworked USDA lookup (candidate list instead of one guess, GI accuracy fix, "Знайти" no longer re-guesses bundle matches); two validation bugs fixed (blank numeric fields were silently saving as `0` in the add-ingredient form and Settings). See `docs/build-log.md`'s 2026-08-14 entries, especially the session wrap-up at the end, for the full list and reasoning behind each.
+**Scoped but not built:** the meal-time reminder/notification mechanics mom asked for in her interview. Full Phase 1 design is locked in (Capacitor Android wrapper, package id `ca.roncreator.trackmymeals`, local notifications scheduled from a cached last-meal timestamp with quiet-hours suppression, release-keystore signing from build #1) — implementation should need no further design decisions. A home-screen widget + dynamic app-icon color swap are an explicit Phase 2, deferred until Phase 1 has been used in practice. See `docs/build-log.md`'s 2026-09-09 entry for the full design and the alternatives that were rejected and why.
 
-**Repo state:** nothing from today is committed yet — last commit is `ae40f48` (2026-08-13). Every change passed `npm run test`/`npm run build` individually; not re-verified as one combined diff.
+**Renamed:** the app is now **Трекер харчування** / **Track My Meals** (was "Трекер Діабету"/"Diabetes Tracker") — the old name implied a medical-app scope this utility tool shouldn't claim. Applied across `src/i18n/uk.ts`, `index.html`, and the PWA manifest in `vite.config.ts`.
 
-**Needs a manual spreadsheet edit before the next sign-in:** add `Favorite` as the header in the Ingredients tab's column M1 — blank existing rows are fine, they default to "not favorited".
+**New:** `docs/automation-candidates.md` — mechanics/workflows from building this app, flagged as candidates for future Claude Code skills/agents/plugins once there's enough cross-project usage to justify formalizing them.
 
-**Not started:** the interview with mom (`docs/requirements-open-questions.md` is still empty) — the app is usable and being dogfooded by the developer ahead of that; exact targets/food lists are still open pending her answers.
+**Repo state:** nothing from this session is committed yet — last commit is `24239be`. Modified: `CLAUDE.md`, `docs/build-log.md`, `docs/technical-spec.md`, `index.html`, `vite.config.ts`, `src/i18n/uk.ts`, `src/index.css`, `src/data/starter-dishes.{ts,test.ts}`, `src/lib/{dailyLog,dishes,ingredients}.{ts,test.ts}`, `src/screens/{BloodSugarScreen,FoodsScreen,TodayScreen}.tsx`. New: `docs/automation-candidates.md`, `src/lib/glycemicFlag.ts`, `src/lib/glycemicFlag.test.ts`.
+
+**Still pending manual spreadsheet edits** (accumulating across sessions — the app works without them, blank cells just read as the default, but they're needed for the sheet to be legible if opened directly): `Favorite` header on Ingredients column M (pending since 2026-08-14); `GlycemicFlag` header on Ingredients column N and Dishes column O; `DailyCaloriesTarget`→1800 and `MealsPerDay`→6 in the live Settings tab (the code defaults were corrected after mom's interview, the sheet itself wasn't).
+
+**Also still pending, lower priority:** reviewing mom's old Google Sheet for real dish/ingredient data to expand the starter bundle; weight tracking and blood-sugar-trend-chart are confirmed wishes with no schema/UI designed yet.
 
 **Credentials:** all three are set up and confirmed working in the developer's local `.env` (Google OAuth client, spreadsheet ID, USDA API key) — see `docs/technical-spec.md` for setup steps if starting fresh elsewhere.
 
@@ -40,4 +44,5 @@ The app runs without `.env` values filled in, but Google Sheets sync won't work 
 - [docs/requirements-open-questions.md](docs/requirements-open-questions.md) — interview questions and answers
 - [docs/technical-spec.md](docs/technical-spec.md) — implementation spec (architecture decided, targets pending mom's interview)
 - [docs/build-log.md](docs/build-log.md) — development journal
+- [docs/automation-candidates.md](docs/automation-candidates.md) — workflows/mechanics flagged as candidates for future Claude Code skills/agents/plugins
 - [CLAUDE.md](CLAUDE.md) — instructions for Claude Code when working in this repo (dev mode / interview mode)
