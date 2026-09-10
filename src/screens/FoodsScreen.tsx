@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { uk } from "../i18n/uk";
 import { useAuth } from "../context/AuthContext";
+import { classifyGi } from "../lib/health";
 import {
   addIngredient,
   listIngredients,
@@ -8,6 +9,7 @@ import {
   setIngredientFavorite,
   setIngredientGlycemicFlag,
   sortFavoritesFirst,
+  updateIngredient,
   type Ingredient,
   type IngredientSource,
 } from "../lib/ingredients";
@@ -17,6 +19,7 @@ import {
   dishContainsFlaggedIngredient,
   listDishes,
   setDishGlycemicFlag,
+  updateDish,
   type Dish,
   type DishIngredientRef,
 } from "../lib/dishes";
@@ -41,28 +44,50 @@ const EMPTY_FORM_VALUES: FormValues = {
   sodiumMg: "",
 };
 
-function AddFoodForm({ onSaved, onCancel }: { onSaved: (ingredient: Ingredient) => void; onCancel: () => void }) {
-  const [nameUk, setNameUk] = useState("");
+function AddFoodForm({
+  existingNames,
+  onSaved,
+  onCancel,
+}: {
+  existingNames: Set<string>;
+  onSaved: (ingredient: Ingredient) => void;
+  onCancel: () => void;
+}) {
+  // search is purely what's typed to find a match — never what gets saved.
+  // saveNameUk is separate and always editable: previously it silently
+  // reused the search text, so two different picks under one broad search
+  // (e.g. "квасоля" → two different USDA beans) both saved under the exact
+  // same name with no warning, one quietly overwriting the other. Splitting
+  // the fields, defaulting saveNameUk to something specific when possible,
+  // and warning on an actual name collision (see handleSave) fixes both.
+  const [search, setSearch] = useState("");
+  const [saveNameUk, setSaveNameUk] = useState("");
   const [resolvedNameEn, setResolvedNameEn] = useState("");
   const [values, setValues] = useState<FormValues>(EMPTY_FORM_VALUES);
   const [source, setSource] = useState<IngredientSource>("manual");
+  // Always starts unchecked, even for a bundle/USDA-sourced estimate —
+  // "we researched it" isn't the same as "a person confirmed it against a
+  // trusted source." See the giVerified comment on the Ingredient type.
+  const [giVerified, setGiVerified] = useState(false);
   const [lookupLoading, setLookupLoading] = useState(false);
   const [lookupAttempted, setLookupAttempted] = useState(false);
   const [candidates, setCandidates] = useState<NutritionEstimate[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  // nameUk is the only field mom types. Bundle matches are picked directly
-  // from the browsable suggestion list below (handlePickSuggestion) — the
-  // "Знайти" button (handleLookup) is only for names not in that list, and
-  // deliberately skips the bundle itself (see lookupExternal) so it never
-  // silently resolves an ambiguous name to a single guessed candidate.
-  // English (needed for the USDA query) is resolved automatically via
-  // translation; it's still shown afterward as a subtle secondary label
-  // (see .food-name-en) — a fallback cross-check, not something she needs
-  // to read or supply herself.
-  const applyEstimate = (estimate: NutritionEstimate | null) => {
+  // Bundle matches are picked directly from the browsable suggestion list
+  // below (handlePickSuggestion) — the "Знайти" button (handleLookup) is
+  // only for names not in that list, and deliberately skips the bundle
+  // itself (see lookupExternal) so it never silently resolves an ambiguous
+  // name to a single guessed candidate. English (needed for the USDA query)
+  // is resolved automatically via translation; it's still shown afterward as
+  // a subtle secondary label (see .food-name-en) — a fallback cross-check,
+  // not something she needs to read or supply herself.
+  const applyEstimate = (estimate: NutritionEstimate | null, defaultSaveName: string) => {
     setLookupAttempted(true);
+    setDuplicateWarning(null);
+    setGiVerified(false); // a new pick hasn't been confirmed, even if a previous one was
     if (estimate) {
       setValues({
         carbsG: String(estimate.carbsG),
@@ -76,6 +101,7 @@ function AddFoodForm({ onSaved, onCancel }: { onSaved: (ingredient: Ingredient) 
       });
       setSource(estimate.source);
       setResolvedNameEn(estimate.nameEn);
+      setSaveNameUk(defaultSaveName);
     } else {
       setValues(EMPTY_FORM_VALUES);
       setSource("manual");
@@ -92,12 +118,12 @@ function AddFoodForm({ onSaved, onCancel }: { onSaved: (ingredient: Ingredient) 
     setLookupLoading(true);
     setError(null);
     try {
-      const results = await lookupExternalCandidates(nameUk);
+      const results = await lookupExternalCandidates(search);
       setCandidates(results);
       if (results.length > 0) {
         setLookupAttempted(true);
       } else {
-        applyEstimate(null);
+        applyEstimate(null, search);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -108,26 +134,30 @@ function AddFoodForm({ onSaved, onCancel }: { onSaved: (ingredient: Ingredient) 
 
   // Clicking a suggestion from the browsable bundle list below skips the
   // lookup round-trip entirely — we already have the full entry in hand.
+  // The bundle's own name is already specific, so it's a safe save-name
+  // default as-is.
   const handlePickSuggestion = (food: (typeof STARTER_FOODS)[number]) => {
-    setNameUk(food.nameUk);
     setCandidates([]);
-    applyEstimate({
-      nameEn: food.nameEn,
-      carbsG: food.carbsG,
-      gi: food.gi,
-      fiberG: food.fiberG,
-      sugarsG: food.sugarsG,
-      proteinG: food.proteinG,
-      fatG: food.fatG,
-      caloriesKcal: food.caloriesKcal,
-      sodiumMg: food.sodiumMg,
-      source: "starter",
-    });
+    applyEstimate(
+      {
+        nameEn: food.nameEn,
+        carbsG: food.carbsG,
+        gi: food.gi,
+        fiberG: food.fiberG,
+        sugarsG: food.sugarsG,
+        proteinG: food.proteinG,
+        fatG: food.fatG,
+        caloriesKcal: food.caloriesKcal,
+        sodiumMg: food.sodiumMg,
+        source: "starter",
+      },
+      food.nameUk,
+    );
   };
 
   const suggestions = lookupAttempted
     ? []
-    : STARTER_FOODS.filter((food) => food.nameUk.toLowerCase().includes(nameUk.toLowerCase()));
+    : STARTER_FOODS.filter((food) => food.nameUk.toLowerCase().includes(search.toLowerCase()));
 
   const handleSave = async () => {
     const parsed = Object.fromEntries(
@@ -138,7 +168,7 @@ function AddFoodForm({ onSaved, onCancel }: { onSaved: (ingredient: Ingredient) 
     // otherwise a field left blank (e.g. an unfilled GI) would silently pass
     // as a valid 0 instead of being caught by validation.
     const allValid =
-      nameUk.trim() !== "" &&
+      saveNameUk.trim() !== "" &&
       NUMERIC_FIELDS.every(
         (field) => values[field].trim() !== "" && Number.isFinite(parsed[field]) && parsed[field] >= 0,
       );
@@ -148,13 +178,25 @@ function AddFoodForm({ onSaved, onCancel }: { onSaved: (ingredient: Ingredient) 
       return;
     }
 
+    // Ambiguous searches (e.g. "квасоля") can surface several distinct
+    // matches that would otherwise all default to the same save name — warn
+    // instead of silently overwriting an existing entry. Editing the name
+    // clears this (see the input's onChange below), so the warning can't go
+    // stale against a name she's since changed.
+    if (!duplicateWarning && existingNames.has(saveNameUk.trim().toLowerCase())) {
+      setError(null);
+      setDuplicateWarning(uk.foods.form.duplicateNameWarning(saveNameUk.trim()));
+      return;
+    }
+
     setSaving(true);
     setError(null);
     try {
       const ingredient: Omit<Ingredient, "dateAdded" | "favorite" | "glycemicFlag"> = {
-        nameUk: nameUk.trim(),
+        nameUk: saveNameUk.trim(),
         nameEn: resolvedNameEn,
         source,
+        giVerified,
         ...parsed,
       };
       await addIngredient(ingredient);
@@ -171,16 +213,16 @@ function AddFoodForm({ onSaved, onCancel }: { onSaved: (ingredient: Ingredient) 
       <label>
         {uk.foods.form.nameUkLabel}
         <input
-          value={nameUk}
+          value={search}
           onChange={(e) => {
-            setNameUk(e.target.value);
+            setSearch(e.target.value);
             setCandidates([]);
           }}
           placeholder={uk.foods.form.nameUkPlaceholder}
         />
       </label>
       <p className="food-form-hint">{uk.foods.form.nameUkHint}</p>
-      <button type="button" onClick={handleLookup} disabled={lookupLoading || !nameUk}>
+      <button type="button" onClick={handleLookup} disabled={lookupLoading || !search}>
         {lookupLoading ? uk.foods.form.lookupLoading : uk.foods.form.lookupButton}
       </button>
 
@@ -191,7 +233,7 @@ function AddFoodForm({ onSaved, onCancel }: { onSaved: (ingredient: Ingredient) 
               <li key={food.nameUk} className="food-list-item-with-action">
                 <span>
                   <strong>{food.nameUk}</strong> <span className="food-name-en">({food.nameEn})</span> —{" "}
-                  {food.carbsG} г вуглеводів, ГІ {food.gi}
+                  {food.carbsG} г вуглеводів, ГІ {food.gi} ({uk.health.gi[classifyGi(food.gi)]})
                 </span>
                 <button type="button" onClick={() => handlePickSuggestion(food)}>
                   {uk.foods.form.pickButton}
@@ -209,9 +251,9 @@ function AddFoodForm({ onSaved, onCancel }: { onSaved: (ingredient: Ingredient) 
             <li key={i} className="food-list-item-with-action">
               <span>
                 <strong>{candidate.nameEn}</strong> — {candidate.carbsG} г вуглеводів
-                {candidate.gi !== null && `, ГІ ${candidate.gi}`}
+                {candidate.gi !== null && `, ГІ ${candidate.gi} (${uk.health.gi[classifyGi(candidate.gi)]})`}
               </span>
-              <button type="button" onClick={() => applyEstimate(candidate)}>
+              <button type="button" onClick={() => applyEstimate(candidate, search)}>
                 {uk.foods.form.pickButton}
               </button>
             </li>
@@ -232,6 +274,18 @@ function AddFoodForm({ onSaved, onCancel }: { onSaved: (ingredient: Ingredient) 
         </p>
       )}
 
+      <label>
+        {uk.foods.form.saveNameLabel}
+        <input
+          value={saveNameUk}
+          onChange={(e) => {
+            setSaveNameUk(e.target.value);
+            setDuplicateWarning(null);
+          }}
+        />
+      </label>
+      <p className="food-form-hint">{uk.foods.form.saveNameHint}</p>
+
       {NUMERIC_FIELDS.map((field) => (
         <label key={field}>
           {uk.foods.form.fields[field]}
@@ -243,11 +297,141 @@ function AddFoodForm({ onSaved, onCancel }: { onSaved: (ingredient: Ingredient) 
         </label>
       ))}
 
+      <label className="settings-checkbox">
+        <input type="checkbox" checked={giVerified} onChange={(e) => setGiVerified(e.target.checked)} />
+        {uk.foods.form.giVerifiedLabel}
+      </label>
+
+      {error && <p className="food-form-error">{error}</p>}
+      {duplicateWarning && <p className="food-form-error">{duplicateWarning}</p>}
+
+      <div className="food-form-actions">
+        <button type="button" onClick={() => void handleSave()} disabled={saving}>
+          {duplicateWarning ? uk.foods.form.confirmOverwriteButton : uk.foods.form.saveButton}
+        </button>
+        <button type="button" onClick={onCancel} disabled={saving}>
+          {uk.foods.cancelButton}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Direct field editing for an existing Ingredient — no search/lookup needed
+// here, unlike AddFoodForm, since she's correcting values already in hand.
+// A bundle-only ingredient (dateAdded === "", never actually saved) can
+// still be "edited" — saving it is then the first save, same implicit-save
+// principle as favoriting one (see handleToggleFavorite in FoodsScreen).
+function EditIngredientForm({
+  ingredient,
+  onSaved,
+  onCancel,
+}: {
+  ingredient: Ingredient;
+  onSaved: (updated: Ingredient) => void;
+  onCancel: () => void;
+}) {
+  const [nameUk, setNameUk] = useState(ingredient.nameUk);
+  const [nameEn, setNameEn] = useState(ingredient.nameEn);
+  const [values, setValues] = useState<FormValues>({
+    carbsG: String(ingredient.carbsG),
+    gi: String(ingredient.gi),
+    fiberG: String(ingredient.fiberG),
+    sugarsG: String(ingredient.sugarsG),
+    proteinG: String(ingredient.proteinG),
+    fatG: String(ingredient.fatG),
+    caloriesKcal: String(ingredient.caloriesKcal),
+    sodiumMg: String(ingredient.sodiumMg),
+  });
+  const [giVerified, setGiVerified] = useState(ingredient.giVerified);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSave = async () => {
+    const parsed = Object.fromEntries(
+      NUMERIC_FIELDS.map((field) => [field, Number(values[field])]),
+    ) as Record<NumericField, number>;
+    const allValid =
+      nameUk.trim() !== "" &&
+      NUMERIC_FIELDS.every(
+        (field) => values[field].trim() !== "" && Number.isFinite(parsed[field]) && parsed[field] >= 0,
+      );
+
+    if (!allValid) {
+      setError(uk.foods.editForm.validationError);
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+    try {
+      const updated: Ingredient = { ...ingredient, nameUk: nameUk.trim(), nameEn: nameEn.trim(), giVerified, ...parsed };
+      if (ingredient.dateAdded) {
+        await updateIngredient(ingredient.nameUk, updated);
+      } else {
+        await addIngredient(
+          {
+            nameUk: updated.nameUk,
+            nameEn: updated.nameEn,
+            carbsG: updated.carbsG,
+            gi: updated.gi,
+            fiberG: updated.fiberG,
+            sugarsG: updated.sugarsG,
+            proteinG: updated.proteinG,
+            fatG: updated.fatG,
+            caloriesKcal: updated.caloriesKcal,
+            sodiumMg: updated.sodiumMg,
+            source: updated.source,
+            giVerified: updated.giVerified,
+          },
+          updated.favorite,
+          updated.glycemicFlag,
+        );
+      }
+      onSaved(updated);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="food-form">
+      <h2>{uk.foods.editForm.title}</h2>
+      <label>
+        {uk.foods.editForm.nameUkLabel}
+        <input value={nameUk} onChange={(e) => setNameUk(e.target.value)} />
+      </label>
+      <label>
+        {uk.foods.editForm.nameEnLabel}
+        <input value={nameEn} onChange={(e) => setNameEn(e.target.value)} />
+      </label>
+
+      {NUMERIC_FIELDS.map((field) => (
+        <label key={field}>
+          {uk.foods.form.fields[field]}
+          <input
+            type="number"
+            value={values[field]}
+            onChange={(e) => {
+              setValues({ ...values, [field]: e.target.value });
+              if (field === "gi") setGiVerified(false); // a changed GI invalidates any prior confirmation
+            }}
+          />
+        </label>
+      ))}
+
+      <label className="settings-checkbox">
+        <input type="checkbox" checked={giVerified} onChange={(e) => setGiVerified(e.target.checked)} />
+        {uk.foods.form.giVerifiedLabel}
+      </label>
+
       {error && <p className="food-form-error">{error}</p>}
 
       <div className="food-form-actions">
-        <button type="button" onClick={handleSave} disabled={saving}>
-          {uk.foods.form.saveButton}
+        <button type="button" onClick={() => void handleSave()} disabled={saving}>
+          {uk.foods.editForm.saveButton}
         </button>
         <button type="button" onClick={onCancel} disabled={saving}>
           {uk.foods.cancelButton}
@@ -298,7 +482,7 @@ function AddDishForm({ onSaved, onCancel }: { onSaved: (dish: Dish) => void; onC
           <li key={dish.nameUk} className="food-list-item-with-action">
             <span>
               <strong>{dish.nameUk}</strong> <span className="food-name-en">({dish.nameEn})</span> — {dish.carbsG} г
-              вуглеводів, ГІ {dish.gi}
+              вуглеводів, ≈ГІ {dish.gi}
             </span>
             <button type="button" onClick={() => void handleAdd(dish)} disabled={saving}>
               {uk.dishes.form.addButton}
@@ -330,16 +514,27 @@ const EMPTY_ROW: ComposeRow = { nameUk: "", grams: "" };
 // dishes.test.ts), never hand-typed, matching how starter dishes are built.
 function ComposeDishForm({
   ingredients,
+  existingDish,
   onSaved,
   onCancel,
 }: {
   ingredients: Ingredient[];
+  // Present only when editing an already-composed Dish — pre-fills the form
+  // from it and updates that row in place on save (or, if it was a
+  // bundle-only dish never actually saved, this becomes its first save —
+  // same implicit-save principle used elsewhere in this screen).
+  existingDish?: Dish;
   onSaved: (dish: Dish) => void;
   onCancel: () => void;
 }) {
-  const [nameUk, setNameUk] = useState("");
-  const [rows, setRows] = useState<ComposeRow[]>([EMPTY_ROW]);
-  const [yieldGrams, setYieldGrams] = useState("");
+  const [nameUk, setNameUk] = useState(existingDish?.nameUk ?? "");
+  const [rows, setRows] = useState<ComposeRow[]>(
+    existingDish && existingDish.ingredients.length > 0
+      ? existingDish.ingredients.map((ref) => ({ nameUk: ref.nameUk, grams: String(ref.grams) }))
+      : [EMPTY_ROW],
+  );
+  const [yieldGrams, setYieldGrams] = useState(existingDish ? String(existingDish.yieldGrams) : "");
+  const [giVerified, setGiVerified] = useState(existingDish?.giVerified ?? false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -400,10 +595,18 @@ function ComposeDishForm({
         ingredients: refs,
         yieldGrams: parsedYield,
         ...nutrition,
-        source: "manual",
+        source: existingDish?.source ?? "manual",
+        giVerified,
       };
-      await addDish(dish);
-      onSaved({ ...dish, dateAdded: new Date().toISOString().slice(0, 10), glycemicFlag: "none" });
+      const glycemicFlag = existingDish?.glycemicFlag ?? "none";
+      if (existingDish?.dateAdded) {
+        const updated: Dish = { ...dish, dateAdded: existingDish.dateAdded, glycemicFlag };
+        await updateDish(existingDish.nameUk, updated);
+        onSaved(updated);
+      } else {
+        await addDish(dish, glycemicFlag);
+        onSaved({ ...dish, dateAdded: new Date().toISOString().slice(0, 10), glycemicFlag });
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -489,8 +692,18 @@ function ComposeDishForm({
       <p className="food-form-hint">{uk.dishes.composeForm.yieldHint}</p>
 
       {preview && (
-        <p className="food-form-source">{uk.dishes.composeForm.preview(preview.carbsG, preview.caloriesKcal, preview.gi)}</p>
+        <>
+          <p className="food-form-source">
+            {uk.dishes.composeForm.preview(preview.carbsG, preview.caloriesKcal, preview.gi, giVerified ? "" : "≈")}
+          </p>
+          <p className="food-form-hint">{uk.dishes.approximateGiNote}</p>
+        </>
       )}
+
+      <label className="settings-checkbox">
+        <input type="checkbox" checked={giVerified} onChange={(e) => setGiVerified(e.target.checked)} />
+        {uk.foods.form.giVerifiedLabel}
+      </label>
 
       {error && <p className="food-form-error">{error}</p>}
 
@@ -518,6 +731,8 @@ export default function FoodsScreen() {
   const [search, setSearch] = useState("");
   const [showAddForm, setShowAddForm] = useState(false);
   const [dishAddMode, setDishAddMode] = useState<DishAddMode>("starter");
+  const [editingIngredient, setEditingIngredient] = useState<Ingredient | null>(null);
+  const [editingDish, setEditingDish] = useState<Dish | null>(null);
 
   useEffect(() => {
     if (!signedIn) return;
@@ -559,6 +774,7 @@ export default function FoodsScreen() {
           caloriesKcal: ingredient.caloriesKcal,
           sodiumMg: ingredient.sodiumMg,
           source: ingredient.source,
+          giVerified: ingredient.giVerified,
         };
         await addIngredient(toSave, nextFavorite, ingredient.glycemicFlag);
         setIngredients((prev) => [
@@ -606,6 +822,7 @@ export default function FoodsScreen() {
           caloriesKcal: ingredient.caloriesKcal,
           sodiumMg: ingredient.sodiumMg,
           source: ingredient.source,
+          giVerified: ingredient.giVerified,
         };
         await addIngredient(toSave, ingredient.favorite, nextFlag);
         setIngredients((prev) => [
@@ -653,6 +870,7 @@ export default function FoodsScreen() {
           caloriesKcal: dish.caloriesKcal,
           sodiumMg: dish.sodiumMg,
           source: dish.source,
+          giVerified: dish.giVerified,
         };
         await addDish(toSave, nextFlag);
         setDishes((prev) => [
@@ -717,6 +935,11 @@ export default function FoodsScreen() {
   const lookupIngredientFlag = (nameUk: string): GlycemicFlag | null =>
     ingredientFlagByName.get(nameUk.trim().toLowerCase()) ?? null;
 
+  // For AddFoodForm's duplicate-name warning — every name currently
+  // resolvable (bundle + saved), not just what's saved, since a collision
+  // with either one would mean the same silent-override problem.
+  const existingIngredientNames = new Set(availableIngredients.map((i) => i.nameUk.trim().toLowerCase()));
+
   return (
     <section className="screen">
       <h1>{uk.foods.title}</h1>
@@ -738,8 +961,42 @@ export default function FoodsScreen() {
         </button>
       </div>
 
-      {showAddForm && subTab === "ingredients" && (
+      {editingIngredient && (
+        <EditIngredientForm
+          ingredient={editingIngredient}
+          onSaved={(updated) => {
+            setIngredients((prev) => {
+              const withoutOld = (prev ?? []).filter(
+                (i) => i.nameUk.trim().toLowerCase() !== editingIngredient.nameUk.trim().toLowerCase(),
+              );
+              return [...withoutOld, updated];
+            });
+            setEditingIngredient(null);
+          }}
+          onCancel={() => setEditingIngredient(null)}
+        />
+      )}
+
+      {editingDish && (
+        <ComposeDishForm
+          ingredients={availableIngredients}
+          existingDish={editingDish}
+          onSaved={(updated) => {
+            setDishes((prev) => {
+              const withoutOld = (prev ?? []).filter(
+                (d) => d.nameUk.trim().toLowerCase() !== editingDish.nameUk.trim().toLowerCase(),
+              );
+              return [...withoutOld, updated];
+            });
+            setEditingDish(null);
+          }}
+          onCancel={() => setEditingDish(null)}
+        />
+      )}
+
+      {!editingIngredient && !editingDish && showAddForm && subTab === "ingredients" && (
         <AddFoodForm
+          existingNames={existingIngredientNames}
           onSaved={(ingredient) => {
             setIngredients((prev) => [...(prev ?? []), ingredient]);
             setShowAddForm(false);
@@ -749,8 +1006,11 @@ export default function FoodsScreen() {
         />
       )}
 
-      {showAddForm && subTab === "dishes" && dishAddMode === "starter" && (
+      {!editingIngredient && !editingDish && showAddForm && subTab === "dishes" && dishAddMode === "starter" && (
         <>
+          <button type="button" className="compose-cta" onClick={() => setDishAddMode("custom")}>
+            {uk.dishes.composeLinkLabel}
+          </button>
           <AddDishForm
             onSaved={(dish) => {
               setDishes((prev) => [...(prev ?? []), dish]);
@@ -759,13 +1019,10 @@ export default function FoodsScreen() {
             }}
             onCancel={() => setShowAddForm(false)}
           />
-          <button type="button" className="link-button" onClick={() => setDishAddMode("custom")}>
-            {uk.dishes.composeLinkLabel}
-          </button>
         </>
       )}
 
-      {showAddForm && subTab === "dishes" && dishAddMode === "custom" && (
+      {!editingIngredient && !editingDish && showAddForm && subTab === "dishes" && dishAddMode === "custom" && (
         <>
           <button type="button" className="link-button" onClick={() => setDishAddMode("starter")}>
             {uk.dishes.backToStarterLabel}
@@ -782,7 +1039,7 @@ export default function FoodsScreen() {
         </>
       )}
 
-      {!showAddForm && subTab === "ingredients" && (
+      {!editingIngredient && !editingDish && !showAddForm && subTab === "ingredients" && (
         <>
           <input
             className="food-search"
@@ -802,9 +1059,19 @@ export default function FoodsScreen() {
               <li key={ingredient.nameUk} className="food-list-item-with-action">
                 <span>
                   <strong>{ingredient.nameUk}</strong> <span className="food-name-en">({ingredient.nameEn})</span> —{" "}
-                  {ingredient.carbsG} г вуглеводів, ГІ {ingredient.gi}
+                  {ingredient.carbsG} г вуглеводів, {ingredient.giVerified ? "" : "≈"}ГІ {ingredient.gi} (
+                  {uk.health.gi[classifyGi(ingredient.gi)]})
                 </span>
                 <div className="food-list-actions">
+                  <button
+                    type="button"
+                    className="edit-toggle"
+                    onClick={() => setEditingIngredient(ingredient)}
+                    aria-label={uk.foods.editLabel}
+                    title={uk.foods.editLabel}
+                  >
+                    ✎
+                  </button>
                   <button
                     type="button"
                     className={`glycemic-badge ${ingredient.glycemicFlag}`}
@@ -830,7 +1097,7 @@ export default function FoodsScreen() {
         </>
       )}
 
-      {!showAddForm && subTab === "dishes" && (
+      {!editingIngredient && !editingDish && !showAddForm && subTab === "dishes" && (
         <>
           <input
             className="food-search"
@@ -853,17 +1120,29 @@ export default function FoodsScreen() {
                   <div className="food-list-item-with-action">
                     <span>
                       <strong>{dish.nameUk}</strong> <span className="food-name-en">({dish.nameEn})</span> —{" "}
-                      {dish.carbsG} г вуглеводів, ГІ {dish.gi} (на 100г)
+                      {dish.carbsG} г вуглеводів, {dish.giVerified ? "" : "≈"}ГІ {dish.gi} (
+                      {uk.health.gi[classifyGi(dish.gi)]}) (на 100г)
                     </span>
-                    <button
-                      type="button"
-                      className={`glycemic-badge ${dish.glycemicFlag}`}
-                      onClick={() => void handleCycleDishFlag(dish)}
-                      aria-label={uk.foods.glycemicFlag.toggleLabel(dish.glycemicFlag)}
-                      title={uk.foods.glycemicFlag.toggleLabel(dish.glycemicFlag)}
-                    >
-                      {GLYCEMIC_FLAG_SYMBOL[dish.glycemicFlag]}
-                    </button>
+                    <div className="food-list-actions">
+                      <button
+                        type="button"
+                        className="edit-toggle"
+                        onClick={() => setEditingDish(dish)}
+                        aria-label={uk.dishes.editLabel}
+                        title={uk.dishes.editLabel}
+                      >
+                        ✎
+                      </button>
+                      <button
+                        type="button"
+                        className={`glycemic-badge ${dish.glycemicFlag}`}
+                        onClick={() => void handleCycleDishFlag(dish)}
+                        aria-label={uk.foods.glycemicFlag.toggleLabel(dish.glycemicFlag)}
+                        title={uk.foods.glycemicFlag.toggleLabel(dish.glycemicFlag)}
+                      >
+                        {GLYCEMIC_FLAG_SYMBOL[dish.glycemicFlag]}
+                      </button>
+                    </div>
                   </div>
 
                   {containsFlagged && <p className="glycemic-hint">{uk.dishes.containsFlaggedIngredientHint}</p>}

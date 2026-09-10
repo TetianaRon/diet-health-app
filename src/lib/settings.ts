@@ -16,10 +16,29 @@ export interface Settings {
   // to suppress notifications during sleep — not a numeric target like the fields above.
   wakeTime: string;
   sleepTime: string;
-  // Which Today-screen progress bars to show — mom picks what she actually
-  // wants to track, rather than always seeing both.
+  // Glycemic Load has an actual sourced daily target, unlike fat/sugars/
+  // protein/sodium below (only fatPerMealLimit, a *per-meal* limit tied to
+  // the no-gallbladder constraint, already covered above) — so this is the
+  // one addition that gets a real progress bar with a target, rather than a
+  // plain opt-in total. 80 is the top of the diabetes-specific "60-80/day"
+  // range from mom's own old spreadsheet (tab "норми ГІ та ГН", citing
+  // prodiabet.ua — a non-diabetic "standard" range of 100-130/day is also
+  // listed there but doesn't apply to her) — found by checking that
+  // spreadsheet after mom said GL had a daily standard, confirming this
+  // number rather than the generic international guideline it started as.
+  dailyGlycemicLoadTarget: number;
+  // Which Today-screen stats to show — everyone picks what they actually want
+  // to track, rather than a fixed set. Carbs/Calories/GL are shown as
+  // progress bars (they have a real daily target); Fat/Sugars/Protein/Sodium
+  // have no established daily target, so they're shown as plain totals
+  // instead of a fabricated progress bar.
   showCarbsProgress: boolean;
   showCaloriesProgress: boolean;
+  showGlycemicLoadProgress: boolean;
+  showFatTotal: boolean;
+  showSugarsTotal: boolean;
+  showProteinTotal: boolean;
+  showSodiumTotal: boolean;
 }
 
 const NUMERIC_FIELDS = [
@@ -30,11 +49,20 @@ const NUMERIC_FIELDS = [
   "maxGapHours",
   "bloodSugarMin",
   "bloodSugarMax",
+  "dailyGlycemicLoadTarget",
 ] as const satisfies readonly (keyof Settings)[];
 
 const STRING_FIELDS = ["wakeTime", "sleepTime"] as const satisfies readonly (keyof Settings)[];
 
-const BOOLEAN_FIELDS = ["showCarbsProgress", "showCaloriesProgress"] as const satisfies readonly (keyof Settings)[];
+const BOOLEAN_FIELDS = [
+  "showCarbsProgress",
+  "showCaloriesProgress",
+  "showGlycemicLoadProgress",
+  "showFatTotal",
+  "showSugarsTotal",
+  "showProteinTotal",
+  "showSodiumTotal",
+] as const satisfies readonly (keyof Settings)[];
 
 function toBoolean(value: string): boolean {
   return value.trim().toUpperCase() === "TRUE";
@@ -51,14 +79,21 @@ const SETTINGS_KEYS: Record<keyof Settings, string> = {
   bloodSugarMax: "BloodSugarMax",
   wakeTime: "WakeTime",
   sleepTime: "SleepTime",
+  dailyGlycemicLoadTarget: "DailyGlycemicLoadTarget",
   showCarbsProgress: "ShowCarbsProgress",
   showCaloriesProgress: "ShowCaloriesProgress",
+  showGlycemicLoadProgress: "ShowGlycemicLoadProgress",
+  showFatTotal: "ShowFatTotal",
+  showSugarsTotal: "ShowSugarsTotal",
+  showProteinTotal: "ShowProteinTotal",
+  showSodiumTotal: "ShowSodiumTotal",
 };
 
 // Defaults per mom's 2026-09-07 interview (docs/requirements-open-questions.md) —
 // used for any key missing from the sheet. wakeTime/sleepTime match her stated
-// schedule (wakes 6:30, sleeps at midnight). Both progress bars default to
-// shown, matching the app's original always-both behavior.
+// schedule (wakes 6:30, sleeps at midnight). Default visible stats are
+// Calories + Glycemic Load specifically (not Carbs) — Carbs stays available
+// as an opt-in toggle, just not shown by default.
 export const DEFAULT_SETTINGS: Settings = {
   dailyCarbsTarget: 140,
   fatPerMealLimit: 18,
@@ -69,8 +104,14 @@ export const DEFAULT_SETTINGS: Settings = {
   bloodSugarMax: 7.8,
   wakeTime: "06:30",
   sleepTime: "00:00",
-  showCarbsProgress: true,
+  dailyGlycemicLoadTarget: 80,
+  showCarbsProgress: false,
   showCaloriesProgress: true,
+  showGlycemicLoadProgress: true,
+  showFatTotal: false,
+  showSugarsTotal: false,
+  showProteinTotal: false,
+  showSodiumTotal: false,
 };
 
 /** Parses raw Key/Value rows into a typed Settings object, falling back to defaults for missing keys. */

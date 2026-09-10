@@ -107,6 +107,44 @@ export function mealsBeforeTimestamp(entries: DailyLogEntry[], timestamp: string
     .slice(0, limit);
 }
 
+export interface DayGroup {
+  dateKey: string; // yyyy-mm-dd
+  entries: DailyLogEntry[]; // most-recent-first
+}
+
+/**
+ * Groups entries from the `days` calendar days immediately before
+ * `referenceDate` (today itself is deliberately excluded — the Today screen
+ * already shows it separately), most-recent-day-first, each day's entries
+ * most-recent-first. Powers Today's lightweight "last 3 days" history —
+ * a stopgap ahead of a proper History tab, per docs/build-log.md.
+ */
+export function recentDayGroups(entries: DailyLogEntry[], referenceDate: Date, days: number): DayGroup[] {
+  const todayKey = localDateKey(referenceDate);
+  const cutoffKeys = new Set<string>();
+  for (let i = 1; i <= days; i++) {
+    const d = new Date(referenceDate);
+    d.setDate(d.getDate() - i);
+    cutoffKeys.add(localDateKey(d));
+  }
+
+  const byDate = new Map<string, DailyLogEntry[]>();
+  for (const entry of entries) {
+    const key = localDateKey(new Date(entry.timestamp));
+    if (key === todayKey || !cutoffKeys.has(key)) continue;
+    const bucket = byDate.get(key);
+    if (bucket) bucket.push(entry);
+    else byDate.set(key, [entry]);
+  }
+
+  return [...byDate.entries()]
+    .sort((a, b) => (a[0] < b[0] ? 1 : -1))
+    .map(([dateKey, dayEntries]) => ({
+      dateKey,
+      entries: [...dayEntries].sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1)),
+    }));
+}
+
 // Column order: Timestamp, MealType, ItemName, PortionGrams, Carbs_g, GI,
 // Fiber_g, Sugars_g, Protein_g, Fat_g, Calories_kcal, Sodium_mg, GL, Notes (A-N).
 export function rowToLogEntry(row: unknown[]): DailyLogEntry {

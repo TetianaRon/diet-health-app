@@ -2,13 +2,14 @@ import { useEffect, useMemo, useState } from "react";
 import { App as CapacitorApp } from "@capacitor/app";
 import { uk } from "../i18n/uk";
 import { useAuth } from "../context/AuthContext";
-import { checkBloodSugarRange, checkFatLimit, mealGapWarning } from "../lib/health";
+import { checkBloodSugarRange, checkFatLimit, classifyGl, mealGapWarning } from "../lib/health";
 import { listIngredients, mergeWithStarterFoods, sortFavoritesFirst, type Ingredient } from "../lib/ingredients";
 import { listDishes, type Dish, type IngredientNutrition } from "../lib/dishes";
 import { GLYCEMIC_FLAG_SYMBOL, type GlycemicFlag } from "../lib/glycemicFlag";
 import { mergeWithStarterDishes } from "../data/starter-dishes";
 import { getSettings, type Settings } from "../lib/settings";
 import { wasLastReadFromCache } from "../lib/sheets";
+import { formatDayMonthFromKey, formatTime } from "../lib/dateFormat";
 import { scheduleMealReminder } from "../lib/reminderScheduler";
 import { latestBloodSugarEntry, listBloodSugarEntries, type BloodSugarEntry } from "../lib/bloodSugar";
 import {
@@ -19,6 +20,7 @@ import {
   isSameLocalDate,
   listLogEntries,
   localDateKey,
+  recentDayGroups,
   suggestMealType,
   type DailyLogEntry,
   type MealType,
@@ -176,7 +178,12 @@ function AddLogEntryForm({
         <input type="number" value={portionGrams} onChange={(e) => setPortionGrams(e.target.value)} />
       </label>
 
-      {previewNutrition && <p className="food-form-source">{uk.today.form.preview(previewNutrition.carbsG, previewNutrition.caloriesKcal, previewGl)}</p>}
+      {previewNutrition && (
+        <p className="food-form-source">
+          {uk.today.form.preview(previewNutrition.carbsG, previewNutrition.caloriesKcal, previewGl)} (
+          {uk.health.gl[classifyGl(previewGl)]})
+        </p>
+      )}
 
       <label>
         {uk.today.form.notesLabel}
@@ -310,9 +317,17 @@ export default function TodayScreen({
 
   const todayKey = localDateKey(new Date());
   const todayEntries = (entries ?? []).filter((e) => isSameLocalDate(e.timestamp, todayKey));
+  // Lightweight stopgap ahead of a proper History tab — mom asked to see
+  // recent days without leaving Today, not a full history browsing UI yet.
+  const historyGroups = recentDayGroups(entries ?? [], new Date(), 3);
 
   const totalCarbs = todayEntries.reduce((sum, e) => sum + e.carbsG, 0);
   const totalCalories = todayEntries.reduce((sum, e) => sum + e.caloriesKcal, 0);
+  const totalGl = todayEntries.reduce((sum, e) => sum + e.gl, 0);
+  const totalFat = todayEntries.reduce((sum, e) => sum + e.fatG, 0);
+  const totalSugars = todayEntries.reduce((sum, e) => sum + e.sugarsG, 0);
+  const totalProtein = todayEntries.reduce((sum, e) => sum + e.proteinG, 0);
+  const totalSodium = todayEntries.reduce((sum, e) => sum + e.sodiumMg, 0);
 
   const fatWarnings = MEAL_TYPES.map((mealType) => {
     const fat = todayEntries.filter((e) => e.mealType === mealType).reduce((sum, e) => sum + e.fatG, 0);
@@ -361,7 +376,7 @@ export default function TodayScreen({
       {loadError && <p className="food-form-error">{loadError}</p>}
       {showingCachedData && <p className="today-warning">{uk.today.offlineNotice}</p>}
 
-      {settings && (settings.showCarbsProgress || settings.showCaloriesProgress) && (
+      {settings && (settings.showCarbsProgress || settings.showCaloriesProgress || settings.showGlycemicLoadProgress) && (
         <div className="progress-block">
           {settings.showCarbsProgress && (
             <ProgressBar label={uk.today.progress.carbs} value={totalCarbs} target={settings.dailyCarbsTarget} unit="г" />
@@ -374,6 +389,23 @@ export default function TodayScreen({
               unit="ккал"
             />
           )}
+          {settings.showGlycemicLoadProgress && (
+            <ProgressBar
+              label={uk.today.progress.glycemicLoad}
+              value={totalGl}
+              target={settings.dailyGlycemicLoadTarget}
+              unit=""
+            />
+          )}
+        </div>
+      )}
+
+      {settings && (settings.showFatTotal || settings.showSugarsTotal || settings.showProteinTotal || settings.showSodiumTotal) && (
+        <div className="today-totals">
+          {settings.showFatTotal && <p>{uk.today.totals.fat(Math.round(totalFat))}</p>}
+          {settings.showSugarsTotal && <p>{uk.today.totals.sugars(Math.round(totalSugars))}</p>}
+          {settings.showProteinTotal && <p>{uk.today.totals.protein(Math.round(totalProtein))}</p>}
+          {settings.showSodiumTotal && <p>{uk.today.totals.sodium(Math.round(totalSodium))}</p>}
         </div>
       )}
 
@@ -416,13 +448,30 @@ export default function TodayScreen({
             <ul className="food-list">
               {items.map((entry, i) => (
                 <li key={`${entry.timestamp}-${i}`}>
-                  <strong>{entry.itemName}</strong> — {uk.today.entryMeta(entry.portionGrams, entry.carbsG, entry.caloriesKcal)}
+                  <span className="entry-time">{formatTime(entry.timestamp)}</span> <strong>{entry.itemName}</strong> —{" "}
+                  {uk.today.entryMeta(entry.portionGrams, entry.carbsG, entry.caloriesKcal)}
                 </li>
               ))}
             </ul>
           </div>
         );
       })}
+
+      <h2 className="history-title">{uk.today.historyTitle}</h2>
+      {historyGroups.length === 0 && <p>{uk.today.historyEmpty}</p>}
+      {historyGroups.map((group) => (
+        <div key={group.dateKey} className="today-meal-group">
+          <h3>{formatDayMonthFromKey(group.dateKey)}</h3>
+          <ul className="food-list">
+            {group.entries.map((entry, i) => (
+              <li key={`${entry.timestamp}-${i}`}>
+                <span className="entry-time">{formatTime(entry.timestamp)}</span> <strong>{entry.itemName}</strong> (
+                {entry.mealType}) — {uk.today.entryMeta(entry.portionGrams, entry.carbsG, entry.caloriesKcal)}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
     </section>
   );
 }

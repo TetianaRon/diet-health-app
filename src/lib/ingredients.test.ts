@@ -19,6 +19,7 @@ describe("rowToIngredient", () => {
       "2026-08-13",
       "TRUE",
       "watch",
+      "TRUE",
     ];
 
     expect(rowToIngredient(row)).toEqual({
@@ -36,6 +37,7 @@ describe("rowToIngredient", () => {
       dateAdded: "2026-08-13",
       favorite: true,
       glycemicFlag: "watch",
+      giVerified: true,
     });
   });
 
@@ -50,6 +52,7 @@ describe("rowToIngredient", () => {
     expect(result.source).toBe("manual");
     expect(result.favorite).toBe(false);
     expect(result.glycemicFlag).toBe("none");
+    expect(result.giVerified).toBe(false);
   });
 });
 
@@ -70,6 +73,7 @@ describe("ingredientToRow", () => {
       dateAdded: "2026-08-13",
       favorite: false,
       glycemicFlag: "none",
+      giVerified: false,
     };
 
     expect(rowToIngredient(ingredientToRow(ingredient))).toEqual(ingredient);
@@ -90,6 +94,7 @@ describe("sortFavoritesFirst", () => {
     source: "manual" as const,
     dateAdded: "2026-08-13",
     glycemicFlag: "none" as const,
+    giVerified: false,
   };
 
   it("moves favorites to the front, preserving relative order within each group", () => {
@@ -137,6 +142,7 @@ describe("mergeWithStarterFoods", () => {
       dateAdded: "2026-08-13",
       favorite: true,
       glycemicFlag: "none",
+      giVerified: false,
     };
 
     const merged = mergeWithStarterFoods([savedVersion]);
@@ -162,6 +168,7 @@ describe("mergeWithStarterFoods", () => {
       dateAdded: "2026-08-13",
       favorite: false,
       glycemicFlag: "none",
+      giVerified: false,
     };
     const merged = mergeWithStarterFoods([custom]);
     expect(merged).toHaveLength(STARTER_FOODS.length + 1);

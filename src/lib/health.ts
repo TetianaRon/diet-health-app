@@ -39,3 +39,29 @@ export function checkBloodSugarRange(valueMmolL: number, minMmolL: number, maxMm
   const tooHigh = valueMmolL > maxMmolL;
   return { tooLow, tooHigh, inRange: !tooLow && !tooHigh };
 }
+
+export type GiCategory = "low" | "medium" | "high";
+export type GlCategory = "low" | "moderate" | "high";
+
+/**
+ * Standard per-food GI classification bands (0-55 low, 56-69 medium, 70+
+ * high) — distinct from Settings.dailyGlycemicLoadTarget, which is a *daily
+ * total*, not a per-item band. Matches the table in mom's own old
+ * spreadsheet (tab "норми ГІ та ГН", sourced from prodiabet.ua).
+ */
+export function classifyGi(gi: number): GiCategory {
+  if (gi <= 55) return "low";
+  if (gi <= 69) return "medium";
+  return "high";
+}
+
+/**
+ * Standard per-portion GL classification bands (0-10 low, 11-19 moderate,
+ * 20+ high) — same source as classifyGi above, also per-item, not a daily
+ * total.
+ */
+export function classifyGl(gl: number): GlCategory {
+  if (gl <= 10) return "low";
+  if (gl <= 19) return "moderate";
+  return "high";
+}

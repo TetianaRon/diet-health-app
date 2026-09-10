@@ -38,10 +38,21 @@ export const STARTER_FOODS: StarterFood[] = [
   // GI carried here is the published value for the cooked/eaten form (GI
   // isn't measured on inedible raw grain) — it's just a place for Dishes to
   // pull from when computing a prepared dish's GI.
-  { nameUk: "Гречка суха", nameEn: "buckwheat, raw", carbsG: 71.5, gi: 54, fiberG: 10, sugarsG: 0, proteinG: 13.2, fatG: 3.4, caloriesKcal: 343, sodiumMg: 1 },
+  //
+  // Source audit, 2026-09-10 (prompted by a question about where these
+  // numbers came from at all — see docs/build-log.md for the full writeup):
+  // checked each grain/legume GI below against published research. GI
+  // varies substantially by variety/cooking method even in the cited
+  // literature (e.g. rice 50-89, millet 52-107 across studies) — a single
+  // number is always an approximation, not something more research fully
+  // resolves. Two values were adjusted to better match the most specific
+  // matching source found; the rest were within a defensible range of what's
+  // commonly cited and left as-is. See starter-dishes.ts for the per-dish
+  // citation table.
+  { nameUk: "Гречка суха", nameEn: "buckwheat, raw", carbsG: 71.5, gi: 50, fiberG: 10, sugarsG: 0, proteinG: 13.2, fatG: 3.4, caloriesKcal: 343, sodiumMg: 1 },
   { nameUk: "Рис білий сирий", nameEn: "white rice, raw", carbsG: 79, gi: 73, fiberG: 1.3, sugarsG: 0.1, proteinG: 7.1, fatG: 0.7, caloriesKcal: 365, sodiumMg: 5 },
   { nameUk: "Рис бурий сирий", nameEn: "brown rice, raw", carbsG: 77, gi: 68, fiberG: 3.5, sugarsG: 0.9, proteinG: 7.9, fatG: 2.9, caloriesKcal: 370, sodiumMg: 7 },
-  { nameUk: "Вівсяні пластівці сирі", nameEn: "rolled oats, raw", carbsG: 66, gi: 55, fiberG: 10, sugarsG: 1, proteinG: 17, fatG: 7, caloriesKcal: 389, sodiumMg: 2 },
+  { nameUk: "Вівсяні пластівці сирі", nameEn: "rolled oats, raw", carbsG: 66, gi: 58, fiberG: 10, sugarsG: 1, proteinG: 17, fatG: 7, caloriesKcal: 389, sodiumMg: 2 },
   { nameUk: "Пшоно сире", nameEn: "millet, raw", carbsG: 73, gi: 71, fiberG: 8.5, sugarsG: 0, proteinG: 11, fatG: 4.2, caloriesKcal: 378, sodiumMg: 5 },
   { nameUk: "Перлова крупа суха", nameEn: "pearl barley, raw", carbsG: 77.7, gi: 25, fiberG: 15.6, sugarsG: 0.8, proteinG: 9.9, fatG: 1.2, caloriesKcal: 352, sodiumMg: 9 },
   { nameUk: "Манна крупа суха", nameEn: "semolina, raw", carbsG: 77, gi: 55, fiberG: 3.9, sugarsG: 0.7, proteinG: 12.7, fatG: 1.1, caloriesKcal: 360, sodiumMg: 1 },
@@ -85,7 +96,16 @@ export const STARTER_FOODS: StarterFood[] = [
   // Vegetables (raw unless noted — potato/beet/pumpkin/corn stay as labeled
   // cooked Ingredients, see scope note above)
   { nameUk: "Капуста білокачанна", nameEn: "cabbage", carbsG: 5.8, gi: 15, fiberG: 2.5, sugarsG: 3.2, proteinG: 1.3, fatG: 0.1, caloriesKcal: 25, sodiumMg: 18 },
-  { nameUk: "Морква", nameEn: "carrot", carbsG: 9.6, gi: 39, fiberG: 2.8, sugarsG: 4.7, proteinG: 0.9, fatG: 0.2, caloriesKcal: 41, sodiumMg: 69 },
+  // Carrot's GI genuinely swings with cooking (unlike onion/cabbage/garlic,
+  // whose GI is low either way, per the 2026-09-10 audit) — raw ~16 vs.
+  // boiled 32-49, because heat gelatinizes its starch. The single "Морква"
+  // row here used to carry GI 39 — clearly a cooked value — under a name
+  // that didn't say so, the same class of bug fixed for dairy/grains
+  // earlier in this project. Split into both states; carbs/calories barely
+  // change with boiling (same reasoning as potato/beet/pumpkin), so only GI
+  // differs between the two rows.
+  { nameUk: "Морква сира", nameEn: "carrot, raw", carbsG: 9.6, gi: 16, fiberG: 2.8, sugarsG: 4.7, proteinG: 0.9, fatG: 0.2, caloriesKcal: 41, sodiumMg: 69 },
+  { nameUk: "Морква варена", nameEn: "carrot, boiled", carbsG: 9.6, gi: 39, fiberG: 2.8, sugarsG: 4.7, proteinG: 0.9, fatG: 0.2, caloriesKcal: 41, sodiumMg: 69 },
   { nameUk: "Буряк варений", nameEn: "beetroot, cooked", carbsG: 10, gi: 64, fiberG: 2.8, sugarsG: 8, proteinG: 1.6, fatG: 0.2, caloriesKcal: 44, sodiumMg: 77 },
   { nameUk: "Картопля варена", nameEn: "potato, boiled", carbsG: 17, gi: 78, fiberG: 1.8, sugarsG: 0.8, proteinG: 2, fatG: 0.1, caloriesKcal: 87, sodiumMg: 6 },
   { nameUk: "Огірок", nameEn: "cucumber", carbsG: 3.6, gi: 15, fiberG: 0.5, sugarsG: 1.7, proteinG: 0.7, fatG: 0.1, caloriesKcal: 15, sodiumMg: 2 },

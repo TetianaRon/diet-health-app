@@ -147,7 +147,7 @@ describe("searchUsda", () => {
     );
 
     const result = await searchUsda("some unrelated query");
-    expect(result[0].gi).toBe(54);
+    expect(result[0].gi).toBe(50);
   });
 
   it("does not fall back to the search query for GI — a candidate unrelated to the query gets no guessed value", async () => {

@@ -7,6 +7,13 @@ export const uk = {
     bloodSugar: "Цукор",
     settings: "Налаштування",
   },
+  // Per-item GI/GL classification labels — see classifyGi/classifyGl in
+  // src/lib/health.ts (standard bands, matching mom's own reference table).
+  // Distinct from the *daily* GL target in Settings.
+  health: {
+    gi: { low: "низький", medium: "середній", high: "високий" },
+    gl: { low: "низьке", moderate: "помірне", high: "високе" },
+  },
   today: {
     title: "Сьогодні",
     loading: "Завантаження...",
@@ -19,15 +26,24 @@ export const uk = {
     progress: {
       carbs: "Вуглеводи",
       calories: "Калорії",
+      glycemicLoad: "Глікемічне навантаження",
+    },
+    totals: {
+      fat: (grams: number) => `Жири сьогодні: ${grams} г`,
+      sugars: (grams: number) => `Цукри сьогодні: ${grams} г`,
+      protein: (grams: number) => `Білки сьогодні: ${grams} г`,
+      sodium: (mg: number) => `Натрій сьогодні: ${mg} мг`,
     },
     mealGapWarning: (hours: number) =>
       `Минуло ${hours.toFixed(1)} год з останнього прийому їжі — час перекусити.`,
     fatWarning: (mealType: string, overByGrams: number) =>
       `${mealType}: жиру забагато на ${overByGrams.toFixed(1)} г понад ліміт на прийом їжі.`,
     addButton: "Додати прийом їжі",
-    addAnotherHint: "Продукт додано. Можете додати ще один до цього прийому їжі, або натиснути «Готово».",
-    doneButton: "Готово",
+    addAnotherHint: "Продукт додано. Можете додати ще один, або натиснути «Зберегти запис».",
+    doneButton: "Зберегти запис",
     empty: "Сьогодні ще немає записів.",
+    historyTitle: "Останні 3 дні",
+    historyEmpty: "За останні 3 дні записів немає.",
     latestBloodSugar: (valueMmolL: number, contextLabel: string) => `${valueMmolL} ммоль/л (${contextLabel})`,
     entryMeta: (portionGrams: number, carbsG: number, caloriesKcal: number) =>
       `${portionGrams} г — ${carbsG} г вуглеводів, ${caloriesKcal} ккал`,
@@ -41,7 +57,7 @@ export const uk = {
       noMatches: "Нічого не знайдено. Спочатку додайте продукт на вкладці «Продукти».",
       preview: (carbsG: number, caloriesKcal: number, gl: number) =>
         `${carbsG} г вуглеводів, ${caloriesKcal} ккал, ГЛ ${gl}`,
-      saveButton: "Зберегти",
+      saveButton: "Додати",
       validationError: "Оберіть продукт і вкажіть порцію у грамах.",
     },
   },
@@ -58,6 +74,14 @@ export const uk = {
     noResults: "Нічого не знайдено.",
     favoriteLabel: "Додати в обране",
     unfavoriteLabel: "Прибрати з обраного",
+    editLabel: "Редагувати",
+    editForm: {
+      title: "Редагувати продукт",
+      nameUkLabel: "Назва (укр.)",
+      nameEnLabel: "Назва (англ., необов'язково)",
+      saveButton: "Зберегти зміни",
+      validationError: "Заповніть назву і всі числові поля коректними значеннями.",
+    },
     glycemicFlag: {
       none: "Без позначки",
       watch: "Обережно",
@@ -72,16 +96,23 @@ export const uk = {
       button: "Увійти через Google",
     },
     form: {
-      nameUkLabel: "Назва продукту",
+      nameUkLabel: "Пошук продукту",
       nameUkPlaceholder: "напр. гречка варена",
       nameUkHint:
         "Якщо важливо, вкажіть спосіб приготування (варене, смажене, сире тощо) та тип продукту (сухий, консервований, свіжий, морожений тощо) — це впливає на калорійність і допомагає пошуку знайти точніший варіант.",
       pickButton: "Обрати",
       lookupButton: "Знайти",
       lookupLoading: "Пошук...",
+      saveNameLabel: "Назва для збереження",
+      saveNameHint:
+        "Це буде назва продукту у вашому списку. Якщо ви шукали загальну назву (наприклад «квасоля») і обрали конкретний варіант, уточніть назву тут — так кілька варіантів не переплутаються між собою.",
       saveButton: "Зберегти",
       notFound: "Не знайдено — введіть дані вручну.",
-      validationError: "Заповніть усі числові поля коректними значеннями.",
+      validationError: "Заповніть назву для збереження і всі числові поля коректними значеннями.",
+      duplicateNameWarning: (name: string) =>
+        `Продукт «${name}» вже є у вашому списку. Зберегти однаково? Існуючий запис буде замінено новими даними.`,
+      confirmOverwriteButton: "Так, замінити",
+      giVerifiedLabel: "Я перевірив(ла) глікемічний індекс за надійним джерелом",
       sourceLabel: "Джерело",
       source: {
         starter: "Базова база",
@@ -103,9 +134,12 @@ export const uk = {
   dishes: {
     addButton: "Додати страву",
     noResults: "Нічого не знайдено.",
-    composeLinkLabel: "Створити власний рецепт з кількох продуктів →",
+    editLabel: "Редагувати",
+    composeLinkLabel: "Створити власний рецепт з кількох продуктів",
     backToStarterLabel: "← Назад до готових страв",
     containsFlaggedIngredientHint: "△ Містить продукт із позначкою — можливо, варто перевірити склад",
+    approximateGiNote:
+      "≈ ГІ страви — приблизний розрахунок за інгредієнтами, а не лабораторний вимір. Для страв, де все готується разом (суп, рагу), реальний ГІ може відрізнятися — спосіб приготування та поєднання продуктів впливають на нього, а це неможливо точно порахувати.",
     flagIngredientsPrompt: {
       title: "Позначити окремі продукти цієї страви? (необов'язково)",
     },
@@ -126,8 +160,9 @@ export const uk = {
       yieldLabel: "Вага готової страви (г)",
       yieldHint: "Загальна вага після приготування — вода додає вагу, але не калорії.",
       unresolvedIngredient: "Такого продукту немає в базі — спочатку додайте його на вкладці «Продукти».",
-      preview: (carbsG: number, caloriesKcal: number, gi: number) =>
-        `На 100г готової страви: ${carbsG} г вуглеводів, ${caloriesKcal} ккал, ГІ ${gi}`,
+      // giVerifiedMarker: "" once she's checked "Я перевірив(ла)...", "≈" until then.
+      preview: (carbsG: number, caloriesKcal: number, gi: number, giVerifiedMarker: string) =>
+        `На 100г готової страви: ${carbsG} г вуглеводів, ${caloriesKcal} ккал, ${giVerifiedMarker}ГІ ${gi}`,
       saveButton: "Зберегти",
       validationError: "Заповніть назву страви, оберіть інгредієнти з бази з коректними грамами та вкажіть вагу готової страви.",
     },
@@ -199,8 +234,14 @@ export const uk = {
       bloodSugarMax: "Максимальний цукор (ммоль/л)",
       wakeTime: "Час пробудження",
       sleepTime: "Час сну",
-      showCarbsProgress: "Показувати прогрес вуглеводів на екрані «Сьогодні»",
-      showCaloriesProgress: "Показувати прогрес калорій на екрані «Сьогодні»",
+      dailyGlycemicLoadTarget: "Денна норма глікемічного навантаження",
+      showCarbsProgress: "Показувати вуглеводи на екрані «Сьогодні»",
+      showCaloriesProgress: "Показувати калорії на екрані «Сьогодні»",
+      showGlycemicLoadProgress: "Показувати глікемічне навантаження на екрані «Сьогодні»",
+      showFatTotal: "Показувати денну суму жирів на екрані «Сьогодні»",
+      showSugarsTotal: "Показувати денну суму цукрів на екрані «Сьогодні»",
+      showProteinTotal: "Показувати денну суму білків на екрані «Сьогодні»",
+      showSodiumTotal: "Показувати денну суму натрію на екрані «Сьогодні»",
     },
   },
   reminders: {

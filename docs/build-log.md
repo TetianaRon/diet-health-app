@@ -948,3 +948,121 @@ New `wasLastReadFromCache()` lets a screen show an offline hint. Wired into `Tod
 **Next steps:**
 1. Same combined rebuild + reinstall as the previous entry, now also covering offline read fallback — test with airplane mode after first opening the app online once (so a cache actually exists to fall back to)
 2. Everything else still pending, unchanged from the previous entries
+
+## 2026-09-10 — Four more UX fixes: button clarity, compose-recipe prominence, Ukrainian month names, expanded Today metrics
+
+**Button labels on the meal-log form**: "Зберегти"/"Готово" were unclear about what each actually did once the form started staying open across multiple items (per the earlier multi-item fix this session) — renamed to "Додати" (adds one item, form stays open) and "Зберегти запис" (finishes the meal, closes the form). No logic change, pure labeling.
+
+**"Create custom recipe" promoted to a real button**: reversed the 2026-08-14 "custom-recipe ingredients no longer a peer tab" decision — that session deliberately made it a subordinate text link below the starter-bundle browser, reasoning it should read as a secondary escape hatch, not a co-equal option. Live use showed the opposite problem: it was too easy to miss entirely. Now a full-width button (new `.compose-cta` CSS) above the bundle browser, not below it as a link. Noting the reversal explicitly since the prior entry's reasoning was recorded as if settled — it wasn't, once real usage disagreed.
+
+**Ukrainian month names**: `BloodSugarScreen.tsx`'s `formatTimestamp` used `month: "2-digit"` (numeric). Changed to `month: "long"` — with the `uk-UA` locale, `toLocaleString` produces the correctly-declined Ukrainian genitive month name (e.g. "10 вересня") via the platform's own ICU data, deliberately not a hand-rolled month-name array (avoids risking the grammar). This was the only place in the app actually displaying a date to the user — `dateAdded` (Ingredients/Dishes) is stored but never rendered anywhere.
+
+**Today screen's trackable stats expanded, defaults changed**: developer wants to eventually surface fat/sugars/protein/sodium as optional stats, and wants Calories + Glycemic Load as the default view (not Carbs). Implemented with a real constraint respected: Carbs/Calories have known daily targets from mom's interview, and **Glycemic Load has a standard nutrition-science reference band** (a "low GL day" is commonly cited as ≤80) — so those three get real progress bars, with `dailyGlycemicLoadTarget` (new, defaults to 80) as GL's target. Fat/Sugars/Protein/Sodium have **no established daily target** (only `fatPerMealLimit`, a *per-meal* limit tied to the no-gallbladder constraint, already existed) — rather than inventing a plausible-sounding number for a health-tracking app, these four are shown as plain opt-in daily totals with no progress bar. Flagged this reasoning to the developer rather than silently picking numbers.
+
+- `src/lib/settings.ts`: `Settings` gains `dailyGlycemicLoadTarget` (numeric) and 5 more booleans (`showGlycemicLoadProgress`, `showFatTotal`, `showSugarsTotal`, `showProteinTotal`, `showSodiumTotal`). **Defaults changed**: `showCarbsProgress` flipped from `true` to `false` (Carbs is now opt-in, not default), `showGlycemicLoadProgress` defaults `true`. This takes effect immediately for anyone without a live Settings-sheet override (i.e. mom right now).
+- `TodayScreen.tsx`: computes `totalGl`/`totalFat`/`totalSugars`/`totalProtein`/`totalSodium` from today's entries; renders GL as a third `ProgressBar` alongside Carbs/Calories, and the four opt-in totals as plain text lines below (new `.today-totals` CSS) when enabled.
+- `SettingsScreen.tsx`: the 5 new checkboxes and 1 new numeric field slot into the existing `NUMERIC_FIELDS`/`BOOLEAN_FIELDS` pattern, no new UI pattern needed.
+
+**Verified**: `npm run test` (90/90, up from 88 — 2 new `settings.test.ts` cases), `npm run build` clean, `npx cap sync android` picked up the changes, live browser check of the not-signed-in state shows no regressions.
+
+**Not yet verified on a real device** — same as everything else from today.
+
+**Needs a manual spreadsheet edit, new**: add `DailyGlycemicLoadTarget` (80), `ShowGlycemicLoadProgress` (TRUE), `ShowFatTotal`/`ShowSugarsTotal`/`ShowProteinTotal`/`ShowSodiumTotal` (FALSE) as new Key/Value rows — same still-growing list as `WakeTime`/`SleepTime`/`ShowCarbsProgress`/`ShowCaloriesProgress` from earlier today.
+
+**Next steps:**
+1. Same combined rebuild + reinstall, now covering everything from the whole session — this is a lot to verify in one pass before Saturday, worth going through the full test checklist methodically rather than spot-checking
+2. Everything else still pending, unchanged from the previous entries
+
+## 2026-09-10 — Confirmed GL daily target against mom's own old spreadsheet
+
+Mom pushed back on the `dailyGlycemicLoadTarget: 80` default from earlier today, saying GL does have real daily-limit standards and she had something about it in her old spreadsheet. Checked it (`docs.google.com/spreadsheets/d/1dz_wPjkqjhwUmrIp1ByU-2078A9YkpsPtBkRIsGe3xM`, link from `docs/requirements-open-questions.md` — first time this spreadsheet's actually been opened, still flagged elsewhere as worth reviewing for bundle-expansion data too, not done yet). She was right, and had more specific guidance than what was used: a tab named "норми ГІ та ГН" (GI and GL norms) states **diabetes-specific daily GL of 60-80** (vs. a separate non-diabetic "standard" of 100-130), sourced from prodiabet.ua. Also has standard per-portion GI (0-55 low/56-69 medium/70+ high) and GL (0-10 low/11-19 moderate/20+ high) classification bands, not currently surfaced anywhere in the app — a possible future per-item GI/GL label, not built.
+
+**No number changed** — 80 (used earlier today as a generic international-guideline default) happens to already match the top of her source's diabetes-specific range, so it was right, just under-justified. Updated the code comment and `docs/technical-spec.md` to cite the real source instead of the generic one. Worth remembering: `docs/requirements-open-questions.md`'s spreadsheet link is real, useful, and still unreviewed for the bundle-expansion purpose it was originally flagged for.
+
+**Also answered, no code change**: whether the AddFoodForm name-collision/no-edit-flow issues (flagged 2026-09-10 earlier, "not necessarily right now") got fixed in any of today's other work — no, still open, confirmed explicitly rather than left ambiguous.
+
+**Next steps:** unchanged from the previous entry — same combined rebuild/test pass still pending, everything else on the standing list untouched.
+
+## 2026-09-10 — Fixed AddFoodForm's name collision, built a real edit flow, added GI/GL classification, and Today timestamps + a 3-day history stopgap
+
+Five separate asks in one message: apply the GI/GL classification bands found in mom's old spreadsheet, finally fix AddFoodForm's search/save-name collision (deferred twice earlier today), build a real edit flow for saved Ingredients/Dishes (also deferred twice), add timestamps to Today's meal list (mom's own observation — she couldn't tell when a meal happened), and a lightweight "last 3 days" history section on Today ahead of a real History tab later.
+
+**GI/GL classification** (`src/lib/health.ts`, new, tested): `classifyGi()` (0-55 low / 56-69 medium / 70+ high) and `classifyGl()` (0-10 low / 11-19 moderate / 20+ high) — the *per-item* bands from mom's spreadsheet, distinct from `Settings.dailyGlycemicLoadTarget` (a *daily total*, from the same spreadsheet but a different table). Applied in `uk.health` (new i18n section) wherever a raw GI/GL number was already shown: Foods screen's Ingredients/Dishes list rows, AddFoodForm's bundle suggestions and USDA candidate list, and Today's meal-log preview line (GL). No new UI surfaces added — every application point already showed the raw number, this just adds the classification word next to it.
+
+**AddFoodForm redesign** (`FoodsScreen.tsx`): split the single `nameUk` field into `search` (query only, drives bundle/USDA matching) and a new, always-visible, always-editable `saveNameUk` field with its own hint explaining why it matters. Defaults: the bundle's own name when picked from there (already specific), the search text when picked from USDA (the best available default — there's no automatic English→Ukrainian back-translation to generate something more specific per candidate). The actual fix for the reported bug: **`handleSave` now checks the save-name against every currently-resolvable name (bundle + saved) and refuses to save silently on a collision** — shows a warning and requires an explicit second tap ("Так, замінити") to proceed, instead of the old silent overwrite. Editing the name after a warning clears it, so it can't go stale against a name she's since changed.
+
+**Edit flow, both Ingredients and Dishes**:
+- `src/lib/ingredients.ts`/`dishes.ts`: new `updateIngredient()`/`updateDish()` — overwrite an existing row in place (found by its *current* name, so a rename is just part of the same write), the edit-flow counterpart to `addIngredient`/`addDish`'s always-append behavior. `dishes.ts` also got a light refactor (`findDishRowNumber` extracted, was inlined only in `setDishGlycemicFlag` before).
+- New `EditIngredientForm` (`FoodsScreen.tsx`): direct field editing, no search/lookup needed since she's correcting values already in hand. A bundle-only ingredient (never actually saved) can still be "edited" — saving becomes its first save, same implicit-save-on-explicit-action principle used for favoriting.
+- `ComposeDishForm` gained an optional `existingDish` prop: pre-fills name/ingredient-rows/yield from it, recomputes nutrition via the same `computeDishNutrition` path as a new dish (never hand-typed, even when editing — matches the standing "Dish nutrition is always computed" principle), and updates in place on save. Reused rather than building a separate edit form, since editing a dish and composing one are the same operation modulo starting state.
+- New ✎ edit button in both list rows (`.edit-toggle` CSS), alongside the existing favorite/flag toggles.
+
+**Today screen — timestamps and history**: new shared `src/lib/dateFormat.ts` (`formatDateTime`, `formatTime`, `formatDayMonthFromKey` — the last one built from explicit local Y/M/D components rather than `new Date("yyyy-mm-dd")`, which parses as UTC midnight and can roll back a day in timezones behind UTC). `BloodSugarScreen.tsx`'s inline `formatTimestamp` moved here and reused rather than duplicated. Each of Today's logged items now shows its time (`.entry-time`, muted gray). New `recentDayGroups()` in `dailyLog.ts` (pure, tested) groups entries from the 3 calendar days before today (today itself excluded — already shown above), most-recent-day-first; rendered as a new "Останні 3 дні" section below Today's meal groups, explicitly framed as a stopgap ahead of a real History tab, per the developer's own words.
+
+**Verified**: `npm run test` (94/94, up from 90 — 4 new `health.test.ts` cases for the classification bands, 2 new `dailyLog.test.ts` cases for `recentDayGroups`), `npm run build` clean (no type errors across this whole redesign), `npx cap sync android` picked up the changes, live browser check of the not-signed-in state shows no regressions across all four tabs.
+
+**Not yet verified on a real device** — this is a large batch (search/save-name split, both edit flows, GI/GL labels, timestamps, history section) all landing in one pass; worth a careful, unhurried test rather than a quick spot-check once installed.
+
+**Next steps:**
+1. The now-quite-large combined rebuild + reinstall + full test pass — recommend going through every item on the standing checklist methodically given how much has accumulated in one session
+2. Everything else still pending, unchanged from earlier entries: `Favorite`/`GlycemicFlag`/`WakeTime`/`SleepTime`/`Show*`/`DailyGlycemicLoadTarget` header cells and rows still needed on the live dev sheet, weight tracking, a real History tab (this session's 3-day section is explicitly a stopgap), reminder Phase 2, deleting the unused Desktop app OAuth client
+
+## 2026-09-10 — GI data source audit; a real raw/cooked mismatch found and fixed; approximation caveats made visible
+
+Developer asked where the app's GI data actually comes from and pushed back on whether computing a cooked dish's GI from its raw ingredient was scientifically sound — a good challenge, since GI is lab-measured empirically and isn't something that follows from macros the way calories/carbs do.
+
+**What was actually verified, precisely**: the mechanism was never a naive "convert raw GI to cooked GI" — `starter-foods.ts`'s grain/legume rows already stored what their own comment claimed was the *cooked*-form's published GI (reasoning: GI can't be measured on inedible raw grain, so there's nothing else meaningful to store there), and `computeDishNutrition`'s single-ingredient pass-through just carries that forward unchanged. The real gap was different and worse: **none of these ~60 GI values had an individual citation** — "published research" was asserted, not traceable.
+
+**Researched all 12 grain/legume dish GI values against real sources** (University of Sydney's GI database where available, cross-checked against other peer-reviewed/commonly-cited figures) — full citation table now in `starter-dishes.ts`. Two adjusted: buckwheat 54→50 (Univ. Sydney cites 49), oatmeal-with-water 55→58 (matches a study of that *exact* prep — old-fashioned rolled oats cooked with water — specifically; this one crosses from "low" to "medium" classification, a real change). The rest were within a defensible range of what's cited and left as-is, with the honest finding documented: GI research itself is inherently noisy (rice cited anywhere from 50-89 across studies depending on variety, millet 52-107) — better sourcing makes the numbers *traceable*, not perfectly precise, since no single figure can be.
+
+**A real, confirmed bug found**: "Морква" (carrot) had no raw/cooked qualifier in its name — the exact class of bug fixed for dairy fat % and grain prep-state earlier in this project, which slipped through for carrot specifically. Its stored GI (39) turned out to be clearly a *cooked* value (raw carrot GI ≈16 per research; boiled 32-49) sitting under an unlabeled name. **Split into "Морква сира" (raw, GI 16) and "Морква варена" (boiled, GI 39)** — carbs/calories barely change with boiling (same reasoning already applied to potato/beet/pumpkin), so only GI differs between the two rows. Checked onion and cabbage too, for the same class of issue — their GI is low and stable regardless of prep state (research confirmed no meaningful swing), so no fix needed there.
+
+**The "soup" concern** (composing a multi-ingredient dish where everything cooks together — a home cook can't separate and re-weigh individual cooked components afterward): confirmed this is the correct, inherent limit of the carb-weighted-average model, already honestly documented in code (`computeDishNutrition`'s comment: "true GI isn't simply additive, but no better data exists without lab-testing the specific dish") but never visible to whoever's actually using the app. Fixed the visibility gap, not the underlying math (there's no better math available without lab equipment): a `≈` now prefixes every *computed* Dish GI wherever shown (Foods screen's Dishes list, the starter-dish browse list, `ComposeDishForm`'s live preview) — distinct from Ingredients' GI, which is a direct reference value, not computed — plus a full explanatory note in `ComposeDishForm` specifically (`uk.dishes.approximateGiNote`), shown right where a soup/stew would actually get composed.
+
+**Verified**: `npm run test` (94/94, unchanged count — no new pure logic added, this was data correction + a UI-only caveat; 3 existing test expectations updated to match the corrected buckwheat/oatmeal GI values), `npm run build` clean, `npx cap sync android` picked up the changes, live browser check shows no regressions.
+
+**Not yet resolved, flagged rather than guessed at**: pearl barley's GI (kept at 25) has a genuine conflict in the sources found — one citation for "cooked pearl barley" ≈25, another for "pearled barley" specifically (which is what Ukrainian "Перлова крупа" actually is) at 58±8, notably higher. Documented the conflict in `starter-dishes.ts` rather than picking one; worth a closer look if it matters in practice.
+
+**Next steps:**
+1. Same combined rebuild + reinstall + full test pass as the previous entry, now covering this too
+2. Consider resolving the pearl barley conflict with a more specific source
+3. Everything else still pending, unchanged from earlier entries
+
+## 2026-09-10 — GI estimate vs. confirmed: a per-item checkbox, not a blanket assumption
+
+Follow-up to the GI audit: developer asked for a manual "estimate vs. confirmed" checkbox on both Ingredients and Dishes, so a specific value someone has personally checked against a trusted source can be marked as such — replacing the blanket `≈` from the previous entry (which couldn't distinguish a genuinely-checked value from an unreviewed one).
+
+**New field, both schemas**: `giVerified: boolean` — `Ingredient` (new column O) and `Dish` (new column P), same additive no-migration pattern as every previous column addition (Favorite, GlycemicFlag). Defaults `false` for every new entry, **including starter-bundle items** — the point being that "we researched it" (the previous entry's audit) and "a person confirmed it" are different claims; nothing gets to claim the second just because of the first.
+
+- `src/lib/ingredients.ts`/`dishes.ts`: schema, row mapping, and range constants extended (Ingredients A2:N→A2:O, Dishes A2:O→A2:P); `updateIngredient`/`updateDish`'s overwrite ranges extended to match.
+- Checkbox added to `AddFoodForm`, `EditIngredientForm`, and `ComposeDishForm` (`uk.foods.form.giVerifiedLabel`) — reused the `.settings-checkbox` CSS from the Settings screen rather than introducing new styling. Resets to unchecked whenever the GI value it would be attesting to actually changes (a new AddFoodForm pick, or editing the GI field directly in `EditIngredientForm`) — a stale checkmark on a since-changed number would be worse than no checkmark.
+- The `≈` marker from the previous entry is now **conditional on `giVerified`**, not blanket — and extended to Ingredients too (previously only Dishes got it, since Ingredients' GI was treated as a direct reference value; now that verification is tracked per-item regardless of type, the same marker logic applies uniformly). Applies everywhere a saved item's GI is shown: Foods screen's Ingredients/Dishes lists, `ComposeDishForm`'s live preview.
+- The three "implicit save" paths (favoriting/flagging a bundle-only Ingredient or Dish) now carry the source item's existing `giVerified` value through instead of dropping it.
+
+**Verified**: `npm run test` (94/94, unchanged — no new pure logic, this is schema + form wiring; several existing `Ingredient`/`Dish` test fixtures updated to include the new required field), `npm run build` clean, `npx cap sync android` picked up the changes, live browser check confirmed the page still renders correctly (one stray `ERR_NETWORK_IO_SUSPENDED` console line from the browser tab having sat idle during a long research phase this session — reload didn't clear it but the actual page content was unaffected, not a real regression).
+
+**Needs a manual spreadsheet edit, new**: add `GiVerified` as a header in Ingredients column O and Dishes column P on the live dev sheet — same category as every other still-pending header addition this session.
+
+**Next steps:**
+1. Same combined rebuild + reinstall + full test pass, now covering this too
+2. Everything else still pending, unchanged from earlier entries
+
+## 2026-09-10 — Pre-publish documentation review
+
+Google Play developer account verification came through — before moving to Play Store setup, did a documentation pass for anything worth fixing first, per the developer's own request.
+
+**Real gap found and fixed**: the spreadsheet template (generated mid-session for mom's setup) had gone stale — schema kept evolving after it was built, so it was missing `GiVerified` (Ingredients/Dishes), the 7 `Show*` display toggles, and `DailyGlycemicLoadTarget` (all Settings). Regenerated with the complete current schema and re-sent — the earlier version should not be used for her real spreadsheet.
+
+**Real gap found, not fixed (out of scope for a doc pass)**: her old Google Sheet's "продукти"/"продукти1" tabs — her actual logged foods — were never reviewed for bundle-expansion despite being flagged as worth reviewing since the interview. Only the GI/GL norms tab got checked, for an unrelated question. Still open.
+
+**Docs updated to match reality** (no functional change, just stopped them contradicting the app): `requirements-open-questions.md`'s reminder item said "not yet designed" — it's built. `technical-spec.md`'s status banner still said "pending mom's interview" — that was 2026-09-07. Its JDK/Android-SDK limitation note was also stale — resolved same-day it was written, once Android Studio access came through.
+
+**Confirmed NOT blocking, deliberately deferred** (unchanged from the standing list): weight tracking, blood-sugar trend charts, medication logging (never scoped), reminder Phase 2, full offline write-sync, the pearl barley GI citation conflict.
+
+**Flagged plainly to the developer**: nothing built this entire session (persistent login, offline caching, multi-item meals, progress-bar toggles, the AddFoodForm/edit-flow rebuild, GI verification checkboxes) has been tested signed-in on a real device yet — every verification this session has been build/test-suite/not-signed-in-browser only. Recommended a real local test pass before adding Play Store's upload/processing delay on top.
+
+**Next steps:**
+1. Developer does a full signed-in device test covering everything from this session (checklist given in-conversation, not duplicated here)
+2. Once confirmed: set up mom's real spreadsheet from the regenerated template, then proceed to Play Store Internal Testing setup (privacy policy via GitHub Pages, .aab build, store listing, add mom as tester)
+3. Review mom's old spreadsheet's actual food/product tabs for bundle expansion, whenever convenient
+4. Everything else still pending, unchanged from earlier entries

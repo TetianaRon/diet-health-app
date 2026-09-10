@@ -24,7 +24,7 @@ describe("STARTER_DISHES", () => {
     const dish = find("Гречка варена");
     expect(dish.caloriesKcal).toBeCloseTo(95, -1);
     expect(dish.carbsG).toBeCloseTo(19.9, 0);
-    expect(dish.gi).toBe(54);
+    expect(dish.gi).toBe(50);
   });
 
   it("computes cooked white rice close to the real published reference (~130 kcal, ~28g carbs per 100g)", () => {
@@ -79,6 +79,7 @@ describe("mergeWithStarterDishes", () => {
       source: "manual",
       dateAdded: "2026-08-13",
       glycemicFlag: "none",
+      giVerified: false,
     };
     const merged = mergeWithStarterDishes([custom]);
     expect(merged).toHaveLength(STARTER_DISHES.length + 1);

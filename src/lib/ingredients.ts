@@ -21,10 +21,17 @@ export interface Ingredient {
   dateAdded: string;
   favorite: boolean;
   glycemicFlag: GlycemicFlag;
+  // True only once a person has explicitly confirmed this GI against a
+  // source they trust — never set automatically, regardless of how the GI
+  // value itself was sourced (bundle research, USDA+static table, manual
+  // entry). Defaults false for every new entry, including bundle items — see
+  // the 2026-09-10 build-log entry for why "we researched it" still isn't
+  // the same as "a person confirmed it."
+  giVerified: boolean;
 }
 
-const INGREDIENTS_RANGE = "A2:N1000"; // header row is A1:N1
-const INGREDIENTS_APPEND_RANGE = "A:N";
+const INGREDIENTS_RANGE = "A2:O1000"; // header row is A1:O1
+const INGREDIENTS_APPEND_RANGE = "A:O";
 
 function toNumber(value: unknown): number {
   const n = Number(value);
@@ -56,6 +63,7 @@ export function rowToIngredient(row: unknown[]): Ingredient {
     dateAdded: String(row[11] ?? ""),
     favorite: toBoolean(row[12]),
     glycemicFlag: toGlycemicFlag(row[13]),
+    giVerified: toBoolean(row[14]),
   };
 }
 
@@ -76,6 +84,7 @@ export function ingredientToRow(ingredient: Ingredient): unknown[] {
     ingredient.dateAdded,
     ingredient.favorite,
     ingredient.glycemicFlag,
+    ingredient.giVerified,
   ];
 }
 
@@ -85,7 +94,7 @@ export function sortFavoritesFirst<T extends { favorite: boolean }>(items: T[]):
 }
 
 function starterFoodToIngredient(food: (typeof STARTER_FOODS)[number]): Ingredient {
-  return { ...food, source: "starter", dateAdded: "", favorite: false, glycemicFlag: "none" };
+  return { ...food, source: "starter", dateAdded: "", favorite: false, glycemicFlag: "none", giVerified: false };
 }
 
 /**
@@ -148,4 +157,15 @@ export async function setIngredientFavorite(nameUk: string, favorite: boolean): 
 export async function setIngredientGlycemicFlag(nameUk: string, glycemicFlag: GlycemicFlag): Promise<void> {
   const rowNumber = await findIngredientRowNumber(nameUk);
   await batchUpdateRanges([{ range: `Ingredients!N${rowNumber}`, values: [[glycemicFlag]] }]);
+}
+
+/**
+ * Overwrites an existing Ingredients row in place, found by its *current*
+ * nameUk (i.e. before any rename in `ingredient`) — the edit flow's
+ * counterpart to addIngredient's always-append behavior. Rewrites every
+ * column, so a rename is just part of the same write, not a separate step.
+ */
+export async function updateIngredient(currentNameUk: string, ingredient: Ingredient): Promise<void> {
+  const rowNumber = await findIngredientRowNumber(currentNameUk);
+  await batchUpdateRanges([{ range: `Ingredients!A${rowNumber}:O${rowNumber}`, values: [ingredientToRow(ingredient)] }]);
 }

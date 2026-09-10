@@ -111,6 +111,7 @@ describe("rowToDish / dishToRow", () => {
       source: "starter",
       dateAdded: "2026-08-13",
       glycemicFlag: "watch",
+      giVerified: true,
     };
 
     expect(rowToDish(dishToRow(dish))).toEqual(dish);
@@ -133,6 +134,7 @@ describe("rowToDish / dishToRow", () => {
       source: "manual",
       dateAdded: "2026-08-13",
       glycemicFlag: "none",
+      giVerified: false,
     };
     expect(rowToDish(dishToRow(dish)).source).toBe("manual");
   });
@@ -178,6 +180,7 @@ describe("dishContainsFlaggedIngredient", () => {
     source: "manual",
     dateAdded: "2026-08-13",
     glycemicFlag: "none",
+    giVerified: false,
   };
 
   it("is true when any referenced ingredient currently resolves to watch or avoid", () => {

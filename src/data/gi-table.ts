@@ -29,11 +29,13 @@ const EXTRA_GI: Record<string, number> = {
   // is a property of the cooked/eaten form and USDA descriptions commonly
   // say "cooked". These base-word entries catch that regardless of exact
   // phrasing (substring match), duplicating the same published GI values.
-  "buckwheat": 54,
+  // Kept in sync with starter-foods.ts's own values — see the source-audit
+  // comment there and in starter-dishes.ts for citations (2026-09-10).
+  "buckwheat": 50,
   "white rice": 73,
   "brown rice": 68,
-  "oatmeal": 55,
-  "rolled oats": 55,
+  "oatmeal": 58,
+  "rolled oats": 58,
   "millet": 71,
   "pearl barley": 25,
   "semolina": 55,

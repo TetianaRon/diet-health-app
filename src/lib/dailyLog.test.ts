@@ -7,6 +7,7 @@ import {
   localDateKey,
   logEntryToRow,
   mealsBeforeTimestamp,
+  recentDayGroups,
   rowToLogEntry,
   suggestMealType,
   type DailyLogEntry,
@@ -147,5 +148,46 @@ describe("mealsBeforeTimestamp", () => {
 
   it("returns an empty list when nothing precedes the timestamp", () => {
     expect(mealsBeforeTimestamp(entries, "2026-08-13T00:00:00.000Z")).toEqual([]);
+  });
+});
+
+describe("recentDayGroups", () => {
+  const day = (y: number, m: number, d: number, h = 12): Date => new Date(y, m - 1, d, h);
+  const entryAt = (date: Date, itemName: string): DailyLogEntry => ({
+    timestamp: date.toISOString(),
+    mealType: "Перекус",
+    itemName,
+    portionGrams: 100,
+    carbsG: 0,
+    gi: 0,
+    fiberG: 0,
+    sugarsG: 0,
+    proteinG: 0,
+    fatG: 0,
+    caloriesKcal: 0,
+    sodiumMg: 0,
+    gl: 0,
+    notes: "",
+  });
+
+  it("groups the previous N days, excluding today, most-recent-day-first", () => {
+    const today = day(2026, 9, 10);
+    const entries = [
+      entryAt(day(2026, 9, 10, 8), "today's breakfast"),
+      entryAt(day(2026, 9, 9, 9), "yesterday breakfast"),
+      entryAt(day(2026, 9, 9, 18), "yesterday dinner"),
+      entryAt(day(2026, 9, 7, 8), "3 days ago"),
+      entryAt(day(2026, 9, 5, 8), "too old, outside the 3-day window"),
+    ];
+
+    const result = recentDayGroups(entries, today, 3);
+
+    expect(result.map((g) => g.dateKey)).toEqual(["2026-09-09", "2026-09-07"]);
+    expect(result[0].entries.map((e) => e.itemName)).toEqual(["yesterday dinner", "yesterday breakfast"]);
+    expect(result[1].entries.map((e) => e.itemName)).toEqual(["3 days ago"]);
+  });
+
+  it("returns an empty array when there's no history in the window", () => {
+    expect(recentDayGroups([], day(2026, 9, 10), 3)).toEqual([]);
   });
 });

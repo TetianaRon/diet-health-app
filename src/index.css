@@ -205,6 +205,16 @@ select {
   color: #e0a800;
 }
 
+.edit-toggle {
+  background: none;
+  border: none;
+  color: #6b6b6b;
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 4px 6px;
+  flex-shrink: 0;
+}
+
 .link-button {
   display: block;
   background: none;
@@ -214,6 +224,12 @@ select {
   padding: 8px 0;
   text-decoration: underline;
   text-align: left;
+}
+
+.compose-cta {
+  display: block;
+  width: 100%;
+  margin-bottom: 16px;
 }
 
 .food-form-actions button:last-child {
@@ -288,6 +304,16 @@ select {
   background: #b3261e;
 }
 
+.today-totals {
+  margin-bottom: 16px;
+}
+
+.today-totals p {
+  font-size: 0.9rem;
+  color: #4a4a4a;
+  margin: 0 0 4px;
+}
+
 .today-warning {
   background: #fdecea;
   color: #8a1f18;
@@ -305,6 +331,24 @@ select {
   font-size: 1.05rem;
   margin: 0 0 4px;
   color: #2f7a4f;
+}
+
+.today-meal-group h3 {
+  font-size: 0.95rem;
+  margin: 0 0 4px;
+  color: #4a4a4a;
+}
+
+.entry-time {
+  color: #9a9a9a;
+  font-size: 0.9em;
+}
+
+.history-title {
+  font-size: 1.1rem;
+  margin: 24px 0 4px;
+  padding-top: 16px;
+  border-top: 1px solid #eef1ee;
 }
 
 .blood-sugar-latest {

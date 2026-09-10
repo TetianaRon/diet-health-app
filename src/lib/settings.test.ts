@@ -35,6 +35,23 @@ describe("parseSettingsRows", () => {
     expect(result.showCaloriesProgress).toBe(false);
     expect(result.showCarbsProgress).toBe(DEFAULT_SETTINGS.showCarbsProgress);
   });
+
+  it("defaults to Calories + Glycemic Load visible, Carbs hidden", () => {
+    expect(DEFAULT_SETTINGS.showCarbsProgress).toBe(false);
+    expect(DEFAULT_SETTINGS.showCaloriesProgress).toBe(true);
+    expect(DEFAULT_SETTINGS.showGlycemicLoadProgress).toBe(true);
+  });
+
+  it("parses the boolean total-only fields (fat/sugars/protein/sodium)", () => {
+    const result = parseSettingsRows([
+      ["ShowFatTotal", "TRUE"],
+      ["ShowSugarsTotal", "true"],
+    ]);
+    expect(result.showFatTotal).toBe(true);
+    expect(result.showSugarsTotal).toBe(true);
+    expect(result.showProteinTotal).toBe(DEFAULT_SETTINGS.showProteinTotal);
+    expect(result.showSodiumTotal).toBe(DEFAULT_SETTINGS.showSodiumTotal);
+  });
 });
 
 describe("computeSettingsUpdates", () => {

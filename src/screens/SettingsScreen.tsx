@@ -12,6 +12,7 @@ const NUMERIC_FIELDS = [
   "maxGapHours",
   "bloodSugarMin",
   "bloodSugarMax",
+  "dailyGlycemicLoadTarget",
 ] as const satisfies readonly (keyof Settings)[];
 type NumericField = (typeof NUMERIC_FIELDS)[number];
 
@@ -23,9 +24,17 @@ type TimeField = (typeof TIME_FIELDS)[number];
 
 const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
 
-// Which Today-screen progress bars to show — a checkbox, not a text field, so
-// kept separate from the numeric/time validation below (nothing to validate).
-const BOOLEAN_FIELDS = ["showCarbsProgress", "showCaloriesProgress"] as const satisfies readonly (keyof Settings)[];
+// Which Today-screen stats to show — a checkbox, not a text field, so kept
+// separate from the numeric/time validation below (nothing to validate).
+const BOOLEAN_FIELDS = [
+  "showCarbsProgress",
+  "showCaloriesProgress",
+  "showGlycemicLoadProgress",
+  "showFatTotal",
+  "showSugarsTotal",
+  "showProteinTotal",
+  "showSodiumTotal",
+] as const satisfies readonly (keyof Settings)[];
 type BooleanField = (typeof BOOLEAN_FIELDS)[number];
 
 const FIELDS = [...NUMERIC_FIELDS, ...TIME_FIELDS, ...BOOLEAN_FIELDS] as const satisfies readonly (keyof Settings)[];

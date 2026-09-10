@@ -36,6 +36,11 @@ export interface Dish extends IngredientNutrition {
   source: DishSource;
   dateAdded: string;
   glycemicFlag: GlycemicFlag;
+  // Same meaning as Ingredient.giVerified — true only once a person has
+  // explicitly confirmed this GI against a trusted source. Defaults false
+  // even for starter dishes, since a computed carb-weighted average (see
+  // computeDishNutrition) is never itself a confirmation.
+  giVerified: boolean;
 }
 
 function round2(value: number): number {
@@ -129,6 +134,10 @@ function toNumber(value: unknown): number {
   return Number.isFinite(n) ? n : 0;
 }
 
+function toBoolean(value: unknown): boolean {
+  return value === true || String(value).trim().toUpperCase() === "TRUE";
+}
+
 function toDishSource(value: unknown): DishSource {
   return value === "starter" ? "starter" : "manual";
 }
@@ -147,7 +156,7 @@ function parseIngredientsJson(value: unknown): DishIngredientRef[] {
 
 // Column order: NameUk, NameEn, IngredientsJson, YieldGrams, Carbs_g, GI,
 // Fiber_g, Sugars_g, Protein_g, Fat_g, Calories_kcal, Sodium_mg, Source,
-// DateAdded, GlycemicFlag (A-O) — see docs/technical-spec.md "Dishes".
+// DateAdded, GlycemicFlag, GiVerified (A-P) — see docs/technical-spec.md "Dishes".
 export function rowToDish(row: unknown[]): Dish {
   return {
     nameUk: String(row[0] ?? ""),
@@ -165,6 +174,7 @@ export function rowToDish(row: unknown[]): Dish {
     source: toDishSource(row[12]),
     dateAdded: String(row[13] ?? ""),
     glycemicFlag: toGlycemicFlag(row[14]),
+    giVerified: toBoolean(row[15]),
   };
 }
 
@@ -185,11 +195,12 @@ export function dishToRow(dish: Dish): unknown[] {
     dish.source,
     dish.dateAdded,
     dish.glycemicFlag,
+    dish.giVerified,
   ];
 }
 
 export async function listDishes(): Promise<Dish[]> {
-  const rows = await readRange("Dishes", "A2:O1000");
+  const rows = await readRange("Dishes", "A2:P1000");
   return rows.filter((row) => row.length > 0).map(rowToDish);
 }
 
@@ -198,16 +209,30 @@ export async function addDish(
   glycemicFlag: GlycemicFlag = "none",
 ): Promise<void> {
   const withDate: Dish = { ...dish, dateAdded: new Date().toISOString().slice(0, 10), glycemicFlag };
-  await writeRange("Dishes", "A:O", [dishToRow(withDate)]);
+  await writeRange("Dishes", "A:P", [dishToRow(withDate)]);
 }
 
-/** Sets the GlycemicFlag column for an existing Dishes row, found by exact nameUk match. */
-export async function setDishGlycemicFlag(nameUk: string, glycemicFlag: GlycemicFlag): Promise<void> {
-  const rows = await readRange("Dishes", "A2:O1000");
+async function findDishRowNumber(nameUk: string): Promise<number> {
+  const rows = await readRange("Dishes", "A2:P1000");
   const rowIndex = rows.findIndex((row) => String(row[0] ?? "").trim().toLowerCase() === nameUk.trim().toLowerCase());
   if (rowIndex === -1) {
     throw new Error(`"${nameUk}" not found in Dishes`);
   }
-  const rowNumber = rowIndex + 2; // +2: 1-based rows, plus the header row
+  return rowIndex + 2; // +2: 1-based rows, plus the header row
+}
+
+/** Sets the GlycemicFlag column for an existing Dishes row, found by exact nameUk match. */
+export async function setDishGlycemicFlag(nameUk: string, glycemicFlag: GlycemicFlag): Promise<void> {
+  const rowNumber = await findDishRowNumber(nameUk);
   await batchUpdateRanges([{ range: `Dishes!O${rowNumber}`, values: [[glycemicFlag]] }]);
+}
+
+/**
+ * Overwrites an existing Dishes row in place, found by its *current* nameUk
+ * (i.e. before any rename in `dish`) — the edit flow's counterpart to
+ * addDish's always-append behavior. Same principle as updateIngredient.
+ */
+export async function updateDish(currentNameUk: string, dish: Dish): Promise<void> {
+  const rowNumber = await findDishRowNumber(currentNameUk);
+  await batchUpdateRanges([{ range: `Dishes!A${rowNumber}:P${rowNumber}`, values: [dishToRow(dish)] }]);
 }

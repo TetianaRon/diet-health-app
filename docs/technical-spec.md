@@ -1,8 +1,6 @@
 # Technical Spec
 
-> **Status:** 🟡 First draft — architecture decided, exact targets/food lists pending mom's interview
-
-The architecture below doesn't depend on mom's interview answers (those only tune numbers and food lists — see [requirements-open-questions.md](requirements-open-questions.md)), so it's safe to build against now.
+> **Status:** 🟢 All four screens built, Android app built/signed/tested, interview completed 2026-09-07 (targets tuned from her answers) — see [requirements-open-questions.md](requirements-open-questions.md) for the interview record and `docs/build-log.md` for the full build history.
 
 ## Architecture
 
@@ -97,8 +95,14 @@ Key/value rows, pre-filled with Project Brief defaults; mom's interview tunes th
 | BloodSugarMax | 7.8 |
 | WakeTime | 06:30 |
 | SleepTime | 00:00 |
-| ShowCarbsProgress | TRUE |
+| DailyGlycemicLoadTarget | 80 (top of the diabetes-specific 60–80/day range mom's own old spreadsheet cites, via prodiabet.ua) |
+| ShowCarbsProgress | FALSE |
 | ShowCaloriesProgress | TRUE |
+| ShowGlycemicLoadProgress | TRUE |
+| ShowFatTotal | FALSE |
+| ShowSugarsTotal | FALSE |
+| ShowProteinTotal | FALSE |
+| ShowSodiumTotal | FALSE |
 
 ## Google Sheets API integration
 
@@ -185,7 +189,7 @@ The web/PWA codebase is also wrapped as an Android app via [Capacitor](https://c
 - **Trigger points**: `TodayScreen` reschedules whenever its most-recent `DailyLog` entry or `Settings` change — this covers both "just logged a meal" and "reopened the app" (a `@capacitor/app` `resume` listener re-reads the sheet on foreground, refreshing a possibly-stale cached state — see the build-log entry for the accepted cross-device gap this doesn't fully close). Tapping the notification (`localNotificationActionPerformed`, handled in `App.tsx`) deep-links into Today's quick-add form.
 - **Android manifest** (`android/app/src/main/AndroidManifest.xml`): `POST_NOTIFICATIONS` (Android 13+ runtime permission), `SCHEDULE_EXACT_ALARM` (Android 12+, for on-time delivery), `RECEIVE_BOOT_COMPLETED`.
 - **Release signing**: `android/app/build.gradle` reads `android/keystore.properties` (gitignored) if present, else falls back to debug signing. See `android/keystore.properties.example` for the one-time `keytool` setup — needs a JDK, so it's done once on whichever machine has Android Studio, not regenerated per build.
-- **Known limitation, not yet resolved**: building/running the actual APK needs a JDK + Android SDK (Android Studio), which the primary dev machine doesn't have as of this writing — `cap add android`/`cap sync` (Node-only) work fine, but `./gradlew assembleRelease` and the exact-alarm/battery-optimization permission prompts still need to be done from a machine with Android Studio installed.
+- **Resolved 2026-09-10**: `./gradlew assembleRelease` needs a JDK + Android SDK (Android Studio), which the primary dev machine lacks — but access to a separate Android Studio machine was available the same day this was written, and the release keystore, signed builds, and on-device testing have all been done from there since.
 
 ## Glycemic Load calculation
 

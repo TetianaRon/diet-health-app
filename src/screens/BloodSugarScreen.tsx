@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { uk } from "../i18n/uk";
 import { useAuth } from "../context/AuthContext";
 import { checkBloodSugarRange } from "../lib/health";
+import { formatDateTime } from "../lib/dateFormat";
 import { getSettings, type Settings } from "../lib/settings";
 import { listLogEntries, mealsBeforeTimestamp, type DailyLogEntry } from "../lib/dailyLog";
 import {
@@ -18,12 +19,6 @@ function statusLabel(entry: BloodSugarEntry, settings: Settings): string {
   if (check.tooLow) return uk.bloodSugar.status.tooLow;
   if (check.tooHigh) return uk.bloodSugar.status.tooHigh;
   return uk.bloodSugar.status.inRange;
-}
-
-function formatTimestamp(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleString("uk-UA", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
 }
 
 function formatTimeBefore(mealTimestamp: string, readingTimestamp: string): string {
@@ -194,7 +189,7 @@ export default function BloodSugarScreen() {
           const meals = logEntries ? mealsBeforeTimestamp(logEntries, entry.timestamp) : [];
           return (
             <li key={key}>
-              {formatTimestamp(entry.timestamp)} — <strong>{entry.valueMmolL} ммоль/л</strong> (
+              {formatDateTime(entry.timestamp)} — <strong>{entry.valueMmolL} ммоль/л</strong> (
               {uk.bloodSugar.context[entry.context]})
               {settings &&
                 !checkBloodSugarRange(entry.valueMmolL, settings.bloodSugarMin, settings.bloodSugarMax).inRange && (

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calcGlycemicLoad, checkBloodSugarRange, checkFatLimit, mealGapWarning } from "./health";
+import { calcGlycemicLoad, checkBloodSugarRange, checkFatLimit, classifyGi, classifyGl, mealGapWarning } from "./health";
 
 describe("calcGlycemicLoad", () => {
   it("computes GI × carbs / 100", () => {
@@ -55,5 +55,27 @@ describe("checkBloodSugarRange", () => {
   it("treats the exact boundary values as in range", () => {
     expect(checkBloodSugarRange(4.0, 4.0, 7.8).inRange).toBe(true);
     expect(checkBloodSugarRange(7.8, 4.0, 7.8).inRange).toBe(true);
+  });
+});
+
+describe("classifyGi", () => {
+  it("classifies the low/medium/high bands and their boundaries", () => {
+    expect(classifyGi(0)).toBe("low");
+    expect(classifyGi(55)).toBe("low");
+    expect(classifyGi(56)).toBe("medium");
+    expect(classifyGi(69)).toBe("medium");
+    expect(classifyGi(70)).toBe("high");
+    expect(classifyGi(100)).toBe("high");
+  });
+});
+
+describe("classifyGl", () => {
+  it("classifies the low/moderate/high bands and their boundaries", () => {
+    expect(classifyGl(0)).toBe("low");
+    expect(classifyGl(10)).toBe("low");
+    expect(classifyGl(11)).toBe("moderate");
+    expect(classifyGl(19)).toBe("moderate");
+    expect(classifyGl(20)).toBe("high");
+    expect(classifyGl(40)).toBe("high");
   });
 });
