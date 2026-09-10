@@ -39,7 +39,14 @@ android {
     }
     buildTypes {
         release {
-            minifyEnabled false
+            // Enabled for readable crash reports — R8 also generates
+            // app/build/outputs/mapping/release/mapping.txt, which Play
+            // Console wants uploaded alongside the .aab (Release details ->
+            // "App bundle explorer" -> upload deobfuscation file, or it's
+            // picked up automatically if uploaded via the Play Console UI
+            // dialog after this warning) so crashes/ANRs show real
+            // class/method names instead of R8's shortened ones.
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             signingConfig = hasKeystoreProperties ? signingConfigs.release : signingConfigs.debug
         }

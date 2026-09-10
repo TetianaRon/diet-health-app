@@ -211,6 +211,7 @@ export const uk = {
     saveButton: "Зберегти",
     saved: "Збережено!",
     validationError: "Заповніть усі поля коректними числовими значеннями.",
+    privacyPolicyLink: "Політика конфіденційності",
     account: {
       title: "Обліковий запис Google",
       notSignedIn: "Не увійшли",

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Browser } from "@capacitor/browser";
 import { uk } from "../i18n/uk";
 import { useAuth } from "../context/AuthContext";
 import { getSettings, updateSettings, type Settings } from "../lib/settings";
@@ -44,6 +45,12 @@ const BOOLEAN_FIELDS = [
 type BooleanField = (typeof BOOLEAN_FIELDS)[number];
 
 const FIELDS = [...NUMERIC_FIELDS, ...TIME_FIELDS, ...BOOLEAN_FIELDS] as const satisfies readonly (keyof Settings)[];
+
+// Google Play's User Data policy requires the privacy policy to be reachable
+// from inside the app itself, not just the Play Console listing field — see
+// docs/privacy-policy.html (published via GitHub Pages, kept isolated from
+// this repo's other docs/ files on its own gh-pages branch).
+const PRIVACY_POLICY_URL = "https://tetianaron.github.io/diet-health-app/";
 
 // Not gated behind sign-in — which spreadsheet this device talks to is a
 // local, per-device setting independent of the signed-in Google account
@@ -281,6 +288,14 @@ export default function SettingsScreen() {
           )}
         </div>
       )}
+
+      <button
+        type="button"
+        className="link-button"
+        onClick={() => void Browser.open({ url: PRIVACY_POLICY_URL })}
+      >
+        {uk.settings.privacyPolicyLink}
+      </button>
     </section>
   );
 }
