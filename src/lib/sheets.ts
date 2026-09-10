@@ -315,6 +315,15 @@ export function setSpreadsheetId(urlOrId: string): void {
   localStorage.setItem(SPREADSHEET_ID_STORAGE_KEY, parseSpreadsheetId(urlOrId));
 }
 
+/** The shared testing/default sheet the "connect default sheet" button points at, if configured. */
+export function getDefaultSpreadsheetId(): string {
+  return import.meta.env.VITE_DEFAULT_SPREADSHEET_ID;
+}
+
+export function getSpreadsheetUrl(id: string): string {
+  return `https://docs.google.com/spreadsheets/d/${id}/edit`;
+}
+
 async function authorizedFetch(path: string, init?: RequestInit): Promise<Response> {
   if (!accessToken) {
     throw new Error("Not signed in — call signIn() first");

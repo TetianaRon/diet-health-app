@@ -72,6 +72,8 @@ export const uk = {
     cancelButton: "Скасувати",
     loading: "Завантаження...",
     noResults: "Нічого не знайдено.",
+    giLegend:
+      "ГІ — глікемічний індекс (наскільки швидко продукт підвищує цукор у крові). Значок «≈» означає орієнтовне значення, ще не перевірене за надійним джерелом.",
     favoriteLabel: "Додати в обране",
     unfavoriteLabel: "Прибрати з обраного",
     editLabel: "Редагувати",
@@ -219,10 +221,16 @@ export const uk = {
     spreadsheet: {
       title: "Таблиця Google Sheets",
       hint: "Вставте посилання на вашу таблицю Google Sheets (або тільки її ID). Кожен пристрій може використовувати свою таблицю.",
+      inputLabel: "Посилання або ID таблиці",
       placeholder: "https://docs.google.com/spreadsheets/d/...",
       saveButton: "Зберегти",
       saved: "Збережено!",
       validationError: "Вставте посилання або ID таблиці.",
+      connectDefaultButton: "Підключити типову таблицю",
+      connectDefaultSaved: "Підключено типову таблицю!",
+      copyLinkButton: "Копіювати посилання на таблицю",
+      copyLinkSaved: "Посилання скопійовано!",
+      copyLinkError: "Не вдалося скопіювати посилання.",
     },
     fields: {
       dailyCarbsTarget: "Денна норма вуглеводів (г)",

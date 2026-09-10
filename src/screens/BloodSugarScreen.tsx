@@ -63,7 +63,7 @@ function AddBloodSugarForm({
     <div className="food-form">
       <label>
         {uk.bloodSugar.form.valueLabel}
-        <input type="number" value={value} onChange={(e) => setValue(e.target.value)} />
+        <input type="number" inputMode="decimal" step="0.1" value={value} onChange={(e) => setValue(e.target.value)} />
       </label>
 
       <label>

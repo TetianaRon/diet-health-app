@@ -31,6 +31,45 @@ body {
   padding: calc(24px + env(safe-area-inset-top, 0px)) 20px calc(96px + env(safe-area-inset-bottom, 0px));
 }
 
+.app-header {
+  /* Same centering trick as .tab-bar below — fixed to the viewport but
+     clamped to the app's own 480px column, not the browser window's actual
+     corner on a wide desktop viewport. pointer-events: none on the wrapper
+     (re-enabled on the button itself) so the empty space around the gear
+     icon doesn't block taps on the screen content underneath it. */
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  justify-content: flex-end;
+  padding-top: env(safe-area-inset-top, 0px);
+  pointer-events: none;
+  z-index: 10;
+}
+
+.settings-gear {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: #6b6b6b;
+  padding: 10px;
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.settings-gear.active {
+  color: #2f7a4f;
+  background: #eef1ee;
+}
+
 .screen h1 {
   font-size: 1.5rem;
   margin: 0 0 12px;
@@ -57,12 +96,19 @@ body {
 
 .tab-button {
   flex: 1;
+  /* min-width: 0 overrides flex items' default min-width: auto, which is
+     "as wide as the content needs" — without this, a larger OS text-size
+     setting makes the 4 labels' combined width exceed the bar and the last
+     tab gets pushed off-screen instead of shrinking/wrapping. */
+  min-width: 0;
   padding: 14px 4px;
   border: none;
   background: none;
   font-size: 0.95rem;
   color: #6b6b6b;
   cursor: pointer;
+  white-space: normal;
+  overflow-wrap: break-word;
 }
 
 .tab-button.active {
@@ -120,7 +166,10 @@ select {
 
 .food-name-en {
   font-size: 0.85em;
-  color: #9a9a9a;
+  /* #6b6b6b, not the lighter gray this used to be — that one measured
+     2.81:1 against the white background, well under WCAG AA's 4.5:1
+     minimum for normal text (this label sits next to every food/dish). */
+  color: #6b6b6b;
   font-weight: normal;
 }
 
@@ -197,12 +246,19 @@ select {
   color: #d0d5d0;
   font-size: 1.3rem;
   line-height: 1;
-  padding: 4px 8px;
+  /* padding sized (with font-size) toward the ~44px touch-target guideline —
+     these sit in a row of 3 icon-only buttons, so cramped targets are easy
+     to mis-tap into each other (e.g. favoriting instead of flagging). */
+  padding: 11px 10px;
+  min-width: 44px;
+  min-height: 44px;
   flex-shrink: 0;
 }
 
 .favorite-toggle.active {
-  color: #e0a800;
+  /* Was #e0a800 (2.15:1 against white — a real WCAG failure); this darker
+     amber keeps the "flagged/favorited" amber hue but passes AA (5.93:1). */
+  color: #8a5a00;
 }
 
 .edit-toggle {
@@ -211,7 +267,9 @@ select {
   color: #6b6b6b;
   font-size: 1.1rem;
   line-height: 1;
-  padding: 4px 6px;
+  padding: 11px 10px;
+  min-width: 44px;
+  min-height: 44px;
   flex-shrink: 0;
 }
 
@@ -241,6 +299,21 @@ select {
   padding-bottom: 16px;
   margin-bottom: 16px;
   border-bottom: 1px solid #eef1ee;
+}
+
+.settings-account label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.95rem;
+  color: #4a4a4a;
+  margin-bottom: 8px;
+}
+
+.settings-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .settings-account h2 {
@@ -340,7 +413,8 @@ select {
 }
 
 .entry-time {
-  color: #9a9a9a;
+  /* Same contrast fix as .food-name-en above — was 2.81:1, now 5.33:1. */
+  color: #6b6b6b;
   font-size: 0.9em;
 }
 
@@ -370,7 +444,11 @@ select {
 .food-list-actions {
   display: flex;
   align-items: center;
-  gap: 2px;
+  /* Was 2px — three icon-only buttons that close together were easy to
+     mis-tap into each other (e.g. tapping favorite while aiming for the
+     glycemic flag), on top of each being under the ~44px touch-target
+     guideline (see the min-width/min-height fixes on those buttons). */
+  gap: 4px;
   flex-shrink: 0;
 }
 
@@ -380,12 +458,15 @@ select {
   color: #d0d5d0;
   font-size: 1.1rem;
   line-height: 1;
-  padding: 4px 6px;
+  padding: 11px 10px;
+  min-width: 44px;
+  min-height: 44px;
   flex-shrink: 0;
 }
 
 .glycemic-badge.watch {
-  color: #e0a800;
+  /* Same contrast fix as .favorite-toggle.active above (2.15:1 -> 5.93:1). */
+  color: #8a5a00;
 }
 
 .glycemic-badge.avoid {
@@ -397,7 +478,8 @@ select {
 }
 
 .glycemic-inline.watch {
-  color: #e0a800;
+  /* Same contrast fix as .glycemic-badge.watch above (2.15:1 -> 5.93:1). */
+  color: #8a5a00;
 }
 
 .glycemic-inline.avoid {

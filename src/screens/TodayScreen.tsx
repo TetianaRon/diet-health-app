@@ -175,7 +175,13 @@ function AddLogEntryForm({
 
       <label>
         {uk.today.form.portionLabel}
-        <input type="number" value={portionGrams} onChange={(e) => setPortionGrams(e.target.value)} />
+        <input
+          type="number"
+          inputMode="decimal"
+          step="0.1"
+          value={portionGrams}
+          onChange={(e) => setPortionGrams(e.target.value)}
+        />
       </label>
 
       {previewNutrition && (

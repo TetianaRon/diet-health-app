@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { uk } from "../i18n/uk";
 import { useAuth } from "../context/AuthContext";
 import { getSettings, updateSettings, type Settings } from "../lib/settings";
-import { getSpreadsheetId, setSpreadsheetId } from "../lib/sheets";
+import { getSpreadsheetId, setSpreadsheetId, getDefaultSpreadsheetId, getSpreadsheetUrl } from "../lib/sheets";
 
 const NUMERIC_FIELDS = [
   "dailyCarbsTarget",
@@ -46,21 +46,59 @@ const FIELDS = [...NUMERIC_FIELDS, ...TIME_FIELDS, ...BOOLEAN_FIELDS] as const s
 // "Spreadsheet selection" comment in src/lib/sheets.ts for why this exists:
 // VITE_SPREADSHEET_ID is one value baked into the build, so every install
 // shared it until this override existed.
+// Clipboard API needs a secure context, which every real target (https dev
+// server, Capacitor's custom scheme) satisfies — but falls back to the old
+// execCommand trick rather than silently doing nothing if it's ever missing.
+async function copyToClipboard(text: string): Promise<boolean> {
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      // fall through to the execCommand fallback below
+    }
+  }
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.style.position = "fixed";
+  textarea.style.opacity = "0";
+  document.body.appendChild(textarea);
+  textarea.focus();
+  textarea.select();
+  const copied = document.execCommand("copy");
+  document.body.removeChild(textarea);
+  return copied;
+}
+
 function SpreadsheetSection() {
   const [value, setValue] = useState(() => getSpreadsheetId());
   const [error, setError] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
+  const [savedMessage, setSavedMessage] = useState<string | null>(null);
+  const defaultSpreadsheetId = getDefaultSpreadsheetId();
 
   const handleSave = () => {
     if (!value.trim()) {
       setError(uk.settings.spreadsheet.validationError);
-      setSaved(false);
+      setSavedMessage(null);
       return;
     }
     setSpreadsheetId(value);
     setValue(getSpreadsheetId()); // reflects the parsed-out ID, not whatever was pasted
     setError(null);
-    setSaved(true);
+    setSavedMessage(uk.settings.spreadsheet.saved);
+  };
+
+  const handleConnectDefault = () => {
+    setSpreadsheetId(defaultSpreadsheetId);
+    setValue(getSpreadsheetId());
+    setError(null);
+    setSavedMessage(uk.settings.spreadsheet.connectDefaultSaved);
+  };
+
+  const handleCopyLink = async () => {
+    const copied = await copyToClipboard(getSpreadsheetUrl(getSpreadsheetId()));
+    setError(copied ? null : uk.settings.spreadsheet.copyLinkError);
+    setSavedMessage(copied ? uk.settings.spreadsheet.copyLinkSaved : null);
   };
 
   return (
@@ -68,20 +106,31 @@ function SpreadsheetSection() {
       <h2>{uk.settings.spreadsheet.title}</h2>
       <p>{uk.settings.spreadsheet.hint}</p>
       <label>
+        {uk.settings.spreadsheet.inputLabel}
         <input
           value={value}
           placeholder={uk.settings.spreadsheet.placeholder}
           onChange={(e) => {
             setValue(e.target.value);
-            setSaved(false);
+            setSavedMessage(null);
           }}
         />
       </label>
       {error && <p className="food-form-error">{error}</p>}
-      {saved && <p>{uk.settings.spreadsheet.saved}</p>}
-      <button type="button" onClick={handleSave}>
-        {uk.settings.spreadsheet.saveButton}
-      </button>
+      {savedMessage && <p>{savedMessage}</p>}
+      <div className="settings-actions">
+        <button type="button" onClick={handleSave}>
+          {uk.settings.spreadsheet.saveButton}
+        </button>
+        {defaultSpreadsheetId && (
+          <button type="button" onClick={handleConnectDefault}>
+            {uk.settings.spreadsheet.connectDefaultButton}
+          </button>
+        )}
+        <button type="button" onClick={handleCopyLink}>
+          {uk.settings.spreadsheet.copyLinkButton}
+        </button>
+      </div>
     </div>
   );
 }
@@ -194,6 +243,8 @@ export default function SettingsScreen() {
                     {uk.settings.fields[field]}
                     <input
                       type={(TIME_FIELDS as readonly string[]).includes(field) ? "time" : "number"}
+                      inputMode={(TIME_FIELDS as readonly string[]).includes(field) ? undefined : "decimal"}
+                      step={(TIME_FIELDS as readonly string[]).includes(field) ? undefined : "0.1"}
                       value={values[field] ?? ""}
                       onChange={(e) => setValues({ ...values, [field]: e.target.value })}
                     />

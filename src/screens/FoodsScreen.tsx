@@ -291,6 +291,8 @@ function AddFoodForm({
           {uk.foods.form.fields[field]}
           <input
             type="number"
+            inputMode="decimal"
+            step="0.1"
             value={values[field]}
             onChange={(e) => setValues({ ...values, [field]: e.target.value })}
           />
@@ -413,6 +415,8 @@ function EditIngredientForm({
           {uk.foods.form.fields[field]}
           <input
             type="number"
+            inputMode="decimal"
+            step="0.1"
             value={values[field]}
             onChange={(e) => {
               setValues({ ...values, [field]: e.target.value });
@@ -669,7 +673,13 @@ function ComposeDishForm({
 
             <label>
               {uk.dishes.composeForm.gramsLabel}
-              <input type="number" value={row.grams} onChange={(e) => updateRow(index, { grams: e.target.value })} />
+              <input
+                type="number"
+                inputMode="decimal"
+                step="0.1"
+                value={row.grams}
+                onChange={(e) => updateRow(index, { grams: e.target.value })}
+              />
             </label>
 
             {rows.length > 1 && (
@@ -687,7 +697,13 @@ function ComposeDishForm({
 
       <label>
         {uk.dishes.composeForm.yieldLabel}
-        <input type="number" value={yieldGrams} onChange={(e) => setYieldGrams(e.target.value)} />
+        <input
+          type="number"
+          inputMode="decimal"
+          step="0.1"
+          value={yieldGrams}
+          onChange={(e) => setYieldGrams(e.target.value)}
+        />
       </label>
       <p className="food-form-hint">{uk.dishes.composeForm.yieldHint}</p>
 
@@ -1044,12 +1060,14 @@ export default function FoodsScreen() {
           <input
             className="food-search"
             placeholder={uk.foods.searchPlaceholder}
+            aria-label={uk.foods.searchPlaceholder}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
           <button type="button" onClick={() => setShowAddForm(true)}>
             {uk.foods.addButton}
           </button>
+          <p className="food-form-hint">{uk.foods.giLegend}</p>
 
           {loadError && <p className="food-form-error">{loadError}</p>}
           {filteredIngredients.length === 0 && <p>{uk.foods.noResults}</p>}
@@ -1102,12 +1120,14 @@ export default function FoodsScreen() {
           <input
             className="food-search"
             placeholder={uk.foods.searchPlaceholder}
+            aria-label={uk.foods.searchPlaceholder}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
           <button type="button" onClick={() => setShowAddForm(true)}>
             {uk.dishes.addButton}
           </button>
+          <p className="food-form-hint">{uk.foods.giLegend}</p>
 
           {loadError && <p className="food-form-error">{loadError}</p>}
           {filteredDishes.length === 0 && <p>{uk.dishes.noResults}</p>}
