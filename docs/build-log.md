@@ -1066,3 +1066,11 @@ Google Play developer account verification came through — before moving to Pla
 2. Once confirmed: set up mom's real spreadsheet from the regenerated template, then proceed to Play Store Internal Testing setup (privacy policy via GitHub Pages, .aab build, store listing, add mom as tester)
 3. Review mom's old spreadsheet's actual food/product tabs for bundle expansion, whenever convenient
 4. Everything else still pending, unchanged from earlier entries
+
+## 2026-09-10 — Session wrap-up (context handoff)
+
+Context ran to ~87% during this single very long session — recording a clean handoff rather than continuing to append. Everything above this entry (search "2026-09-10" for the full run) covers, in order: Android release build pipeline stood up end-to-end (keystore, signed builds, sign-in fixed through 3 rounds of live correction), persistent login, offline read caching, multi-device spreadsheet support, several UX fixes (multi-item meals, configurable Today stats, timestamps, a 3-day history stopgap, button clarity, compose-recipe prominence), a full GI data audit (real carrot bug found and fixed), a `giVerified` estimate/confirmed flag, and finally this pre-publish documentation review. `docs/requirements-open-questions.md` and `docs/technical-spec.md` were also both updated in this pass to stop contradicting the app's actual state.
+
+**Repo state**: commit `aa58511`, working tree clean, everything from this session committed in two batches (`2a271cd`, `aa58511`).
+
+**Where things actually stand and what's next**: see the `project-pending-items` memory file (rewritten this session to reflect current end-state, not appended) for the full picture — short version: the immediate thread is device-test → mom's spreadsheet → Play Store Internal Testing, in that order, not the deferred-features backlog.
