@@ -24,9 +24,8 @@ import {
   type DishIngredientRef,
 } from "../lib/dishes";
 import { cycleGlycemicFlag, GLYCEMIC_FLAG_SYMBOL, type GlycemicFlag } from "../lib/glycemicFlag";
-import { lookupExternalCandidates, translateUkToEn, type NutritionEstimate } from "../lib/nutrition";
-import { STARTER_DISHES, mergeWithStarterDishes } from "../data/starter-dishes";
-import { STARTER_FOODS } from "../data/starter-foods";
+import { lookupExternalCandidates, translateEnToUk, translateUkToEn, type NutritionEstimate } from "../lib/nutrition";
+import { mergeWithStarterDishes } from "../data/starter-dishes";
 
 const NUMERIC_FIELDS = ["carbsG", "gi", "fiberG", "sugarsG", "proteinG", "fatG", "caloriesKcal", "sodiumMg"] as const;
 type NumericField = (typeof NUMERIC_FIELDS)[number];
@@ -45,10 +44,12 @@ const EMPTY_FORM_VALUES: FormValues = {
 };
 
 function AddFoodForm({
+  availableFoods,
   existingNames,
   onSaved,
   onCancel,
 }: {
+  availableFoods: Ingredient[];
   existingNames: Set<string>;
   onSaved: (ingredient: Ingredient) => void;
   onCancel: () => void;
@@ -72,6 +73,11 @@ function AddFoodForm({
   const [lookupLoading, setLookupLoading] = useState(false);
   const [lookupAttempted, setLookupAttempted] = useState(false);
   const [candidates, setCandidates] = useState<NutritionEstimate[]>([]);
+  // Parallel to candidates — each candidate's nameEn back-translated to
+  // Ukrainian purely for display (mom doesn't read English, and USDA's own
+  // descriptions are English-only). null entries mean translation failed or
+  // hasn't resolved yet; the UI falls back to showing English alone for those.
+  const [candidateNamesUk, setCandidateNamesUk] = useState<(string | null)[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -84,7 +90,10 @@ function AddFoodForm({
   // is resolved automatically via translation; it's still shown afterward as
   // a subtle secondary label (see .food-name-en) — a fallback cross-check,
   // not something she needs to read or supply herself.
-  const applyEstimate = (estimate: NutritionEstimate | null, defaultSaveName: string) => {
+  const applyEstimate = (
+    estimate: (Omit<NutritionEstimate, "source"> & { source: IngredientSource }) | null,
+    defaultSaveName: string,
+  ) => {
     setLookupAttempted(true);
     setDuplicateWarning(null);
     setGiVerified(false); // a new pick hasn't been confirmed, even if a previous one was
@@ -120,8 +129,21 @@ function AddFoodForm({
     try {
       const results = await lookupExternalCandidates(search);
       setCandidates(results);
+      setCandidateNamesUk(results.map(() => null));
       if (results.length > 0) {
         setLookupAttempted(true);
+        // Fire off independently, in the background — never block showing
+        // the (already-usable, English) candidate list on translation, which
+        // can be slow or fail per-candidate. Each one fills in as it resolves.
+        results.forEach((candidate, i) => {
+          void translateEnToUk(candidate.nameEn).then((nameUk) => {
+            setCandidateNamesUk((prev) => {
+              const next = [...prev];
+              next[i] = nameUk;
+              return next;
+            });
+          });
+        });
       } else {
         applyEstimate(null, search);
       }
@@ -132,12 +154,13 @@ function AddFoodForm({
     }
   };
 
-  // Clicking a suggestion from the browsable bundle list below skips the
-  // lookup round-trip entirely — we already have the full entry in hand.
-  // The bundle's own name is already specific, so it's a safe save-name
-  // default as-is.
-  const handlePickSuggestion = (food: (typeof STARTER_FOODS)[number]) => {
+  // Clicking a suggestion below skips the lookup round-trip entirely — we
+  // already have the full entry in hand, whether it came from the bundle or
+  // was already saved to the sheet. Its own name is already specific, so
+  // it's a safe save-name default as-is.
+  const handlePickSuggestion = (food: Ingredient) => {
     setCandidates([]);
+    setCandidateNamesUk([]);
     applyEstimate(
       {
         nameEn: food.nameEn,
@@ -149,15 +172,23 @@ function AddFoodForm({
         fatG: food.fatG,
         caloriesKcal: food.caloriesKcal,
         sodiumMg: food.sodiumMg,
-        source: "starter",
+        source: food.source,
       },
       food.nameUk,
     );
   };
 
-  const suggestions = lookupAttempted
-    ? []
-    : STARTER_FOODS.filter((food) => food.nameUk.toLowerCase().includes(search.toLowerCase()));
+  // Only searches once something's actually typed — showing the entire
+  // available list (bundle + everything already saved) by default made it
+  // look like a list of pre-existing entries rather than a search, and
+  // buried the point of typing a query at all. Searches the FULL available
+  // list (not just the static bundle) specifically so an already-saved food
+  // that isn't part of the bundle still turns up here — the whole reason
+  // this existed was so a near-duplicate re-add is visible before it happens.
+  const suggestions =
+    lookupAttempted || !search.trim()
+      ? []
+      : availableFoods.filter((food) => food.nameUk.toLowerCase().includes(search.toLowerCase()));
 
   const handleSave = async () => {
     const parsed = Object.fromEntries(
@@ -217,6 +248,7 @@ function AddFoodForm({
           onChange={(e) => {
             setSearch(e.target.value);
             setCandidates([]);
+            setCandidateNamesUk([]);
           }}
           placeholder={uk.foods.form.nameUkPlaceholder}
         />
@@ -226,7 +258,7 @@ function AddFoodForm({
         {lookupLoading ? uk.foods.form.lookupLoading : uk.foods.form.lookupButton}
       </button>
 
-      {!lookupAttempted && (
+      {!lookupAttempted && search.trim() !== "" && (
         <>
           <ul className="food-list">
             {suggestions.map((food) => (
@@ -247,17 +279,27 @@ function AddFoodForm({
 
       {lookupAttempted && candidates.length > 0 && (
         <ul className="food-list food-list-scroll">
-          {candidates.map((candidate, i) => (
-            <li key={i} className="food-list-item-with-action">
-              <span>
-                <strong>{candidate.nameEn}</strong> — {candidate.carbsG} г вуглеводів
-                {candidate.gi !== null && `, ГІ ${candidate.gi} (${uk.health.gi[classifyGi(candidate.gi)]})`}
-              </span>
-              <button type="button" onClick={() => applyEstimate(candidate, search)}>
-                {uk.foods.form.pickButton}
-              </button>
-            </li>
-          ))}
+          {candidates.map((candidate, i) => {
+            const nameUk = candidateNamesUk[i];
+            return (
+              <li key={i} className="food-list-item-with-action">
+                <span>
+                  {nameUk ? (
+                    <>
+                      <strong>{nameUk}</strong> <span className="food-name-en">({candidate.nameEn})</span>
+                    </>
+                  ) : (
+                    <strong>{candidate.nameEn}</strong>
+                  )}{" "}
+                  — {candidate.carbsG} г вуглеводів
+                  {candidate.gi !== null && `, ГІ ${candidate.gi} (${uk.health.gi[classifyGi(candidate.gi)]})`}
+                </span>
+                <button type="button" onClick={() => applyEstimate(candidate, nameUk ?? search)}>
+                  {uk.foods.form.pickButton}
+                </button>
+              </li>
+            );
+          })}
         </ul>
       )}
 
@@ -447,12 +489,27 @@ function EditIngredientForm({
 
 // Browse the pre-computed starter bundle and add one as-is. Composing a
 // custom multi-ingredient recipe is ComposeDishForm, below.
-function AddDishForm({ onSaved, onCancel }: { onSaved: (dish: Dish) => void; onCancel: () => void }) {
+function AddDishForm({
+  availableDishes,
+  onSaved,
+  onCancel,
+}: {
+  availableDishes: Dish[];
+  onSaved: (dish: Dish) => void;
+  onCancel: () => void;
+}) {
   const [search, setSearch] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const matches = STARTER_DISHES.filter((d) => d.nameUk.toLowerCase().includes(search.toLowerCase()));
+  // Only searches once something's typed, and over the full available list
+  // (bundle + whatever's already saved) — same reasoning as AddFoodForm's
+  // suggestions: showing everything by default looked like a pre-existing
+  // list rather than a search, and searching only the static bundle missed
+  // an already-saved dish that isn't part of it.
+  const matches = search.trim()
+    ? availableDishes.filter((d) => d.nameUk.toLowerCase().includes(search.toLowerCase()))
+    : [];
 
   const handleAdd = async (dish: Omit<Dish, "dateAdded">) => {
     setSaving(true);
@@ -1012,6 +1069,7 @@ export default function FoodsScreen() {
 
       {!editingIngredient && !editingDish && showAddForm && subTab === "ingredients" && (
         <AddFoodForm
+          availableFoods={availableIngredients}
           existingNames={existingIngredientNames}
           onSaved={(ingredient) => {
             setIngredients((prev) => [...(prev ?? []), ingredient]);
@@ -1028,6 +1086,7 @@ export default function FoodsScreen() {
             {uk.dishes.composeLinkLabel}
           </button>
           <AddDishForm
+            availableDishes={availableDishes}
             onSaved={(dish) => {
               setDishes((prev) => [...(prev ?? []), dish]);
               setShowAddForm(false);
@@ -1067,7 +1126,7 @@ export default function FoodsScreen() {
           <button type="button" onClick={() => setShowAddForm(true)}>
             {uk.foods.addButton}
           </button>
-          <p className="food-form-hint">{uk.foods.giLegend}</p>
+          <p className="food-list-hint">{uk.foods.giLegend}</p>
 
           {loadError && <p className="food-form-error">{loadError}</p>}
           {filteredIngredients.length === 0 && <p>{uk.foods.noResults}</p>}
@@ -1127,7 +1186,7 @@ export default function FoodsScreen() {
           <button type="button" onClick={() => setShowAddForm(true)}>
             {uk.dishes.addButton}
           </button>
-          <p className="food-form-hint">{uk.foods.giLegend}</p>
+          <p className="food-list-hint">{uk.foods.giLegend}</p>
 
           {loadError && <p className="food-form-error">{loadError}</p>}
           {filteredDishes.length === 0 && <p>{uk.dishes.noResults}</p>}

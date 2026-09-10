@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { lookupExternalCandidates, searchUsda, translateUkToEn } from "./nutrition";
+import { lookupExternalCandidates, searchUsda, translateEnToUk, translateUkToEn } from "./nutrition";
 
 describe("translateUkToEn", () => {
   afterEach(() => {
@@ -35,6 +35,29 @@ describe("translateUkToEn", () => {
     );
 
     expect(await translateUkToEn("гречка")).toBeNull();
+  });
+});
+
+describe("translateEnToUk", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("returns the translated text on success", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ responseData: { translatedText: "Гречка" } }),
+      }),
+    );
+
+    expect(await translateEnToUk("Buckwheat, raw")).toBe("Гречка");
+  });
+
+  it("returns null when the API is unreachable", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false }));
+    expect(await translateEnToUk("Buckwheat, raw")).toBeNull();
   });
 });
 

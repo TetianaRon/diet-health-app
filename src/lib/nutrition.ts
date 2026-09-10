@@ -12,9 +12,8 @@ import { lookupGI } from "../data/gi-table";
 
 const TRANSLATE_URL = "https://api.mymemory.translated.net/get";
 
-/** Translates a Ukrainian food name to English via a free, no-key API. Returns null if unavailable. */
-export async function translateUkToEn(textUk: string): Promise<string | null> {
-  const params = new URLSearchParams({ q: textUk, langpair: "uk|en" });
+async function translate(text: string, langpair: "uk|en" | "en|uk"): Promise<string | null> {
+  const params = new URLSearchParams({ q: text, langpair });
   const response = await fetch(`${TRANSLATE_URL}?${params}`);
   if (!response.ok) return null;
 
@@ -23,6 +22,21 @@ export async function translateUkToEn(textUk: string): Promise<string | null> {
   if (!translated || translated.toUpperCase().includes("MYMEMORY WARNING")) return null;
 
   return translated;
+}
+
+/** Translates a Ukrainian food name to English via a free, no-key API. Returns null if unavailable. */
+export async function translateUkToEn(textUk: string): Promise<string | null> {
+  return translate(textUk, "uk|en");
+}
+
+// USDA candidates are English-only (its own database descriptions, not
+// something we translated ourselves) — mom never reads English, so each
+// candidate also gets a best-effort Ukrainian back-translation purely for
+// display (never saved as the authoritative nameUk; she still picks/edits
+// the actual save name herself). Returns null on failure — callers fall back
+// to showing English only, same as before this existed.
+export async function translateEnToUk(textEn: string): Promise<string | null> {
+  return translate(textEn, "en|uk");
 }
 
 export interface NutritionEstimate {

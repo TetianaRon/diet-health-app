@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<title>Трекер харчування — Політика конфіденційності / Privacy Policy</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 720px; margin: 0 auto; padding: 24px 20px 64px; line-height: 1.6; color: #1a1a1a; }
+  h1 { font-size: 1.5rem; }
+  h2 { font-size: 1.15rem; margin-top: 2em; }
+  .lang-divider { border: none; border-top: 2px solid #2f7a4f; margin: 3em 0; }
+  .updated { color: #6b6b6b; font-size: 0.9rem; }
+  ul { padding-left: 1.3em; }
+  .disclaimer { background: #fdecea; color: #8a1f18; padding: 14px 16px; border-radius: 8px; margin: 16px 0; }
+  .disclaimer p { margin: 0; }
+  .disclaimer p + p { margin-top: 0.6em; }
+</style>
+</head>
+<body>
+
+<h1>Трекер харчування — Політика конфіденційності</h1>
+<p class="updated">Останнє оновлення: 10 вересня 2026</p>
+
+<p>Цей застосунок ("Трекер харчування") створений одним розробником для особистого/сімейного використання і не збирає, не зберігає та не продає жодні персональні дані на власних серверах — застосунок не має власного сервера чи бази даних взагалі.</p>
+
+<div class="disclaimer">
+  <p><strong>Це не медичний застосунок.</strong> Трекер харчування — це особистий інструмент для ведення щоденника харчування та орієнтовних розрахунків (глікемічний індекс/навантаження, калорії, БЖВ). Він не діагностує й не лікує жодних захворювань і не замінює консультацію лікаря чи дієтолога.</p>
+  <p>Значення глікемічного індексу та харчової цінності є оцінками з відкритих джерел (наукові дослідження ГІ, USDA FoodData Central) і можуть не бути точними для конкретного продукту чи людини — застосунок явно позначає непідтверджені значення значком «≈». Завжди консультуйтеся з лікарем перед прийняттям рішень щодо харчування, дозування ліків чи лікування діабету або будь-якого іншого стану здоров'я.</p>
+</div>
+
+<h2>Які дані застосунок опрацьовує</h2>
+<p>Застосунок отримує доступ до наступних даних:</p>
+<ul>
+  <li><strong>Базова інформація облікового запису Google</strong> (ім'я, email) — лише для входу через Google Sign-In.</li>
+  <li><strong>Вміст вашої таблиці Google Sheets</strong> — продукти, страви, записи про харчування та вимірювання цукру в крові, які ви вносите. Це включає дані про здоров'я (рівень цукру в крові), тому ставимося до цього з особливою обережністю: ці дані ніколи не залишають зв'язку між вашим пристроєм і вашою власною таблицею.</li>
+  <li><strong>Назви продуктів</strong> (без будь-якої іншої інформації) — надсилаються до USDA FoodData Central та MyMemory Translation виключно для пошуку харчової цінності й перекладу (див. нижче).</li>
+</ul>
+<p>Жодні з цих даних не надсилаються на сервери розробника — їх там просто немає.</p>
+
+<h2>Як працюють ваші дані</h2>
+<p>Усі дані про харчування та вимірювання цукру в крові, які ви вносите, зберігаються виключно у вашій власній таблиці Google Sheets — тій, яку ви підключаєте у Налаштуваннях. Застосунок читає й записує дані напряму у цю таблицю через офіційний Google Sheets API, використовуючи ваш власний обліковий запис Google. Розробник не має доступу до вашої таблиці й не отримує копію цих даних.</p>
+<p>Вхід виконується через Google (OAuth). Токен доступу зберігається лише в пам'яті пристрою на час сесії й не передається нікому, крім Google.</p>
+
+<h2>Сторонні сервіси</h2>
+<ul>
+  <li><strong>Google Sheets API / Google Sign-In</strong> — для збереження ваших даних і входу в застосунок. Керується <a href="https://policies.google.com/privacy">політикою конфіденційності Google</a>.</li>
+  <li><strong>USDA FoodData Central</strong> — безкоштовна публічна база даних поживних речовин уряду США. Застосунок надсилає туди лише назву продукту (англійською) для пошуку калорійності/БЖВ — без жодної особистої інформації.</li>
+  <li><strong>MyMemory Translation API</strong> — безкоштовний сервіс перекладу, який отримує лише назву продукту українською для перекладу англійською — без особистої інформації.</li>
+</ul>
+
+<h2>Сповіщення</h2>
+<p>Нагадування про прийом їжі плануються та спрацьовують повністю на вашому пристрої, без передачі будь-яких даних.</p>
+
+<h2>Реклама та аналітика</h2>
+<p>Застосунок не містить реклами, трекерів аналітики та не передає дані рекламним мережам.</p>
+
+<h2>Безпека</h2>
+<p>З'єднання із Google Sheets API, USDA та MyMemory виконуються виключно через шифрований HTTPS. Токен доступу до вашого облікового запису Google зберігається лише в оперативній пам'яті пристрою під час сесії — ніколи на диску, ніколи в застосунку, ніколи на жодному сервері.</p>
+
+<h2>Зберігання й видалення даних</h2>
+<p>Розробник не зберігає жодних ваших даних — їх просто нема де зберігати поза вашою власною таблицею. У застосунку немає окремого облікового запису чи бази даних, яку потрібно було б видаляти: все, що є, — це ваша таблиця Google Sheets. Ви повністю контролюєте ці дані — можете редагувати чи видалити будь-який запис прямо в таблиці, видалити саму таблицю, або відкликати доступ застосунку до свого облікового запису Google у <a href="https://myaccount.google.com/permissions">налаштуваннях безпеки Google</a> — будь-яка з цих дій негайно і повністю припиняє доступ застосунку до ваших даних.</p>
+
+<h2>Контакт</h2>
+<p>Питання щодо цієї політики: <a href="mailto:info@roncreator.ca">info@roncreator.ca</a></p>
+
+<hr class="lang-divider">
+
+<h1>Track My Meals — Privacy Policy</h1>
+<p class="updated">Last updated: September 10, 2026</p>
+
+<p>This app ("Track My Meals" / "Трекер харчування") is built by a single independent developer for personal/family use. It does not collect, store, or sell any personal data on its own servers — the app has no backend server or database of its own at all.</p>
+
+<div class="disclaimer">
+  <p><strong>This is not a medical app.</strong> Track My Meals is a personal food-logging tool with estimated calculations (glycemic index/load, calories, macros). It does not diagnose or treat any medical condition and is not a substitute for advice from a doctor or registered dietitian.</p>
+  <p>Glycemic index and nutrition values are estimates drawn from public sources (published GI research, USDA FoodData Central) and may not be accurate for a specific product or person — the app explicitly flags unconfirmed values with a "≈" marker. Always consult your doctor before making decisions about diet, medication dosing, or the management of diabetes or any other health condition.</p>
+</div>
+
+<h2>What data the app accesses</h2>
+<p>The app accesses:</p>
+<ul>
+  <li><strong>Basic Google account info</strong> (name, email) — only to sign you in via Google Sign-In.</li>
+  <li><strong>The contents of your Google Sheets spreadsheet</strong> — the ingredients, dishes, meal entries, and blood-sugar readings you enter. This includes health data (blood glucose), which we treat with particular care: it never leaves the direct connection between your device and your own spreadsheet.</li>
+  <li><strong>Food names</strong> (nothing else) — sent to USDA FoodData Central and MyMemory Translation solely to look up nutrition values and translate them (see below).</li>
+</ul>
+<p>None of this ever reaches the developer's own servers — there are none.</p>
+
+<h2>How your data works</h2>
+<p>All nutrition and blood-sugar data you enter is stored exclusively in your own Google Sheets spreadsheet — the one you connect in Settings. The app reads and writes to that spreadsheet directly via the official Google Sheets API, using your own Google account. The developer has no access to your spreadsheet and never receives a copy of this data.</p>
+<p>Sign-in is performed via Google (OAuth). The access token lives only in the device's memory for the session and is never sent anywhere except Google.</p>
+
+<h2>Third-party services</h2>
+<ul>
+  <li><strong>Google Sheets API / Google Sign-In</strong> — for storing your data and signing in. Governed by <a href="https://policies.google.com/privacy">Google's Privacy Policy</a>.</li>
+  <li><strong>USDA FoodData Central</strong> — a free public nutrition database run by the US government. The app sends only a food name (in English) to search for its nutrition values — no personal information.</li>
+  <li><strong>MyMemory Translation API</strong> — a free translation service that receives only the Ukrainian food name to translate to English — no personal information.</li>
+</ul>
+
+<h2>Notifications</h2>
+<p>Meal reminders are scheduled and fire entirely on your device, with no data transmitted anywhere.</p>
+
+<h2>Ads and analytics</h2>
+<p>The app contains no advertising, no analytics trackers, and does not share data with ad networks.</p>
+
+<h2>Security</h2>
+<p>All connections to the Google Sheets API, USDA, and MyMemory are made exclusively over encrypted HTTPS. Your Google account access token lives only in the device's memory for the duration of a session — never written to disk, never stored in the app, never sent to any server we control.</p>
+
+<h2>Data retention and deletion</h2>
+<p>The developer retains none of your data — there's nowhere for it to be retained outside your own spreadsheet. There is no separate account or database of ours to delete: your Google Sheets spreadsheet is the only place this data ever lives. You fully control it — edit or delete any entry directly in the spreadsheet, delete the spreadsheet itself, or revoke the app's access to your Google account anytime in your <a href="https://myaccount.google.com/permissions">Google security settings</a> — any of these immediately and completely cuts off the app's access to your data.</p>
+
+<h2>Contact</h2>
+<p>Questions about this policy: <a href="mailto:info@roncreator.ca">info@roncreator.ca</a></p>
+
+</body>
+</html>

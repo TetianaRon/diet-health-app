@@ -315,9 +315,19 @@ export function setSpreadsheetId(urlOrId: string): void {
   localStorage.setItem(SPREADSHEET_ID_STORAGE_KEY, parseSpreadsheetId(urlOrId));
 }
 
-/** The shared testing/default sheet the "connect default sheet" button points at, if configured. */
-export function getDefaultSpreadsheetId(): string {
+/** Mom's real sheet — the "connect Mom's sheet" button points here, if configured. */
+export function getMomSpreadsheetId(): string {
   return import.meta.env.VITE_DEFAULT_SPREADSHEET_ID;
+}
+
+/**
+ * The developer's own dev/test sheet — same value VITE_SPREADSHEET_ID already
+ * falls back to when no per-device override is set (see getSpreadsheetId
+ * above), just exposed as an explicit one-tap button too, so switching back
+ * to it after testing "connect Mom's sheet" doesn't mean retyping the ID.
+ */
+export function getTestSpreadsheetId(): string {
+  return import.meta.env.VITE_SPREADSHEET_ID;
 }
 
 export function getSpreadsheetUrl(id: string): string {

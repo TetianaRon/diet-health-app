@@ -2,7 +2,13 @@ import { useEffect, useState } from "react";
 import { uk } from "../i18n/uk";
 import { useAuth } from "../context/AuthContext";
 import { getSettings, updateSettings, type Settings } from "../lib/settings";
-import { getSpreadsheetId, setSpreadsheetId, getDefaultSpreadsheetId, getSpreadsheetUrl } from "../lib/sheets";
+import {
+  getSpreadsheetId,
+  setSpreadsheetId,
+  getMomSpreadsheetId,
+  getTestSpreadsheetId,
+  getSpreadsheetUrl,
+} from "../lib/sheets";
 
 const NUMERIC_FIELDS = [
   "dailyCarbsTarget",
@@ -74,7 +80,8 @@ function SpreadsheetSection() {
   const [value, setValue] = useState(() => getSpreadsheetId());
   const [error, setError] = useState<string | null>(null);
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
-  const defaultSpreadsheetId = getDefaultSpreadsheetId();
+  const momSpreadsheetId = getMomSpreadsheetId();
+  const testSpreadsheetId = getTestSpreadsheetId();
 
   const handleSave = () => {
     if (!value.trim()) {
@@ -88,11 +95,18 @@ function SpreadsheetSection() {
     setSavedMessage(uk.settings.spreadsheet.saved);
   };
 
-  const handleConnectDefault = () => {
-    setSpreadsheetId(defaultSpreadsheetId);
+  const handleConnectMom = () => {
+    setSpreadsheetId(momSpreadsheetId);
     setValue(getSpreadsheetId());
     setError(null);
-    setSavedMessage(uk.settings.spreadsheet.connectDefaultSaved);
+    setSavedMessage(uk.settings.spreadsheet.connectMomSaved);
+  };
+
+  const handleConnectTest = () => {
+    setSpreadsheetId(testSpreadsheetId);
+    setValue(getSpreadsheetId());
+    setError(null);
+    setSavedMessage(uk.settings.spreadsheet.connectTestSaved);
   };
 
   const handleCopyLink = async () => {
@@ -122,9 +136,14 @@ function SpreadsheetSection() {
         <button type="button" onClick={handleSave}>
           {uk.settings.spreadsheet.saveButton}
         </button>
-        {defaultSpreadsheetId && (
-          <button type="button" onClick={handleConnectDefault}>
-            {uk.settings.spreadsheet.connectDefaultButton}
+        {momSpreadsheetId && (
+          <button type="button" onClick={handleConnectMom}>
+            {uk.settings.spreadsheet.connectMomButton}
+          </button>
+        )}
+        {testSpreadsheetId && (
+          <button type="button" onClick={handleConnectTest}>
+            {uk.settings.spreadsheet.connectTestButton}
           </button>
         )}
         <button type="button" onClick={handleCopyLink}>

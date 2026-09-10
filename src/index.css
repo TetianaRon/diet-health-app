@@ -217,6 +217,16 @@ select {
   margin: -6px 0 0;
 }
 
+/* Same text style as .food-form-hint, but sits right after the Add
+   button (not an input) — that -6px negative top margin was tuned to hug
+   a field above it, which instead pulled this flush against the button
+   with no visible gap at all. */
+.food-list-hint {
+  font-size: 0.85rem;
+  color: #6b6b6b;
+  margin: 10px 0 0;
+}
+
 .food-form-error {
   color: #b3261e;
 }
