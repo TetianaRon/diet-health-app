@@ -3,11 +3,12 @@ import { App as CapacitorApp } from "@capacitor/app";
 import { uk } from "../i18n/uk";
 import { useAuth } from "../context/AuthContext";
 import { checkBloodSugarRange, checkFatLimit, mealGapWarning } from "../lib/health";
-import { listIngredients, mergeWithStarterFoods, type Ingredient } from "../lib/ingredients";
+import { listIngredients, mergeWithStarterFoods, sortFavoritesFirst, type Ingredient } from "../lib/ingredients";
 import { listDishes, type Dish, type IngredientNutrition } from "../lib/dishes";
 import { GLYCEMIC_FLAG_SYMBOL, type GlycemicFlag } from "../lib/glycemicFlag";
 import { mergeWithStarterDishes } from "../data/starter-dishes";
 import { getSettings, type Settings } from "../lib/settings";
+import { wasLastReadFromCache } from "../lib/sheets";
 import { scheduleMealReminder } from "../lib/reminderScheduler";
 import { latestBloodSugarEntry, listBloodSugarEntries, type BloodSugarEntry } from "../lib/bloodSugar";
 import {
@@ -70,6 +71,11 @@ function AddLogEntryForm({
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // A meal is often several items (e.g. buckwheat + an omelet + kefir at
+  // breakfast) — the form stays open and just resets the item-picking fields
+  // after each save, so mealType carries over instead of forcing it to be
+  // re-picked for every single item.
+  const [justSaved, setJustSaved] = useState(false);
 
   const matches =
     !selected || search !== selected.nameUk
@@ -101,6 +107,13 @@ function AddLogEntryForm({
       const entry = buildLogEntry(mealType, selected.nameUk, parsedPortion, selected.per100g, notes.trim());
       await addLogEntry(entry);
       onSaved(entry);
+      // Reset only the item-picking fields — mealType carries over so the
+      // next item (same meal) doesn't need it re-selected.
+      setSelected(null);
+      setSearch("");
+      setPortionGrams("");
+      setNotes("");
+      setJustSaved(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -128,10 +141,13 @@ function AddLogEntryForm({
           onChange={(e) => {
             setSearch(e.target.value);
             setSelected(null);
+            setJustSaved(false);
           }}
           placeholder={uk.today.form.itemPlaceholder}
         />
       </label>
+
+      {justSaved && <p className="food-form-source">{uk.today.addAnotherHint}</p>}
 
       {matches.length > 0 && (
         <ul className="food-list">
@@ -174,7 +190,7 @@ function AddLogEntryForm({
           {uk.today.form.saveButton}
         </button>
         <button type="button" onClick={onCancel} disabled={saving}>
-          {uk.today.cancelButton}
+          {uk.today.doneButton}
         </button>
       </div>
     </div>
@@ -196,6 +212,10 @@ export default function TodayScreen({
   const [bloodSugarEntries, setBloodSugarEntries] = useState<BloodSugarEntry[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
+  // True if any of the reads below fell back to cached data (see
+  // wasLastReadFromCache() in sheets.ts) — reset at the start of each
+  // refresh, then set by whichever read(s) actually used the cache.
+  const [showingCachedData, setShowingCachedData] = useState(false);
 
   useEffect(() => {
     if (autoOpenAddForm) {
@@ -208,20 +228,39 @@ export default function TodayScreen({
     if (!signedIn) return;
 
     const refresh = () => {
+      setShowingCachedData(false);
+      const flagIfCached = () => {
+        if (wasLastReadFromCache()) setShowingCachedData(true);
+      };
       listIngredients()
-        .then(setIngredients)
+        .then((data) => {
+          setIngredients(data);
+          flagIfCached();
+        })
         .catch((err: unknown) => setLoadError(err instanceof Error ? err.message : String(err)));
       listDishes()
-        .then(setDishes)
+        .then((data) => {
+          setDishes(data);
+          flagIfCached();
+        })
         .catch((err: unknown) => setLoadError(err instanceof Error ? err.message : String(err)));
       getSettings()
-        .then(setSettings)
+        .then((data) => {
+          setSettings(data);
+          flagIfCached();
+        })
         .catch((err: unknown) => setLoadError(err instanceof Error ? err.message : String(err)));
       listLogEntries()
-        .then(setEntries)
+        .then((data) => {
+          setEntries(data);
+          flagIfCached();
+        })
         .catch((err: unknown) => setLoadError(err instanceof Error ? err.message : String(err)));
       listBloodSugarEntries()
-        .then(setBloodSugarEntries)
+        .then((data) => {
+          setBloodSugarEntries(data);
+          flagIfCached();
+        })
         .catch((err: unknown) => setLoadError(err instanceof Error ? err.message : String(err)));
     };
 
@@ -254,10 +293,17 @@ export default function TodayScreen({
   // Meal logging picks from the whole bundle, not just what's been saved to
   // the personal sheet — same principle as the Foods screen: nothing needs
   // to be individually "added" first just to be loggable for a meal.
+  // Dishes first, then favorited ingredients, then the rest — the picker's
+  // default (empty-search) view only shows the first 20 via .slice below, and
+  // dishes are what most quick-adds actually are (a cooked meal), while
+  // ingredients alone were drowning them out purely by outnumbering them.
+  // Favorited ingredients still surface early for the genuinely as-eaten ones
+  // (fruit, cottage cheese, a boiled egg) — Dishes has no favorite mechanism
+  // yet to sort by, so it stays in bundle/sheet order for now.
   const foods = useMemo<PickableFood[]>(
     () => [
-      ...mergeWithStarterFoods(ingredients ?? []).map(toPickable),
       ...mergeWithStarterDishes(dishes ?? []).map(toPickable),
+      ...sortFavoritesFirst(mergeWithStarterFoods(ingredients ?? [])).map(toPickable),
     ],
     [ingredients, dishes],
   );
@@ -313,16 +359,21 @@ export default function TodayScreen({
       <h1>{uk.today.title}</h1>
 
       {loadError && <p className="food-form-error">{loadError}</p>}
+      {showingCachedData && <p className="today-warning">{uk.today.offlineNotice}</p>}
 
-      {settings && (
+      {settings && (settings.showCarbsProgress || settings.showCaloriesProgress) && (
         <div className="progress-block">
-          <ProgressBar label={uk.today.progress.carbs} value={totalCarbs} target={settings.dailyCarbsTarget} unit="г" />
-          <ProgressBar
-            label={uk.today.progress.calories}
-            value={totalCalories}
-            target={settings.dailyCaloriesTarget}
-            unit="ккал"
-          />
+          {settings.showCarbsProgress && (
+            <ProgressBar label={uk.today.progress.carbs} value={totalCarbs} target={settings.dailyCarbsTarget} unit="г" />
+          )}
+          {settings.showCaloriesProgress && (
+            <ProgressBar
+              label={uk.today.progress.calories}
+              value={totalCalories}
+              target={settings.dailyCaloriesTarget}
+              unit="ккал"
+            />
+          )}
         </div>
       )}
 
@@ -344,7 +395,6 @@ export default function TodayScreen({
           foods={foods}
           onSaved={(entry) => {
             setEntries((prev) => [...(prev ?? []), entry]);
-            setShowAddForm(false);
           }}
           onCancel={() => setShowAddForm(false)}
         />

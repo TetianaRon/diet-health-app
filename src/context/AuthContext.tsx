@@ -19,6 +19,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     sheets
       .initGoogleAuth()
+      // On native, initGoogleAuth() may have just silently signed in from a
+      // stored refresh token (see sheets.ts) — reflect that here rather than
+      // leaving signedIn stuck at its initial false until an interactive
+      // signIn() call, which would never come if the user doesn't need one.
+      .then(() => setSignedIn(sheets.isSignedIn()))
       .catch((error: unknown) => console.error("initGoogleAuth failed:", error))
       .finally(() => setInitializing(false));
   }, []);

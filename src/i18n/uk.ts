@@ -14,6 +14,8 @@ export const uk = {
       message: "Увійдіть через Google, щоб вести щоденний журнал харчування.",
       button: "Увійти через Google",
     },
+    offlineNotice:
+      "Немає з'єднання — показано збережені раніше дані. Нові записи не збережуться, доки з'єднання не відновиться.",
     progress: {
       carbs: "Вуглеводи",
       calories: "Калорії",
@@ -23,7 +25,8 @@ export const uk = {
     fatWarning: (mealType: string, overByGrams: number) =>
       `${mealType}: жиру забагато на ${overByGrams.toFixed(1)} г понад ліміт на прийом їжі.`,
     addButton: "Додати прийом їжі",
-    cancelButton: "Скасувати",
+    addAnotherHint: "Продукт додано. Можете додати ще один до цього прийому їжі, або натиснути «Готово».",
+    doneButton: "Готово",
     empty: "Сьогодні ще немає записів.",
     latestBloodSugar: (valueMmolL: number, contextLabel: string) => `${valueMmolL} ммоль/л (${contextLabel})`,
     entryMeta: (portionGrams: number, carbsG: number, caloriesKcal: number) =>
@@ -178,6 +181,14 @@ export const uk = {
       signInButton: "Увійти через Google",
       signOutButton: "Вийти",
     },
+    spreadsheet: {
+      title: "Таблиця Google Sheets",
+      hint: "Вставте посилання на вашу таблицю Google Sheets (або тільки її ID). Кожен пристрій може використовувати свою таблицю.",
+      placeholder: "https://docs.google.com/spreadsheets/d/...",
+      saveButton: "Зберегти",
+      saved: "Збережено!",
+      validationError: "Вставте посилання або ID таблиці.",
+    },
     fields: {
       dailyCarbsTarget: "Денна норма вуглеводів (г)",
       fatPerMealLimit: "Ліміт жиру на прийом їжі (г)",
@@ -188,6 +199,8 @@ export const uk = {
       bloodSugarMax: "Максимальний цукор (ммоль/л)",
       wakeTime: "Час пробудження",
       sleepTime: "Час сну",
+      showCarbsProgress: "Показувати прогрес вуглеводів на екрані «Сьогодні»",
+      showCaloriesProgress: "Показувати прогрес калорій на екрані «Сьогодні»",
     },
   },
   reminders: {

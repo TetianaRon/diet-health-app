@@ -16,6 +16,10 @@ export interface Settings {
   // to suppress notifications during sleep — not a numeric target like the fields above.
   wakeTime: string;
   sleepTime: string;
+  // Which Today-screen progress bars to show — mom picks what she actually
+  // wants to track, rather than always seeing both.
+  showCarbsProgress: boolean;
+  showCaloriesProgress: boolean;
 }
 
 const NUMERIC_FIELDS = [
@@ -30,6 +34,12 @@ const NUMERIC_FIELDS = [
 
 const STRING_FIELDS = ["wakeTime", "sleepTime"] as const satisfies readonly (keyof Settings)[];
 
+const BOOLEAN_FIELDS = ["showCarbsProgress", "showCaloriesProgress"] as const satisfies readonly (keyof Settings)[];
+
+function toBoolean(value: string): boolean {
+  return value.trim().toUpperCase() === "TRUE";
+}
+
 // Maps our field names to the sheet's Key column values.
 const SETTINGS_KEYS: Record<keyof Settings, string> = {
   dailyCarbsTarget: "DailyCarbsTarget",
@@ -41,11 +51,14 @@ const SETTINGS_KEYS: Record<keyof Settings, string> = {
   bloodSugarMax: "BloodSugarMax",
   wakeTime: "WakeTime",
   sleepTime: "SleepTime",
+  showCarbsProgress: "ShowCarbsProgress",
+  showCaloriesProgress: "ShowCaloriesProgress",
 };
 
 // Defaults per mom's 2026-09-07 interview (docs/requirements-open-questions.md) —
 // used for any key missing from the sheet. wakeTime/sleepTime match her stated
-// schedule (wakes 6:30, sleeps at midnight).
+// schedule (wakes 6:30, sleeps at midnight). Both progress bars default to
+// shown, matching the app's original always-both behavior.
 export const DEFAULT_SETTINGS: Settings = {
   dailyCarbsTarget: 140,
   fatPerMealLimit: 18,
@@ -56,6 +69,8 @@ export const DEFAULT_SETTINGS: Settings = {
   bloodSugarMax: 7.8,
   wakeTime: "06:30",
   sleepTime: "00:00",
+  showCarbsProgress: true,
+  showCaloriesProgress: true,
 };
 
 /** Parses raw Key/Value rows into a typed Settings object, falling back to defaults for missing keys. */
@@ -75,6 +90,10 @@ export function parseSettingsRows(rows: unknown[][]): Settings {
   for (const field of STRING_FIELDS) {
     const raw = byKey.get(SETTINGS_KEYS[field]);
     if (raw !== undefined) result[field] = raw;
+  }
+  for (const field of BOOLEAN_FIELDS) {
+    const raw = byKey.get(SETTINGS_KEYS[field]);
+    if (raw !== undefined) result[field] = toBoolean(raw);
   }
   return result;
 }

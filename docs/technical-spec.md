@@ -97,6 +97,8 @@ Key/value rows, pre-filled with Project Brief defaults; mom's interview tunes th
 | BloodSugarMax | 7.8 |
 | WakeTime | 06:30 |
 | SleepTime | 00:00 |
+| ShowCarbsProgress | TRUE |
+| ShowCaloriesProgress | TRUE |
 
 ## Google Sheets API integration
 
@@ -168,7 +170,9 @@ The web/PWA sign-in (`src/lib/sheets.ts`'s GIS token-client flow, described abov
 2. **"Android" type client, still rejected on the double-slash redirect URI**: switching client type alone wasn't enough — `ca.roncreator.trackmymeals://oauth2redirect` parses as having an authority component (`oauth2redirect` as host), which the validator for this client type doesn't accept. Fixed by using the single-slash opaque form instead (matches the convention Google's own AppAuth-Android library uses).
 3. **"Custom URI scheme is not enabled for your Android client"**: a specific, actionable error pointing at a Console-only setting — Google added an explicit opt-in toggle for custom-scheme redirects on Android OAuth clients (pushing Android App Links as the more-secure default). No code change, just enabling that toggle on the client's edit page.
 
-**Final working setup**: `VITE_GOOGLE_ANDROID_CLIENT_ID`, an "Android" type client registered with package name `ca.roncreator.trackmymeals`, the SHA-1 fingerprint of the signing certificate (from `./gradlew signingReport`, run with `JAVA_HOME` pointed at Android Studio's bundled JDK since a plain terminal doesn't have Java on `PATH` by default), and the custom-URI-scheme toggle enabled. "Android" type clients issue **no client secret at all** (verification is via package+signature instead), so this path is fully secret-free, same as the web flow. **Known follow-up**: the registered SHA-1 is the *debug* keystore's — once the release keystore exists (per the Phase 1 checklist above), its SHA-1 needs adding too (Console supports multiple fingerprints on one Android-type client, via "+ Add fingerprint"), or sign-in will break specifically on release builds.
+**Final working setup**: `VITE_GOOGLE_ANDROID_CLIENT_ID`, an "Android" type client registered with package name `ca.roncreator.trackmymeals`, the SHA-1 fingerprint of the signing certificate (from `./gradlew signingReport`, run with `JAVA_HOME` pointed at Android Studio's bundled JDK since a plain terminal doesn't have Java on `PATH` by default), and the custom-URI-scheme toggle enabled. "Android" type clients issue **no client secret at all** (verification is via package+signature instead), so this path is fully secret-free, same as the web flow.
+
+**Correction, found once the release keystore was actually generated**: Google Cloud Console's Android client edit page has **one** SHA-1 field, not a multi-fingerprint list — there is no "+ Add fingerprint" option. Once the release keystore existed (see the Phase 1 entry below), its SHA-1 simply **replaced** the debug one on this same client, rather than being added alongside it. This means **only the release build can sign in from that point on** — a deliberate, accepted tradeoff, since mom only ever runs the signed release build and debug was purely a testing vehicle. If debug-build sign-in testing is ever needed again, it would need its own separate Android-type client (same package name, debug SHA-1), not a second fingerprint on this one.
 
 **Also found and fixed in the same live-testing pass**: the app's CSS had never accounted for Android's edge-to-edge system bars (status bar over the top, gesture/nav bar over the bottom) — bad enough that the bottom tab bar was unusable on a real device. `src/index.css`'s `.app-content`/`.tab-bar` now add `env(safe-area-inset-top)`/`env(safe-area-inset-bottom)` padding, which is `0px` (a no-op) on web/desktop.
 

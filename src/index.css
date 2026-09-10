@@ -246,6 +246,16 @@ select {
   color: #4a4a4a;
 }
 
+.settings-checkbox {
+  flex-direction: row !important;
+  align-items: center;
+  gap: 8px !important;
+}
+
+.settings-checkbox input {
+  width: auto;
+}
+
 .progress-block {
   display: flex;
   flex-direction: column;

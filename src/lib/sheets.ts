@@ -70,6 +70,18 @@ let accessToken: string | null = null;
 let nativeRedirectListenerRegistered = false;
 let pendingNativeSignIn: { verifier: string; resolve: () => void; reject: (err: Error) => void } | null = null;
 
+// Persisted across app restarts (unlike accessToken, which is deliberately
+// memory-only — see the file-top comment) so the app can silently re-sign-in
+// on launch instead of requiring an interactive sign-in every time it's
+// opened. Native-only: the web flow was never the source of this friction
+// (a browser tab typically stays open across a session already), so it's
+// left as-is rather than changing behavior nobody asked to change. Google
+// expires these after 7 days while this app's OAuth consent screen remains
+// in "Testing" publishing status — a real Google policy, not a bug here;
+// moving to "In production" (a separate step from Play Store distribution)
+// would lift that, but needs its own verification review.
+const REFRESH_TOKEN_STORAGE_KEY = "trackmymeals.refreshToken";
+
 function base64UrlEncode(bytes: Uint8Array): string {
   let binary = "";
   for (const b of bytes) binary += String.fromCharCode(b);
@@ -112,7 +124,42 @@ async function exchangeCodeForToken(code: string, verifier: string): Promise<str
 
   const data = await response.json();
   if (!data.access_token) throw new Error("Token exchange: no access_token returned");
+  if (data.refresh_token) localStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, data.refresh_token);
   return data.access_token as string;
+}
+
+/**
+ * Silently exchanges the stored refresh token for a new access token — no
+ * browser, no user interaction. Used both at app launch (to restore a
+ * session without an interactive sign-in) and by authorizedFetch on a 401
+ * (to recover from an expired access token mid-session, e.g. after the app
+ * sat backgrounded for over an hour). Returns false (and clears the stored
+ * refresh token, since it's presumably invalid/revoked/expired) rather than
+ * throwing, so callers can fall back to a normal interactive sign-in.
+ */
+async function refreshAccessToken(): Promise<boolean> {
+  const refreshToken = localStorage.getItem(REFRESH_TOKEN_STORAGE_KEY);
+  if (!refreshToken) return false;
+
+  const clientId = import.meta.env.VITE_GOOGLE_ANDROID_CLIENT_ID;
+  const response = await fetch(TOKEN_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ client_id: clientId, refresh_token: refreshToken, grant_type: "refresh_token" }),
+  });
+
+  if (!response.ok) {
+    localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
+    return false;
+  }
+
+  const data = await response.json();
+  if (!data.access_token) {
+    localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
+    return false;
+  }
+  accessToken = data.access_token as string;
+  return true;
 }
 
 /** Handles the redirect back into the app after the system browser completes sign-in. */
@@ -154,6 +201,12 @@ function signInNative(): Promise<void> {
         authUrl.searchParams.set("scope", SHEETS_SCOPE);
         authUrl.searchParams.set("code_challenge", challenge);
         authUrl.searchParams.set("code_challenge_method", "S256");
+        // access_type=offline requests a refresh token; prompt=consent forces
+        // Google to actually issue one — without it, Google only returns a
+        // refresh token on a user's very first-ever authorization of this
+        // client+scope, silently omitting it on every sign-in after that.
+        authUrl.searchParams.set("access_type", "offline");
+        authUrl.searchParams.set("prompt", "consent");
 
         pendingNativeSignIn = { verifier, resolve, reject };
         await Browser.open({ url: authUrl.toString() });
@@ -179,13 +232,14 @@ function loadGisScript(): Promise<void> {
   });
 }
 
-/** Prepares Google sign-in for whichever platform this is running on. */
+/** Prepares Google sign-in for whichever platform this is running on. On native, also attempts a silent sign-in from a stored refresh token — check isSignedIn() after this resolves. */
 export async function initGoogleAuth(): Promise<void> {
   if (Capacitor.isNativePlatform()) {
     if (!nativeRedirectListenerRegistered) {
       nativeRedirectListenerRegistered = true;
       App.addListener("appUrlOpen", (data) => void handleNativeRedirect(data.url));
     }
+    await refreshAccessToken();
     return;
   }
 
@@ -225,20 +279,62 @@ export function signIn(): Promise<void> {
 
 export function signOut(): void {
   accessToken = null;
+  // No-op if never set (e.g. on web) — removeItem on a missing key is safe.
+  localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
 }
 
 export function isSignedIn(): boolean {
   return accessToken !== null;
 }
 
+// --- Spreadsheet selection ---
+//
+// VITE_SPREADSHEET_ID is a single value baked into the build at compile
+// time — fine while this app had exactly one user, but every install (this
+// developer's phone, mom's phone, ...) shares one binary, so a build-time
+// value can only ever point everyone at the same spreadsheet. A per-device
+// override, entered once in Settings and kept in localStorage (persists
+// across app restarts, private to this device, no new dependency needed —
+// works the same in a browser tab and inside the Capacitor WebView), lets
+// each install point at its own spreadsheet while the env var remains a
+// reasonable default for local development.
+const SPREADSHEET_ID_STORAGE_KEY = "trackmymeals.spreadsheetId";
+
+/** Pulls the spreadsheet ID out of a pasted Google Sheets URL, or returns the input as-is if it's already a bare ID. */
+export function parseSpreadsheetId(input: string): string {
+  const trimmed = input.trim();
+  const match = trimmed.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  return match ? match[1] : trimmed;
+}
+
+export function getSpreadsheetId(): string {
+  return localStorage.getItem(SPREADSHEET_ID_STORAGE_KEY) || import.meta.env.VITE_SPREADSHEET_ID;
+}
+
+export function setSpreadsheetId(urlOrId: string): void {
+  localStorage.setItem(SPREADSHEET_ID_STORAGE_KEY, parseSpreadsheetId(urlOrId));
+}
+
 async function authorizedFetch(path: string, init?: RequestInit): Promise<Response> {
   if (!accessToken) {
     throw new Error("Not signed in — call signIn() first");
   }
-  const response = await fetch(`${SHEETS_API_BASE}/${path}`, {
-    ...init,
-    headers: { ...init?.headers, Authorization: `Bearer ${accessToken}` },
-  });
+  const doFetch = () =>
+    fetch(`${SHEETS_API_BASE}/${path}`, {
+      ...init,
+      headers: { ...init?.headers, Authorization: `Bearer ${accessToken}` },
+    });
+
+  let response = await doFetch();
+
+  // A 401 usually just means the ~1hr access token expired mid-session —
+  // e.g. the app sat backgrounded for a while. Try one silent refresh (a
+  // no-op if there's no stored refresh token, which is the case on web)
+  // before giving up, so a long-idle app doesn't need a full interactive
+  // re-sign-in just to make its next request.
+  if (response.status === 401 && (await refreshAccessToken())) {
+    response = await doFetch();
+  }
 
   if (!response.ok) {
     // fetch() only rejects on network failure, not HTTP error status — without
@@ -258,17 +354,62 @@ async function authorizedFetch(path: string, init?: RequestInit): Promise<Respon
   return response;
 }
 
-/** Reads a range, e.g. readRange("Ingredients", "A1:L200"). */
+// --- Offline read fallback ---
+//
+// Writes deliberately still fail outright with no connection (queueing and
+// replaying writes safely — handling conflicts, retries, partial failures —
+// is a real sync-engine project of its own, not something to bolt on
+// quickly; a clear "try again" error beats a write that silently never
+// actually saved). Reads are different: falling back to whatever was last
+// successfully fetched is safe (nothing to lose) and means the app stays
+// usable — viewing today's log, targets, history — when the connection
+// drops, instead of going blank. Scoped per spreadsheet (via getSpreadsheetId())
+// so switching which sheet a device points at can't show stale data from
+// the wrong one.
+const READ_CACHE_PREFIX = "trackmymeals.cache.";
+let lastReadWasFromCache = false;
+
+function readCacheKey(tab: string, range: string): string {
+  return `${READ_CACHE_PREFIX}${getSpreadsheetId()}:${tab}:${range}`;
+}
+
+/** True if the most recent readRange() call fell back to cached data instead of a live fetch — check after fetching to decide whether to show an "offline" hint. */
+export function wasLastReadFromCache(): boolean {
+  return lastReadWasFromCache;
+}
+
+/** Reads a range, e.g. readRange("Ingredients", "A1:L200"). Falls back to the last successful read for this exact tab/range if the network is unreachable — see the comment above. */
 export async function readRange(tab: string, range: string): Promise<unknown[][]> {
-  const spreadsheetId = import.meta.env.VITE_SPREADSHEET_ID;
-  const response = await authorizedFetch(`${spreadsheetId}/values/${tab}!${range}`);
-  const data = await response.json();
-  return data.values ?? [];
+  const spreadsheetId = getSpreadsheetId();
+  const key = readCacheKey(tab, range);
+  try {
+    const response = await authorizedFetch(`${spreadsheetId}/values/${tab}!${range}`);
+    const data = await response.json();
+    const values = data.values ?? [];
+    localStorage.setItem(key, JSON.stringify(values));
+    lastReadWasFromCache = false;
+    return values;
+  } catch (err) {
+    // Only fall back for a genuine network failure — fetch() itself throws a
+    // TypeError when it can't reach the server at all (no connectivity, DNS
+    // failure, CORS block). An HTTP error status (bad permissions, a bad
+    // range, an expired session that couldn't be refreshed) resolves fine
+    // and is surfaced by authorizedFetch as a plain Error instead — that's a
+    // real problem a stale cache should never quietly paper over.
+    if (err instanceof TypeError) {
+      const cached = localStorage.getItem(key);
+      if (cached) {
+        lastReadWasFromCache = true;
+        return JSON.parse(cached);
+      }
+    }
+    throw err;
+  }
 }
 
 /** Appends rows to a tab, e.g. writeRange("DailyLog", "A:J", [[...]]). */
 export async function writeRange(tab: string, range: string, values: unknown[][]): Promise<void> {
-  const spreadsheetId = import.meta.env.VITE_SPREADSHEET_ID;
+  const spreadsheetId = getSpreadsheetId();
   await authorizedFetch(`${spreadsheetId}/values/${tab}!${range}:append?valueInputOption=USER_ENTERED`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -282,7 +423,7 @@ export async function writeRange(tab: string, range: string, values: unknown[][]
  * e.g. "Settings!B3".
  */
 export async function batchUpdateRanges(updates: { range: string; values: unknown[][] }[]): Promise<void> {
-  const spreadsheetId = import.meta.env.VITE_SPREADSHEET_ID;
+  const spreadsheetId = getSpreadsheetId();
   await authorizedFetch(`${spreadsheetId}/values:batchUpdate`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

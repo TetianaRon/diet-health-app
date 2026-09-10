@@ -29,6 +29,12 @@ describe("parseSettingsRows", () => {
     expect(result.wakeTime).toBe("07:00");
     expect(result.sleepTime).toBe(DEFAULT_SETTINGS.sleepTime);
   });
+
+  it("parses boolean fields (show*Progress) and falls back to defaults for missing ones", () => {
+    const result = parseSettingsRows([["ShowCaloriesProgress", "FALSE"]]);
+    expect(result.showCaloriesProgress).toBe(false);
+    expect(result.showCarbsProgress).toBe(DEFAULT_SETTINGS.showCarbsProgress);
+  });
 });
 
 describe("computeSettingsUpdates", () => {

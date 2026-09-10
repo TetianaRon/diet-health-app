@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { uk } from "../i18n/uk";
 import { useAuth } from "../context/AuthContext";
 import { getSettings, updateSettings, type Settings } from "../lib/settings";
+import { getSpreadsheetId, setSpreadsheetId } from "../lib/sheets";
 
 const NUMERIC_FIELDS = [
   "dailyCarbsTarget",
@@ -22,7 +23,59 @@ type TimeField = (typeof TIME_FIELDS)[number];
 
 const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
 
-const FIELDS = [...NUMERIC_FIELDS, ...TIME_FIELDS] as const satisfies readonly (keyof Settings)[];
+// Which Today-screen progress bars to show — a checkbox, not a text field, so
+// kept separate from the numeric/time validation below (nothing to validate).
+const BOOLEAN_FIELDS = ["showCarbsProgress", "showCaloriesProgress"] as const satisfies readonly (keyof Settings)[];
+type BooleanField = (typeof BOOLEAN_FIELDS)[number];
+
+const FIELDS = [...NUMERIC_FIELDS, ...TIME_FIELDS, ...BOOLEAN_FIELDS] as const satisfies readonly (keyof Settings)[];
+
+// Not gated behind sign-in — which spreadsheet this device talks to is a
+// local, per-device setting independent of the signed-in Google account
+// (unlike the numeric targets below, which live in that spreadsheet's
+// Settings tab and so need a real read/write round-trip). See the
+// "Spreadsheet selection" comment in src/lib/sheets.ts for why this exists:
+// VITE_SPREADSHEET_ID is one value baked into the build, so every install
+// shared it until this override existed.
+function SpreadsheetSection() {
+  const [value, setValue] = useState(() => getSpreadsheetId());
+  const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+
+  const handleSave = () => {
+    if (!value.trim()) {
+      setError(uk.settings.spreadsheet.validationError);
+      setSaved(false);
+      return;
+    }
+    setSpreadsheetId(value);
+    setValue(getSpreadsheetId()); // reflects the parsed-out ID, not whatever was pasted
+    setError(null);
+    setSaved(true);
+  };
+
+  return (
+    <div className="settings-account">
+      <h2>{uk.settings.spreadsheet.title}</h2>
+      <p>{uk.settings.spreadsheet.hint}</p>
+      <label>
+        <input
+          value={value}
+          placeholder={uk.settings.spreadsheet.placeholder}
+          onChange={(e) => {
+            setValue(e.target.value);
+            setSaved(false);
+          }}
+        />
+      </label>
+      {error && <p className="food-form-error">{error}</p>}
+      {saved && <p>{uk.settings.spreadsheet.saved}</p>}
+      <button type="button" onClick={handleSave}>
+        {uk.settings.spreadsheet.saveButton}
+      </button>
+    </div>
+  );
+}
 
 export default function SettingsScreen() {
   const { signedIn, initializing, signIn, signOut } = useAuth();
@@ -65,12 +118,16 @@ export default function SettingsScreen() {
       TimeField,
       string
     >;
+    const booleanParsed = Object.fromEntries(BOOLEAN_FIELDS.map((field) => [field, values[field] === "true"])) as Record<
+      BooleanField,
+      boolean
+    >;
 
     setSaving(true);
     setSaveError(null);
     setSaved(false);
     try {
-      await updateSettings({ ...numericParsed, ...timeParsed });
+      await updateSettings({ ...numericParsed, ...timeParsed, ...booleanParsed });
       setSaved(true);
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : String(err));
@@ -104,6 +161,8 @@ export default function SettingsScreen() {
         )}
       </div>
 
+      <SpreadsheetSection />
+
       {signedIn && (
         <div className="settings-targets">
           {loadError && <p className="food-form-error">{loadError}</p>}
@@ -111,16 +170,27 @@ export default function SettingsScreen() {
 
           {loaded && (
             <>
-              {FIELDS.map((field) => (
-                <label key={field}>
-                  {uk.settings.fields[field]}
-                  <input
-                    type={(TIME_FIELDS as readonly string[]).includes(field) ? "time" : "number"}
-                    value={values[field] ?? ""}
-                    onChange={(e) => setValues({ ...values, [field]: e.target.value })}
-                  />
-                </label>
-              ))}
+              {FIELDS.map((field) =>
+                (BOOLEAN_FIELDS as readonly string[]).includes(field) ? (
+                  <label key={field} className="settings-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={values[field] === "true"}
+                      onChange={(e) => setValues({ ...values, [field]: String(e.target.checked) })}
+                    />
+                    {uk.settings.fields[field]}
+                  </label>
+                ) : (
+                  <label key={field}>
+                    {uk.settings.fields[field]}
+                    <input
+                      type={(TIME_FIELDS as readonly string[]).includes(field) ? "time" : "number"}
+                      value={values[field] ?? ""}
+                      onChange={(e) => setValues({ ...values, [field]: e.target.value })}
+                    />
+                  </label>
+                ),
+              )}
 
               {saveError && <p className="food-form-error">{saveError}</p>}
               {saved && <p>{uk.settings.saved}</p>}
