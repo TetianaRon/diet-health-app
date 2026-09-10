@@ -38,8 +38,9 @@
 <p>Жодні з цих даних не надсилаються на сервери розробника — їх там просто немає.</p>
 
 <h2>Як працюють ваші дані</h2>
-<p>Усі дані про харчування та вимірювання цукру в крові, які ви вносите, зберігаються виключно у вашій власній таблиці Google Sheets — тій, яку ви підключаєте у Налаштуваннях. Застосунок читає й записує дані напряму у цю таблицю через офіційний Google Sheets API, використовуючи ваш власний обліковий запис Google. Розробник не має доступу до вашої таблиці й не отримує копію цих даних.</p>
+<p>Усі дані про харчування та вимірювання цукру в крові, які ви вносите, зберігаються виключно у вашій таблиці Google Sheets — тій, яку ви підключаєте у Налаштуваннях. Застосунок читає й записує дані напряму у цю таблицю через офіційний Google Sheets API, використовуючи ваш власний обліковий запис Google. <strong>Сам застосунок</strong> ніколи не надсилає ці дані розробнику й не зберігає їхню копію — кожен запит іде напряму між вашим пристроєм і Google Sheets.</p>
 <p>Вхід виконується через Google (OAuth). Токен доступу зберігається лише в пам'яті пристрою на час сесії й не передається нікому, крім Google.</p>
+<p><strong>Окреме уточнення щодо власності файлу:</strong> хто саме бачить вашу таблицю поза застосунком, залежить від того, хто є її власником у Google Drive і з ким вона розшарена, — і це питання прав доступу до файлу в Google Drive, а не самого застосунку. Якщо таблицю створив і досі є її власником хтось інший (наприклад, член сім'ї, який допоміг вам розпочати роботу із застосунком), ця особа може мати прямий доступ до файлу через Google Drive, незалежно від того, що робить сам застосунок. Якщо ви хочете, щоб доступ до вашої таблиці мали виключно ви, зробіть себе єдиним власником файлу в Google Drive.</p>
 
 <h2>Сторонні сервіси</h2>
 <ul>
@@ -85,8 +86,9 @@
 <p>None of this ever reaches the developer's own servers — there are none.</p>
 
 <h2>How your data works</h2>
-<p>All nutrition and blood-sugar data you enter is stored exclusively in your own Google Sheets spreadsheet — the one you connect in Settings. The app reads and writes to that spreadsheet directly via the official Google Sheets API, using your own Google account. The developer has no access to your spreadsheet and never receives a copy of this data.</p>
+<p>All nutrition and blood-sugar data you enter is stored in your Google Sheets spreadsheet — the one you connect in Settings. The app reads and writes to that spreadsheet directly via the official Google Sheets API, using your own Google account. <strong>The app itself</strong> never sends this data to the developer and never keeps a copy of it — every request goes directly between your device and Google Sheets.</p>
 <p>Sign-in is performed via Google (OAuth). The access token lives only in the device's memory for the session and is never sent anywhere except Google.</p>
+<p><strong>A separate note on file ownership:</strong> who else can see your spreadsheet outside the app depends on who owns that file in Google Drive and who it's shared with — that's a matter of the file's Google Drive permissions, not the app itself. If the spreadsheet was created by, and is still owned by, someone else (for example, a family member who helped you get set up with the app), that person may have direct access to the file through Google Drive, independent of anything the app does. If you want sole access to your spreadsheet, make yourself the file's only owner in Google Drive.</p>
 
 <h2>Third-party services</h2>
 <ul>
