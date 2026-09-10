@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { App as CapacitorApp } from "@capacitor/app";
 import { uk } from "../i18n/uk";
 import { useAuth } from "../context/AuthContext";
 import { checkBloodSugarRange, checkFatLimit, mealGapWarning } from "../lib/health";
@@ -7,6 +8,7 @@ import { listDishes, type Dish, type IngredientNutrition } from "../lib/dishes";
 import { GLYCEMIC_FLAG_SYMBOL, type GlycemicFlag } from "../lib/glycemicFlag";
 import { mergeWithStarterDishes } from "../data/starter-dishes";
 import { getSettings, type Settings } from "../lib/settings";
+import { scheduleMealReminder } from "../lib/reminderScheduler";
 import { latestBloodSugarEntry, listBloodSugarEntries, type BloodSugarEntry } from "../lib/bloodSugar";
 import {
   MEAL_TYPES,
@@ -179,7 +181,13 @@ function AddLogEntryForm({
   );
 }
 
-export default function TodayScreen() {
+export default function TodayScreen({
+  autoOpenAddForm = false,
+  onAutoOpenAddFormConsumed,
+}: {
+  autoOpenAddForm?: boolean;
+  onAutoOpenAddFormConsumed?: () => void;
+} = {}) {
   const { signedIn, initializing, signIn } = useAuth();
   const [ingredients, setIngredients] = useState<Ingredient[] | null>(null);
   const [dishes, setDishes] = useState<Dish[] | null>(null);
@@ -190,23 +198,58 @@ export default function TodayScreen() {
   const [showAddForm, setShowAddForm] = useState(false);
 
   useEffect(() => {
+    if (autoOpenAddForm) {
+      setShowAddForm(true);
+      onAutoOpenAddFormConsumed?.();
+    }
+  }, [autoOpenAddForm, onAutoOpenAddFormConsumed]);
+
+  useEffect(() => {
     if (!signedIn) return;
-    listIngredients()
-      .then(setIngredients)
-      .catch((err: unknown) => setLoadError(err instanceof Error ? err.message : String(err)));
-    listDishes()
-      .then(setDishes)
-      .catch((err: unknown) => setLoadError(err instanceof Error ? err.message : String(err)));
-    getSettings()
-      .then(setSettings)
-      .catch((err: unknown) => setLoadError(err instanceof Error ? err.message : String(err)));
-    listLogEntries()
-      .then(setEntries)
-      .catch((err: unknown) => setLoadError(err instanceof Error ? err.message : String(err)));
-    listBloodSugarEntries()
-      .then(setBloodSugarEntries)
-      .catch((err: unknown) => setLoadError(err instanceof Error ? err.message : String(err)));
+
+    const refresh = () => {
+      listIngredients()
+        .then(setIngredients)
+        .catch((err: unknown) => setLoadError(err instanceof Error ? err.message : String(err)));
+      listDishes()
+        .then(setDishes)
+        .catch((err: unknown) => setLoadError(err instanceof Error ? err.message : String(err)));
+      getSettings()
+        .then(setSettings)
+        .catch((err: unknown) => setLoadError(err instanceof Error ? err.message : String(err)));
+      listLogEntries()
+        .then(setEntries)
+        .catch((err: unknown) => setLoadError(err instanceof Error ? err.message : String(err)));
+      listBloodSugarEntries()
+        .then(setBloodSugarEntries)
+        .catch((err: unknown) => setLoadError(err instanceof Error ? err.message : String(err)));
+    };
+
+    refresh();
+
+    // Re-reads on foreground so a meal logged on another device (e.g. the
+    // computer) still reschedules the reminder correctly here — see the
+    // "cross-device staleness" note in docs/build-log.md's 2026-09-09 entry.
+    // @capacitor/app has a web implementation too (visibilitychange-based),
+    // so this is safe to register outside the Android build as well.
+    const listenerPromise = CapacitorApp.addListener("resume", refresh);
+    return () => {
+      void listenerPromise.then((listener) => listener.remove());
+    };
   }, [signedIn]);
+
+  // (Re)schedules the meal reminder whenever the most recent log entry or the
+  // relevant settings change — covers both "just logged a meal" (entries
+  // changes) and "reopened the app" (the resume-triggered refresh above also
+  // changes entries). No-op on non-native builds (see reminderScheduler.ts).
+  useEffect(() => {
+    if (!entries || !settings) return;
+    const lastEntry = entries.reduce<DailyLogEntry | null>(
+      (latest, e) => (!latest || e.timestamp > latest.timestamp ? e : latest),
+      null,
+    );
+    if (lastEntry) void scheduleMealReminder(new Date(lastEntry.timestamp), settings);
+  }, [entries, settings]);
 
   // Meal logging picks from the whole bundle, not just what's been saved to
   // the personal sheet — same principle as the Foods screen: nothing needs

@@ -186,6 +186,12 @@ export const uk = {
       maxGapHours: "Макс. проміжок між прийомами їжі (год)",
       bloodSugarMin: "Мінімальний цукор (ммоль/л)",
       bloodSugarMax: "Максимальний цукор (ммоль/л)",
+      wakeTime: "Час пробудження",
+      sleepTime: "Час сну",
     },
+  },
+  reminders: {
+    notificationTitle: "Трекер харчування",
+    notificationBody: "Час перевірити, чи не пора поїсти",
   },
 } as const;

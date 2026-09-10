@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { LocalNotifications } from "@capacitor/local-notifications";
 import { uk } from "./i18n/uk";
 import { AuthProvider } from "./context/AuthContext";
+import { initMealReminders } from "./lib/reminderScheduler";
 import TodayScreen from "./screens/TodayScreen";
 import FoodsScreen from "./screens/FoodsScreen";
 import BloodSugarScreen from "./screens/BloodSugarScreen";
@@ -17,12 +19,29 @@ const TABS: { id: TabId; label: string }[] = [
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabId>("today");
+  const [autoOpenAddForm, setAutoOpenAddForm] = useState(false);
+
+  useEffect(() => {
+    void initMealReminders();
+
+    const listenerPromise = LocalNotifications.addListener("localNotificationActionPerformed", (action) => {
+      if (action.notification.extra?.action === "addMeal") {
+        setActiveTab("today");
+        setAutoOpenAddForm(true);
+      }
+    });
+    return () => {
+      void listenerPromise.then((listener) => listener.remove());
+    };
+  }, []);
 
   return (
     <AuthProvider>
       <div className="app">
         <main className="app-content">
-          {activeTab === "today" && <TodayScreen />}
+          {activeTab === "today" && (
+            <TodayScreen autoOpenAddForm={autoOpenAddForm} onAutoOpenAddFormConsumed={() => setAutoOpenAddForm(false)} />
+          )}
           {activeTab === "foods" && <FoodsScreen />}
           {activeTab === "bloodSugar" && <BloodSugarScreen />}
           {activeTab === "settings" && <SettingsScreen />}

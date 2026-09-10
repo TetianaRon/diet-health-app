@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Трекер харчування</string>
+    <string name="title_activity_main">Трекер харчування</string>
+    <string name="package_name">ca.roncreator.trackmymeals</string>
+    <string name="custom_url_scheme">ca.roncreator.trackmymeals</string>
+</resources>

@@ -3,7 +3,7 @@ import { uk } from "../i18n/uk";
 import { useAuth } from "../context/AuthContext";
 import { getSettings, updateSettings, type Settings } from "../lib/settings";
 
-const FIELDS = [
+const NUMERIC_FIELDS = [
   "dailyCarbsTarget",
   "fatPerMealLimit",
   "dailyCaloriesTarget",
@@ -12,7 +12,17 @@ const FIELDS = [
   "bloodSugarMin",
   "bloodSugarMax",
 ] as const satisfies readonly (keyof Settings)[];
-type SettingsField = (typeof FIELDS)[number];
+type NumericField = (typeof NUMERIC_FIELDS)[number];
+
+// wakeTime/sleepTime are "HH:MM" strings (quiet hours for the meal reminder),
+// not numeric targets — kept in a separate list so they get <input type="time">
+// and format validation instead of the numeric-field checks below.
+const TIME_FIELDS = ["wakeTime", "sleepTime"] as const satisfies readonly (keyof Settings)[];
+type TimeField = (typeof TIME_FIELDS)[number];
+
+const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+const FIELDS = [...NUMERIC_FIELDS, ...TIME_FIELDS] as const satisfies readonly (keyof Settings)[];
 
 export default function SettingsScreen() {
   const { signedIn, initializing, signIn, signOut } = useAuth();
@@ -34,25 +44,33 @@ export default function SettingsScreen() {
   }, [signedIn]);
 
   const handleSave = async () => {
-    const parsed = Object.fromEntries(FIELDS.map((field) => [field, Number(values[field])])) as Record<
-      SettingsField,
+    const numericParsed = Object.fromEntries(NUMERIC_FIELDS.map((field) => [field, Number(values[field])])) as Record<
+      NumericField,
       number
     >;
     // Number("") is 0, not NaN — checking for a blank string first is
     // required, otherwise a field left empty would silently pass as 0
     // instead of being caught by validation.
-    const allValid = FIELDS.every((field) => (values[field] ?? "").trim() !== "" && Number.isFinite(parsed[field]));
+    const numericValid = NUMERIC_FIELDS.every(
+      (field) => (values[field] ?? "").trim() !== "" && Number.isFinite(numericParsed[field]),
+    );
+    const timeValid = TIME_FIELDS.every((field) => TIME_PATTERN.test(values[field] ?? ""));
 
-    if (!allValid) {
+    if (!numericValid || !timeValid) {
       setSaveError(uk.settings.validationError);
       return;
     }
+
+    const timeParsed = Object.fromEntries(TIME_FIELDS.map((field) => [field, values[field]])) as Record<
+      TimeField,
+      string
+    >;
 
     setSaving(true);
     setSaveError(null);
     setSaved(false);
     try {
-      await updateSettings(parsed);
+      await updateSettings({ ...numericParsed, ...timeParsed });
       setSaved(true);
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : String(err));
@@ -97,7 +115,7 @@ export default function SettingsScreen() {
                 <label key={field}>
                   {uk.settings.fields[field]}
                   <input
-                    type="number"
+                    type={(TIME_FIELDS as readonly string[]).includes(field) ? "time" : "number"}
                     value={values[field] ?? ""}
                     onChange={(e) => setValues({ ...values, [field]: e.target.value })}
                   />

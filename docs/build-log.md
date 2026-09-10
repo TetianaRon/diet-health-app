@@ -726,3 +726,32 @@ Also created **`docs/automation-candidates.md`** (linked from `CLAUDE.md`) — a
 2. Decide on committing the current working tree (as-is or split), if the developer wants that done before moving on
 3. Implement the reminder Phase 1 exactly as scoped in the 2026-09-09 entry — no further design decisions expected
 4. Everything else pending across sessions: live Settings sheet 1800/6 update, `Favorite`/`GlycemicFlag` header cells on the live sheet, reviewing mom's old Google Sheet for bundle expansion, weight tracking, blood-sugar trend charts, and Phase 2 of the reminder (widget + icon swap) once Phase 1 has real usage behind it
+
+## 2026-09-10 — Built reminder Phase 1 (Capacitor/Android scaffold + scheduling logic)
+
+Implemented Phase 1 exactly as scoped in the 2026-09-09 entry — no new design decisions, only implementation. **Important limitation found immediately: this dev machine has Node but no JDK/Android SDK**, so everything Node-only was completed and verified, but nothing requiring Gradle/Android Studio could be (see below).
+
+**Capacitor scaffold**: installed `@capacitor/core`, `@capacitor/cli`, `@capacitor/android`, `@capacitor/app`, `@capacitor/local-notifications`, `@capacitor/preferences`. `npx cap init` (`ca.roncreator.trackmymeals`, web dir `dist`) and `npx cap add android` both completed cleanly without needing a JDK — these are pure Node/template-copy operations. `android/` is now in the repo; `npx cap sync android` re-run after the TS changes below to pick them up.
+
+**`src/lib/reminders.ts`** (new, pure, unit-tested in `reminders.test.ts`): `isWithinQuietHours()` (handles both a plain and a midnight-wrapping quiet window), `computeReminderTime()` (lastMealTime + maxGapHours), `shouldScheduleReminder()`. No Capacitor dependency, so testable like the rest of `src/lib`.
+
+**`src/lib/reminderScheduler.ts`** (new, thin platform wrapper, not unit-tested — same convention as `sheets.ts`'s `authorizedFetch`): `initMealReminders()` (requests notification permission, creates a high-importance/lock-screen-visible channel) and `scheduleMealReminder(lastMealTime, settings)` via `@capacitor/local-notifications`. Both no-op via `Capacitor.isNativePlatform()` outside the Android build, so they're safe to call unconditionally from the shared React code — no `if (native)` branching needed at call sites. An already-overdue gap fires almost immediately instead of being silently dropped, but still checked against quiet hours using "now," not the missed past time (so it doesn't sneak a notification through by padding the fire time forward).
+
+**Settings schema**: added `wakeTime`/`sleepTime` (`"HH:MM"` strings) to `src/lib/settings.ts`'s `Settings` type — the first non-numeric Settings fields, so `parseSettingsRows`/`computeSettingsUpdates` were generalized to handle a mixed numeric/string map instead of assuming everything is numeric. Defaults (`06:30`/`00:00`) match mom's actual stated schedule. `SettingsScreen.tsx` renders these two as `<input type="time">` with `HH:MM` format validation, separate from the existing blank-check numeric validation (same blank-field safety principle, applied to the new field type).
+
+**Wiring**: `TodayScreen` now (re)schedules the reminder in a `useEffect` keyed on its most-recent `DailyLog` entry + `Settings` — this single effect covers both "just logged a meal" (saving an entry updates `entries` state) and "reopened the app" (a new `@capacitor/app` `resume` listener re-runs the same Sheets fetch that already populated the screen, which also updates `entries`), matching the design's "reuse the existing `listLogEntries()` read, no new mechanism" intent. `App.tsx` calls `initMealReminders()` once on mount and listens for `localNotificationActionPerformed` to deep-link a notification tap into Today's quick-add form (`autoOpenAddForm` prop, consumed once).
+
+**Android manifest** (`android/app/src/main/AndroidManifest.xml`): added `POST_NOTIFICATIONS`, `SCHEDULE_EXACT_ALARM`, `RECEIVE_BOOT_COMPLETED`.
+
+**Release signing, prepared but not generated**: `android/app/build.gradle`'s `release` build type now reads `android/keystore.properties` (gitignored) if present, falling back to debug signing otherwise — so the project builds either way. `android/keystore.properties.example` documents the one-time `keytool -genkeypair` command and the "generate once, never again, back it up outside this machine" reasoning from the design session. Uncommented the `*.jks`/`*.keystore` lines in `android/.gitignore` (were commented out in Capacitor's template) and added `keystore.properties` to it. **Not generated this session** — `keytool` needs a JDK, which isn't on this machine.
+
+**Verified**: `npm run test` (83/83, up from 76 — 6 new `reminders.test.ts` cases + 1 new `settings.test.ts` case), `npm run build` clean, live browser check of the not-signed-in state across all four tabs (no console errors; Settings screen correctly still gates the new time fields behind sign-in).
+
+**Not verified — needs a machine with Android Studio (JDK + Android SDK), which this one doesn't have**: `./gradlew assembleRelease` or any native build, the actual notification firing/quiet-hours/lock-screen behavior on a real device, the exact-alarm and battery-optimization permission prompts, and generating the release keystore. Also not verified: any signed-in flow (same standing limitation as every session — Google's sign-in popup can't be completed by the automated browser tool).
+
+**Needs manual spreadsheet edit, new**: add `WakeTime`/`SleepTime` as new Key/Value rows on the Settings tab (`06:30`/`00:00` to match the code defaults) — unlike the header-cell additions for Favorite/GlycemicFlag, these are new *rows* since Settings is key/value-shaped, not columnar. Without them the app just uses the in-code defaults, same fallback behavior as every other Settings key.
+
+**Next steps:**
+1. Get access to a machine with Android Studio (JDK + Android SDK) to: run `./gradlew assembleRelease` for the first time, generate the release keystore per `android/keystore.properties.example`, and test real notification delivery/quiet-hours/lock-screen behavior on mom's actual phone
+2. Add the `WakeTime`/`SleepTime` rows to the live Settings sheet
+3. Everything else still pending: live Settings sheet 1800/6 update, `Favorite`/`GlycemicFlag` header cells on Ingredients/Dishes, reviewing mom's old Google Sheet for bundle expansion, weight tracking, blood-sugar trend charts, and reminder Phase 2 (widget + icon swap) once Phase 1 has real usage behind it

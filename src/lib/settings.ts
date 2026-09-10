@@ -12,7 +12,23 @@ export interface Settings {
   maxGapHours: number;
   bloodSugarMin: number;
   bloodSugarMax: number;
+  // "HH:MM" 24h local time. Used by the meal-reminder scheduler (src/lib/reminders.ts)
+  // to suppress notifications during sleep — not a numeric target like the fields above.
+  wakeTime: string;
+  sleepTime: string;
 }
+
+const NUMERIC_FIELDS = [
+  "dailyCarbsTarget",
+  "fatPerMealLimit",
+  "dailyCaloriesTarget",
+  "mealsPerDay",
+  "maxGapHours",
+  "bloodSugarMin",
+  "bloodSugarMax",
+] as const satisfies readonly (keyof Settings)[];
+
+const STRING_FIELDS = ["wakeTime", "sleepTime"] as const satisfies readonly (keyof Settings)[];
 
 // Maps our field names to the sheet's Key column values.
 const SETTINGS_KEYS: Record<keyof Settings, string> = {
@@ -23,10 +39,13 @@ const SETTINGS_KEYS: Record<keyof Settings, string> = {
   maxGapHours: "MaxGapHours",
   bloodSugarMin: "BloodSugarMin",
   bloodSugarMax: "BloodSugarMax",
+  wakeTime: "WakeTime",
+  sleepTime: "SleepTime",
 };
 
 // Defaults per mom's 2026-09-07 interview (docs/requirements-open-questions.md) —
-// used for any key missing from the sheet.
+// used for any key missing from the sheet. wakeTime/sleepTime match her stated
+// schedule (wakes 6:30, sleeps at midnight).
 export const DEFAULT_SETTINGS: Settings = {
   dailyCarbsTarget: 140,
   fatPerMealLimit: 18,
@@ -35,21 +54,27 @@ export const DEFAULT_SETTINGS: Settings = {
   maxGapHours: 3,
   bloodSugarMin: 4.0,
   bloodSugarMax: 7.8,
+  wakeTime: "06:30",
+  sleepTime: "00:00",
 };
 
 /** Parses raw Key/Value rows into a typed Settings object, falling back to defaults for missing keys. */
 export function parseSettingsRows(rows: unknown[][]): Settings {
-  const byKey = new Map<string, number>();
+  const byKey = new Map<string, string>();
   for (const row of rows) {
     const key = String(row[0] ?? "");
-    const value = Number(row[1]);
-    if (key && Number.isFinite(value)) byKey.set(key, value);
+    if (key && row[1] !== undefined && row[1] !== "") byKey.set(key, String(row[1]));
   }
 
   const result = { ...DEFAULT_SETTINGS };
-  for (const field of Object.keys(SETTINGS_KEYS) as (keyof Settings)[]) {
-    const sheetValue = byKey.get(SETTINGS_KEYS[field]);
-    if (sheetValue !== undefined) result[field] = sheetValue;
+  for (const field of NUMERIC_FIELDS) {
+    const raw = byKey.get(SETTINGS_KEYS[field]);
+    const value = raw !== undefined ? Number(raw) : NaN;
+    if (Number.isFinite(value)) result[field] = value;
+  }
+  for (const field of STRING_FIELDS) {
+    const raw = byKey.get(SETTINGS_KEYS[field]);
+    if (raw !== undefined) result[field] = raw;
   }
   return result;
 }

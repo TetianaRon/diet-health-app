@@ -95,6 +95,8 @@ Key/value rows, pre-filled with Project Brief defaults; mom's interview tunes th
 | MaxGapHours | 2.5–3 |
 | BloodSugarMin | 4.0 |
 | BloodSugarMax | 7.8 |
+| WakeTime | 06:30 |
+| SleepTime | 00:00 |
 
 ## Google Sheets API integration
 
@@ -146,6 +148,17 @@ A Dish composed from a bundle-only ingredient (never saved to the Ingredients sh
 ## Meals-before-reading review
 
 The Blood Sugar screen lets mom expand any reading to see the last 6 `DailyLog` entries at or before that reading's timestamp, most-recent-first, with time-before-reading shown per item (`mealsBeforeTimestamp()` in `src/lib/dailyLog.ts`). Pure timestamp filter/sort — ISO strings already sort correctly lexically — with no correlation or statistics computed; mom reviews the list herself to spot patterns. Deliberately scoped down from a full food/blood-sugar analytics feature (see `docs/build-log.md`'s 2026-09-07 design entry).
+
+## Meal-time reminder (Android/Capacitor)
+
+The web/PWA codebase is also wrapped as an Android app via [Capacitor](https://capacitorjs.com) (`capacitor.config.ts`, `android/`) — additive to, not replacing, the browser/PWA path, which keeps working exactly as before. App ID `ca.roncreator.trackmymeals`. Full design rationale (why Capacitor over a backend/push service, cross-device staleness tradeoff, Phase 2 ideas) is in `docs/build-log.md`'s 2026-09-09 "Scoped the meal-time reminder" entry — this section just documents the mechanism as built.
+
+- **Pure scheduling logic** (`src/lib/reminders.ts`, unit-tested): `computeReminderTime(lastMealTime, maxGapHours)` and `shouldScheduleReminder()`/`isWithinQuietHours()` — a reminder due inside the `[SleepTime, WakeTime)` window is skipped entirely, not deferred to wake time.
+- **Platform glue** (`src/lib/reminderScheduler.ts`, not unit-tested — thin IO wrapper, same convention as `sheets.ts`): `initMealReminders()` (requests notification permission, creates a high-importance/lock-screen-visible channel — call once at app startup) and `scheduleMealReminder(lastMealTime, settings)` via `@capacitor/local-notifications`. Both are no-ops outside a native build (`Capacitor.isNativePlatform()`), so calling them from the shared React code is always safe.
+- **Trigger points**: `TodayScreen` reschedules whenever its most-recent `DailyLog` entry or `Settings` change — this covers both "just logged a meal" and "reopened the app" (a `@capacitor/app` `resume` listener re-reads the sheet on foreground, refreshing a possibly-stale cached state — see the build-log entry for the accepted cross-device gap this doesn't fully close). Tapping the notification (`localNotificationActionPerformed`, handled in `App.tsx`) deep-links into Today's quick-add form.
+- **Android manifest** (`android/app/src/main/AndroidManifest.xml`): `POST_NOTIFICATIONS` (Android 13+ runtime permission), `SCHEDULE_EXACT_ALARM` (Android 12+, for on-time delivery), `RECEIVE_BOOT_COMPLETED`.
+- **Release signing**: `android/app/build.gradle` reads `android/keystore.properties` (gitignored) if present, else falls back to debug signing. See `android/keystore.properties.example` for the one-time `keytool` setup — needs a JDK, so it's done once on whichever machine has Android Studio, not regenerated per build.
+- **Known limitation, not yet resolved**: building/running the actual APK needs a JDK + Android SDK (Android Studio), which the primary dev machine doesn't have as of this writing — `cap add android`/`cap sync` (Node-only) work fine, but `./gradlew assembleRelease` and the exact-alarm/battery-optimization permission prompts still need to be done from a machine with Android Studio installed.
 
 ## Glycemic Load calculation
 

@@ -23,6 +23,12 @@ describe("parseSettingsRows", () => {
   it("returns all defaults for an empty sheet", () => {
     expect(parseSettingsRows([])).toEqual(DEFAULT_SETTINGS);
   });
+
+  it("parses string fields (wakeTime/sleepTime) and falls back to defaults for missing ones", () => {
+    const result = parseSettingsRows([["WakeTime", "07:00"]]);
+    expect(result.wakeTime).toBe("07:00");
+    expect(result.sleepTime).toBe(DEFAULT_SETTINGS.sleepTime);
+  });
 });
 
 describe("computeSettingsUpdates", () => {
