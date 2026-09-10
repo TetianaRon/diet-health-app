@@ -24,7 +24,11 @@ body {
 
 .app-content {
   flex: 1;
-  padding: 24px 20px 96px;
+  /* env(safe-area-inset-*) accounts for Android's edge-to-edge system bars
+     (status bar overlapping the top, gesture/nav bar overlapping the
+     bottom) — 0px everywhere else (browser, desktop PWA), so this is a
+     no-op outside the Android build. */
+  padding: calc(24px + env(safe-area-inset-top, 0px)) 20px calc(96px + env(safe-area-inset-bottom, 0px));
 }
 
 .screen h1 {
@@ -48,6 +52,7 @@ body {
   display: flex;
   border-top: 1px solid #e2e6e2;
   background: #ffffff;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 .tab-button {

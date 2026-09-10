@@ -22,6 +22,20 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
+            <!-- Google sign-in redirect (system browser + PKCE) — see the auth
+                 comment at the top of src/lib/sheets.ts. NATIVE_REDIRECT_URI
+                 there is "ca.roncreator.trackmymeals:/oauth2redirect" (a
+                 single slash, no host/authority component), so this filter
+                 matches on scheme alone — the same convention Google's own
+                 AppAuth-Android library uses, since a host+path filter can't
+                 match a host-less custom-scheme URI. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="ca.roncreator.trackmymeals" />
+            </intent-filter>
+
         </activity>
 
         <provider

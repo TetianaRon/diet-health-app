@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
+import { Capacitor } from "@capacitor/core";
 import { LocalNotifications } from "@capacitor/local-notifications";
+import { StatusBar, Style } from "@capacitor/status-bar";
 import { uk } from "./i18n/uk";
 import { AuthProvider } from "./context/AuthContext";
 import { initMealReminders } from "./lib/reminderScheduler";
@@ -22,6 +24,15 @@ export default function App() {
   const [autoOpenAddForm, setAutoOpenAddForm] = useState(false);
 
   useEffect(() => {
+    // The app's background is white — Style.Light gives dark status bar
+    // icons/text (Capacitor's naming is the reverse of what it sounds like:
+    // it names the *content* color, not the background). Without this, the
+    // status bar defaults to light/white icons that vanish on our white
+    // background. No-op on web (no status bar there).
+    if (Capacitor.isNativePlatform()) {
+      void StatusBar.setStyle({ style: Style.Light });
+    }
+
     void initMealReminders();
 
     const listenerPromise = LocalNotifications.addListener("localNotificationActionPerformed", (action) => {

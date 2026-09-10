@@ -755,3 +755,106 @@ Implemented Phase 1 exactly as scoped in the 2026-09-09 entry — no new design 
 1. Get access to a machine with Android Studio (JDK + Android SDK) to: run `./gradlew assembleRelease` for the first time, generate the release keystore per `android/keystore.properties.example`, and test real notification delivery/quiet-hours/lock-screen behavior on mom's actual phone
 2. Add the `WakeTime`/`SleepTime` rows to the live Settings sheet
 3. Everything else still pending: live Settings sheet 1800/6 update, `Favorite`/`GlycemicFlag` header cells on Ingredients/Dishes, reviewing mom's old Google Sheet for bundle expansion, weight tracking, blood-sugar trend charts, and reminder Phase 2 (widget + icon swap) once Phase 1 has real usage behind it
+
+## 2026-09-10 — Fixed Google sign-in on Android (system browser + PKCE)
+
+**Turned out access to Android Studio arrived same-day.** Developer got a JDK+SDK machine working, opened `android/` in Android Studio, fixed a Gradle/JVM mismatch (project's Gradle 8.14.3 needs JVM ≤24; Studio's bundled JDK was 25 — picked "Use JVM 21" from Studio's own prompt, no project changes needed), and got a debug APK building and installing on a real phone. **First real find**: tapping sign-in produced Google's "Error 400."
+
+**Root cause**: not a bug — Google deliberately blocks OAuth sign-in from inside an embedded WebView (anti-phishing policy, applies to every app). A default Capacitor app's `MainActivity` renders in exactly that kind of WebView, so the existing GIS token-client flow (built for a real browser tab, per the 2026-08-13 auth entry) can never complete there. The web/PWA sign-in is completely unaffected — Android-only problem.
+
+**Decision — system browser + Authorization Code + PKCE, not native Google Sign-In**: walked through both real options with the developer before writing code (matches this project's established "agree the design, then build" pattern):
+- **Chosen**: `@capacitor/browser` opens Google's real auth page in Chrome Custom Tabs (a real browser context Google will authorize), using RFC 8252's Authorization Code + PKCE flow — Google's own recommended pattern for installed apps. Redirect comes back via a custom-scheme intent-filter + `@capacitor/app`'s `appUrlOpen` event. Token exchange is a plain `fetch()`, no new library, consistent with everything else in `sheets.ts`.
+- **Rejected**: native Google Sign-In via a Capacitor plugin. Feels more "native," but pulls in a third-party plugin dependency and ties sign-in to the exact SHA-1 fingerprint of whichever keystore signed the build — debug and release are different keystores, so it needs registering twice, and a missed release-key registration would silently break sign-in only once on the real signed build. The chosen approach also generalizes better if this ever targets another platform (same OAuth logic, just a different redirect URI), where native Sign-In would mean a different SDK per platform.
+
+**New OAuth client, Android-only**: a **"Desktop app"** type client (not "Android" type — that's what native Google Sign-In would need) was required since the existing Web application client can't accept a custom-scheme redirect URI. One nuance surfaced and explained to the developer: Google's Desktop app client type does issue a client secret the token exchange must send, but Google's own docs say not to treat it as confidential for this client type (expected to ship in a binary) — different from the web flow's genuinely secret-free design, but not a real security gap. New env vars `VITE_GOOGLE_DESKTOP_CLIENT_ID`/`VITE_GOOGLE_DESKTOP_CLIENT_SECRET` (`.env`, `.env.example`).
+
+**`src/lib/sheets.ts`**: `initGoogleAuth()`/`signIn()` now branch on `Capacitor.isNativePlatform()`. Native path: PKCE verifier/challenge generation (Web Crypto, no library), `Browser.open()` for the auth request, `App.addListener("appUrlOpen", ...)` to catch the redirect, direct `fetch()` token exchange. Web path unchanged. `AuthContext.tsx` and every screen that calls `useAuth()` needed zero changes — the branching is fully contained inside `sheets.ts`.
+
+**`android/app/src/main/AndroidManifest.xml`**: added a second intent-filter on `MainActivity` for `ca.roncreator.trackmymeals://oauth2redirect` (reuses the `custom_url_scheme` Capacitor already declared in `strings.xml`), alongside the existing launcher one.
+
+**Verified**: `npm run test` (83/83, unchanged — this is IO/platform glue with no new pure logic, same as `reminderScheduler.ts`), `npm run build` clean, `npx cap sync android` picked up the new `@capacitor/browser` plugin, live browser check of the web build's not-signed-in state (no regressions — Capacitor's web fallbacks for `App`/`Browser`/`Capacitor.isNativePlatform()` are no-ops there, exactly as intended).
+
+**Not yet verified**: the actual Android sign-in flow end-to-end (browser opens → Google login → redirect lands back in the app → Sheets calls succeed) — needs a real device test, which is the developer's next step now that they're back at the Android Studio machine.
+
+**Next steps:**
+1. Rebuild and reinstall the debug APK, retry sign-in — confirm the system browser opens, Google's page loads (no more Error 400), and the app receives control back with a working session
+2. If that works: resume the original Phase 1 checklist — generate the release keystore, run `./gradlew assembleRelease`, test real notification delivery on mom's phone
+3. Everything else still pending: `WakeTime`/`SleepTime` and the 1800/6 update on the live Settings sheet, `Favorite`/`GlycemicFlag` header cells, reviewing mom's old Google Sheet for bundle expansion, weight tracking, blood-sugar trend charts, reminder Phase 2
+
+## 2026-09-10 — Corrected the Android OAuth client: "Desktop app" type doesn't work, needed "Android" type
+
+**Live testing immediately caught a second, different Error 400** after the browser-opening fix landed — this time in the real Chrome Custom Tab, not the embedded WebView. Decoding the error page's technical detail link pointed at Google's "secure response handling" OAuth policy: **custom URI scheme redirects are only permitted for "Android" or "iOS" type OAuth clients**, because only those types let Google verify which app actually owns that scheme (via package name + signing certificate). The "Desktop app" client created earlier this session has no such binding, so Google refuses the redirect outright — anyone could otherwise register the same custom scheme and intercept it. This wasn't a config mistake so much as an incomplete understanding of Google's client-type rules going in — worth recording plainly since the previous entry confidently explained why "Desktop app" was chosen over "Android" type, and that reasoning turned out to be wrong on this specific point.
+
+**Fix**: created a proper **"Android" type** OAuth client instead, registered with package name `ca.roncreator.trackmymeals` and the SHA-1 fingerprint of the debug signing certificate. Getting that fingerprint needed `./gradlew signingReport` from Android Studio's Terminal tab, which itself needed `JAVA_HOME` pointed at Android Studio's bundled JDK (`C:\Program Files\Android\Android Studio\jbr`) since a plain terminal window doesn't inherit the JDK the IDE itself uses. Result: `SHA1: 7E:6A:A2:CD:5A:2C:B1:D4:64:2D:05:FA:41:52:63:84:C8:35:3D:0C` (debug keystore).
+
+**Net effect is actually better than the original plan, not just different**: "Android" type clients issue **no client secret at all** — verification happens via package+signature instead — so `exchangeCodeForToken()` in `src/lib/sheets.ts` now sends no `client_secret` param, and the app ended up fully secret-free on Android too, not just "the secret isn't really confidential" as the Desktop app approach required explaining. Same PKCE/browser/deep-link code as before; only the client type, client ID, and dropped secret changed. New env var `VITE_GOOGLE_ANDROID_CLIENT_ID` replaces `VITE_GOOGLE_DESKTOP_CLIENT_ID`/`_SECRET` (both removed from `.env`/`.env.example`).
+
+**Known follow-up, not yet due**: this SHA-1 is from the *debug* keystore. Once the release keystore is generated (still pending — needs a JDK, per every earlier entry), its SHA-1 needs adding to the same Android OAuth client (Google Cloud Console supports multiple fingerprints per client via "+ Add fingerprint") — otherwise sign-in will work in debug builds but break specifically on the real signed release build, the same "easy to forget" trap flagged as a reason to avoid native Google Sign-In earlier, now unavoidable in a smaller form (one fingerprint to add later, not a whole SDK).
+
+**The old "Desktop app" OAuth client is now dead weight** — not deleted yet, left for the developer to clean up in Google Cloud Console whenever convenient (no functional impact either way, an unused client is not a live credential).
+
+**Verified**: `npm run test` (83/83, unchanged), `npm run build` clean, `npx cap sync android` picked up the rebuilt web assets.
+
+**Not yet verified**: the actual sign-in flow with the new Android client — this is the very next thing to test on the device.
+
+**Next steps:**
+1. Rebuild/reinstall the debug APK, retry sign-in — this time expecting it to actually complete (browser opens → Google login → redirect → token exchange → signed in)
+2. If that works: resume Phase 1 — generate the release keystore, add its SHA-1 to the Android OAuth client, `./gradlew assembleRelease`, test real notification delivery on mom's phone
+3. Everything else still pending: `WakeTime`/`SleepTime` and the 1800/6 update on the live Settings sheet, `Favorite`/`GlycemicFlag` header cells, reviewing mom's old Google Sheet for bundle expansion, weight tracking, blood-sugar trend charts, reminder Phase 2
+
+## 2026-09-10 — Android sign-in fully working; two more fixes along the way
+
+**Two more rounds of live-testing-driven fixes before sign-in actually completed:**
+
+1. **Redirect URI format**: same "secure response handling" Error 400 persisted even after switching to the Android-type client. Root cause: `ca.roncreator.trackmymeals://oauth2redirect` (double slash) parses as a URI with an *authority* component (`oauth2redirect` as a host) — Google's validator for this client type expects the single-slash opaque form instead, `ca.roncreator.trackmymeals:/oauth2redirect` (matches the convention Google's own AppAuth-Android library uses). Changed `NATIVE_REDIRECT_URI` in `sheets.ts` accordingly, and simplified the `AndroidManifest.xml` intent-filter to match on `android:scheme` alone (dropped `android:host`, since a host-less URI can't match a host-based filter).
+
+2. **"Custom URI scheme is not enabled for your Android client"**: a much more specific error this time, pointing at an actual Console toggle — Google added an explicit opt-in for custom-scheme redirects on Android OAuth clients (they push Android App Links as the more-secure default now). Developer found and enabled it on the client's edit page in Google Cloud Console. No code change — pure Console setting.
+
+**Sign-in confirmed working end-to-end on the real device** — browser opens, Google login completes, redirect lands back in the app, and (per the developer's live test right after) Settings/BloodSugar/DailyLog all loaded real data from the sheet, confirming the token from this new flow is valid for actual Sheets API calls, not just the OAuth handshake itself.
+
+**Two more issues found in that same live test:**
+
+- **A `503` on one of the five parallel Sheets reads** ("The service is currently unavailable") — Google's own transient server message, not something in our code; the other four reads succeeded in the same batch (real Settings values, a real blood sugar reading, a real 73-hour meal gap warning all rendered correctly). Logged as likely transient, not investigated further unless it recurs.
+- **Real bug: bottom tab bar and top heading were both covered by Android's edge-to-edge system bars** (status bar over the top, gesture/nav bar over the bottom) — bad enough that the developer "couldn't navigate to other tabs." Root cause: Android 15+ renders apps edge-to-edge by default, and this app's CSS was never updated for that since it had only ever been tested as a browser tab (where there's no OS chrome to overlap). **Fix**: `src/index.css` — `.app-content` and `.tab-bar` now add `env(safe-area-inset-top)`/`env(safe-area-inset-bottom)` padding (0px everywhere else, so no effect on web/desktop — confirmed via a live browser check of the not-signed-in state after the change).
+
+**Verified**: `npm run build` clean after both fixes, `npx cap sync android` picked up the changes, live browser check of the web build shows no regression. **Not yet re-verified**: whether the safe-area fix actually resolves the tab-bar overlap on the real device — that's the very next thing to confirm.
+
+**Next steps:**
+1. Rebuild/reinstall the debug APK, confirm the tab bar and heading are no longer covered by system UI, and retry the 503'd read (likely just works on retry)
+2. Once confirmed: generate the release keystore, add its SHA-1 to the same Android OAuth client (alongside the debug one — Console supports multiple fingerprints per client), `./gradlew assembleRelease`, test real notification delivery on mom's phone
+3. Everything else still pending: `WakeTime`/`SleepTime` and the 1800/6 update on the live Settings sheet, `Favorite`/`GlycemicFlag` header cells, reviewing mom's old Google Sheet for bundle expansion, weight tracking, blood-sugar trend charts, reminder Phase 2, and deleting the now-unused "Desktop app" OAuth client from Google Cloud Console whenever convenient
+
+## 2026-09-10 — Status bar readability fix
+
+**Reported**: after the safe-area fix made the status bar visible (rather than overlapped by content), its icons/text turned out to be white — invisible against this app's white background.
+
+**Considered and deliberately declined fullscreen/immersive mode first** (hiding the status and nav bars entirely, instead of just fixing their color) — discussed with the developer: hiding the status bar removes the clock, which seems worth keeping in a meal-*timing* app, and hiding Android's nav bar replaces the back/home buttons mom already knows with an edge-swipe gesture, a real learning-curve cost for a user whose tech comfort isn't assumed to be high. Also just generally not what Google recommends as the default. Kept both system bars visible, fixed only the fix contrast.
+
+**Fix**: `@capacitor/status-bar` (new dependency), `StatusBar.setStyle({ style: Style.Light })` called once on native platforms in `App.tsx`. Worth noting for next time: the plugin's naming is the reverse of what it sounds like — `Style.Light` means dark icons (for a light background), `Style.Dark` means light icons (for a dark background); checked the actual type definitions rather than trusting memory here, good thing, since the intuitive-sounding guess would have been backwards.
+
+**Verified**: `npm run test` (83/83, unchanged), `npm run build` clean, `npx cap sync android` picked up the new plugin, live browser check of the web build (no-op there, as intended — no status bar in a browser tab).
+
+**Not yet verified**: whether the icons are actually readable now on the real device.
+
+**Next steps:**
+1. Rebuild/reinstall, confirm status bar icons are now visible, tab bar is fully clickable, and retry the earlier 503
+2. Once the layout/readability round is confirmed: decide whether to commit this whole batch of fixes (Android OAuth client correction × 3, safe-area layout, status bar contrast — all uncommitted so far this session)
+3. Then resume Phase 1: release keystore, `./gradlew assembleRelease`, real notification test on mom's phone
+4. Everything else still pending: `WakeTime`/`SleepTime` and 1800/6 on the live Settings sheet, `Favorite`/`GlycemicFlag` header cells, mom's old Google Sheet review, weight tracking, blood-sugar trend charts, reminder Phase 2, deleting the unused Desktop app OAuth client
+
+## 2026-09-10 — Full device verification passed; two real UX gaps found in the add-ingredient flow
+
+**All four tabs confirmed working on the real device** after the layout/status-bar fixes: no more 503, tab bar fully tappable, status bar readable. **Sign-out then sign-in again confirmed the previously-added dish and blood sugar reading both persisted** — meaningful because it's the first confirmation that *writes* (not just reads) work correctly through the new native PKCE auth path, and that the flow is repeatable, not a one-off fluke.
+
+**Two real gaps found via live use, not yet fixed (developer flagged as "not necessarily right now"):**
+
+1. **Name collision on save, silent**: `AddFoodForm`'s single name field doubles as both the USDA search query and the value saved as `nameUk`. Searching a broad/generic term (e.g. "кабачки") and picking different specific candidates from the results still saves every pick under the identical literal search string — and since ingredients are keyed by name everywhere they're merged/looked up (`mergeWithStarterFoods`, favorite/flag toggles), a second save under the same name silently shadows the first, with zero warning. Developer's proposed fix, which is the right shape: split "search" (query only) from "name to save" (a separate, editable field defaulting to something specific to the actual picked result, not the bare search term) — solves the collision and the "which pick is this" ambiguity together.
+2. **No edit flow for a saved Ingredient/Dish**: the only way to change one today is re-adding under the same name — which, per #1, means an unwarned silent overwrite, not a real edit.
+
+**Not implemented this session** — logged for a future pass, not urgent per the developer. Both are Foods-screen scoped; Today/BloodSugar/Settings weren't reported as affected.
+
+**Next steps:**
+1. Decide whether to commit today's whole batch (Android OAuth client corrections, safe-area layout, status bar fix) — device-verified and working now
+2. Resume Phase 1: release keystore, `./gradlew assembleRelease`, real notification test on mom's phone
+3. Whenever picked up: redesign `AddFoodForm` to separate search-query from save-name (defaulted from the picked result, editable), and add a real edit flow for saved Ingredients/Dishes with an explicit overwrite warning if a duplicate name is used deliberately
+4. Everything else still pending: `WakeTime`/`SleepTime` and 1800/6 on the live Settings sheet, `Favorite`/`GlycemicFlag` header cells, mom's old Google Sheet review, weight tracking, blood-sugar trend charts, reminder Phase 2, deleting the unused Desktop app OAuth client

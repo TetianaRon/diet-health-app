@@ -149,6 +149,29 @@ A Dish composed from a bundle-only ingredient (never saved to the Ingredients sh
 
 The Blood Sugar screen lets mom expand any reading to see the last 6 `DailyLog` entries at or before that reading's timestamp, most-recent-first, with time-before-reading shown per item (`mealsBeforeTimestamp()` in `src/lib/dailyLog.ts`). Pure timestamp filter/sort — ISO strings already sort correctly lexically — with no correlation or statistics computed; mom reviews the list herself to spot patterns. Deliberately scoped down from a full food/blood-sugar analytics feature (see `docs/build-log.md`'s 2026-09-07 design entry).
 
+## Google auth on Android: system browser + PKCE, not GIS
+
+The web/PWA sign-in (`src/lib/sheets.ts`'s GIS token-client flow, described above) **cannot complete inside the Android build** — confirmed live as "Error 400" during the 2026-09-10 Android session. Google deliberately blocks OAuth sign-in from inside an embedded WebView (an anti-phishing policy that applies to every app, not something specific to this one), and a default Capacitor app renders in exactly that kind of WebView.
+
+**Fix, Android-only, web path untouched**: `initGoogleAuth()`/`signIn()` in `sheets.ts` branch on `Capacitor.isNativePlatform()`. On native, sign-in uses the system browser (`@capacitor/browser`, which launches Chrome Custom Tabs — a real browser context Google will authorize) with the Authorization Code + PKCE flow (RFC 8252, Google's own recommended pattern for installed apps):
+
+1. Generate a PKCE `code_verifier`/`code_challenge` (Web Crypto, no library).
+2. Open `https://accounts.google.com/o/oauth2/v2/auth` in the system browser via `Browser.open()`.
+3. The redirect (`ca.roncreator.trackmymeals:/oauth2redirect` — a single slash, opaque URI with no host/authority, deliberately) is caught by an intent-filter on `MainActivity` (`AndroidManifest.xml`, matched on `android:scheme` alone since there's no host to match on) and delivered to the app via `@capacitor/app`'s `appUrlOpen` event.
+4. Exchange the returned `code` for an access token via a direct `fetch()` to `https://oauth2.googleapis.com/token` (no `client_secret` param — see below) — no library needed, same as every other Sheets API call in this codebase.
+
+**A second OAuth client was required** — the existing Web application client (`VITE_GOOGLE_CLIENT_ID`) can't be reused, because a "Web application" client's redirect URIs must be pre-registered HTTPS/localhost origins, incompatible with a custom URI scheme redirect.
+
+**Getting the working client configuration took three rounds of live-testing-driven correction** — worth recording all three since each looked like "the fix" until the next test disproved it:
+
+1. **"Desktop app" type client, rejected**: Error 400 (`invalid_request`, citing Google's "secure response handling" policy) — custom URI scheme redirects are only accepted for "Android" or "iOS" type clients, since only those let Google verify which app owns the scheme (via package name + signing certificate); a "Desktop app" client has no such binding.
+2. **"Android" type client, still rejected on the double-slash redirect URI**: switching client type alone wasn't enough — `ca.roncreator.trackmymeals://oauth2redirect` parses as having an authority component (`oauth2redirect` as host), which the validator for this client type doesn't accept. Fixed by using the single-slash opaque form instead (matches the convention Google's own AppAuth-Android library uses).
+3. **"Custom URI scheme is not enabled for your Android client"**: a specific, actionable error pointing at a Console-only setting — Google added an explicit opt-in toggle for custom-scheme redirects on Android OAuth clients (pushing Android App Links as the more-secure default). No code change, just enabling that toggle on the client's edit page.
+
+**Final working setup**: `VITE_GOOGLE_ANDROID_CLIENT_ID`, an "Android" type client registered with package name `ca.roncreator.trackmymeals`, the SHA-1 fingerprint of the signing certificate (from `./gradlew signingReport`, run with `JAVA_HOME` pointed at Android Studio's bundled JDK since a plain terminal doesn't have Java on `PATH` by default), and the custom-URI-scheme toggle enabled. "Android" type clients issue **no client secret at all** (verification is via package+signature instead), so this path is fully secret-free, same as the web flow. **Known follow-up**: the registered SHA-1 is the *debug* keystore's — once the release keystore exists (per the Phase 1 checklist above), its SHA-1 needs adding too (Console supports multiple fingerprints on one Android-type client, via "+ Add fingerprint"), or sign-in will break specifically on release builds.
+
+**Also found and fixed in the same live-testing pass**: the app's CSS had never accounted for Android's edge-to-edge system bars (status bar over the top, gesture/nav bar over the bottom) — bad enough that the bottom tab bar was unusable on a real device. `src/index.css`'s `.app-content`/`.tab-bar` now add `env(safe-area-inset-top)`/`env(safe-area-inset-bottom)` padding, which is `0px` (a no-op) on web/desktop.
+
 ## Meal-time reminder (Android/Capacitor)
 
 The web/PWA codebase is also wrapped as an Android app via [Capacitor](https://capacitorjs.com) (`capacitor.config.ts`, `android/`) — additive to, not replacing, the browser/PWA path, which keeps working exactly as before. App ID `ca.roncreator.trackmymeals`. Full design rationale (why Capacitor over a backend/push service, cross-device staleness tradeoff, Phase 2 ideas) is in `docs/build-log.md`'s 2026-09-09 "Scoped the meal-time reminder" entry — this section just documents the mechanism as built.
