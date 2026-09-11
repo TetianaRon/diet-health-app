@@ -21,6 +21,10 @@
 
 Spreadsheet ID stored in `VITE_SPREADSHEET_ID`. Tabs:
 
+**Schema resilience:** two independent mechanisms keep an existing spreadsheet readable across app releases and manual edits, without any version-tracking or migration-script system:
+1. **Additive-only columns** — every schema change so far has appended new trailing columns (Favorite, GlycemicFlag, GiVerified, MealId), never inserted or removed one; a missing cell parses to a safe default. See the `dev-feedback-patterns` memory.
+2. **Header-name-based column resolution** (`src/lib/sheetRow.ts`, added 2026-09-11) — `ingredients.ts`/`dishes.ts`/`dailyLog.ts`/`bloodSugar.ts` read/write each row by looking up the *actual* column position of each header name in row 1, not a fixed index. This makes a **reordered** sheet — a deliberate future schema change, or someone manually dragging a column in the Sheets UI — parse correctly too, which positional reads couldn't handle. (`settings.ts` never needed this: it's already key/value rows keyed by matching column A's text against a known key, not position.) Every `rowToX`/`xToRow` function takes an optional `columnIndex` param defaulting to each module's own canonical header order (`INGREDIENTS_HEADERS`/`DISHES_HEADERS`/`DAILY_LOG_HEADERS`/`BLOOD_SUGAR_HEADERS`, also imported by `spreadsheetInit.ts` so the header list is defined once, not duplicated) — real reads/writes always fetch and pass the live sheet's actual current header row instead.
+
 ### Ingredients
 Raw foods only — always the uncooked/unprepared state, values per 100g. Anything requiring cooking or preparation belongs in Dishes instead (see below), even a single-ingredient one like cooked rice — cooking changes carbs/100g too much (water dilution) to treat as the same row. `GI` here is carried over from the food's published GI (which is normally measured on the cooked/eaten form) purely so Dishes has a value to pull from when computing a prepared dish's GI — it's not claiming the raw form itself has been measured.
 
@@ -112,13 +116,17 @@ Client-side only — no custom backend for data storage. Uses Google Identity Se
 **One-time setup (manual, in Google Cloud Console — done by the project owner, not by Claude):**
 
 1. Create a Google Cloud project.
-2. Enable the **Google Sheets API**.
-3. Configure the **OAuth consent screen** — External, in Testing mode; add both Google accounts (mom's and the developer's) as **test users** (avoids the app-verification process needed for a two-person app).
+2. Enable the **Google Sheets API** and the **Google Drive API** (the latter added 2026-09-11, needed only for the "create a new spreadsheet from the app" flow below).
+3. Configure the **OAuth consent screen** — External, in Testing mode; add both Google accounts (mom's and the developer's) as **test users** (avoids the app-verification process needed for a two-person app). On the **Data Access** tab, the configured scopes must include both `.../auth/spreadsheets` and `.../auth/drive.file` — a scope the code requests but the consent screen doesn't list is rejected by Google, not silently ignored.
 4. Create an **OAuth Client ID** (type: Web application), with the app's dev/prod URLs as authorized origins.
 5. Copy the Client ID into `.env` as `VITE_GOOGLE_CLIENT_ID`.
-6. Create the spreadsheet (or reuse mom's existing one, restructured into the tabs above) and copy its ID into `.env` as `VITE_SPREADSHEET_ID`.
+6. Either connect an existing spreadsheet (reuse mom's, restructured into the tabs above, or a freshly blank one — see "Connecting a brand-new blank spreadsheet" below) and copy its ID into `.env` as `VITE_SPREADSHEET_ID`, or use the app's own "Створити нову таблицю" button (Settings screen) to create one from scratch — see "Creating a new spreadsheet from the app" below.
+
+**`drive.file` re-consent note:** adding this scope means every existing signed-in device (mom's phone, the developer's) needs to sign in again once to grant it — a stored access/refresh token from before this scope existed doesn't retroactively cover it. This is a one-time re-consent, not a recurring thing.
 
 `src/lib/sheets.ts` wraps: `initGoogleAuth()`, `signIn()`, `signOut()`, `readRange(tab, range)`, `writeRange(tab, range, values)` — thin wrappers over the Sheets REST API using the OAuth access token.
+
+**Creating a new spreadsheet from the app:** `createSpreadsheetInAppFolder(name)` in `sheets.ts` uses the Drive API to create a blank spreadsheet inside a single app-owned Drive folder ("Track My Meals" in Drive root, created on first use), using the `drive.file` scope — the narrowest scope that can do this, since it only grants access to files the app itself creates (it does not grant broader Drive access, and doesn't change how the existing "connect an existing spreadsheet by pasting a link" flow works — that still relies entirely on the `spreadsheets` scope). The caller then calls `initializeSpreadsheet()` (see below) to populate the new file's tabs, same as any other blank spreadsheet. The Settings screen exposes this as a name field + "Створити" button, alongside the existing "paste a link" flow for an existing spreadsheet and the Mom's/test-sheet shortcut buttons.
 
 **Connecting a brand-new blank spreadsheet** (step 6 above doesn't require restructuring an existing sheet by hand): a genuinely blank Google Sheet has none of the 5 tabs above, which would otherwise make every read fail. `src/lib/spreadsheetInit.ts` (`checkSpreadsheetTabs()`, `initializeSpreadsheet()`) creates whichever tabs are missing and fills each with its header row (Settings also gets its full set of default key/value rows, since — unlike the other 4, which are append-only — a Settings tab with just a header row would silently reject every future save). Wired into the Settings screen's spreadsheet-connect flow: it checks automatically once signed in and offers an "Ініціалізувати таблицю" button when tabs are missing.
 

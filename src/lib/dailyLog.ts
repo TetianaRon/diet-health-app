@@ -4,6 +4,7 @@
 // (a later edit to the Ingredients/Dishes bundle shouldn't retroactively
 // change what was actually eaten).
 import { readRange, writeRange } from "./sheets";
+import { buildColumnIndex, buildRow, cell, readColumnIndex, type ColumnIndex } from "./sheetRow";
 import { calcGlycemicLoad } from "./health";
 import type { IngredientNutrition } from "./dishes";
 
@@ -23,8 +24,34 @@ export interface DailyLogEntry extends IngredientNutrition {
   mealId: string;
 }
 
-const LOG_RANGE = "A2:O5000"; // header row is A1:O1
+// Canonical column order — what a brand-new sheet gets initialized with (see
+// spreadsheetInit.ts, which imports this) and the default columnIndex used
+// below when none is given (tests, or before a live sheet's own header row
+// has been read). Rows are read/written by column HEADER NAME (see
+// sheetRow.ts), not fixed position, so a reordered sheet still parses
+// correctly.
+export const DAILY_LOG_HEADERS = [
+  "Timestamp",
+  "MealType",
+  "ItemName",
+  "PortionGrams",
+  "Carbs_g",
+  "GI",
+  "Fiber_g",
+  "Sugars_g",
+  "Protein_g",
+  "Fat_g",
+  "Calories_kcal",
+  "Sodium_mg",
+  "GL",
+  "Notes",
+  "MealId",
+] as const;
+const DEFAULT_COLUMN_INDEX = buildColumnIndex(DAILY_LOG_HEADERS);
+
+const LOG_RANGE = "A1:O5000"; // includes the header row (row 1), needed to resolve columns by name
 const LOG_APPEND_RANGE = "A:O";
+const LOG_WIDTH = "O";
 
 function round2(value: number): number {
   return Math.round(value * 100) / 100;
@@ -217,56 +244,60 @@ export function recentDayGroups(entries: DailyLogEntry[], referenceDate: Date, d
     }));
 }
 
-// Column order: Timestamp, MealType, ItemName, PortionGrams, Carbs_g, GI,
-// Fiber_g, Sugars_g, Protein_g, Fat_g, Calories_kcal, Sodium_mg, GL, Notes,
-// MealId (A-O) — MealId appended additively, see toMealId's fallback for
-// rows logged before it existed.
-export function rowToLogEntry(row: unknown[]): DailyLogEntry {
-  const timestamp = String(row[0] ?? "");
+// MealId appended additively — see toMealId's fallback for rows logged
+// before it existed.
+export function rowToLogEntry(row: unknown[], columnIndex: ColumnIndex = DEFAULT_COLUMN_INDEX): DailyLogEntry {
+  const timestamp = String(cell(row, columnIndex, "Timestamp") ?? "");
   return {
     timestamp,
-    mealType: toMealType(row[1]),
-    itemName: String(row[2] ?? ""),
-    portionGrams: toNumber(row[3]),
-    carbsG: toNumber(row[4]),
-    gi: toNumber(row[5]),
-    fiberG: toNumber(row[6]),
-    sugarsG: toNumber(row[7]),
-    proteinG: toNumber(row[8]),
-    fatG: toNumber(row[9]),
-    caloriesKcal: toNumber(row[10]),
-    sodiumMg: toNumber(row[11]),
-    gl: toNumber(row[12]),
-    notes: String(row[13] ?? ""),
-    mealId: toMealId(row[14], timestamp),
+    mealType: toMealType(cell(row, columnIndex, "MealType")),
+    itemName: String(cell(row, columnIndex, "ItemName") ?? ""),
+    portionGrams: toNumber(cell(row, columnIndex, "PortionGrams")),
+    carbsG: toNumber(cell(row, columnIndex, "Carbs_g")),
+    gi: toNumber(cell(row, columnIndex, "GI")),
+    fiberG: toNumber(cell(row, columnIndex, "Fiber_g")),
+    sugarsG: toNumber(cell(row, columnIndex, "Sugars_g")),
+    proteinG: toNumber(cell(row, columnIndex, "Protein_g")),
+    fatG: toNumber(cell(row, columnIndex, "Fat_g")),
+    caloriesKcal: toNumber(cell(row, columnIndex, "Calories_kcal")),
+    sodiumMg: toNumber(cell(row, columnIndex, "Sodium_mg")),
+    gl: toNumber(cell(row, columnIndex, "GL")),
+    notes: String(cell(row, columnIndex, "Notes") ?? ""),
+    mealId: toMealId(cell(row, columnIndex, "MealId"), timestamp),
   };
 }
 
-export function logEntryToRow(entry: DailyLogEntry): unknown[] {
-  return [
-    entry.timestamp,
-    entry.mealType,
-    entry.itemName,
-    entry.portionGrams,
-    entry.carbsG,
-    entry.gi,
-    entry.fiberG,
-    entry.sugarsG,
-    entry.proteinG,
-    entry.fatG,
-    entry.caloriesKcal,
-    entry.sodiumMg,
-    entry.gl,
-    entry.notes,
-    entry.mealId,
-  ];
+export function logEntryToRow(entry: DailyLogEntry, columnIndex: ColumnIndex = DEFAULT_COLUMN_INDEX): unknown[] {
+  return buildRow(
+    {
+      Timestamp: entry.timestamp,
+      MealType: entry.mealType,
+      ItemName: entry.itemName,
+      PortionGrams: entry.portionGrams,
+      Carbs_g: entry.carbsG,
+      GI: entry.gi,
+      Fiber_g: entry.fiberG,
+      Sugars_g: entry.sugarsG,
+      Protein_g: entry.proteinG,
+      Fat_g: entry.fatG,
+      Calories_kcal: entry.caloriesKcal,
+      Sodium_mg: entry.sodiumMg,
+      GL: entry.gl,
+      Notes: entry.notes,
+      MealId: entry.mealId,
+    },
+    columnIndex,
+  );
 }
 
 export async function listLogEntries(): Promise<DailyLogEntry[]> {
   const rows = await readRange("DailyLog", LOG_RANGE);
-  return rows.filter((row) => row.length > 0).map(rowToLogEntry);
+  const [header, ...dataRows] = rows;
+  const columnIndex = header ? buildColumnIndex(header) : DEFAULT_COLUMN_INDEX;
+  return dataRows.filter((row) => row.length > 0).map((row) => rowToLogEntry(row, columnIndex));
 }
 
 export async function addLogEntry(entry: DailyLogEntry): Promise<void> {
-  await writeRange("DailyLog", LOG_APPEND_RANGE, [logEntryToRow(entry)]);
+  const columnIndex = await readColumnIndex("DailyLog", LOG_WIDTH);
+  await writeRange("DailyLog", LOG_APPEND_RANGE, [logEntryToRow(entry, columnIndex)]);
 }

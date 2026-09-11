@@ -8,6 +8,7 @@
 // first, Source/DateAdded last, same nutrient column names in between —
 // only IngredientsJson/YieldGrams are Dish-specific, inserted in the middle.
 import { batchUpdateRanges, readRange, writeRange } from "./sheets";
+import { buildColumnIndex, buildRow, cell, columnLetter, readColumnIndex, type ColumnIndex } from "./sheetRow";
 import { toGlycemicFlag, type GlycemicFlag } from "./glycemicFlag";
 
 export type DishSource = "starter" | "manual";
@@ -154,54 +155,91 @@ function parseIngredientsJson(value: unknown): DishIngredientRef[] {
   }
 }
 
-// Column order: NameUk, NameEn, IngredientsJson, YieldGrams, Carbs_g, GI,
-// Fiber_g, Sugars_g, Protein_g, Fat_g, Calories_kcal, Sodium_mg, Source,
-// DateAdded, GlycemicFlag, GiVerified (A-P) — see docs/technical-spec.md "Dishes".
-export function rowToDish(row: unknown[]): Dish {
+// Canonical column order — what a brand-new sheet gets initialized with (see
+// spreadsheetInit.ts, which imports this) and the default columnIndex used
+// below when none is given (tests, or before a live sheet's own header row
+// has been read). A real sheet's actual current order always wins over this
+// default once read — see readDishesSheet/readColumnIndex below. Rows are
+// read/written by column HEADER NAME, not fixed position (see sheetRow.ts),
+// so a reordered sheet still parses correctly.
+export const DISHES_HEADERS = [
+  "NameUk",
+  "NameEn",
+  "IngredientsJson",
+  "YieldGrams",
+  "Carbs_g",
+  "GI",
+  "Fiber_g",
+  "Sugars_g",
+  "Protein_g",
+  "Fat_g",
+  "Calories_kcal",
+  "Sodium_mg",
+  "Source",
+  "DateAdded",
+  "GlycemicFlag",
+  "GiVerified",
+] as const;
+const DEFAULT_COLUMN_INDEX = buildColumnIndex(DISHES_HEADERS);
+
+const DISHES_RANGE = "A1:P1000"; // includes the header row (row 1), needed to resolve columns by name
+const DISHES_APPEND_RANGE = "A:P";
+const DISHES_WIDTH = "P";
+
+export function rowToDish(row: unknown[], columnIndex: ColumnIndex = DEFAULT_COLUMN_INDEX): Dish {
   return {
-    nameUk: String(row[0] ?? ""),
-    nameEn: String(row[1] ?? ""),
-    ingredients: parseIngredientsJson(row[2]),
-    yieldGrams: toNumber(row[3]),
-    carbsG: toNumber(row[4]),
-    gi: toNumber(row[5]),
-    fiberG: toNumber(row[6]),
-    sugarsG: toNumber(row[7]),
-    proteinG: toNumber(row[8]),
-    fatG: toNumber(row[9]),
-    caloriesKcal: toNumber(row[10]),
-    sodiumMg: toNumber(row[11]),
-    source: toDishSource(row[12]),
-    dateAdded: String(row[13] ?? ""),
-    glycemicFlag: toGlycemicFlag(row[14]),
-    giVerified: toBoolean(row[15]),
+    nameUk: String(cell(row, columnIndex, "NameUk") ?? ""),
+    nameEn: String(cell(row, columnIndex, "NameEn") ?? ""),
+    ingredients: parseIngredientsJson(cell(row, columnIndex, "IngredientsJson")),
+    yieldGrams: toNumber(cell(row, columnIndex, "YieldGrams")),
+    carbsG: toNumber(cell(row, columnIndex, "Carbs_g")),
+    gi: toNumber(cell(row, columnIndex, "GI")),
+    fiberG: toNumber(cell(row, columnIndex, "Fiber_g")),
+    sugarsG: toNumber(cell(row, columnIndex, "Sugars_g")),
+    proteinG: toNumber(cell(row, columnIndex, "Protein_g")),
+    fatG: toNumber(cell(row, columnIndex, "Fat_g")),
+    caloriesKcal: toNumber(cell(row, columnIndex, "Calories_kcal")),
+    sodiumMg: toNumber(cell(row, columnIndex, "Sodium_mg")),
+    source: toDishSource(cell(row, columnIndex, "Source")),
+    dateAdded: String(cell(row, columnIndex, "DateAdded") ?? ""),
+    glycemicFlag: toGlycemicFlag(cell(row, columnIndex, "GlycemicFlag")),
+    giVerified: toBoolean(cell(row, columnIndex, "GiVerified")),
   };
 }
 
-export function dishToRow(dish: Dish): unknown[] {
-  return [
-    dish.nameUk,
-    dish.nameEn,
-    JSON.stringify(dish.ingredients.map((i) => ({ name: i.nameUk, grams: i.grams }))),
-    dish.yieldGrams,
-    dish.carbsG,
-    dish.gi,
-    dish.fiberG,
-    dish.sugarsG,
-    dish.proteinG,
-    dish.fatG,
-    dish.caloriesKcal,
-    dish.sodiumMg,
-    dish.source,
-    dish.dateAdded,
-    dish.glycemicFlag,
-    dish.giVerified,
-  ];
+export function dishToRow(dish: Dish, columnIndex: ColumnIndex = DEFAULT_COLUMN_INDEX): unknown[] {
+  return buildRow(
+    {
+      NameUk: dish.nameUk,
+      NameEn: dish.nameEn,
+      IngredientsJson: JSON.stringify(dish.ingredients.map((i) => ({ name: i.nameUk, grams: i.grams }))),
+      YieldGrams: dish.yieldGrams,
+      Carbs_g: dish.carbsG,
+      GI: dish.gi,
+      Fiber_g: dish.fiberG,
+      Sugars_g: dish.sugarsG,
+      Protein_g: dish.proteinG,
+      Fat_g: dish.fatG,
+      Calories_kcal: dish.caloriesKcal,
+      Sodium_mg: dish.sodiumMg,
+      Source: dish.source,
+      DateAdded: dish.dateAdded,
+      GlycemicFlag: dish.glycemicFlag,
+      GiVerified: dish.giVerified,
+    },
+    columnIndex,
+  );
+}
+
+async function readDishesSheet(): Promise<{ columnIndex: ColumnIndex; dataRows: unknown[][] }> {
+  const rows = await readRange("Dishes", DISHES_RANGE);
+  const [header, ...dataRows] = rows;
+  return { columnIndex: header ? buildColumnIndex(header) : DEFAULT_COLUMN_INDEX, dataRows };
 }
 
 export async function listDishes(): Promise<Dish[]> {
-  const rows = await readRange("Dishes", "A2:P1000");
-  return rows.filter((row) => row.length > 0).map(rowToDish);
+  const { columnIndex, dataRows } = await readDishesSheet();
+  return dataRows.filter((row) => row.length > 0).map((row) => rowToDish(row, columnIndex));
 }
 
 export async function addDish(
@@ -209,22 +247,27 @@ export async function addDish(
   glycemicFlag: GlycemicFlag = "none",
 ): Promise<void> {
   const withDate: Dish = { ...dish, dateAdded: new Date().toISOString().slice(0, 10), glycemicFlag };
-  await writeRange("Dishes", "A:P", [dishToRow(withDate)]);
+  const columnIndex = await readColumnIndex("Dishes", DISHES_WIDTH);
+  await writeRange("Dishes", DISHES_APPEND_RANGE, [dishToRow(withDate, columnIndex)]);
 }
 
-async function findDishRowNumber(nameUk: string): Promise<number> {
-  const rows = await readRange("Dishes", "A2:P1000");
-  const rowIndex = rows.findIndex((row) => String(row[0] ?? "").trim().toLowerCase() === nameUk.trim().toLowerCase());
+async function findDishRow(nameUk: string): Promise<{ rowNumber: number; columnIndex: ColumnIndex }> {
+  const { columnIndex, dataRows } = await readDishesSheet();
+  const rowIndex = dataRows.findIndex(
+    (row) => String(cell(row, columnIndex, "NameUk") ?? "").trim().toLowerCase() === nameUk.trim().toLowerCase(),
+  );
   if (rowIndex === -1) {
     throw new Error(`"${nameUk}" not found in Dishes`);
   }
-  return rowIndex + 2; // +2: 1-based rows, plus the header row
+  return { rowNumber: rowIndex + 2, columnIndex }; // +2: 1-based rows, plus the header row
 }
 
 /** Sets the GlycemicFlag column for an existing Dishes row, found by exact nameUk match. */
 export async function setDishGlycemicFlag(nameUk: string, glycemicFlag: GlycemicFlag): Promise<void> {
-  const rowNumber = await findDishRowNumber(nameUk);
-  await batchUpdateRanges([{ range: `Dishes!O${rowNumber}`, values: [[glycemicFlag]] }]);
+  const { rowNumber, columnIndex } = await findDishRow(nameUk);
+  const col = columnIndex.get("GlycemicFlag");
+  if (col === undefined) throw new Error('Dishes sheet has no "GlycemicFlag" column');
+  await batchUpdateRanges([{ range: `Dishes!${columnLetter(col)}${rowNumber}`, values: [[glycemicFlag]] }]);
 }
 
 /**
@@ -233,6 +276,7 @@ export async function setDishGlycemicFlag(nameUk: string, glycemicFlag: Glycemic
  * addDish's always-append behavior. Same principle as updateIngredient.
  */
 export async function updateDish(currentNameUk: string, dish: Dish): Promise<void> {
-  const rowNumber = await findDishRowNumber(currentNameUk);
-  await batchUpdateRanges([{ range: `Dishes!A${rowNumber}:P${rowNumber}`, values: [dishToRow(dish)] }]);
+  const { rowNumber, columnIndex } = await findDishRow(currentNameUk);
+  const lastCol = columnLetter(Math.max(...columnIndex.values()));
+  await batchUpdateRanges([{ range: `Dishes!A${rowNumber}:${lastCol}${rowNumber}`, values: [dishToRow(dish, columnIndex)] }]);
 }

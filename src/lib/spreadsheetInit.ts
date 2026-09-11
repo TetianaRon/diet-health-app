@@ -8,67 +8,12 @@
 // already has, so it's safe to run on a partially-set-up sheet too.
 import { addSheetTabs, batchUpdateRanges, listSheetTitles } from "./sheets";
 import { DEFAULT_SETTINGS, settingsToRows } from "./settings";
+import { INGREDIENTS_HEADERS } from "./ingredients";
+import { DISHES_HEADERS } from "./dishes";
+import { DAILY_LOG_HEADERS } from "./dailyLog";
+import { BLOOD_SUGAR_HEADERS } from "./bloodSugar";
 
 export const REQUIRED_TABS = ["Ingredients", "Dishes", "DailyLog", "BloodSugar", "Settings"] as const;
-
-// Column order matches each data module's rowTo*/​*ToRow mapping exactly —
-// see the "Column order" comment in ingredients.ts/dishes.ts/dailyLog.ts/
-// bloodSugar.ts. GiVerified/Favorite/GlycemicFlag/MealId are additive
-// columns appended after the schema's original shape, per this project's
-// no-migration convention (see docs/build-log.md).
-const INGREDIENTS_HEADERS = [
-  "NameUk",
-  "NameEn",
-  "Carbs_g",
-  "GI",
-  "Fiber_g",
-  "Sugars_g",
-  "Protein_g",
-  "Fat_g",
-  "Calories_kcal",
-  "Sodium_mg",
-  "Source",
-  "DateAdded",
-  "Favorite",
-  "GlycemicFlag",
-  "GiVerified",
-];
-const DISHES_HEADERS = [
-  "NameUk",
-  "NameEn",
-  "IngredientsJson",
-  "YieldGrams",
-  "Carbs_g",
-  "GI",
-  "Fiber_g",
-  "Sugars_g",
-  "Protein_g",
-  "Fat_g",
-  "Calories_kcal",
-  "Sodium_mg",
-  "Source",
-  "DateAdded",
-  "GlycemicFlag",
-  "GiVerified",
-];
-const DAILY_LOG_HEADERS = [
-  "Timestamp",
-  "MealType",
-  "ItemName",
-  "PortionGrams",
-  "Carbs_g",
-  "GI",
-  "Fiber_g",
-  "Sugars_g",
-  "Protein_g",
-  "Fat_g",
-  "Calories_kcal",
-  "Sodium_mg",
-  "GL",
-  "Notes",
-  "MealId",
-];
-const BLOOD_SUGAR_HEADERS = ["Timestamp", "ValueMmolL", "Context", "Notes"];
 
 /** Which of the 5 required tabs aren't in a spreadsheet's actual tab list — pure, so it's testable without a live sheet. */
 export function missingTabs(existingTitles: string[]): string[] {
@@ -85,10 +30,10 @@ export function missingTabs(existingTitles: string[]): string[] {
 export function buildInitUpdates(missing: string[]): { range: string; values: unknown[][] }[] {
   const missingSet = new Set(missing);
   const updates: { range: string; values: unknown[][] }[] = [];
-  if (missingSet.has("Ingredients")) updates.push({ range: "Ingredients!A1:O1", values: [INGREDIENTS_HEADERS] });
-  if (missingSet.has("Dishes")) updates.push({ range: "Dishes!A1:P1", values: [DISHES_HEADERS] });
-  if (missingSet.has("DailyLog")) updates.push({ range: "DailyLog!A1:O1", values: [DAILY_LOG_HEADERS] });
-  if (missingSet.has("BloodSugar")) updates.push({ range: "BloodSugar!A1:D1", values: [BLOOD_SUGAR_HEADERS] });
+  if (missingSet.has("Ingredients")) updates.push({ range: "Ingredients!A1:O1", values: [[...INGREDIENTS_HEADERS]] });
+  if (missingSet.has("Dishes")) updates.push({ range: "Dishes!A1:P1", values: [[...DISHES_HEADERS]] });
+  if (missingSet.has("DailyLog")) updates.push({ range: "DailyLog!A1:O1", values: [[...DAILY_LOG_HEADERS]] });
+  if (missingSet.has("BloodSugar")) updates.push({ range: "BloodSugar!A1:D1", values: [[...BLOOD_SUGAR_HEADERS]] });
   if (missingSet.has("Settings")) {
     const settingsRows = settingsToRows(DEFAULT_SETTINGS);
     updates.push({ range: "Settings!A1:B1", values: [["Key", "Value"]] });

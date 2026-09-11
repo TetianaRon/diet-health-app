@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { computeDishNutrition, dishContainsFlaggedIngredient, dishToRow, rowToDish, type Dish, type IngredientNutrition } from "./dishes";
+import { buildColumnIndex } from "./sheetRow";
 
 const BUCKWHEAT_RAW: IngredientNutrition = {
   carbsG: 71.5,
@@ -115,6 +116,47 @@ describe("rowToDish / dishToRow", () => {
     };
 
     expect(rowToDish(dishToRow(dish))).toEqual(dish);
+  });
+
+  it("still round-trips correctly when the sheet's own columns are reordered", () => {
+    const dish: Dish = {
+      nameUk: "Гречка варена",
+      nameEn: "buckwheat, cooked",
+      ingredients: [{ nameUk: "Гречка суха", grams: 100 }],
+      yieldGrams: 360,
+      carbsG: 19.86,
+      gi: 54,
+      fiberG: 2.78,
+      sugarsG: 0,
+      proteinG: 3.67,
+      fatG: 0.94,
+      caloriesKcal: 95.28,
+      sodiumMg: 0.28,
+      source: "starter",
+      dateAdded: "2026-08-13",
+      glycemicFlag: "watch",
+      giVerified: true,
+    };
+    // Mirrors a sheet where GI and YieldGrams got swapped.
+    const reordered = buildColumnIndex([
+      "NameUk",
+      "NameEn",
+      "IngredientsJson",
+      "GI",
+      "Carbs_g",
+      "YieldGrams",
+      "Fiber_g",
+      "Sugars_g",
+      "Protein_g",
+      "Fat_g",
+      "Calories_kcal",
+      "Sodium_mg",
+      "Source",
+      "DateAdded",
+      "GlycemicFlag",
+      "GiVerified",
+    ]);
+    expect(rowToDish(dishToRow(dish, reordered), reordered)).toEqual(dish);
   });
 
   it("defaults an unrecognized Source to manual", () => {

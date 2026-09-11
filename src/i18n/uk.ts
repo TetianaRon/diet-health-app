@@ -228,6 +228,17 @@ export const uk = {
     },
     spreadsheet: {
       title: "Таблиця Google Sheets",
+      newSpreadsheetTitle: "Нова таблиця",
+      newSpreadsheetHint:
+        "Створити нову таблицю Google Sheets у папці «Track My Meals» на вашому Google Диску — з усіма потрібними вкладками одразу.",
+      newNameLabel: "Назва таблиці",
+      newNameDefault: "Мої дані — Трекер харчування",
+      newNameValidationError: "Введіть назву для нової таблиці.",
+      createButton: "Створити",
+      creating: "Створення таблиці...",
+      createdNew: "Нову таблицю створено та підключено!",
+      signInToCreateHint: "Увійдіть через Google, щоб створити нову таблицю.",
+      existingSpreadsheetTitle: "Наявна таблиця",
       hint: "Вставте посилання на вашу таблицю Google Sheets (або тільки її ID). Кожен пристрій може використовувати свою таблицю.",
       inputLabel: "Посилання або ID таблиці",
       placeholder: "https://docs.google.com/spreadsheets/d/...",

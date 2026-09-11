@@ -22,8 +22,16 @@ import { App } from "@capacitor/app";
 import { Browser } from "@capacitor/browser";
 
 const SHEETS_API_BASE = "https://sheets.googleapis.com/v4/spreadsheets";
+const DRIVE_API_BASE = "https://www.googleapis.com/drive/v3/files";
 const GIS_SCRIPT_SRC = "https://accounts.google.com/gsi/client";
-const SHEETS_SCOPE = "https://www.googleapis.com/auth/spreadsheets";
+// drive.file (added for the "create a new spreadsheet from the app" flow —
+// see createSpreadsheetInAppFolder below) only grants access to files this
+// app itself creates or that the user opens through a Google file picker —
+// it does NOT grant blanket access to the rest of Drive, and it doesn't
+// affect the existing "connect an existing spreadsheet by pasting a link"
+// flow at all, which relies entirely on the spreadsheets scope already
+// granting full read/write on any spreadsheet the signed-in account can open.
+const SHEETS_SCOPE = "https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file";
 const TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token";
 const AUTH_ENDPOINT = "https://accounts.google.com/o/oauth2/v2/auth";
 // Matches the intent-filter added to android/app/src/main/AndroidManifest.xml
@@ -334,12 +342,13 @@ export function getSpreadsheetUrl(id: string): string {
   return `https://docs.google.com/spreadsheets/d/${id}/edit`;
 }
 
-async function authorizedFetch(path: string, init?: RequestInit): Promise<Response> {
+/** Authorized fetch against an arbitrary absolute URL — the shared retry/error-handling logic behind both authorizedFetch (Sheets API) and the Drive API calls below. */
+async function authorizedFetchUrl(url: string, init?: RequestInit): Promise<Response> {
   if (!accessToken) {
     throw new Error("Not signed in — call signIn() first");
   }
   const doFetch = () =>
-    fetch(`${SHEETS_API_BASE}/${path}`, {
+    fetch(url, {
       ...init,
       headers: { ...init?.headers, Authorization: `Bearer ${accessToken}` },
     });
@@ -360,7 +369,7 @@ async function authorizedFetch(path: string, init?: RequestInit): Promise<Respon
     // this check, a failed Sheets API call (bad range, permission error, etc.)
     // silently does nothing and callers proceed as if it had succeeded.
     const body = await response.text().catch(() => "");
-    let message = `Sheets API request failed: ${response.status}`;
+    let message = `Google API request failed: ${response.status}`;
     try {
       const parsed = JSON.parse(body);
       if (parsed?.error?.message) message += ` — ${parsed.error.message}`;
@@ -371,6 +380,10 @@ async function authorizedFetch(path: string, init?: RequestInit): Promise<Respon
   }
 
   return response;
+}
+
+async function authorizedFetch(path: string, init?: RequestInit): Promise<Response> {
+  return authorizedFetchUrl(`${SHEETS_API_BASE}/${path}`, init);
 }
 
 // --- Offline read fallback ---
@@ -486,4 +499,61 @@ export async function addSheetTabs(titles: string[]): Promise<void> {
       requests: titles.map((title) => ({ addSheet: { properties: { title } } })),
     }),
   });
+}
+
+// --- Creating a brand-new spreadsheet from the app ---
+//
+// Lets someone start using this app without first building a spreadsheet by
+// hand (the flow above already covers the "I already have a spreadsheet"
+// case). New files go inside a single app-owned Drive folder rather than
+// Drive's root, using the drive.file scope (see SHEETS_SCOPE above) — the
+// narrowest scope that can do this, since it only grants access to files
+// this app itself creates. The caller is responsible for calling
+// spreadsheetInit.ts's initializeSpreadsheet() afterward to populate the new
+// (still blank) file's tabs — this module only creates the empty file.
+
+const APP_FOLDER_NAME = "Track My Meals";
+
+async function findAppFolder(): Promise<string | null> {
+  const query = encodeURIComponent(
+    `mimeType='application/vnd.google-apps.folder' and name='${APP_FOLDER_NAME}' and 'root' in parents and trashed=false`,
+  );
+  const response = await authorizedFetchUrl(`${DRIVE_API_BASE}?q=${query}&fields=files(id)`);
+  const data = await response.json();
+  const files = (data.files ?? []) as { id: string }[];
+  return files[0]?.id ?? null;
+}
+
+async function createAppFolder(): Promise<string> {
+  const response = await authorizedFetchUrl(DRIVE_API_BASE, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name: APP_FOLDER_NAME, mimeType: "application/vnd.google-apps.folder", parents: ["root"] }),
+  });
+  const data = await response.json();
+  return data.id as string;
+}
+
+/** Finds this app's Drive folder (by its fixed name, in Drive root), creating it on first use. */
+async function findOrCreateAppFolder(): Promise<string> {
+  const existing = await findAppFolder();
+  return existing ?? createAppFolder();
+}
+
+/**
+ * Creates a brand-new, blank spreadsheet with the given name inside this
+ * app's Drive folder, and returns its ID. The file is blank (a single
+ * default tab, no data) exactly like any other new Google Sheet — the
+ * caller must still call initializeSpreadsheet() to give it this app's 5
+ * tabs, same as connecting any other blank spreadsheet.
+ */
+export async function createSpreadsheetInAppFolder(name: string): Promise<string> {
+  const folderId = await findOrCreateAppFolder();
+  const response = await authorizedFetchUrl(DRIVE_API_BASE, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, mimeType: "application/vnd.google-apps.spreadsheet", parents: [folderId] }),
+  });
+  const data = await response.json();
+  return data.id as string;
 }

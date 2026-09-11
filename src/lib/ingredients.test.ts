@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ingredientToRow, mergeWithStarterFoods, rowToIngredient, sortFavoritesFirst, type Ingredient } from "./ingredients";
+import { buildColumnIndex } from "./sheetRow";
 import { STARTER_FOODS } from "../data/starter-foods";
 
 describe("rowToIngredient", () => {
@@ -57,26 +58,52 @@ describe("rowToIngredient", () => {
 });
 
 describe("ingredientToRow", () => {
-  it("round-trips through rowToIngredient", () => {
-    const ingredient: Ingredient = {
-      nameUk: "Кефір",
-      nameEn: "kefir, low-fat",
-      carbsG: 4.0,
-      gi: 32,
-      fiberG: 0,
-      sugarsG: 4.0,
-      proteinG: 3.4,
-      fatG: 1.0,
-      caloriesKcal: 41,
-      sodiumMg: 40,
-      source: "starter",
-      dateAdded: "2026-08-13",
-      favorite: false,
-      glycemicFlag: "none",
-      giVerified: false,
-    };
+  const ingredient: Ingredient = {
+    nameUk: "Кефір",
+    nameEn: "kefir, low-fat",
+    carbsG: 4.0,
+    gi: 32,
+    fiberG: 0,
+    sugarsG: 4.0,
+    proteinG: 3.4,
+    fatG: 1.0,
+    caloriesKcal: 41,
+    sodiumMg: 40,
+    source: "starter",
+    dateAdded: "2026-08-13",
+    favorite: false,
+    glycemicFlag: "none",
+    giVerified: false,
+  };
 
+  it("round-trips through rowToIngredient", () => {
     expect(rowToIngredient(ingredientToRow(ingredient))).toEqual(ingredient);
+  });
+
+  it("still round-trips correctly when the sheet's own columns are reordered", () => {
+    // Mirrors a sheet where GI and Carbs_g got swapped, e.g. by someone
+    // manually dragging a column in the Google Sheets UI.
+    const reordered = buildColumnIndex([
+      "NameUk",
+      "NameEn",
+      "GI",
+      "Carbs_g",
+      "Fiber_g",
+      "Sugars_g",
+      "Protein_g",
+      "Fat_g",
+      "Calories_kcal",
+      "Sodium_mg",
+      "Source",
+      "DateAdded",
+      "Favorite",
+      "GlycemicFlag",
+      "GiVerified",
+    ]);
+    const row = ingredientToRow(ingredient, reordered);
+    expect(row[2]).toBe(32); // GI now in column C
+    expect(row[3]).toBe(4.0); // Carbs_g now in column D
+    expect(rowToIngredient(row, reordered)).toEqual(ingredient);
   });
 });
 

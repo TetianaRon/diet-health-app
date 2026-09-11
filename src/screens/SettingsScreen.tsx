@@ -9,6 +9,7 @@ import {
   getMomSpreadsheetId,
   getTestSpreadsheetId,
   getSpreadsheetUrl,
+  createSpreadsheetInAppFolder,
 } from "../lib/sheets";
 import { checkSpreadsheetTabs, initializeSpreadsheet } from "../lib/spreadsheetInit";
 
@@ -96,6 +97,8 @@ function SpreadsheetSection({ signedIn }: { signedIn: boolean }) {
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
   const [tabCheck, setTabCheck] = useState<TabCheckState>({ checking: false, missing: null, error: null });
   const [initializing, setInitializing] = useState(false);
+  const [newName, setNewName] = useState<string>(uk.settings.spreadsheet.newNameDefault);
+  const [creatingNew, setCreatingNew] = useState(false);
   const momSpreadsheetId = getMomSpreadsheetId();
   const testSpreadsheetId = getTestSpreadsheetId();
 
@@ -126,6 +129,29 @@ function SpreadsheetSection({ signedIn }: { signedIn: boolean }) {
       setTabCheck((prev) => ({ ...prev, error: err instanceof Error ? err.message : String(err) }));
     } finally {
       setInitializing(false);
+    }
+  };
+
+  const handleCreateNew = async () => {
+    if (!newName.trim()) {
+      setError(uk.settings.spreadsheet.newNameValidationError);
+      setSavedMessage(null);
+      return;
+    }
+    setCreatingNew(true);
+    setError(null);
+    setSavedMessage(null);
+    try {
+      const id = await createSpreadsheetInAppFolder(newName.trim());
+      setSpreadsheetId(id);
+      setValue(getSpreadsheetId());
+      await initializeSpreadsheet();
+      await runTabCheck();
+      setSavedMessage(uk.settings.spreadsheet.createdNew);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setCreatingNew(false);
     }
   };
 
@@ -167,6 +193,24 @@ function SpreadsheetSection({ signedIn }: { signedIn: boolean }) {
   return (
     <div className="settings-account">
       <h2>{uk.settings.spreadsheet.title}</h2>
+
+      {signedIn ? (
+        <div className="settings-spreadsheet-create">
+          <h3>{uk.settings.spreadsheet.newSpreadsheetTitle}</h3>
+          <p>{uk.settings.spreadsheet.newSpreadsheetHint}</p>
+          <label>
+            {uk.settings.spreadsheet.newNameLabel}
+            <input value={newName} onChange={(e) => setNewName(e.target.value)} />
+          </label>
+          <button type="button" onClick={() => void handleCreateNew()} disabled={creatingNew}>
+            {creatingNew ? uk.settings.spreadsheet.creating : uk.settings.spreadsheet.createButton}
+          </button>
+        </div>
+      ) : (
+        <p>{uk.settings.spreadsheet.signInToCreateHint}</p>
+      )}
+
+      <h3>{uk.settings.spreadsheet.existingSpreadsheetTitle}</h3>
       <p>{uk.settings.spreadsheet.hint}</p>
       <label>
         {uk.settings.spreadsheet.inputLabel}
