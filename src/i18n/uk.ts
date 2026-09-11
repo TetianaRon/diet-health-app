@@ -47,6 +47,12 @@ export const uk = {
     latestBloodSugar: (valueMmolL: number, contextLabel: string) => `${valueMmolL} ммоль/л (${contextLabel})`,
     entryMeta: (portionGrams: number, carbsG: number, caloriesKcal: number) =>
       `${portionGrams} г — ${carbsG} г вуглеводів, ${caloriesKcal} ккал`,
+    // "1. Сніданок" — a simple running count of today's meal occasions, so
+    // mom can tell apart e.g. her 2nd snack of the day from her 1st at a
+    // glance, without needing to read the clock time next to it.
+    mealHeading: (index: number, mealType: string) => `${index}. ${mealType}`,
+    mealTotal: (carbsG: number, caloriesKcal: number, gl: number) =>
+      `Разом за прийом: ${carbsG} г вуглеводів, ${caloriesKcal} ккал, ГН ${gl}`,
     form: {
       mealTypeLabel: "Прийом їжі",
       itemLabel: "Продукт або страва",

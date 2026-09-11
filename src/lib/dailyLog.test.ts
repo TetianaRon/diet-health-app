@@ -3,6 +3,7 @@ import type { IngredientNutrition } from "./dishes";
 import {
   buildLogEntry,
   computePortionNutrition,
+  groupIntoMeals,
   isSameLocalDate,
   localDateKey,
   logEntryToRow,
@@ -39,13 +40,22 @@ describe("computePortionNutrition", () => {
 
 describe("buildLogEntry", () => {
   it("computes GL from the scaled carbs and GI", () => {
-    const entry = buildLogEntry("Обід", "Гречка варена", 200, BUCKWHEAT_PER_100G, "", "2026-08-13T12:00:00.000Z");
+    const entry = buildLogEntry(
+      "Обід",
+      "Гречка варена",
+      200,
+      BUCKWHEAT_PER_100G,
+      "",
+      "meal-1",
+      "2026-08-13T12:00:00.000Z",
+    );
     // carbs for 200g = 39.8, GL = 54 * 39.8 / 100
     expect(entry.carbsG).toBeCloseTo(39.8, 1);
     expect(entry.gl).toBeCloseTo((54 * 39.8) / 100, 1);
     expect(entry.mealType).toBe("Обід");
     expect(entry.itemName).toBe("Гречка варена");
     expect(entry.portionGrams).toBe(200);
+    expect(entry.mealId).toBe("meal-1");
   });
 });
 
@@ -96,6 +106,7 @@ describe("rowToLogEntry / logEntryToRow", () => {
       sodiumMg: 8,
       gl: 21.49,
       notes: "",
+      mealId: "2026-08-13T12:00:00.000Z",
     };
     expect(rowToLogEntry(logEntryToRow(entry))).toEqual(entry);
   });
@@ -104,10 +115,70 @@ describe("rowToLogEntry / logEntryToRow", () => {
     const row = ["2026-08-13T12:00:00.000Z", "Weird", "Тест", "10", "1", "1", "1", "1", "1", "1", "1", "1", "1", ""];
     expect(rowToLogEntry(row).mealType).toBe("Перекус");
   });
+
+  it("falls back MealId to the row's own timestamp when the column is blank (rows logged before MealId existed)", () => {
+    const row = ["2026-08-13T12:00:00.000Z", "Обід", "Тест", "10", "1", "1", "1", "1", "1", "1", "1", "1", "1", ""];
+    expect(rowToLogEntry(row).mealId).toBe("2026-08-13T12:00:00.000Z");
+  });
+});
+
+describe("groupIntoMeals", () => {
+  const item = (mealId: string, timestamp: string, itemName: string, carbsG = 10, caloriesKcal = 50): DailyLogEntry => ({
+    timestamp,
+    mealType: "Обід",
+    itemName,
+    portionGrams: 100,
+    carbsG,
+    gi: 50,
+    fiberG: 0,
+    sugarsG: 0,
+    proteinG: 0,
+    fatG: 0,
+    caloriesKcal,
+    sodiumMg: 0,
+    gl: carbsG * 0.5,
+    notes: "",
+    mealId,
+  });
+
+  it("groups several items sharing a mealId into one meal with summed totals", () => {
+    const entries = [
+      item("lunch-1", "2026-08-13T12:00:00.000Z", "Гречка", 20, 90),
+      item("lunch-1", "2026-08-13T12:01:00.000Z", "Курка", 0, 165),
+      item("lunch-1", "2026-08-13T12:02:00.000Z", "Салат", 5, 25),
+    ];
+    const groups = groupIntoMeals(entries);
+    expect(groups).toHaveLength(1);
+    expect(groups[0].entries).toHaveLength(3);
+    expect(groups[0].totals.carbsG).toBeCloseTo(25, 5);
+    expect(groups[0].totals.caloriesKcal).toBeCloseTo(280, 5);
+  });
+
+  it("keeps meals with different mealIds separate even when the mealType is identical", () => {
+    // Mirrors the real scenario: a snack after breakfast and a snack after
+    // lunch both carry mealType "Перекус" but are different occasions.
+    const entries = [
+      item("snack-1", "2026-08-13T10:00:00.000Z", "Яблуко"),
+      item("snack-2", "2026-08-13T15:00:00.000Z", "Горіхи"),
+    ];
+    const groups = groupIntoMeals(entries);
+    expect(groups).toHaveLength(2);
+    expect(groups.map((g) => g.entries[0].itemName).sort()).toEqual(["Горіхи", "Яблуко"]);
+  });
+
+  it("uses the earliest item's timestamp and mealType for the group", () => {
+    const entries = [
+      item("lunch-1", "2026-08-13T12:05:00.000Z", "Другий"),
+      item("lunch-1", "2026-08-13T12:00:00.000Z", "Перший"),
+    ];
+    const [group] = groupIntoMeals(entries);
+    expect(group.timestamp).toBe("2026-08-13T12:00:00.000Z");
+    expect(group.entries.map((e) => e.itemName)).toEqual(["Перший", "Другий"]);
+  });
 });
 
 describe("mealsBeforeTimestamp", () => {
-  const entryAt = (timestamp: string, itemName: string): DailyLogEntry => ({
+  const item = (mealId: string, timestamp: string, itemName: string): DailyLogEntry => ({
     timestamp,
     mealType: "Перекус",
     itemName,
@@ -122,28 +193,40 @@ describe("mealsBeforeTimestamp", () => {
     sodiumMg: 0,
     gl: 0,
     notes: "",
+    mealId,
   });
 
   const entries: DailyLogEntry[] = [
-    entryAt("2026-08-13T07:00:00.000Z", "Сніданок"),
-    entryAt("2026-08-13T09:00:00.000Z", "Перекус 1"),
-    entryAt("2026-08-13T12:00:00.000Z", "Обід"),
-    entryAt("2026-08-13T15:00:00.000Z", "Після вимірювання"),
+    item("breakfast", "2026-08-13T07:00:00.000Z", "Сніданок"),
+    item("snack-1", "2026-08-13T09:00:00.000Z", "Перекус 1"),
+    item("lunch", "2026-08-13T12:00:00.000Z", "Обід"),
+    item("after-reading", "2026-08-13T15:00:00.000Z", "Після вимірювання"),
   ];
 
-  it("returns entries at or before the given timestamp, most-recent-first", () => {
+  it("returns meal occasions at or before the given timestamp, most-recent-first", () => {
     const result = mealsBeforeTimestamp(entries, "2026-08-13T12:00:00.000Z");
-    expect(result.map((e) => e.itemName)).toEqual(["Обід", "Перекус 1", "Сніданок"]);
+    expect(result.map((m) => m.entries[0].itemName)).toEqual(["Обід", "Перекус 1", "Сніданок"]);
   });
 
-  it("excludes entries after the given timestamp", () => {
+  it("excludes meals after the given timestamp", () => {
     const result = mealsBeforeTimestamp(entries, "2026-08-13T10:00:00.000Z");
-    expect(result.map((e) => e.itemName)).toEqual(["Перекус 1", "Сніданок"]);
+    expect(result.map((m) => m.entries[0].itemName)).toEqual(["Перекус 1", "Сніданок"]);
   });
 
-  it("caps the result at the given limit", () => {
-    const result = mealsBeforeTimestamp(entries, "2026-08-13T12:00:00.000Z", 2);
-    expect(result.map((e) => e.itemName)).toEqual(["Обід", "Перекус 1"]);
+  it("caps the result at the given limit, counting MEALS not individual items", () => {
+    // The real bug this fixes: a single multi-dish meal used to eat up the
+    // whole limit on its own, since each dish was counted as a separate
+    // "meal" — a 6-item lunch would fill limit=6 by itself.
+    const multiDishLunch = [
+      item("lunch", "2026-08-13T12:00:00.000Z", "Гречка"),
+      item("lunch", "2026-08-13T12:01:00.000Z", "Курка"),
+      item("lunch", "2026-08-13T12:02:00.000Z", "Салат"),
+    ];
+    const withMultiDishLunch = [entries[0], entries[1], ...multiDishLunch];
+    const result = mealsBeforeTimestamp(withMultiDishLunch, "2026-08-13T12:02:00.000Z", 2);
+    expect(result).toHaveLength(2);
+    expect(result[0].entries.map((e) => e.itemName)).toEqual(["Гречка", "Курка", "Салат"]);
+    expect(result[1].entries[0].itemName).toBe("Перекус 1");
   });
 
   it("returns an empty list when nothing precedes the timestamp", () => {
@@ -168,6 +251,7 @@ describe("recentDayGroups", () => {
     sodiumMg: 0,
     gl: 0,
     notes: "",
+    mealId: date.toISOString(),
   });
 
   it("groups the previous N days, excluding today, most-recent-day-first", () => {

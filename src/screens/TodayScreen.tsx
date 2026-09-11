@@ -17,12 +17,14 @@ import {
   addLogEntry,
   buildLogEntry,
   computePortionNutrition,
+  groupIntoMeals,
   isSameLocalDate,
   listLogEntries,
   localDateKey,
   recentDayGroups,
   suggestMealType,
   type DailyLogEntry,
+  type MealGroup,
   type MealType,
 } from "../lib/dailyLog";
 
@@ -57,6 +59,27 @@ function ProgressBar({ label, value, target, unit }: { label: string; value: num
   );
 }
 
+// Shared by Today's list and the recent-days history — one meal occasion's
+// items plus its combined total, so a multi-item meal reads as one thing
+// (matching mom's feedback that it didn't before) rather than N unrelated rows.
+function MealItemsList({ meal }: { meal: MealGroup }) {
+  return (
+    <>
+      <ul className="food-list">
+        {meal.entries.map((entry, i) => (
+          <li key={`${entry.timestamp}-${i}`}>
+            <span className="entry-time">{formatTime(entry.timestamp)}</span> <strong>{entry.itemName}</strong> —{" "}
+            {uk.today.entryMeta(entry.portionGrams, entry.carbsG, entry.caloriesKcal)}
+          </li>
+        ))}
+      </ul>
+      <p className="today-meal-total">
+        {uk.today.mealTotal(meal.totals.carbsG, meal.totals.caloriesKcal, meal.totals.gl)}
+      </p>
+    </>
+  );
+}
+
 function AddLogEntryForm({
   foods,
   onSaved,
@@ -76,7 +99,13 @@ function AddLogEntryForm({
   // A meal is often several items (e.g. buckwheat + an omelet + kefir at
   // breakfast) — the form stays open and just resets the item-picking fields
   // after each save, so mealType carries over instead of forcing it to be
-  // re-picked for every single item.
+  // re-picked for every single item. mealId is generated once per form
+  // session (this component instance) and reused across every item saved
+  // while it stays open, so they're grouped as one meal occasion — see
+  // groupIntoMeals in lib/dailyLog.ts. Closing and reopening the form (a
+  // fresh mount) starts a new meal, exactly matching "this is a different
+  // sitting."
+  const [mealId] = useState(() => new Date().toISOString());
   const [justSaved, setJustSaved] = useState(false);
 
   const matches =
@@ -106,7 +135,7 @@ function AddLogEntryForm({
     setSaving(true);
     setError(null);
     try {
-      const entry = buildLogEntry(mealType, selected.nameUk, parsedPortion, selected.per100g, notes.trim());
+      const entry = buildLogEntry(mealType, selected.nameUk, parsedPortion, selected.per100g, notes.trim(), mealId);
       await addLogEntry(entry);
       onSaved(entry);
       // Reset only the item-picking fields — mealType carries over so the
@@ -323,6 +352,13 @@ export default function TodayScreen({
 
   const todayKey = localDateKey(new Date());
   const todayEntries = (entries ?? []).filter((e) => isSameLocalDate(e.timestamp, todayKey));
+  // Chronological (oldest first) — matches how mom actually numbers her day
+  // ("1 - Breakfast, 2 - Snack, 3 - Lunch, ..."), and groups items logged in
+  // one sitting into one meal occasion instead of one row per item (see
+  // groupIntoMeals) — a mealType like "Перекус" can legitimately repeat
+  // several times a day, so grouping by mealId (not mealType) is what
+  // actually keeps those separate.
+  const todayMeals = groupIntoMeals(todayEntries).sort((a, b) => (a.timestamp < b.timestamp ? -1 : 1));
   // Lightweight stopgap ahead of a proper History tab — mom asked to see
   // recent days without leaving Today, not a full history browsing UI yet.
   const historyGroups = recentDayGroups(entries ?? [], new Date(), 3);
@@ -335,11 +371,17 @@ export default function TodayScreen({
   const totalProtein = todayEntries.reduce((sum, e) => sum + e.proteinG, 0);
   const totalSodium = todayEntries.reduce((sum, e) => sum + e.sodiumMg, 0);
 
-  const fatWarnings = MEAL_TYPES.map((mealType) => {
-    const fat = todayEntries.filter((e) => e.mealType === mealType).reduce((sum, e) => sum + e.fatG, 0);
-    const check = settings ? checkFatLimit(fat, settings.fatPerMealLimit) : null;
-    return check?.exceeded ? uk.today.fatWarning(mealType, check.overByGrams) : null;
-  }).filter((w): w is string => w !== null);
+  // Per meal OCCASION, not per mealType-across-the-day — the fat limit is a
+  // per-sitting rule (no gallbladder), so two separate small snacks each
+  // under the limit shouldn't get silently summed together just because
+  // they share the "Перекус" label, and a single over-limit snack shouldn't
+  // get buried inside a combined daily "Перекус" total.
+  const fatWarnings = todayMeals
+    .map((meal) => {
+      const check = settings ? checkFatLimit(meal.totals.fatG, settings.fatPerMealLimit) : null;
+      return check?.exceeded ? uk.today.fatWarning(meal.mealType, check.overByGrams) : null;
+    })
+    .filter((w): w is string => w !== null);
 
   const lastEntry = (entries ?? []).reduce<DailyLogEntry | null>(
     (latest, e) => (!latest || e.timestamp > latest.timestamp ? e : latest),
@@ -445,37 +487,30 @@ export default function TodayScreen({
       {entries === null && !loadError && <p>{uk.today.loading}</p>}
       {entries !== null && todayEntries.length === 0 && !showAddForm && <p>{uk.today.empty}</p>}
 
-      {MEAL_TYPES.map((mealType) => {
-        const items = todayEntries.filter((e) => e.mealType === mealType);
-        if (items.length === 0) return null;
-        return (
-          <div key={mealType} className="today-meal-group">
-            <h2>{mealType}</h2>
-            <ul className="food-list">
-              {items.map((entry, i) => (
-                <li key={`${entry.timestamp}-${i}`}>
-                  <span className="entry-time">{formatTime(entry.timestamp)}</span> <strong>{entry.itemName}</strong> —{" "}
-                  {uk.today.entryMeta(entry.portionGrams, entry.carbsG, entry.caloriesKcal)}
-                </li>
-              ))}
-            </ul>
-          </div>
-        );
-      })}
+      {todayMeals.map((meal, i) => (
+        <div key={meal.mealId} className="today-meal-group">
+          <h2>
+            {uk.today.mealHeading(i + 1, meal.mealType)} <span className="entry-time">· {formatTime(meal.timestamp)}</span>
+          </h2>
+          <MealItemsList meal={meal} />
+        </div>
+      ))}
 
       <h2 className="history-title">{uk.today.historyTitle}</h2>
       {historyGroups.length === 0 && <p>{uk.today.historyEmpty}</p>}
       {historyGroups.map((group) => (
         <div key={group.dateKey} className="today-meal-group">
           <h3>{formatDayMonthFromKey(group.dateKey)}</h3>
-          <ul className="food-list">
-            {group.entries.map((entry, i) => (
-              <li key={`${entry.timestamp}-${i}`}>
-                <span className="entry-time">{formatTime(entry.timestamp)}</span> <strong>{entry.itemName}</strong> (
-                {entry.mealType}) — {uk.today.entryMeta(entry.portionGrams, entry.carbsG, entry.caloriesKcal)}
-              </li>
+          {groupIntoMeals(group.entries)
+            .sort((a, b) => (a.timestamp < b.timestamp ? -1 : 1))
+            .map((meal) => (
+              <div key={meal.mealId} className="history-meal">
+                <p className="history-meal-label">
+                  <strong>{meal.mealType}</strong> · {formatTime(meal.timestamp)}
+                </p>
+                <MealItemsList meal={meal} />
+              </div>
             ))}
-          </ul>
         </div>
       ))}
     </section>

@@ -209,9 +209,10 @@ export default function BloodSugarScreen() {
                   <p className="food-form-hint">{uk.bloodSugar.mealsBefore.empty}</p>
                 ) : (
                   <ul className="food-list meals-before-list">
-                    {meals.map((meal, j) => (
-                      <li key={`${meal.timestamp}-${j}`}>
-                        <strong>{meal.itemName}</strong> — {meal.mealType}, {formatTimeBefore(meal.timestamp, entry.timestamp)}
+                    {meals.map((meal) => (
+                      <li key={meal.mealId}>
+                        <strong>{meal.mealType}</strong> ({meal.entries.map((e) => e.itemName).join(", ")}) —{" "}
+                        {formatTimeBefore(meal.timestamp, entry.timestamp)}
                       </li>
                     ))}
                   </ul>

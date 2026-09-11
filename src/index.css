@@ -422,6 +422,22 @@ select {
   color: #4a4a4a;
 }
 
+.today-meal-total {
+  font-size: 0.9rem;
+  color: #4a4a4a;
+  margin: 4px 0 0;
+}
+
+.history-meal {
+  margin-top: 10px;
+}
+
+.history-meal-label {
+  font-size: 0.9rem;
+  color: #4a4a4a;
+  margin: 0 0 4px;
+}
+
 .entry-time {
   /* Same contrast fix as .food-name-en above — was 2.81:1, now 5.33:1. */
   color: #6b6b6b;

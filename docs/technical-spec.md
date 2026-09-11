@@ -61,7 +61,7 @@ Schema is deliberately kept consistent with Ingredients: `NameUk`/`NameEn` first
 Implemented in `src/lib/dishes.ts` (`computeDishNutrition`, pure and unit-tested).
 
 ### DailyLog
-Every meal entry.
+Every meal entry — one row per logged item (an ingredient or dish portion).
 
 | Column | Notes |
 |---|---|
@@ -72,6 +72,7 @@ Every meal entry.
 | Carbs_g … Sodium_mg | computed for the portion |
 | GL | computed: `GI × Carbs_g / 100` |
 | Notes | |
+| MealId | Ties multiple item-rows eaten in one sitting together as a single meal *occasion*, distinct from MealType — added 2026-09-11 per mom's real-usage feedback: MealType alone can't tell two same-day snacks apart, and without a shared identifier a multi-dish meal only ever displayed as several unrelated items instead of one meal with a combined total. Generated once per "add meal" form session (`AddLogEntryForm` in `TodayScreen.tsx`) and reused across every item saved in that session; a fresh form open (after "Зберегти запис") starts a new meal. Additive column (same pattern as Favorite/GlycemicFlag elsewhere) — a blank cell (rows logged before this existed) falls back to that row's own Timestamp, so old rows each remain their own single-item meal exactly as they already behaved. See `groupIntoMeals()` in `src/lib/dailyLog.ts`. |
 
 ### BloodSugar
 | Column | Notes |

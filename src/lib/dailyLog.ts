@@ -17,10 +17,14 @@ export interface DailyLogEntry extends IngredientNutrition {
   portionGrams: number;
   gl: number;
   notes: string;
+  // Ties multiple items eaten in one sitting together as a single meal
+  // occasion, distinct from mealType (a label that can repeat several times
+  // a day — e.g. three separate snacks). See buildLogEntry/groupIntoMeals.
+  mealId: string;
 }
 
-const LOG_RANGE = "A2:N5000"; // header row is A1:N1
-const LOG_APPEND_RANGE = "A:N";
+const LOG_RANGE = "A2:O5000"; // header row is A1:O1
+const LOG_APPEND_RANGE = "A:O";
 
 function round2(value: number): number {
   return Math.round(value * 100) / 100;
@@ -33,6 +37,16 @@ function toNumber(value: unknown): number {
 
 function toMealType(value: unknown): MealType {
   return (MEAL_TYPES as readonly string[]).includes(String(value)) ? (value as MealType) : "Перекус";
+}
+
+// Rows logged before MealId existed (additive column, per this project's
+// schema convention) have a blank cell — falling back to the row's own
+// timestamp makes each of those a singleton meal of its own, exactly
+// matching how they already behaved (and displayed) before this existed, no
+// backfill required.
+function toMealId(value: unknown, timestamp: string): string {
+  const s = String(value ?? "").trim();
+  return s !== "" ? s : timestamp;
 }
 
 /** Scales an item's per-100g nutrition to a logged portion; GI itself doesn't scale. */
@@ -50,13 +64,20 @@ export function computePortionNutrition(per100g: IngredientNutrition, portionGra
   };
 }
 
-/** Builds a full log entry (including GL) from an item's per-100g nutrition and a logged portion. */
+/**
+ * Builds a full log entry (including GL) from an item's per-100g nutrition
+ * and a logged portion. `mealId` ties this item to whichever other items
+ * were logged in the same sitting (see groupIntoMeals) — callers adding
+ * several items to one meal should generate it once and reuse it across
+ * every item in that meal, not per-item.
+ */
 export function buildLogEntry(
   mealType: MealType,
   itemName: string,
   portionGrams: number,
   per100g: IngredientNutrition,
   notes: string,
+  mealId: string,
   timestamp: string = new Date().toISOString(),
 ): DailyLogEntry {
   const portion = computePortionNutrition(per100g, portionGrams);
@@ -68,6 +89,7 @@ export function buildLogEntry(
     ...portion,
     gl: round2(calcGlycemicLoad(portion.gi, portion.carbsG)),
     notes,
+    mealId,
   };
 }
 
@@ -93,16 +115,66 @@ export function localDateKey(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
+export interface MealGroup {
+  mealId: string;
+  mealType: MealType;
+  timestamp: string; // earliest item's timestamp in the meal
+  entries: DailyLogEntry[]; // chronological (oldest item first)
+  totals: IngredientNutrition & { gl: number };
+}
+
 /**
- * Last `limit` DailyLog entries at or before a given ISO timestamp,
- * most-recent-first — powers the Blood Sugar screen's "meals before this
- * reading" review. ISO strings already sort correctly lexically, so no
- * date-parsing logic is needed. Pure timestamp filter/sort, no correlation
- * or statistics — mom reviews the list herself.
+ * Groups log entries into meal occasions by mealId (see DailyLogEntry) —
+ * several items logged in one sitting become one group with summed totals,
+ * instead of being treated as separate meals. Order within a group is
+ * chronological; groups themselves are returned in whatever order `entries`
+ * came in (callers sort as needed — Today wants chronological, "meals
+ * before a reading" wants most-recent-first).
  */
-export function mealsBeforeTimestamp(entries: DailyLogEntry[], timestamp: string, limit = 6): DailyLogEntry[] {
-  return entries
-    .filter((e) => e.timestamp <= timestamp)
+export function groupIntoMeals(entries: DailyLogEntry[]): MealGroup[] {
+  const byMealId = new Map<string, DailyLogEntry[]>();
+  for (const entry of entries) {
+    const bucket = byMealId.get(entry.mealId);
+    if (bucket) bucket.push(entry);
+    else byMealId.set(entry.mealId, [entry]);
+  }
+
+  return [...byMealId.values()].map((groupEntries) => {
+    const sorted = [...groupEntries].sort((a, b) => (a.timestamp < b.timestamp ? -1 : 1));
+    const totals = sorted.reduce(
+      (sum, e) => ({
+        carbsG: round2(sum.carbsG + e.carbsG),
+        gi: 0, // not meaningful summed across items — GL is the per-meal figure that matters
+        fiberG: round2(sum.fiberG + e.fiberG),
+        sugarsG: round2(sum.sugarsG + e.sugarsG),
+        proteinG: round2(sum.proteinG + e.proteinG),
+        fatG: round2(sum.fatG + e.fatG),
+        caloriesKcal: round2(sum.caloriesKcal + e.caloriesKcal),
+        sodiumMg: round2(sum.sodiumMg + e.sodiumMg),
+        gl: round2(sum.gl + e.gl),
+      }),
+      { carbsG: 0, gi: 0, fiberG: 0, sugarsG: 0, proteinG: 0, fatG: 0, caloriesKcal: 0, sodiumMg: 0, gl: 0 },
+    );
+    return {
+      mealId: sorted[0].mealId,
+      mealType: sorted[0].mealType,
+      timestamp: sorted[0].timestamp,
+      entries: sorted,
+      totals,
+    };
+  });
+}
+
+/**
+ * Last `limit` meal occasions at or before a given ISO timestamp,
+ * most-recent-first — powers the Blood Sugar screen's "meals before this
+ * reading" review. Groups by meal first (see groupIntoMeals) so a 6-item
+ * lunch counts as one meal, not six — otherwise a single big meal could
+ * fill the whole list and hide everything eaten before it.
+ */
+export function mealsBeforeTimestamp(entries: DailyLogEntry[], timestamp: string, limit = 6): MealGroup[] {
+  const priorEntries = entries.filter((e) => e.timestamp <= timestamp);
+  return groupIntoMeals(priorEntries)
     .sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1))
     .slice(0, limit);
 }
@@ -146,10 +218,13 @@ export function recentDayGroups(entries: DailyLogEntry[], referenceDate: Date, d
 }
 
 // Column order: Timestamp, MealType, ItemName, PortionGrams, Carbs_g, GI,
-// Fiber_g, Sugars_g, Protein_g, Fat_g, Calories_kcal, Sodium_mg, GL, Notes (A-N).
+// Fiber_g, Sugars_g, Protein_g, Fat_g, Calories_kcal, Sodium_mg, GL, Notes,
+// MealId (A-O) — MealId appended additively, see toMealId's fallback for
+// rows logged before it existed.
 export function rowToLogEntry(row: unknown[]): DailyLogEntry {
+  const timestamp = String(row[0] ?? "");
   return {
-    timestamp: String(row[0] ?? ""),
+    timestamp,
     mealType: toMealType(row[1]),
     itemName: String(row[2] ?? ""),
     portionGrams: toNumber(row[3]),
@@ -163,6 +238,7 @@ export function rowToLogEntry(row: unknown[]): DailyLogEntry {
     sodiumMg: toNumber(row[11]),
     gl: toNumber(row[12]),
     notes: String(row[13] ?? ""),
+    mealId: toMealId(row[14], timestamp),
   };
 }
 
@@ -182,6 +258,7 @@ export function logEntryToRow(entry: DailyLogEntry): unknown[] {
     entry.sodiumMg,
     entry.gl,
     entry.notes,
+    entry.mealId,
   ];
 }
 
