@@ -10,6 +10,7 @@ import {
   getTestSpreadsheetId,
   getDevSpreadsheetId,
   getSpreadsheetUrl,
+  getSpreadsheetName,
   createSpreadsheetInAppFolder,
 } from "../lib/sheets";
 import { checkSchemaGaps, checkSpreadsheetTabs, initializeSpreadsheet, topUpSchemaGaps, type ColumnGap } from "../lib/spreadsheetInit";
@@ -62,29 +63,6 @@ const PRIVACY_POLICY_URL = "https://tetianaron.github.io/diet-health-app/";
 // "Spreadsheet selection" comment in src/lib/sheets.ts for why this exists:
 // VITE_SPREADSHEET_ID is one value baked into the build, so every install
 // shared it until this override existed.
-// Clipboard API needs a secure context, which every real target (https dev
-// server, Capacitor's custom scheme) satisfies — but falls back to the old
-// execCommand trick rather than silently doing nothing if it's ever missing.
-async function copyToClipboard(text: string): Promise<boolean> {
-  if (navigator.clipboard?.writeText) {
-    try {
-      await navigator.clipboard.writeText(text);
-      return true;
-    } catch {
-      // fall through to the execCommand fallback below
-    }
-  }
-  const textarea = document.createElement("textarea");
-  textarea.value = text;
-  textarea.style.position = "fixed";
-  textarea.style.opacity = "0";
-  document.body.appendChild(textarea);
-  textarea.focus();
-  textarea.select();
-  const copied = document.execCommand("copy");
-  document.body.removeChild(textarea);
-  return copied;
-}
 
 // Result of checking a connected spreadsheet's structure — null fields
 // before the first check, or when not signed in yet (the check needs a real
@@ -117,14 +95,22 @@ function SpreadsheetSection({ signedIn }: { signedIn: boolean }) {
   const [toppingUp, setToppingUp] = useState(false);
   const [newName, setNewName] = useState<string>(uk.settings.spreadsheet.newNameDefault);
   const [creatingNew, setCreatingNew] = useState(false);
+  // The connected spreadsheet's own title — shown as a hyperlink so it's
+  // unmistakable which real file is connected, not just a bare ID (a gap
+  // noticed when the create-new flow worked but gave no visible proof of
+  // which spreadsheet it actually connected). Loaded alongside the tab
+  // check, not separately, since both need the same signed-in API access.
+  const [spreadsheetName, setSpreadsheetName] = useState<string | null>(null);
   const momSpreadsheetId = getMomSpreadsheetId();
   const testSpreadsheetId = getTestSpreadsheetId();
   const devSpreadsheetId = getDevSpreadsheetId();
 
   const runTabCheck = async () => {
     setTabCheck({ ...EMPTY_TAB_CHECK, checking: true });
+    setSpreadsheetName(null);
     try {
-      const missingTabs = await checkSpreadsheetTabs();
+      const [missingTabs, name] = await Promise.all([checkSpreadsheetTabs(), getSpreadsheetName()]);
+      setSpreadsheetName(name);
       if (missingTabs.length > 0) {
         setTabCheck({ ...EMPTY_TAB_CHECK, missingTabs });
         return;
@@ -230,12 +216,6 @@ function SpreadsheetSection({ signedIn }: { signedIn: boolean }) {
     if (signedIn) void runTabCheck();
   };
 
-  const handleCopyLink = async () => {
-    const copied = await copyToClipboard(getSpreadsheetUrl(getSpreadsheetId()));
-    setError(copied ? null : uk.settings.spreadsheet.copyLinkError);
-    setSavedMessage(copied ? uk.settings.spreadsheet.copyLinkSaved : null);
-  };
-
   // Flattened "Tab: header1, header2" / "Settings: key1, key2" lines for display.
   const schemaGapDescriptions = [
     ...(tabCheck.columnGaps ?? []).map((gap) => `${gap.tab}: ${gap.missingHeaders.join(", ")}`),
@@ -265,6 +245,14 @@ function SpreadsheetSection({ signedIn }: { signedIn: boolean }) {
       )}
 
       <h3>{uk.settings.spreadsheet.existingSpreadsheetTitle}</h3>
+      {signedIn && spreadsheetName && (
+        <p>
+          {uk.settings.spreadsheet.connectedLabel}{" "}
+          <a href={getSpreadsheetUrl(getSpreadsheetId())} target="_blank" rel="noopener noreferrer">
+            {spreadsheetName}
+          </a>
+        </p>
+      )}
       <p>{uk.settings.spreadsheet.hint}</p>
       <label>
         {uk.settings.spreadsheet.inputLabel}
@@ -298,9 +286,6 @@ function SpreadsheetSection({ signedIn }: { signedIn: boolean }) {
             {uk.settings.spreadsheet.connectDevButton}
           </button>
         )}
-        <button type="button" onClick={handleCopyLink}>
-          {uk.settings.spreadsheet.copyLinkButton}
-        </button>
       </div>
 
       {signedIn && tabCheck.checking && <p>{uk.settings.spreadsheet.checking}</p>}

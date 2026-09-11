@@ -45,8 +45,18 @@ export const uk = {
     historyTitle: "Останні 3 дні",
     historyEmpty: "За останні 3 дні записів немає.",
     latestBloodSugar: (valueMmolL: number, contextLabel: string) => `${valueMmolL} ммоль/л (${contextLabel})`,
-    entryMeta: (portionGrams: number, carbsG: number, caloriesKcal: number) =>
-      `${portionGrams} г — ${carbsG} г вуглеводів, ${caloriesKcal} ккал`,
+    // carbsText/caloriesText are pre-formatted (see carbsValue/caloriesValue
+    // below or unknownValueLabel) rather than raw numbers, so a custom
+    // entry's unknown field can show "невідомо" instead of a misleading "0".
+    entryMeta: (portionGrams: number, carbsText: string, caloriesText: string) => `${portionGrams} г — ${carbsText}, ${caloriesText}`,
+    carbsValue: (g: number) => `${g} г вуглеводів`,
+    caloriesValue: (kcal: number) => `${kcal} ккал`,
+    unknownValueLabel: "невідомо",
+    // Meal- and day-level caveats — the underlying totals already exclude
+    // an unknown field from the sum (see sumKnownField in dailyLog.ts), so
+    // these are purely "something here has a gap," not a correctness fix.
+    mealHasUnknownSuffix: "(є позиції з невідомими значеннями)",
+    unknownValuesNotice: (count: number) => `Позицій з невідомими значеннями: ${count} (не враховано в підсумках вище).`,
     // "1. Сніданок" — a simple running count of today's meal occasions, so
     // mom can tell apart e.g. her 2nd snack of the day from her 1st at a
     // glance, without needing to read the clock time next to it.
@@ -66,6 +76,27 @@ export const uk = {
         `${carbsG} г вуглеводів, ${caloriesKcal} ккал, ГЛ ${gl}`,
       saveButton: "Додати",
       validationError: "Оберіть продукт, вкажіть порцію у грамах і час прийому їжі.",
+      // Custom/estimated entries — a genuinely one-off item not in the
+      // database (restaurant food, a homemade dish with no exact recipe).
+      // Always a one-off DailyLog row, never saved to Ingredients — see the
+      // 2026-09-11 build-log entry for why.
+      switchToCustomButton: "Власний запис (страва не з бази)",
+      switchToPickButton: "← Обрати з бази",
+      customNameLabel: "Назва страви",
+      customNamePlaceholder: "напр. Борщ у ресторані",
+      customHint: "Заповніть відомі значення, невідомі залиште порожніми — вони не враховуватимуться в денних підсумках.",
+      customFieldPlaceholder: "невідомо",
+      customValidationError: "Введіть назву страви, порцію, час і хоча б одне відоме значення.",
+      customFieldLabels: {
+        carbsG: "Вуглеводи (г)",
+        gi: "Глікемічний індекс",
+        fiberG: "Клітковина (г)",
+        sugarsG: "Цукри (г)",
+        proteinG: "Білки (г)",
+        fatG: "Жири (г)",
+        caloriesKcal: "Калорії (ккал)",
+        sodiumMg: "Натрій (мг)",
+      },
     },
   },
   foods: {
@@ -239,6 +270,7 @@ export const uk = {
       createdNew: "Нову таблицю створено та підключено!",
       signInToCreateHint: "Увійдіть через Google, щоб створити нову таблицю.",
       existingSpreadsheetTitle: "Наявна таблиця",
+      connectedLabel: "Підключена таблиця:",
       hint: "Вставте посилання на вашу таблицю Google Sheets (або тільки її ID). Кожен пристрій може використовувати свою таблицю.",
       inputLabel: "Посилання або ID таблиці",
       placeholder: "https://docs.google.com/spreadsheets/d/...",
@@ -251,9 +283,6 @@ export const uk = {
       connectTestSaved: "Підключено тестову таблицю!",
       connectDevButton: "Підключити dev-таблицю",
       connectDevSaved: "Підключено dev-таблицю!",
-      copyLinkButton: "Копіювати посилання на таблицю",
-      copyLinkSaved: "Посилання скопійовано!",
-      copyLinkError: "Не вдалося скопіювати посилання.",
       checking: "Перевірка структури таблиці...",
       tabsOk: "✓ Усі потрібні вкладки та стовпці знайдено.",
       tabsMissing: (missing: string[]) =>

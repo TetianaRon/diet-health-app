@@ -28,13 +28,17 @@ export function missingTabs(existingTitles: string[]): string[] {
  * update, so re-running this against a partially-initialized sheet can't
  * clobber real data in a tab that already existed for some other reason.
  */
+function headerRowUpdate(tab: string, headers: readonly string[]): { range: string; values: unknown[][] } {
+  return { range: `${tab}!A1:${columnLetter(headers.length - 1)}1`, values: [[...headers]] };
+}
+
 export function buildInitUpdates(missing: string[]): { range: string; values: unknown[][] }[] {
   const missingSet = new Set(missing);
   const updates: { range: string; values: unknown[][] }[] = [];
-  if (missingSet.has("Ingredients")) updates.push({ range: "Ingredients!A1:O1", values: [[...INGREDIENTS_HEADERS]] });
-  if (missingSet.has("Dishes")) updates.push({ range: "Dishes!A1:P1", values: [[...DISHES_HEADERS]] });
-  if (missingSet.has("DailyLog")) updates.push({ range: "DailyLog!A1:O1", values: [[...DAILY_LOG_HEADERS]] });
-  if (missingSet.has("BloodSugar")) updates.push({ range: "BloodSugar!A1:D1", values: [[...BLOOD_SUGAR_HEADERS]] });
+  if (missingSet.has("Ingredients")) updates.push(headerRowUpdate("Ingredients", INGREDIENTS_HEADERS));
+  if (missingSet.has("Dishes")) updates.push(headerRowUpdate("Dishes", DISHES_HEADERS));
+  if (missingSet.has("DailyLog")) updates.push(headerRowUpdate("DailyLog", DAILY_LOG_HEADERS));
+  if (missingSet.has("BloodSugar")) updates.push(headerRowUpdate("BloodSugar", BLOOD_SUGAR_HEADERS));
   if (missingSet.has("Settings")) {
     const settingsRows = settingsToRows(DEFAULT_SETTINGS);
     updates.push({ range: "Settings!A1:B1", values: [["Key", "Value"]] });

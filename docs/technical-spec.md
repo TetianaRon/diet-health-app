@@ -65,7 +65,7 @@ Schema is deliberately kept consistent with Ingredients: `NameUk`/`NameEn` first
 Implemented in `src/lib/dishes.ts` (`computeDishNutrition`, pure and unit-tested).
 
 ### DailyLog
-Every meal entry — one row per logged item (an ingredient or dish portion).
+Every meal entry — one row per logged item (an ingredient/dish portion, or a custom/estimated entry — see below).
 
 | Column | Notes |
 |---|---|
@@ -73,10 +73,13 @@ Every meal entry — one row per logged item (an ingredient or dish portion).
 | MealType | Сніданок / Обід / Вечеря / Перекус |
 | ItemName | ingredient or dish name |
 | PortionGrams | |
-| Carbs_g … Sodium_mg | computed for the portion |
+| Carbs_g … Sodium_mg | computed for the portion, or typed directly for a custom entry |
 | GL | computed: `GI × Carbs_g / 100` |
 | Notes | |
 | MealId | Ties multiple item-rows eaten in one sitting together as a single meal *occasion*, distinct from MealType — added 2026-09-11 per mom's real-usage feedback: MealType alone can't tell two same-day snacks apart, and without a shared identifier a multi-dish meal only ever displayed as several unrelated items instead of one meal with a combined total. Generated once per "add meal" form session (`AddLogEntryForm` in `TodayScreen.tsx`) and reused across every item saved in that session; a fresh form open (after "Зберегти запис") starts a new meal. Additive column (same pattern as Favorite/GlycemicFlag elsewhere) — a blank cell (rows logged before this existed) falls back to that row's own Timestamp, so old rows each remain their own single-item meal exactly as they already behaved. See `groupIntoMeals()` in `src/lib/dailyLog.ts`. |
+| UnknownFields | Comma-separated list of which of this row's own nutrient fields (any of Carbs_g/GI/Fiber_g/Sugars_g/Protein_g/Fat_g/Calories_kcal/Sodium_mg, plus the derived GL) the person explicitly didn't know rather than a real value — added 2026-09-11 for custom/estimated entries (see below). The field itself still stores 0 (a safe, writable default); a blank cell means nothing is unknown, same additive-column convention as MealId. See `sumKnownField()`/`buildCustomLogEntry()` in `src/lib/dailyLog.ts`. |
+
+**Custom/estimated entries** (added 2026-09-11, real-usage feedback item #2): a genuinely one-off item not in the Ingredients/Dishes database — restaurant food, a homemade dish with no exact recipe. `AddLogEntryForm` in `TodayScreen.tsx` has a "Власний запис" toggle that switches from database-picking to typing the item's name and its actual totals-as-eaten directly (not a per-100g figure scaled by portion, since there's no database row to scale from). Any of the 8 nutrient fields can be left blank rather than guessed — recorded in UnknownFields — and `sumKnownField()` excludes that specific field from any total it's rolled into (meal-level via `groupIntoMeals()`, daily-level in `TodayScreen.tsx`) rather than letting a real gap silently read as zero. Design decisions (confirmed with the developer via `AskUserQuestion` before building): unknown fields are excluded from totals with a visible caveat, not silently zeroed; any field can be unknown independently, not all-or-nothing; a custom entry is always a one-off DailyLog row, never saved to Ingredients for reuse (avoids an Ingredients list bloated with one-time restaurant meals).
 
 ### BloodSugar
 | Column | Notes |

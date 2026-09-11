@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { IngredientNutrition } from "./dishes";
 import {
+  buildCustomLogEntry,
   buildLogEntry,
   computePortionNutrition,
   groupIntoMeals,
@@ -11,6 +12,7 @@ import {
   recentDayGroups,
   rowToLogEntry,
   suggestMealType,
+  sumKnownField,
   type DailyLogEntry,
 } from "./dailyLog";
 
@@ -56,6 +58,97 @@ describe("buildLogEntry", () => {
     expect(entry.itemName).toBe("Гречка варена");
     expect(entry.portionGrams).toBe(200);
     expect(entry.mealId).toBe("meal-1");
+    expect(entry.unknownFields).toEqual([]);
+  });
+});
+
+describe("buildCustomLogEntry", () => {
+  it("stores every provided field and marks nothing unknown when all are given", () => {
+    const entry = buildCustomLogEntry(
+      "Обід",
+      "Борщ у ресторані",
+      350,
+      { carbsG: 30, gi: 40, fiberG: 3, sugarsG: 5, proteinG: 8, fatG: 10, caloriesKcal: 250, sodiumMg: 600 },
+      "",
+      "meal-1",
+      "2026-09-11T12:00:00.000Z",
+    );
+    expect(entry.carbsG).toBe(30);
+    expect(entry.caloriesKcal).toBe(250);
+    expect(entry.unknownFields).toEqual([]);
+    expect(entry.gl).toBeCloseTo((40 * 30) / 100, 5);
+  });
+
+  it("marks a field unknown (stored as 0) when it's left out of values", () => {
+    const entry = buildCustomLogEntry(
+      "Обід",
+      "Обід у кафе",
+      300,
+      { carbsG: 25, gi: 50 }, // caloriesKcal, fatG, etc. not supplied
+      "",
+      "meal-1",
+    );
+    expect(entry.caloriesKcal).toBe(0);
+    expect(entry.unknownFields).toContain("caloriesKcal");
+    expect(entry.unknownFields).toContain("fatG");
+    expect(entry.unknownFields).not.toContain("carbsG");
+    expect(entry.unknownFields).not.toContain("gi");
+  });
+
+  it("marks GL unknown when carbs is unknown, even if GI is known", () => {
+    const entry = buildCustomLogEntry("Обід", "Страва", 200, { gi: 50 }, "", "meal-1");
+    expect(entry.unknownFields).toContain("carbsG");
+    expect(entry.unknownFields).toContain("gl");
+    expect(entry.gl).toBe(0);
+  });
+
+  it("marks GL unknown when GI is unknown, even if carbs is known", () => {
+    const entry = buildCustomLogEntry("Обід", "Страва", 200, { carbsG: 40 }, "", "meal-1");
+    expect(entry.unknownFields).toContain("gi");
+    expect(entry.unknownFields).toContain("gl");
+    expect(entry.gl).toBe(0);
+  });
+
+  it("computes GL normally when both GI and carbs are known, regardless of other unknowns", () => {
+    const entry = buildCustomLogEntry("Обід", "Страва", 200, { carbsG: 40, gi: 60 }, "", "meal-1");
+    expect(entry.unknownFields).not.toContain("gl");
+    expect(entry.gl).toBeCloseTo((60 * 40) / 100, 5);
+  });
+});
+
+describe("sumKnownField", () => {
+  const entry = (caloriesKcal: number, unknownFields: DailyLogEntry["unknownFields"] = []): DailyLogEntry => ({
+    timestamp: "2026-09-11T12:00:00.000Z",
+    mealType: "Обід",
+    itemName: "Тест",
+    portionGrams: 100,
+    carbsG: 10,
+    gi: 50,
+    fiberG: 0,
+    sugarsG: 0,
+    proteinG: 0,
+    fatG: 0,
+    caloriesKcal,
+    sodiumMg: 0,
+    gl: 5,
+    notes: "",
+    mealId: "m1",
+    unknownFields,
+  });
+
+  it("sums a field normally when nothing is unknown", () => {
+    expect(sumKnownField([entry(100), entry(200)], "caloriesKcal")).toEqual({ total: 300, unknownCount: 0 });
+  });
+
+  it("excludes entries where that specific field is unknown, and counts them", () => {
+    const entries = [entry(100), entry(999, ["caloriesKcal"]), entry(200)];
+    expect(sumKnownField(entries, "caloriesKcal")).toEqual({ total: 300, unknownCount: 1 });
+  });
+
+  it("only excludes the field actually marked unknown, not the whole entry", () => {
+    // carbsG is known even though caloriesKcal on this entry is unknown.
+    const entries = [entry(100, ["caloriesKcal"])];
+    expect(sumKnownField(entries, "carbsG")).toEqual({ total: 10, unknownCount: 0 });
   });
 });
 
@@ -107,6 +200,7 @@ describe("rowToLogEntry / logEntryToRow", () => {
       gl: 21.49,
       notes: "",
       mealId: "2026-08-13T12:00:00.000Z",
+      unknownFields: [],
     };
     expect(rowToLogEntry(logEntryToRow(entry))).toEqual(entry);
   });
@@ -119,6 +213,16 @@ describe("rowToLogEntry / logEntryToRow", () => {
   it("falls back MealId to the row's own timestamp when the column is blank (rows logged before MealId existed)", () => {
     const row = ["2026-08-13T12:00:00.000Z", "Обід", "Тест", "10", "1", "1", "1", "1", "1", "1", "1", "1", "1", ""];
     expect(rowToLogEntry(row).mealId).toBe("2026-08-13T12:00:00.000Z");
+  });
+
+  it("defaults UnknownFields to an empty array for a row logged before it existed", () => {
+    const row = ["2026-08-13T12:00:00.000Z", "Обід", "Тест", "10", "1", "1", "1", "1", "1", "1", "1", "1", "1", ""];
+    expect(rowToLogEntry(row).unknownFields).toEqual([]);
+  });
+
+  it("round-trips UnknownFields through logEntryToRow", () => {
+    const entry = buildCustomLogEntry("Обід", "Ресторанна страва", 300, { carbsG: 30 }, "", "meal-1", "2026-09-11T12:00:00.000Z");
+    expect(rowToLogEntry(logEntryToRow(entry)).unknownFields.sort()).toEqual([...entry.unknownFields].sort());
   });
 });
 
@@ -139,6 +243,7 @@ describe("groupIntoMeals", () => {
     gl: carbsG * 0.5,
     notes: "",
     mealId,
+    unknownFields: [],
   });
 
   it("groups several items sharing a mealId into one meal with summed totals", () => {
@@ -175,6 +280,22 @@ describe("groupIntoMeals", () => {
     expect(group.timestamp).toBe("2026-08-13T12:00:00.000Z");
     expect(group.entries.map((e) => e.itemName)).toEqual(["Перший", "Другий"]);
   });
+
+  it("is false when no item in the meal has an unknown value", () => {
+    const entries = [item("lunch-1", "2026-08-13T12:00:00.000Z", "Гречка")];
+    expect(groupIntoMeals(entries)[0].hasUnknownValues).toBe(false);
+  });
+
+  it("flags hasUnknownValues and excludes the unknown field from the meal total, without affecting other items' contribution", () => {
+    const known = item("lunch-1", "2026-08-13T12:00:00.000Z", "Гречка", 20, 90);
+    const customWithUnknownCalories = { ...item("lunch-1", "2026-08-13T12:01:00.000Z", "Ресторанна страва", 15, 999), unknownFields: ["caloriesKcal" as const] };
+    const groups = groupIntoMeals([known, customWithUnknownCalories]);
+    expect(groups[0].hasUnknownValues).toBe(true);
+    // caloriesKcal total should only include the known item's 90, not the unknown entry's stored 999.
+    expect(groups[0].totals.caloriesKcal).toBe(90);
+    // carbsG is known on both, so it sums normally regardless of the calories gap.
+    expect(groups[0].totals.carbsG).toBe(35);
+  });
 });
 
 describe("mealsBeforeTimestamp", () => {
@@ -194,6 +315,7 @@ describe("mealsBeforeTimestamp", () => {
     gl: 0,
     notes: "",
     mealId,
+    unknownFields: [],
   });
 
   const entries: DailyLogEntry[] = [
@@ -252,6 +374,7 @@ describe("recentDayGroups", () => {
     gl: 0,
     notes: "",
     mealId: date.toISOString(),
+    unknownFields: [],
   });
 
   it("groups the previous N days, excluding today, most-recent-day-first", () => {

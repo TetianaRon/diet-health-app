@@ -499,6 +499,14 @@ export async function listSheetTitles(): Promise<string[]> {
   return sheets.map((s) => s.properties.title);
 }
 
+/** The connected spreadsheet's own display name (its title in Drive/Sheets) — lets Settings show something more recognizable than a bare ID. */
+export async function getSpreadsheetName(): Promise<string> {
+  const spreadsheetId = getSpreadsheetId();
+  const response = await authorizedFetch(`${spreadsheetId}?fields=properties.title`);
+  const data = await response.json();
+  return String(data.properties?.title ?? "");
+}
+
 /**
  * Adds new tabs to the spreadsheet by title. Additive only — never touches
  * or removes any existing tab, including a blank spreadsheet's lone default

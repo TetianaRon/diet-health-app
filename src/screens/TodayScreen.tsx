@@ -15,6 +15,7 @@ import { latestBloodSugarEntry, listBloodSugarEntries, type BloodSugarEntry } fr
 import {
   MEAL_TYPES,
   addLogEntry,
+  buildCustomLogEntry,
   buildLogEntry,
   computePortionNutrition,
   groupIntoMeals,
@@ -23,6 +24,7 @@ import {
   localDateKey,
   recentDayGroups,
   suggestMealType,
+  sumKnownField,
   type DailyLogEntry,
   type MealGroup,
   type MealType,
@@ -62,23 +64,62 @@ function ProgressBar({ label, value, target, unit }: { label: string; value: num
 // Shared by Today's list and the recent-days history — one meal occasion's
 // items plus its combined total, so a multi-item meal reads as one thing
 // (matching mom's feedback that it didn't before) rather than N unrelated rows.
+// A custom/estimated item (see AddLogEntryForm's "Власний запис" mode) may
+// have some fields explicitly unknown rather than a real value — shown here
+// as "невідомо" instead of a misleading "0", and meal.totals already
+// excludes them from the sum (see sumKnownField in dailyLog.ts), so
+// hasUnknownValues is purely a display caveat, not a correctness concern.
 function MealItemsList({ meal }: { meal: MealGroup }) {
   return (
     <>
       <ul className="food-list">
-        {meal.entries.map((entry, i) => (
-          <li key={`${entry.timestamp}-${i}`}>
-            <span className="entry-time">{formatTime(entry.timestamp)}</span> <strong>{entry.itemName}</strong> —{" "}
-            {uk.today.entryMeta(entry.portionGrams, entry.carbsG, entry.caloriesKcal)}
-          </li>
-        ))}
+        {meal.entries.map((entry, i) => {
+          const carbsText = entry.unknownFields.includes("carbsG")
+            ? uk.today.unknownValueLabel
+            : uk.today.carbsValue(entry.carbsG);
+          const caloriesText = entry.unknownFields.includes("caloriesKcal")
+            ? uk.today.unknownValueLabel
+            : uk.today.caloriesValue(entry.caloriesKcal);
+          return (
+            <li key={`${entry.timestamp}-${i}`}>
+              <span className="entry-time">{formatTime(entry.timestamp)}</span> <strong>{entry.itemName}</strong> —{" "}
+              {uk.today.entryMeta(entry.portionGrams, carbsText, caloriesText)}
+            </li>
+          );
+        })}
       </ul>
       <p className="today-meal-total">
         {uk.today.mealTotal(meal.totals.carbsG, meal.totals.caloriesKcal, meal.totals.gl)}
+        {meal.hasUnknownValues && ` ${uk.today.mealHasUnknownSuffix}`}
       </p>
     </>
   );
 }
+
+// The 8 nutrition fields a custom entry can individually fill in or leave
+// blank (= unknown) — see buildCustomLogEntry in dailyLog.ts. Module-level
+// so the object identity is stable across renders (used as a useState
+// initializer/reset value).
+const CUSTOM_FIELDS: (keyof IngredientNutrition)[] = [
+  "caloriesKcal",
+  "carbsG",
+  "fatG",
+  "proteinG",
+  "fiberG",
+  "sugarsG",
+  "sodiumMg",
+  "gi",
+];
+const EMPTY_CUSTOM_VALUES: Record<keyof IngredientNutrition, string> = {
+  carbsG: "",
+  gi: "",
+  fiberG: "",
+  sugarsG: "",
+  proteinG: "",
+  fatG: "",
+  caloriesKcal: "",
+  sodiumMg: "",
+};
 
 function AddLogEntryForm({
   foods,
@@ -112,6 +153,25 @@ function AddLogEntryForm({
   // sitting."
   const [mealId] = useState(() => new Date().toISOString());
   const [justSaved, setJustSaved] = useState(false);
+
+  // "custom" is for a genuinely one-off item not in the database (restaurant
+  // food, a homemade dish with no exact recipe) — the meal can freely mix
+  // database-picked and custom items, since both share the same mealId
+  // (see buildCustomLogEntry in dailyLog.ts). Custom entries are never
+  // saved to Ingredients; they only ever produce a DailyLog row.
+  const [mode, setMode] = useState<"pick" | "custom">("pick");
+  const [customName, setCustomName] = useState("");
+  const [customValues, setCustomValues] = useState<Record<keyof IngredientNutrition, string>>(EMPTY_CUSTOM_VALUES);
+
+  const switchMode = (next: "pick" | "custom") => {
+    setMode(next);
+    setError(null);
+    setJustSaved(false);
+    setSelected(null);
+    setSearch("");
+    setCustomName("");
+    setCustomValues(EMPTY_CUSTOM_VALUES);
+  };
 
   const matches =
     !selected || search !== selected.nameUk
@@ -165,6 +225,51 @@ function AddLogEntryForm({
     }
   };
 
+  const filledCustomFields = CUSTOM_FIELDS.filter((field) => customValues[field].trim() !== "");
+  const customFieldsValid = filledCustomFields.every((field) => Number.isFinite(Number(customValues[field])));
+
+  const handleSaveCustom = async () => {
+    if (
+      !customName.trim() ||
+      !Number.isFinite(parsedPortion) ||
+      parsedPortion <= 0 ||
+      timestamp.trim() === "" ||
+      filledCustomFields.length === 0 ||
+      !customFieldsValid
+    ) {
+      setError(uk.today.form.customValidationError);
+      return;
+    }
+
+    const values: Partial<IngredientNutrition> = {};
+    for (const field of filledCustomFields) values[field] = Number(customValues[field]);
+
+    setSaving(true);
+    setError(null);
+    try {
+      const entry = buildCustomLogEntry(
+        mealType,
+        customName.trim(),
+        parsedPortion,
+        values,
+        notes.trim(),
+        mealId,
+        fromDatetimeLocalValue(timestamp),
+      );
+      await addLogEntry(entry);
+      onSaved(entry);
+      setCustomName("");
+      setCustomValues(EMPTY_CUSTOM_VALUES);
+      setPortionGrams("");
+      setNotes("");
+      setJustSaved(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="food-form">
       <label>
@@ -183,42 +288,62 @@ function AddLogEntryForm({
         <input type="datetime-local" value={timestamp} onChange={(e) => setTimestamp(e.target.value)} />
       </label>
 
-      <label>
-        {uk.today.form.itemLabel}
-        <input
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setSelected(null);
-            setJustSaved(false);
-          }}
-          placeholder={uk.today.form.itemPlaceholder}
-        />
-      </label>
+      <button type="button" className="food-form-mode-toggle" onClick={() => switchMode(mode === "pick" ? "custom" : "pick")}>
+        {mode === "pick" ? uk.today.form.switchToCustomButton : uk.today.form.switchToPickButton}
+      </button>
 
       {justSaved && <p className="food-form-source">{uk.today.addAnotherHint}</p>}
 
-      {matches.length > 0 && (
-        <ul className="food-list">
-          {matches.slice(0, 20).map((food) => (
-            <li key={food.nameUk} className="food-list-item-with-action">
-              <span>
-                {food.glycemicFlag !== "none" && (
-                  <span aria-hidden="true" className={`glycemic-inline ${food.glycemicFlag}`}>
-                    {GLYCEMIC_FLAG_SYMBOL[food.glycemicFlag]}{" "}
+      {mode === "pick" ? (
+        <>
+          <label>
+            {uk.today.form.itemLabel}
+            <input
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setSelected(null);
+                setJustSaved(false);
+              }}
+              placeholder={uk.today.form.itemPlaceholder}
+            />
+          </label>
+
+          {matches.length > 0 && (
+            <ul className="food-list">
+              {matches.slice(0, 20).map((food) => (
+                <li key={food.nameUk} className="food-list-item-with-action">
+                  <span>
+                    {food.glycemicFlag !== "none" && (
+                      <span aria-hidden="true" className={`glycemic-inline ${food.glycemicFlag}`}>
+                        {GLYCEMIC_FLAG_SYMBOL[food.glycemicFlag]}{" "}
+                      </span>
+                    )}
+                    <strong>{food.nameUk}</strong> <span className="food-name-en">({food.nameEn})</span> —{" "}
+                    {food.per100g.carbsG} г вуглеводів/100г
                   </span>
-                )}
-                <strong>{food.nameUk}</strong> <span className="food-name-en">({food.nameEn})</span> —{" "}
-                {food.per100g.carbsG} г вуглеводів/100г
-              </span>
-              <button type="button" onClick={() => handlePick(food)}>
-                {uk.foods.form.pickButton}
-              </button>
-            </li>
-          ))}
-        </ul>
+                  <button type="button" onClick={() => handlePick(food)}>
+                    {uk.foods.form.pickButton}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          {search && matches.length === 0 && !selected && <p>{uk.today.form.noMatches}</p>}
+        </>
+      ) : (
+        <label>
+          {uk.today.form.customNameLabel}
+          <input
+            value={customName}
+            onChange={(e) => {
+              setCustomName(e.target.value);
+              setJustSaved(false);
+            }}
+            placeholder={uk.today.form.customNamePlaceholder}
+          />
+        </label>
       )}
-      {search && matches.length === 0 && !selected && <p>{uk.today.form.noMatches}</p>}
 
       <label>
         {uk.today.form.portionLabel}
@@ -231,11 +356,30 @@ function AddLogEntryForm({
         />
       </label>
 
-      {previewNutrition && (
+      {mode === "pick" && previewNutrition && (
         <p className="food-form-source">
           {uk.today.form.preview(previewNutrition.carbsG, previewNutrition.caloriesKcal, previewGl)} (
           {uk.health.gl[classifyGl(previewGl)]})
         </p>
+      )}
+
+      {mode === "custom" && (
+        <div className="food-form-custom-fields">
+          <p className="food-form-source">{uk.today.form.customHint}</p>
+          {CUSTOM_FIELDS.map((field) => (
+            <label key={field}>
+              {uk.today.form.customFieldLabels[field]}
+              <input
+                type="number"
+                inputMode="decimal"
+                step="0.1"
+                value={customValues[field]}
+                placeholder={uk.today.form.customFieldPlaceholder}
+                onChange={(e) => setCustomValues((prev) => ({ ...prev, [field]: e.target.value }))}
+              />
+            </label>
+          ))}
+        </div>
       )}
 
       <label>
@@ -246,7 +390,7 @@ function AddLogEntryForm({
       {error && <p className="food-form-error">{error}</p>}
 
       <div className="food-form-actions">
-        <button type="button" onClick={() => void handleSave()} disabled={saving}>
+        <button type="button" onClick={() => void (mode === "pick" ? handleSave() : handleSaveCustom())} disabled={saving}>
           {uk.today.form.saveButton}
         </button>
         <button type="button" onClick={onCancel} disabled={saving}>
@@ -381,13 +525,20 @@ export default function TodayScreen({
   // recent days without leaving Today, not a full history browsing UI yet.
   const historyGroups = recentDayGroups(entries ?? [], new Date(), 3);
 
-  const totalCarbs = todayEntries.reduce((sum, e) => sum + e.carbsG, 0);
-  const totalCalories = todayEntries.reduce((sum, e) => sum + e.caloriesKcal, 0);
-  const totalGl = todayEntries.reduce((sum, e) => sum + e.gl, 0);
-  const totalFat = todayEntries.reduce((sum, e) => sum + e.fatG, 0);
-  const totalSugars = todayEntries.reduce((sum, e) => sum + e.sugarsG, 0);
-  const totalProtein = todayEntries.reduce((sum, e) => sum + e.proteinG, 0);
-  const totalSodium = todayEntries.reduce((sum, e) => sum + e.sodiumMg, 0);
+  // sumKnownField excludes an entry from a specific total when that exact
+  // field is unknown (a custom/estimated item — see AddLogEntryForm), rather
+  // than letting its stored-as-0 value silently understate the total.
+  const totalCarbs = sumKnownField(todayEntries, "carbsG").total;
+  const totalCalories = sumKnownField(todayEntries, "caloriesKcal").total;
+  const totalGl = sumKnownField(todayEntries, "gl").total;
+  const totalFat = sumKnownField(todayEntries, "fatG").total;
+  const totalSugars = sumKnownField(todayEntries, "sugarsG").total;
+  const totalProtein = sumKnownField(todayEntries, "proteinG").total;
+  const totalSodium = sumKnownField(todayEntries, "sodiumMg").total;
+  // One combined caveat rather than a per-stat count — see the 2026-09-11
+  // design decision: precise enough to flag "something's missing" without
+  // cluttering every individual total with its own disclaimer.
+  const todayUnknownCount = todayEntries.filter((e) => e.unknownFields.length > 0).length;
 
   // Per meal OCCASION, not per mealType-across-the-day — the fat limit is a
   // per-sitting rule (no gallbladder), so two separate small snacks each
@@ -474,6 +625,8 @@ export default function TodayScreen({
           {settings.showSodiumTotal && <p>{uk.today.totals.sodium(Math.round(totalSodium))}</p>}
         </div>
       )}
+
+      {todayUnknownCount > 0 && <p className="today-warning">{uk.today.unknownValuesNotice(todayUnknownCount)}</p>}
 
       {latestBloodSugar && (
         <p className={bloodSugarStatus?.inRange ? "blood-sugar-latest" : "blood-sugar-latest out-of-range"}>
