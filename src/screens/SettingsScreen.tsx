@@ -12,7 +12,7 @@ import {
   getSpreadsheetUrl,
   createSpreadsheetInAppFolder,
 } from "../lib/sheets";
-import { checkSpreadsheetTabs, initializeSpreadsheet } from "../lib/spreadsheetInit";
+import { checkSchemaGaps, checkSpreadsheetTabs, initializeSpreadsheet, topUpSchemaGaps, type ColumnGap } from "../lib/spreadsheetInit";
 
 const NUMERIC_FIELDS = [
   "dailyCarbsTarget",
@@ -86,18 +86,35 @@ async function copyToClipboard(text: string): Promise<boolean> {
   return copied;
 }
 
-// Which of this app's 5 tabs a connected spreadsheet is missing — null
+// Result of checking a connected spreadsheet's structure — null fields
 // before the first check, or when not signed in yet (the check needs a real
 // API call, so it can't run pre-sign-in; see the "Spreadsheet selection"
 // comment in sheets.ts for why the ID itself is settable pre-sign-in anyway).
-type TabCheckState = { checking: boolean; missing: string[] | null; error: string | null };
+// columnGaps/missingSettingsKeys are only meaningful once missingTabs is
+// known to be empty — no point checking a tab's columns before it exists.
+type TabCheckState = {
+  checking: boolean;
+  missingTabs: string[] | null;
+  columnGaps: ColumnGap[] | null;
+  missingSettingsKeys: string[] | null;
+  error: string | null;
+};
+
+const EMPTY_TAB_CHECK: TabCheckState = {
+  checking: false,
+  missingTabs: null,
+  columnGaps: null,
+  missingSettingsKeys: null,
+  error: null,
+};
 
 function SpreadsheetSection({ signedIn }: { signedIn: boolean }) {
   const [value, setValue] = useState(() => getSpreadsheetId());
   const [error, setError] = useState<string | null>(null);
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
-  const [tabCheck, setTabCheck] = useState<TabCheckState>({ checking: false, missing: null, error: null });
+  const [tabCheck, setTabCheck] = useState<TabCheckState>(EMPTY_TAB_CHECK);
   const [initializing, setInitializing] = useState(false);
+  const [toppingUp, setToppingUp] = useState(false);
   const [newName, setNewName] = useState<string>(uk.settings.spreadsheet.newNameDefault);
   const [creatingNew, setCreatingNew] = useState(false);
   const momSpreadsheetId = getMomSpreadsheetId();
@@ -105,12 +122,17 @@ function SpreadsheetSection({ signedIn }: { signedIn: boolean }) {
   const devSpreadsheetId = getDevSpreadsheetId();
 
   const runTabCheck = async () => {
-    setTabCheck({ checking: true, missing: null, error: null });
+    setTabCheck({ ...EMPTY_TAB_CHECK, checking: true });
     try {
-      const missing = await checkSpreadsheetTabs();
-      setTabCheck({ checking: false, missing, error: null });
+      const missingTabs = await checkSpreadsheetTabs();
+      if (missingTabs.length > 0) {
+        setTabCheck({ ...EMPTY_TAB_CHECK, missingTabs });
+        return;
+      }
+      const { columnGaps, missingSettingsKeys } = await checkSchemaGaps();
+      setTabCheck({ ...EMPTY_TAB_CHECK, missingTabs: [], columnGaps, missingSettingsKeys });
     } catch (err) {
-      setTabCheck({ checking: false, missing: null, error: err instanceof Error ? err.message : String(err) });
+      setTabCheck({ ...EMPTY_TAB_CHECK, error: err instanceof Error ? err.message : String(err) });
     }
   };
 
@@ -131,6 +153,20 @@ function SpreadsheetSection({ signedIn }: { signedIn: boolean }) {
       setTabCheck((prev) => ({ ...prev, error: err instanceof Error ? err.message : String(err) }));
     } finally {
       setInitializing(false);
+    }
+  };
+
+  const handleTopUpSchema = async () => {
+    setToppingUp(true);
+    setSavedMessage(null);
+    try {
+      await topUpSchemaGaps();
+      await runTabCheck();
+      setSavedMessage(uk.settings.spreadsheet.topUpDone);
+    } catch (err) {
+      setTabCheck((prev) => ({ ...prev, error: err instanceof Error ? err.message : String(err) }));
+    } finally {
+      setToppingUp(false);
     }
   };
 
@@ -200,6 +236,14 @@ function SpreadsheetSection({ signedIn }: { signedIn: boolean }) {
     setSavedMessage(copied ? uk.settings.spreadsheet.copyLinkSaved : null);
   };
 
+  // Flattened "Tab: header1, header2" / "Settings: key1, key2" lines for display.
+  const schemaGapDescriptions = [
+    ...(tabCheck.columnGaps ?? []).map((gap) => `${gap.tab}: ${gap.missingHeaders.join(", ")}`),
+    ...(tabCheck.missingSettingsKeys && tabCheck.missingSettingsKeys.length > 0
+      ? [`Settings: ${tabCheck.missingSettingsKeys.join(", ")}`]
+      : []),
+  ];
+
   return (
     <div className="settings-account">
       <h2>{uk.settings.spreadsheet.title}</h2>
@@ -261,14 +305,29 @@ function SpreadsheetSection({ signedIn }: { signedIn: boolean }) {
 
       {signedIn && tabCheck.checking && <p>{uk.settings.spreadsheet.checking}</p>}
       {signedIn && tabCheck.error && <p className="food-form-error">{tabCheck.error}</p>}
-      {signedIn && tabCheck.missing && tabCheck.missing.length === 0 && <p>{uk.settings.spreadsheet.tabsOk}</p>}
-      {signedIn && tabCheck.missing && tabCheck.missing.length > 0 && (
+
+      {signedIn && tabCheck.missingTabs && tabCheck.missingTabs.length > 0 && (
         <div className="today-warning">
-          <p>{uk.settings.spreadsheet.tabsMissing(tabCheck.missing)}</p>
+          <p>{uk.settings.spreadsheet.tabsMissing(tabCheck.missingTabs)}</p>
           <button type="button" onClick={() => void handleInitialize()} disabled={initializing}>
             {initializing ? uk.settings.spreadsheet.initializing : uk.settings.spreadsheet.initializeButton}
           </button>
         </div>
+      )}
+
+      {signedIn && tabCheck.missingTabs && tabCheck.missingTabs.length === 0 && (
+        <>
+          {schemaGapDescriptions.length === 0 ? (
+            <p>{uk.settings.spreadsheet.tabsOk}</p>
+          ) : (
+            <div className="today-warning">
+              <p>{uk.settings.spreadsheet.schemaGapsFound(schemaGapDescriptions)}</p>
+              <button type="button" onClick={() => void handleTopUpSchema()} disabled={toppingUp}>
+                {toppingUp ? uk.settings.spreadsheet.toppingUp : uk.settings.spreadsheet.topUpButton}
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

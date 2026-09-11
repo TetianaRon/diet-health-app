@@ -1134,3 +1134,19 @@ Also answered a related developer question (design-only, not built): can the app
 **Verified:** `npm run test` (119/119, unchanged — no new pure logic, just a new env-var-backed function mirroring two existing ones), `npm run build` clean.
 
 **Next steps:** developer still needs to do the Drive API + OAuth scope setup actions from the previous entry before any of the new spreadsheet flows are testable; decide whether to build the missing-columns top-up feature described above.
+
+## 2026-09-11 — Built the missing-columns/missing-keys top-up feature
+
+Developer confirmed building the design proposed in the previous entry.
+
+**`spreadsheetInit.ts` additions:** `checkSchemaGaps()`/`topUpSchemaGaps()`, one level finer than the existing whole-tab-missing `checkSpreadsheetTabs()`/`initializeSpreadsheet()` pair. For each already-existing tab (Ingredients/Dishes/DailyLog/BloodSugar), reads its live header row (a generous "AZ"-wide scan — comfortably covers any real tab plus room for a person's own extra columns) and diffs it against that module's canonical `*_HEADERS` list (`missingHeadersFor()`, pure). For Settings specifically — key/value rows, not columns — does the row-based analog: diffs the actual Key column against every expected key (`missingSettingsKeysFor()`, pure). Both are skipped for a tab that doesn't exist at all yet (that's `checkSpreadsheetTabs()`'s job).
+
+**The actual fix (`topUpSchemaGaps()`):** appends missing headers right after a tab's *true* current last column (`buildColumnTopUpUpdate()`, pure) — reading the wide "AZ" scan rather than just the canonical width specifically so this can't collide with or overwrite a column this app doesn't recognize, e.g. a personal note column someone added themselves. Missing Settings keys get appended as new rows with their default values, reusing `settingsToRows(DEFAULT_SETTINGS)` (already built) filtered down to just the missing ones (`buildSettingsKeyTopUpUpdate()`, pure) rather than re-deriving the boolean-to-string conversion a second time.
+
+**Deliberately NOT built, as discussed when this was proposed:** auto-fixing a genuinely mismatched/renamed header. Only ever surfaces it (as an unrecognized/missing-header diagnostic), never guesses at a fix — ambiguous whether it's a typo, a deliberate rename, or someone's own column, and this project's "never let a wrong guess look authoritative" pattern argues against auto-resolving that kind of ambiguity.
+
+**Settings screen UX:** `SpreadsheetSection`'s tab check now runs `checkSchemaGaps()` right after confirming no tabs are missing (skipped entirely while tabs are still missing — no point checking a tab's columns before it exists). Shows either "✓ all tabs and columns found," or a warning listing exactly which tabs/Settings are short which headers/keys, with an "Оновити структуру" button that calls `topUpSchemaGaps()` then re-checks.
+
+**Verified:** `npm run test` (127/127, up from 119 — 8 new pure-function tests, no network mocking needed per this project's usual IO/pure-function split), `npm run build` clean. **Not live-tested** — same standing sign-in-required / dev-server-port-conflict limitation as the rest of this session's spreadsheet work.
+
+**Next steps:** once the developer finishes the Drive API + OAuth scope setup from two entries ago, all three new spreadsheet flows (create-new, blank-tab-init, column/key top-up) become testable together — worth verifying as one pass rather than three separate ones. Items #2/#3 from the 2026-09-11 handoff (custom entries, edit/merge) remain open with scoping questions.
