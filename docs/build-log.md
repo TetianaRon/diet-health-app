@@ -1090,3 +1090,9 @@ Context ran to ~87% during this single very long session — recording a clean h
 **Verified**: `npm run test` (100/100, up from 96 — new `groupIntoMeals` tests plus updated `mealsBeforeTimestamp`/`buildLogEntry`/round-trip tests for the new field), `npm run build` clean, live browser check of the not-signed-in state (no regressions) — the actual meal-grouping UI is behind sign-in, same standing limitation as ever, so real verification needs the developer testing live.
 
 **Next steps**: confirm R8 doesn't break anything in a real Android Studio build before the next release; add the `MealId` header cell on both live sheets; the bundle-expansion research from mom's old spreadsheet (2026-09-10) is still unmerged — see `project-pending-items` memory.
+
+## 2026-09-11 — Session handoff (developer-requested, ~77% context)
+
+Four new asks landed right after the meal-grouping fix above shipped: editable meal timestamps, custom/estimated meal entries (restaurant food, unknown macros, mixable with database picks), editing/merging existing meal entries (e.g. two snacks 5 min apart → one entry — nothing in this app can edit/delete a logged entry yet), and a confirmed-real gap where connecting a brand-new blank spreadsheet fails (`400 — Unable to parse range`, since every data module hardcodes its tab name/range and a blank sheet has none of them — this was previously discussed and deliberately deferred, not a regression). None of the four are built. Full detail, including design questions worth asking before building #2 and #3, is in the `project-pending-items` memory file (rewritten this session, not appended).
+
+**Repo state**: commit `aaddad8`, working tree clean.
