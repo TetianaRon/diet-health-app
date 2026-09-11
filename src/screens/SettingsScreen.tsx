@@ -10,6 +10,7 @@ import {
   getTestSpreadsheetId,
   getSpreadsheetUrl,
 } from "../lib/sheets";
+import { checkSpreadsheetTabs, initializeSpreadsheet } from "../lib/spreadsheetInit";
 
 const NUMERIC_FIELDS = [
   "dailyCarbsTarget",
@@ -83,12 +84,50 @@ async function copyToClipboard(text: string): Promise<boolean> {
   return copied;
 }
 
-function SpreadsheetSection() {
+// Which of this app's 5 tabs a connected spreadsheet is missing — null
+// before the first check, or when not signed in yet (the check needs a real
+// API call, so it can't run pre-sign-in; see the "Spreadsheet selection"
+// comment in sheets.ts for why the ID itself is settable pre-sign-in anyway).
+type TabCheckState = { checking: boolean; missing: string[] | null; error: string | null };
+
+function SpreadsheetSection({ signedIn }: { signedIn: boolean }) {
   const [value, setValue] = useState(() => getSpreadsheetId());
   const [error, setError] = useState<string | null>(null);
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
+  const [tabCheck, setTabCheck] = useState<TabCheckState>({ checking: false, missing: null, error: null });
+  const [initializing, setInitializing] = useState(false);
   const momSpreadsheetId = getMomSpreadsheetId();
   const testSpreadsheetId = getTestSpreadsheetId();
+
+  const runTabCheck = async () => {
+    setTabCheck({ checking: true, missing: null, error: null });
+    try {
+      const missing = await checkSpreadsheetTabs();
+      setTabCheck({ checking: false, missing, error: null });
+    } catch (err) {
+      setTabCheck({ checking: false, missing: null, error: err instanceof Error ? err.message : String(err) });
+    }
+  };
+
+  // Re-checks whenever sign-in becomes available (covers pasting an ID
+  // before signing in) and right after connecting to a different spreadsheet.
+  useEffect(() => {
+    if (signedIn) void runTabCheck();
+  }, [signedIn]);
+
+  const handleInitialize = async () => {
+    setInitializing(true);
+    setSavedMessage(null);
+    try {
+      await initializeSpreadsheet();
+      await runTabCheck();
+      setSavedMessage(uk.settings.spreadsheet.initializeDone);
+    } catch (err) {
+      setTabCheck((prev) => ({ ...prev, error: err instanceof Error ? err.message : String(err) }));
+    } finally {
+      setInitializing(false);
+    }
+  };
 
   const handleSave = () => {
     if (!value.trim()) {
@@ -100,6 +139,7 @@ function SpreadsheetSection() {
     setValue(getSpreadsheetId()); // reflects the parsed-out ID, not whatever was pasted
     setError(null);
     setSavedMessage(uk.settings.spreadsheet.saved);
+    if (signedIn) void runTabCheck();
   };
 
   const handleConnectMom = () => {
@@ -107,6 +147,7 @@ function SpreadsheetSection() {
     setValue(getSpreadsheetId());
     setError(null);
     setSavedMessage(uk.settings.spreadsheet.connectMomSaved);
+    if (signedIn) void runTabCheck();
   };
 
   const handleConnectTest = () => {
@@ -114,6 +155,7 @@ function SpreadsheetSection() {
     setValue(getSpreadsheetId());
     setError(null);
     setSavedMessage(uk.settings.spreadsheet.connectTestSaved);
+    if (signedIn) void runTabCheck();
   };
 
   const handleCopyLink = async () => {
@@ -157,6 +199,18 @@ function SpreadsheetSection() {
           {uk.settings.spreadsheet.copyLinkButton}
         </button>
       </div>
+
+      {signedIn && tabCheck.checking && <p>{uk.settings.spreadsheet.checking}</p>}
+      {signedIn && tabCheck.error && <p className="food-form-error">{tabCheck.error}</p>}
+      {signedIn && tabCheck.missing && tabCheck.missing.length === 0 && <p>{uk.settings.spreadsheet.tabsOk}</p>}
+      {signedIn && tabCheck.missing && tabCheck.missing.length > 0 && (
+        <div className="today-warning">
+          <p>{uk.settings.spreadsheet.tabsMissing(tabCheck.missing)}</p>
+          <button type="button" onClick={() => void handleInitialize()} disabled={initializing}>
+            {initializing ? uk.settings.spreadsheet.initializing : uk.settings.spreadsheet.initializeButton}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -245,7 +299,7 @@ export default function SettingsScreen() {
         )}
       </div>
 
-      <SpreadsheetSection />
+      <SpreadsheetSection signedIn={signedIn} />
 
       {signedIn && (
         <div className="settings-targets">

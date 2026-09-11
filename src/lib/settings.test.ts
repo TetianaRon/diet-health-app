@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeSettingsUpdates, DEFAULT_SETTINGS, parseSettingsRows, type Settings } from "./settings";
+import { computeSettingsUpdates, DEFAULT_SETTINGS, parseSettingsRows, settingsToRows, type Settings } from "./settings";
 
 describe("parseSettingsRows", () => {
   it("maps known keys and falls back to defaults for missing ones", () => {
@@ -79,5 +79,20 @@ describe("computeSettingsUpdates", () => {
     const partialRows = [["DailyCarbsTarget", "140"]];
     const updates = computeSettingsUpdates(DEFAULT_SETTINGS, partialRows);
     expect(updates).toEqual([{ range: "Settings!B2", values: [[DEFAULT_SETTINGS.dailyCarbsTarget]] }]);
+  });
+});
+
+describe("settingsToRows", () => {
+  it("emits one Key/Value row per setting, round-tripping cleanly through parseSettingsRows", () => {
+    const rows = settingsToRows(DEFAULT_SETTINGS);
+    expect(rows).toHaveLength(17);
+    expect(rows).toContainEqual(["DailyCarbsTarget", 140]);
+    expect(parseSettingsRows(rows)).toEqual(DEFAULT_SETTINGS);
+  });
+
+  it("writes booleans as TRUE/FALSE strings, not JS booleans", () => {
+    const rows = settingsToRows(DEFAULT_SETTINGS);
+    expect(rows).toContainEqual(["ShowCarbsProgress", "FALSE"]);
+    expect(rows).toContainEqual(["ShowCaloriesProgress", "TRUE"]);
   });
 });

@@ -68,8 +68,10 @@ function toBoolean(value: string): boolean {
   return value.trim().toUpperCase() === "TRUE";
 }
 
-// Maps our field names to the sheet's Key column values.
-const SETTINGS_KEYS: Record<keyof Settings, string> = {
+// Maps our field names to the sheet's Key column values. Exported so
+// spreadsheetInit.ts can build a fresh Settings tab's full key list without
+// duplicating it — this is the one place the mapping is defined.
+export const SETTINGS_KEYS: Record<keyof Settings, string> = {
   dailyCarbsTarget: "DailyCarbsTarget",
   fatPerMealLimit: "FatPerMealLimit",
   dailyCaloriesTarget: "DailyCaloriesTarget",
@@ -164,6 +166,20 @@ export function computeSettingsUpdates(settings: Settings, existingRows: unknown
     }
   }
   return updates;
+}
+
+/**
+ * Builds a full Key/Value row for every setting, in a fixed order — used to
+ * pre-fill a brand-new Settings tab with defaults (see spreadsheetInit.ts).
+ * Unlike computeSettingsUpdates (which targets specific existing rows for a
+ * partial update), this always emits one row per key, since it's writing a
+ * tab that doesn't have any rows yet.
+ */
+export function settingsToRows(settings: Settings): unknown[][] {
+  return (Object.keys(SETTINGS_KEYS) as (keyof Settings)[]).map((field) => {
+    const value = settings[field];
+    return [SETTINGS_KEYS[field], typeof value === "boolean" ? (value ? "TRUE" : "FALSE") : value];
+  });
 }
 
 export async function getSettings(): Promise<Settings> {

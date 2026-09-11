@@ -120,6 +120,8 @@ Client-side only — no custom backend for data storage. Uses Google Identity Se
 
 `src/lib/sheets.ts` wraps: `initGoogleAuth()`, `signIn()`, `signOut()`, `readRange(tab, range)`, `writeRange(tab, range, values)` — thin wrappers over the Sheets REST API using the OAuth access token.
 
+**Connecting a brand-new blank spreadsheet** (step 6 above doesn't require restructuring an existing sheet by hand): a genuinely blank Google Sheet has none of the 5 tabs above, which would otherwise make every read fail. `src/lib/spreadsheetInit.ts` (`checkSpreadsheetTabs()`, `initializeSpreadsheet()`) creates whichever tabs are missing and fills each with its header row (Settings also gets its full set of default key/value rows, since — unlike the other 4, which are append-only — a Settings tab with just a header row would silently reject every future save). Wired into the Settings screen's spreadsheet-connect flow: it checks automatically once signed in and offers an "Ініціалізувати таблицю" button when tabs are missing.
+
 ## Nutrition lookup: bundled data + USDA FoodData Central
 
 Lookup order, implemented in `src/lib/nutrition.ts`:

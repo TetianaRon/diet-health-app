@@ -452,3 +452,38 @@ export async function batchUpdateRanges(updates: { range: string; values: unknow
     }),
   });
 }
+
+// --- Blank-spreadsheet initialization ---
+//
+// A genuinely blank Google Sheet only has its own single default tab —
+// connecting one fails every read this app makes (each data module
+// hardcodes its own tab name/range), confirmed as a real gap once real
+// testers connected a fresh sheet rather than the pre-built template (see
+// docs/build-log.md, 2026-09-11). See spreadsheetInit.ts for the flow that
+// uses these two primitives.
+
+/** Lists a spreadsheet's existing tab (sheet) titles. */
+export async function listSheetTitles(): Promise<string[]> {
+  const spreadsheetId = getSpreadsheetId();
+  const response = await authorizedFetch(`${spreadsheetId}?fields=sheets.properties.title`);
+  const data = await response.json();
+  const sheets = (data.sheets ?? []) as { properties: { title: string } }[];
+  return sheets.map((s) => s.properties.title);
+}
+
+/**
+ * Adds new tabs to the spreadsheet by title. Additive only — never touches
+ * or removes any existing tab, including a blank spreadsheet's lone default
+ * one, so it's safe to run against a sheet that already has other content.
+ */
+export async function addSheetTabs(titles: string[]): Promise<void> {
+  if (titles.length === 0) return;
+  const spreadsheetId = getSpreadsheetId();
+  await authorizedFetch(`${spreadsheetId}:batchUpdate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      requests: titles.map((title) => ({ addSheet: { properties: { title } } })),
+    }),
+  });
+}
