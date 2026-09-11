@@ -481,6 +481,18 @@ export async function batchUpdateRanges(updates: { range: string; values: unknow
   });
 }
 
+/**
+ * Clears a range's values — used as a "delete" for a single row (e.g.
+ * `deleteLogEntry` in dailyLog.ts): the row itself still physically exists,
+ * but every listX() already filters out a row with `row.length > 0`, so a
+ * genuinely blank row reads as if it were never there. Simpler and safer
+ * than removing the row/shifting everything below it up.
+ */
+export async function clearRange(tab: string, range: string): Promise<void> {
+  const spreadsheetId = getSpreadsheetId();
+  await authorizedFetch(`${spreadsheetId}/values/${tab}!${range}:clear`, { method: "POST" });
+}
+
 // --- Blank-spreadsheet initialization ---
 //
 // A genuinely blank Google Sheet only has its own single default tab —

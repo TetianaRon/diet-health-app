@@ -57,6 +57,25 @@ export const uk = {
     // these are purely "something here has a gap," not a correctness fix.
     mealHasUnknownSuffix: "(є позиції з невідомими значеннями)",
     unknownValuesNotice: (count: number) => `Позицій з невідомими значеннями: ${count} (не враховано в підсумках вище).`,
+    // Per-entry edit/move/delete actions — the first time this app lets
+    // someone change or remove an already-saved log row (see the
+    // 2026-09-11 build-log entry: originally a deliberate gap).
+    editEntryButton: "Редагувати",
+    moveEntryButton: "Перенести",
+    deleteEntryButton: "Видалити",
+    deleteConfirm: (itemName: string) => `Видалити запис «${itemName}»? Цю дію не можна скасувати.`,
+    deleteConfirmButton: "Так, видалити",
+    editForm: {
+      title: "Редагувати запис",
+      saveButton: "Зберегти зміни",
+    },
+    moveForm: {
+      title: "Перенести до іншого прийому",
+      targetLabel: "Перенести до:",
+      moveButton: "Перенести",
+      noOtherMeals: "Сьогодні немає інших прийомів їжі, до яких можна перенести цей запис.",
+      validationError: "Оберіть прийом їжі, до якого перенести запис.",
+    },
     // "1. Сніданок" — a simple running count of today's meal occasions, so
     // mom can tell apart e.g. her 2nd snack of the day from her 1st at a
     // glance, without needing to read the clock time next to it.

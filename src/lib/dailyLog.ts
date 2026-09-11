@@ -4,8 +4,8 @@
 // (a later edit to the Ingredients/Dishes bundle shouldn't retroactively
 // change what was actually eaten) — or a custom/estimated entry (restaurant
 // food, etc.) with some values entered directly and possibly left unknown.
-import { readRange, writeRange } from "./sheets";
-import { buildColumnIndex, buildRow, cell, readColumnIndex, type ColumnIndex } from "./sheetRow";
+import { batchUpdateRanges, clearRange, readRange, writeRange } from "./sheets";
+import { buildColumnIndex, buildRow, cell, columnLetter, readColumnIndex, type ColumnIndex } from "./sheetRow";
 import { calcGlycemicLoad } from "./health";
 import type { IngredientNutrition } from "./dishes";
 
@@ -414,14 +414,84 @@ export function logEntryToRow(entry: DailyLogEntry, columnIndex: ColumnIndex = D
   );
 }
 
-export async function listLogEntries(): Promise<DailyLogEntry[]> {
+async function readLogSheet(): Promise<{ columnIndex: ColumnIndex; dataRows: unknown[][] }> {
   const rows = await readRange("DailyLog", LOG_RANGE);
   const [header, ...dataRows] = rows;
-  const columnIndex = header ? buildColumnIndex(header) : DEFAULT_COLUMN_INDEX;
+  return { columnIndex: header ? buildColumnIndex(header) : DEFAULT_COLUMN_INDEX, dataRows };
+}
+
+export async function listLogEntries(): Promise<DailyLogEntry[]> {
+  const { columnIndex, dataRows } = await readLogSheet();
   return dataRows.filter((row) => row.length > 0).map((row) => rowToLogEntry(row, columnIndex));
 }
 
 export async function addLogEntry(entry: DailyLogEntry): Promise<void> {
   const columnIndex = await readColumnIndex("DailyLog", LOG_WIDTH);
   await writeRange("DailyLog", LOG_APPEND_RANGE, [logEntryToRow(entry, columnIndex)]);
+}
+
+// Finding a specific row to edit/delete/move: DailyLog has no surrogate row
+// ID, so — same content-based-matching convention as
+// findIngredientRow/findDishRow — a row is identified by its (timestamp,
+// itemName, mealId) triple, which is unique enough in practice (items in
+// one meal get distinct timestamps as they're added one at a time).
+async function findLogEntryRow(
+  timestamp: string,
+  itemName: string,
+  mealId: string,
+): Promise<{ rowNumber: number; columnIndex: ColumnIndex }> {
+  const { columnIndex, dataRows } = await readLogSheet();
+  const rowIndex = dataRows.findIndex((row) => {
+    const rowTimestamp = String(cell(row, columnIndex, "Timestamp") ?? "");
+    return (
+      rowTimestamp === timestamp &&
+      String(cell(row, columnIndex, "ItemName") ?? "") === itemName &&
+      toMealId(cell(row, columnIndex, "MealId"), rowTimestamp) === mealId
+    );
+  });
+  if (rowIndex === -1) {
+    throw new Error(`Log entry "${itemName}" at ${timestamp} not found`);
+  }
+  return { rowNumber: rowIndex + 2, columnIndex }; // +2: 1-based rows, plus the header row
+}
+
+/**
+ * Overwrites an existing DailyLog row in place, found by its *current*
+ * timestamp/itemName/mealId (i.e. before any change in `entry`) — the edit
+ * flow's counterpart to addLogEntry's always-append behavior. Same
+ * principle as updateIngredient/updateDish.
+ */
+export async function updateLogEntry(
+  currentTimestamp: string,
+  currentItemName: string,
+  currentMealId: string,
+  entry: DailyLogEntry,
+): Promise<void> {
+  const { rowNumber, columnIndex } = await findLogEntryRow(currentTimestamp, currentItemName, currentMealId);
+  const lastCol = columnLetter(Math.max(...columnIndex.values()));
+  await batchUpdateRanges([
+    { range: `DailyLog!A${rowNumber}:${lastCol}${rowNumber}`, values: [logEntryToRow(entry, columnIndex)] },
+  ]);
+}
+
+/** Removes a logged entry — clears its row rather than shifting rows below it up (see clearRange in sheets.ts). Irreversible; callers should confirm with the user first. */
+export async function deleteLogEntry(timestamp: string, itemName: string, mealId: string): Promise<void> {
+  const { rowNumber, columnIndex } = await findLogEntryRow(timestamp, itemName, mealId);
+  const lastCol = columnLetter(Math.max(...columnIndex.values()));
+  await clearRange("DailyLog", `A${rowNumber}:${lastCol}${rowNumber}`);
+}
+
+/**
+ * Reassigns an entry to join a different, already-existing meal occasion —
+ * e.g. "this snack was actually part of the lunch 5 minutes earlier."
+ * `targetMealType` should match the target meal's own mealType, since
+ * groupIntoMeals derives a group's displayed mealType from its earliest
+ * entry, not from every member individually.
+ */
+export async function moveLogEntryToMeal(entry: DailyLogEntry, targetMealId: string, targetMealType: MealType): Promise<void> {
+  await updateLogEntry(entry.timestamp, entry.itemName, entry.mealId, {
+    ...entry,
+    mealId: targetMealId,
+    mealType: targetMealType,
+  });
 }
