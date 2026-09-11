@@ -9,7 +9,7 @@ import { GLYCEMIC_FLAG_SYMBOL, type GlycemicFlag } from "../lib/glycemicFlag";
 import { mergeWithStarterDishes } from "../data/starter-dishes";
 import { getSettings, type Settings } from "../lib/settings";
 import { wasLastReadFromCache } from "../lib/sheets";
-import { formatDayMonthFromKey, formatTime } from "../lib/dateFormat";
+import { formatDayMonthFromKey, formatTime, fromDatetimeLocalValue, toDatetimeLocalValue } from "../lib/dateFormat";
 import { scheduleMealReminder } from "../lib/reminderScheduler";
 import { latestBloodSugarEntry, listBloodSugarEntries, type BloodSugarEntry } from "../lib/bloodSugar";
 import {
@@ -90,6 +90,11 @@ function AddLogEntryForm({
   onCancel: () => void;
 }) {
   const [mealType, setMealType] = useState<MealType>(() => suggestMealType(new Date()));
+  // Defaults to "now" but is editable — mom may log a meal after the fact
+  // (e.g. writing it down on paper first, then entering it later). Carries
+  // over across items added in the same form session, same as mealType,
+  // since a multi-item meal was eaten at one time regardless of entry order.
+  const [timestamp, setTimestamp] = useState(() => toDatetimeLocalValue(new Date().toISOString()));
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<PickableFood | null>(null);
   const [portionGrams, setPortionGrams] = useState("");
@@ -127,7 +132,7 @@ function AddLogEntryForm({
     previewNutrition && selected ? Math.round(((selected.per100g.gi * previewNutrition.carbsG) / 100) * 100) / 100 : 0;
 
   const handleSave = async () => {
-    if (!selected || !Number.isFinite(parsedPortion) || parsedPortion <= 0) {
+    if (!selected || !Number.isFinite(parsedPortion) || parsedPortion <= 0 || timestamp.trim() === "") {
       setError(uk.today.form.validationError);
       return;
     }
@@ -135,7 +140,15 @@ function AddLogEntryForm({
     setSaving(true);
     setError(null);
     try {
-      const entry = buildLogEntry(mealType, selected.nameUk, parsedPortion, selected.per100g, notes.trim(), mealId);
+      const entry = buildLogEntry(
+        mealType,
+        selected.nameUk,
+        parsedPortion,
+        selected.per100g,
+        notes.trim(),
+        mealId,
+        fromDatetimeLocalValue(timestamp),
+      );
       await addLogEntry(entry);
       onSaved(entry);
       // Reset only the item-picking fields — mealType carries over so the
@@ -163,6 +176,11 @@ function AddLogEntryForm({
             </option>
           ))}
         </select>
+      </label>
+
+      <label>
+        {uk.today.form.timestampLabel}
+        <input type="datetime-local" value={timestamp} onChange={(e) => setTimestamp(e.target.value)} />
       </label>
 
       <label>

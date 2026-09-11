@@ -30,3 +30,27 @@ export function formatDayMonthFromKey(dateKey: string): string {
   const d = new Date(year, month - 1, day);
   return d.toLocaleDateString("uk-UA", { day: "2-digit", month: "long" });
 }
+
+/**
+ * ISO timestamp -> the local "yyyy-MM-ddTHH:mm" string a
+ * `<input type="datetime-local">` needs. Built from the Date object's local
+ * Y/M/D/h/m getters, not a slice of the ISO string itself — ISO is UTC, so
+ * slicing it would show the wrong wall-clock time in any zone other than UTC.
+ */
+export function toDatetimeLocalValue(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/**
+ * Inverse of toDatetimeLocalValue: a `<input type="datetime-local">` value
+ * (no timezone) back to a full ISO timestamp. `new Date(...)` parses a
+ * timezone-less date-time string as local time per spec, so this is a
+ * straight round-trip, not a conversion.
+ */
+export function fromDatetimeLocalValue(value: string): string {
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
+}

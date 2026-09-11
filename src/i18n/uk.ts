@@ -55,6 +55,7 @@ export const uk = {
       `Разом за прийом: ${carbsG} г вуглеводів, ${caloriesKcal} ккал, ГН ${gl}`,
     form: {
       mealTypeLabel: "Прийом їжі",
+      timestampLabel: "Час",
       itemLabel: "Продукт або страва",
       itemPlaceholder: "Пошук продукту...",
       portionLabel: "Порція (г)",
@@ -64,7 +65,7 @@ export const uk = {
       preview: (carbsG: number, caloriesKcal: number, gl: number) =>
         `${carbsG} г вуглеводів, ${caloriesKcal} ккал, ГЛ ${gl}`,
       saveButton: "Додати",
-      validationError: "Оберіть продукт і вкажіть порцію у грамах.",
+      validationError: "Оберіть продукт, вкажіть порцію у грамах і час прийому їжі.",
     },
   },
   foods: {
