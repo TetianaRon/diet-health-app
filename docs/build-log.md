@@ -1150,3 +1150,17 @@ Developer confirmed building the design proposed in the previous entry.
 **Verified:** `npm run test` (127/127, up from 119 — 8 new pure-function tests, no network mocking needed per this project's usual IO/pure-function split), `npm run build` clean. **Not live-tested** — same standing sign-in-required / dev-server-port-conflict limitation as the rest of this session's spreadsheet work.
 
 **Next steps:** once the developer finishes the Drive API + OAuth scope setup from two entries ago, all three new spreadsheet flows (create-new, blank-tab-init, column/key top-up) become testable together — worth verifying as one pass rather than three separate ones. Items #2/#3 from the 2026-09-11 handoff (custom entries, edit/merge) remain open with scoping questions.
+
+## 2026-09-11 — Version bump for the next Play Store release
+
+Developer completed the Google Cloud Console setup from two entries ago (Drive API enabled, `drive.file` scope added to the consent screen's Data Access tab, confirmed live via screenshots) and asked to cut a new release bundling today's spreadsheet work. `android/app/build.gradle`: `versionCode` 1 → 2, `versionName` "1.0" → "1.1" — Play Console rejects a re-upload with an unchanged `versionCode`, and this had never been bumped since the original v1.0 publish despite several real feature sessions since.
+
+**Also fixed a stale doc note found while checking for other loose ends**: `docs/requirements-open-questions.md` still marked the food-vs-blood-sugar correlation feature "ready to implement, not yet built" — it actually shipped a while ago (`mealsBeforeTimestamp()` + the `GlycemicFlag` watch/avoid flags, both live in `BloodSugarScreen.tsx`). Updated to reflect that.
+
+**Bonus, worth calling out to future testers**: several long-pending "manually add this header cell to the live sheet" to-dos from past sessions (`Favorite`, `GlycemicFlag`, `GiVerified`, `MealId` on Ingredients/Dishes/DailyLog; a handful of `Show*`/`DailyGlycemicLoadTarget` Settings rows) are effectively obsolete now that this release ships the column/key top-up feature — "Оновити структуру" in Settings will auto-detect and fix all of them the next time it runs, so no more manual spreadsheet editing needed for that class of gap.
+
+**Verified:** `npm run test` (127/127, unchanged), `npm run build` clean.
+
+**Not done by this sandbox (needs the developer, real Android tooling required):** `npx cap sync android`, opening the project in Android Studio, building the signed release bundle, and — importantly — actually confirming R8/ProGuard (`minifyEnabled true`, enabled a few sessions ago, never verified in a real build since this sandbox can't run Gradle at all) doesn't break anything before promoting past Internal Testing. Sign-in, adding a food, and logging a meal are the minimum smoke test given a minification bug would show up as something silently misbehaving, not a build failure.
+
+**Next steps:** developer builds and uploads the release; once live, verify all three new spreadsheet flows (create-new, blank-tab-init, column/key top-up) as one pass on a real device. Items #2/#3 (custom entries, edit/merge) still open after that.
