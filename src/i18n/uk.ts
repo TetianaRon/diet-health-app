@@ -249,6 +249,8 @@ export const uk = {
       connectMomSaved: "Підключено мамину таблицю!",
       connectTestButton: "Підключити тестову таблицю",
       connectTestSaved: "Підключено тестову таблицю!",
+      connectDevButton: "Підключити dev-таблицю",
+      connectDevSaved: "Підключено dev-таблицю!",
       copyLinkButton: "Копіювати посилання на таблицю",
       copyLinkSaved: "Посилання скопійовано!",
       copyLinkError: "Не вдалося скопіювати посилання.",

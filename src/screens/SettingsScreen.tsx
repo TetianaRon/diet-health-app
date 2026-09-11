@@ -8,6 +8,7 @@ import {
   setSpreadsheetId,
   getMomSpreadsheetId,
   getTestSpreadsheetId,
+  getDevSpreadsheetId,
   getSpreadsheetUrl,
   createSpreadsheetInAppFolder,
 } from "../lib/sheets";
@@ -101,6 +102,7 @@ function SpreadsheetSection({ signedIn }: { signedIn: boolean }) {
   const [creatingNew, setCreatingNew] = useState(false);
   const momSpreadsheetId = getMomSpreadsheetId();
   const testSpreadsheetId = getTestSpreadsheetId();
+  const devSpreadsheetId = getDevSpreadsheetId();
 
   const runTabCheck = async () => {
     setTabCheck({ checking: true, missing: null, error: null });
@@ -184,6 +186,14 @@ function SpreadsheetSection({ signedIn }: { signedIn: boolean }) {
     if (signedIn) void runTabCheck();
   };
 
+  const handleConnectDev = () => {
+    setSpreadsheetId(devSpreadsheetId);
+    setValue(getSpreadsheetId());
+    setError(null);
+    setSavedMessage(uk.settings.spreadsheet.connectDevSaved);
+    if (signedIn) void runTabCheck();
+  };
+
   const handleCopyLink = async () => {
     const copied = await copyToClipboard(getSpreadsheetUrl(getSpreadsheetId()));
     setError(copied ? null : uk.settings.spreadsheet.copyLinkError);
@@ -237,6 +247,11 @@ function SpreadsheetSection({ signedIn }: { signedIn: boolean }) {
         {testSpreadsheetId && (
           <button type="button" onClick={handleConnectTest}>
             {uk.settings.spreadsheet.connectTestButton}
+          </button>
+        )}
+        {devSpreadsheetId && (
+          <button type="button" onClick={handleConnectDev}>
+            {uk.settings.spreadsheet.connectDevButton}
           </button>
         )}
         <button type="button" onClick={handleCopyLink}>

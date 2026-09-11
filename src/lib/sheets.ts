@@ -329,13 +329,28 @@ export function getMomSpreadsheetId(): string {
 }
 
 /**
- * The developer's own dev/test sheet — same value VITE_SPREADSHEET_ID already
- * falls back to when no per-device override is set (see getSpreadsheetId
- * above), just exposed as an explicit one-tap button too, so switching back
- * to it after testing "connect Mom's sheet" doesn't mean retyping the ID.
+ * The stable test sheet real testers connect to — same value
+ * VITE_SPREADSHEET_ID already falls back to when no per-device override is
+ * set (see getSpreadsheetId above), just exposed as an explicit one-tap
+ * button too. Kept matching whatever the currently-released app build
+ * expects — schema changes during active development target
+ * getDevSpreadsheetId() below instead, never this one, so testers on the
+ * released build are never affected by in-progress work.
  */
 export function getTestSpreadsheetId(): string {
   return import.meta.env.VITE_SPREADSHEET_ID;
+}
+
+/**
+ * The spreadsheet actual schema/data changes get tried against during
+ * active development — separate from getTestSpreadsheetId() specifically so
+ * in-progress schema work never risks breaking what real testers are using
+ * with the currently-released build (added 2026-09-11, after the
+ * header-based reorder-resilience refactor made schema experiments on a
+ * shared sheet feel materially riskier).
+ */
+export function getDevSpreadsheetId(): string {
+  return import.meta.env.VITE_DEV_SPREADSHEET_ID;
 }
 
 export function getSpreadsheetUrl(id: string): string {
