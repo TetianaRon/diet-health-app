@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import type { IngredientNutrition } from "./dishes";
+import { buildColumnIndex } from "./sheetRow";
 import {
+  DAILY_LOG_HEADERS,
+  planMealSave,
   buildCustomLogEntry,
   buildLogEntry,
   computePortionNutrition,
@@ -396,5 +399,137 @@ describe("recentDayGroups", () => {
 
   it("returns an empty array when there's no history in the window", () => {
     expect(recentDayGroups([], day(2026, 9, 10), 3)).toEqual([]);
+  });
+});
+
+describe("buildLogEntry with an item's own unknown fields", () => {
+  it("carries them into the entry and marks GL unknown when GI is", () => {
+    const entry = buildLogEntry("Обід", "Щось", 100, BUCKWHEAT_PER_100G, "", "m", "2026-08-13T12:00:00.000Z", ["gi", "fatG"]);
+    expect(entry.unknownFields).toEqual(["gi", "fatG", "gl"]);
+    expect(entry.gl).toBe(0);
+  });
+
+  it("keeps GL known when only unrelated fields are unknown", () => {
+    const entry = buildLogEntry("Обід", "Щось", 100, BUCKWHEAT_PER_100G, "", "m", "2026-08-13T12:00:00.000Z", ["sodiumMg"]);
+    expect(entry.unknownFields).toEqual(["sodiumMg"]);
+    expect(entry.gl).toBeCloseTo((54 * 19.9) / 100, 1);
+  });
+
+  it("excludes the inherited unknown value from a meal's total", () => {
+    const known = buildLogEntry("Обід", "A", 100, BUCKWHEAT_PER_100G, "", "m", "2026-08-13T12:00:00.000Z");
+    const unknownKcal = buildLogEntry(
+      "Обід",
+      "B",
+      100,
+      { ...BUCKWHEAT_PER_100G, caloriesKcal: 0 },
+      "",
+      "m",
+      "2026-08-13T12:01:00.000Z",
+      ["caloriesKcal"],
+    );
+    const [meal] = groupIntoMeals([known, unknownKcal]);
+    expect(meal.totals.caloriesKcal).toBe(92);
+    expect(meal.hasUnknownValues).toBe(true);
+  });
+});
+
+describe("MealGroup.totalGrams", () => {
+  it("sums the portions of every item in the meal", () => {
+    const a = buildLogEntry("Обід", "A", 150, BUCKWHEAT_PER_100G, "", "m", "2026-08-13T12:00:00.000Z");
+    const b = buildLogEntry("Обід", "B", 80.5, BUCKWHEAT_PER_100G, "", "m", "2026-08-13T12:01:00.000Z");
+    expect(groupIntoMeals([a, b])[0].totalGrams).toBe(230.5);
+  });
+});
+
+describe("planMealSave", () => {
+  const entry = (itemName: string, timestamp = "2026-08-13T12:00:00.000Z"): DailyLogEntry =>
+    buildLogEntry("Обід", itemName, 100, BUCKWHEAT_PER_100G, "", "m1", timestamp);
+  const columnIndex = buildColumnIndex(DAILY_LOG_HEADERS);
+  const rowsOf = (...entries: DailyLogEntry[]) => entries.map((e) => logEntryToRow(e, columnIndex));
+
+  it("appends a brand-new meal after the last existing row", () => {
+    const existing = [entry("Інша", "2026-08-12T12:00:00.000Z")];
+    const a = entry("A");
+    const b = entry("B", "2026-08-13T12:01:00.000Z");
+    const updates = planMealSave(
+      [],
+      [
+        { entry: a, original: null },
+        { entry: b, original: null },
+      ],
+      rowsOf(...existing),
+      columnIndex,
+    );
+    expect(updates.map((u) => u.range)).toEqual(["DailyLog!A3:P3", "DailyLog!A4:P4"]);
+  });
+
+  it("overwrites an edited dish in place and leaves untouched rows alone", () => {
+    const a = entry("A");
+    const b = entry("B", "2026-08-13T12:01:00.000Z");
+    const edited = { ...b, portionGrams: 250 };
+    const updates = planMealSave(
+      [a, b],
+      [
+        { entry: a, original: a },
+        { entry: edited, original: b },
+      ],
+      rowsOf(a, b),
+      columnIndex,
+    );
+    expect(updates.map((u) => u.range)).toEqual(["DailyLog!A2:P2", "DailyLog!A3:P3"]);
+    expect(rowToLogEntry(updates[1].values[0], columnIndex).portionGrams).toBe(250);
+  });
+
+  it("blanks the row of a dish that was removed", () => {
+    const a = entry("A");
+    const b = entry("B", "2026-08-13T12:01:00.000Z");
+    const updates = planMealSave([a, b], [{ entry: a, original: a }], rowsOf(a, b), columnIndex);
+    const blanked = updates.find((u) => u.range === "DailyLog!A3:P3");
+    expect(blanked?.values[0]).toEqual(new Array(16).fill(""));
+  });
+
+  it("reuses a freed row for a new dish before appending", () => {
+    const a = entry("A");
+    const b = entry("B", "2026-08-13T12:01:00.000Z");
+    const fresh = entry("C", "2026-08-13T12:02:00.000Z");
+    const updates = planMealSave(
+      [a, b],
+      [
+        { entry: a, original: a },
+        { entry: fresh, original: null },
+      ],
+      rowsOf(a, b),
+      columnIndex,
+    );
+    expect(updates.map((u) => u.range)).toEqual(["DailyLog!A2:P2", "DailyLog!A3:P3"]);
+    expect(rowToLogEntry(updates[1].values[0], columnIndex).itemName).toBe("C");
+  });
+
+  it("deletes a whole meal by blanking every one of its rows", () => {
+    const a = entry("A");
+    const b = entry("B", "2026-08-13T12:01:00.000Z");
+    const updates = planMealSave([a, b], [], rowsOf(a, b), columnIndex);
+    expect(updates).toHaveLength(2);
+    expect(updates.every((u) => u.values[0].every((v) => v === ""))).toBe(true);
+  });
+
+  it("gives two identical dishes (same name and time) distinct rows", () => {
+    const a1 = entry("Яйце");
+    const a2 = { ...entry("Яйце"), notes: "друге" };
+    const updates = planMealSave(
+      [a1, a2],
+      [
+        { entry: a1, original: a1 },
+        { entry: a2, original: a2 },
+      ],
+      rowsOf(a1, a2),
+      columnIndex,
+    );
+    expect(updates.map((u) => u.range)).toEqual(["DailyLog!A2:P2", "DailyLog!A3:P3"]);
+  });
+
+  it("throws rather than guess when an original row is gone", () => {
+    const a = entry("A");
+    expect(() => planMealSave([a], [{ entry: a, original: a }], [], columnIndex)).toThrow(/not found/);
   });
 });

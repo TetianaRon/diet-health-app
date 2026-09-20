@@ -2,7 +2,10 @@ import { useEffect, useState } from "react";
 import { Browser } from "@capacitor/browser";
 import { uk } from "../i18n/uk";
 import { useAuth } from "../context/AuthContext";
-import { getSettings, updateSettings, type Settings } from "../lib/settings";
+import { getSettings, updateSettings, type Settings, type TimeFormat } from "../lib/settings";
+import { TimeInput } from "./TimeInput";
+import { fullMealShareLeavesNoRoom, mealShares } from "../lib/mealRecommendation";
+import { setTimeFormat } from "../lib/dateFormat";
 import {
   getSpreadsheetId,
   setSpreadsheetId,
@@ -20,6 +23,8 @@ const NUMERIC_FIELDS = [
   "fatPerMealLimit",
   "dailyCaloriesTarget",
   "mealsPerDay",
+  "snacksPerDay",
+  "fullMealSharePercent",
   "maxGapHours",
   "bloodSugarMin",
   "bloodSugarMax",
@@ -35,6 +40,13 @@ type TimeField = (typeof TIME_FIELDS)[number];
 
 const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
 
+// A Sheets time cell can read back as "6:30:00" — reduce it to the "HH:MM" the
+// picker and TIME_PATTERN expect, leaving anything unparseable untouched.
+function normalizeTime(value: string): string {
+  const match = /^(\d{1,2}):(\d{2})(?::\d{2})?$/.exec(value.trim());
+  return match ? `${match[1].padStart(2, "0")}:${match[2]}` : value;
+}
+
 // Which Today-screen stats to show — a checkbox, not a text field, so kept
 // separate from the numeric/time validation below (nothing to validate).
 const BOOLEAN_FIELDS = [
@@ -48,6 +60,8 @@ const BOOLEAN_FIELDS = [
 ] as const satisfies readonly (keyof Settings)[];
 type BooleanField = (typeof BOOLEAN_FIELDS)[number];
 
+// 24h/12h display — a choice, not a number/time/checkbox, so rendered by hand
+// (right above the wake/sleep times it also governs).
 const FIELDS = [...NUMERIC_FIELDS, ...TIME_FIELDS, ...BOOLEAN_FIELDS] as const satisfies readonly (keyof Settings)[];
 
 // Google Play's User Data policy requires the privacy policy to be reachable
@@ -318,6 +332,31 @@ function SpreadsheetSection({ signedIn }: { signedIn: boolean }) {
   );
 }
 
+// Shows what the full-meal share works out to for the other meals, live as the
+// numbers are edited: the derived snack share, and both in the person's own
+// units. Purely arithmetic (see mealShares) — never advice.
+function SnackShareHint({ values }: { values: Record<string, string> }) {
+  const num = (key: string) => (values[key] ?? "").trim() !== "" ? Number(values[key]) : NaN;
+  const settings = {
+    mealsPerDay: num("mealsPerDay"),
+    snacksPerDay: num("snacksPerDay"),
+    fullMealSharePercent: num("fullMealSharePercent"),
+  };
+  if (!Object.values(settings).every(Number.isFinite)) return null;
+  if (fullMealShareLeavesNoRoom(settings)) return <span className="food-form-hint">{uk.settings.fullMealShareError}</span>;
+
+  const { fullPercent, snackPercent } = mealShares(settings);
+  const of = (target: number, percent: number) => Math.round((target * percent) / 100);
+  const calories = num("dailyCaloriesTarget");
+  const parts = [uk.settings.shareSummary.full(Math.round(fullPercent * 10) / 10, Number.isFinite(calories) ? of(calories, fullPercent) : null)];
+  if (snackPercent !== null) {
+    parts.push(
+      uk.settings.shareSummary.snack(Math.round(snackPercent * 10) / 10, Number.isFinite(calories) ? of(calories, snackPercent) : null),
+    );
+  }
+  return <span className="food-form-hint">{parts.join(" ")}</span>;
+}
+
 export default function SettingsScreen() {
   const { signedIn, initializing, signIn, signOut } = useAuth();
   const [values, setValues] = useState<Record<string, string>>({});
@@ -331,7 +370,12 @@ export default function SettingsScreen() {
     if (!signedIn) return;
     getSettings()
       .then((s) => {
-        setValues(Object.fromEntries(FIELDS.map((field) => [field, String(s[field])])));
+        setValues({
+          ...Object.fromEntries(FIELDS.map((field) => [field, String(s[field])])),
+          timeFormat: s.timeFormat,
+          wakeTime: normalizeTime(s.wakeTime),
+          sleepTime: normalizeTime(s.sleepTime),
+        });
         setLoaded(true);
       })
       .catch((err: unknown) => setLoadError(err instanceof Error ? err.message : String(err)));
@@ -354,6 +398,14 @@ export default function SettingsScreen() {
       setSaveError(uk.settings.validationError);
       return;
     }
+    if (numericParsed.snacksPerDay < 0 || numericParsed.snacksPerDay > numericParsed.mealsPerDay) {
+      setSaveError(uk.settings.snacksValidationError);
+      return;
+    }
+    if (fullMealShareLeavesNoRoom(numericParsed)) {
+      setSaveError(uk.settings.fullMealShareError);
+      return;
+    }
 
     const timeParsed = Object.fromEntries(TIME_FIELDS.map((field) => [field, values[field]])) as Record<
       TimeField,
@@ -368,7 +420,9 @@ export default function SettingsScreen() {
     setSaveError(null);
     setSaved(false);
     try {
-      await updateSettings({ ...numericParsed, ...timeParsed, ...booleanParsed });
+      const timeFormat: TimeFormat = values.timeFormat === "12h" ? "12h" : "24h";
+      await updateSettings({ ...numericParsed, ...timeParsed, ...booleanParsed, timeFormat });
+      setTimeFormat(timeFormat);
       setSaved(true);
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : String(err));
@@ -411,8 +465,29 @@ export default function SettingsScreen() {
 
           {loaded && (
             <>
+              <label>
+                {uk.settings.fields.timeFormat}
+                <select
+                  value={values.timeFormat === "12h" ? "12h" : "24h"}
+                  onChange={(e) => setValues({ ...values, timeFormat: e.target.value })}
+                >
+                  <option value="24h">{uk.settings.timeFormatOptions["24h"]}</option>
+                  <option value="12h">{uk.settings.timeFormatOptions["12h"]}</option>
+                </select>
+              </label>
+
               {FIELDS.map((field) =>
-                (BOOLEAN_FIELDS as readonly string[]).includes(field) ? (
+                (TIME_FIELDS as readonly string[]).includes(field) ? (
+                  <label key={field}>
+                    {uk.settings.fields[field]}
+                    <TimeInput
+                      ariaLabel={uk.settings.fields[field]}
+                      format={values.timeFormat === "12h" ? "12h" : "24h"}
+                      value={values[field] ?? "00:00"}
+                      onChange={(t) => setValues({ ...values, [field]: t })}
+                    />
+                  </label>
+                ) : (BOOLEAN_FIELDS as readonly string[]).includes(field) ? (
                   <label key={field} className="settings-checkbox">
                     <input
                       type="checkbox"
@@ -424,6 +499,7 @@ export default function SettingsScreen() {
                 ) : (
                   <label key={field}>
                     {uk.settings.fields[field]}
+                    {field === "fullMealSharePercent" && <SnackShareHint values={values} />}
                     <input
                       type={(TIME_FIELDS as readonly string[]).includes(field) ? "time" : "number"}
                       inputMode={(TIME_FIELDS as readonly string[]).includes(field) ? undefined : "decimal"}

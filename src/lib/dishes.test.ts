@@ -1,5 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { computeDishNutrition, dishContainsFlaggedIngredient, dishToRow, rowToDish, type Dish, type IngredientNutrition } from "./dishes";
+import {
+  computeDishNutrition,
+  computeDishUnknownFields,
+  dishContainsFlaggedIngredient,
+  dishToRow,
+  parseUnknownNutritionFields,
+  rowToDish,
+  type Dish,
+  type IngredientNutrition,
+  type NutritionKey,
+} from "./dishes";
 import { buildColumnIndex } from "./sheetRow";
 
 const BUCKWHEAT_RAW: IngredientNutrition = {
@@ -113,6 +123,7 @@ describe("rowToDish / dishToRow", () => {
       dateAdded: "2026-08-13",
       glycemicFlag: "watch",
       giVerified: true,
+      unknownFields: [],
     };
 
     expect(rowToDish(dishToRow(dish))).toEqual(dish);
@@ -136,6 +147,7 @@ describe("rowToDish / dishToRow", () => {
       dateAdded: "2026-08-13",
       glycemicFlag: "watch",
       giVerified: true,
+      unknownFields: [],
     };
     // Mirrors a sheet where GI and YieldGrams got swapped.
     const reordered = buildColumnIndex([
@@ -177,6 +189,7 @@ describe("rowToDish / dishToRow", () => {
       dateAdded: "2026-08-13",
       glycemicFlag: "none",
       giVerified: false,
+      unknownFields: [],
     };
     expect(rowToDish(dishToRow(dish)).source).toBe("manual");
   });
@@ -223,6 +236,7 @@ describe("dishContainsFlaggedIngredient", () => {
     dateAdded: "2026-08-13",
     glycemicFlag: "none",
     giVerified: false,
+    unknownFields: [],
   };
 
   it("is true when any referenced ingredient currently resolves to watch or avoid", () => {
@@ -241,5 +255,59 @@ describe("dishContainsFlaggedIngredient", () => {
   it("does not depend on the dish's own explicit glycemicFlag", () => {
     const flaggedDish: Dish = { ...baseDish, glycemicFlag: "avoid" };
     expect(dishContainsFlaggedIngredient(flaggedDish, () => "none")).toBe(false);
+  });
+});
+
+describe("parseUnknownNutritionFields", () => {
+  it("treats a blank or missing cell as nothing unknown (old rows stay valid)", () => {
+    expect(parseUnknownNutritionFields("")).toEqual([]);
+    expect(parseUnknownNutritionFields(undefined)).toEqual([]);
+  });
+
+  it("parses known names in canonical order and drops anything unrecognized", () => {
+    expect(parseUnknownNutritionFields("caloriesKcal, gi ,bogus,carbsG")).toEqual(["carbsG", "gi", "caloriesKcal"]);
+  });
+});
+
+describe("unknownFields round-trip through a Dishes row", () => {
+  it("persists which fields were left blank", () => {
+    const dish: Dish = { ...rowToDish([]), nameUk: "Суп", unknownFields: ["gi", "sodiumMg"] };
+    expect(rowToDish(dishToRow(dish)).unknownFields).toEqual(["gi", "sodiumMg"]);
+  });
+});
+
+describe("computeDishUnknownFields", () => {
+  type Ing = IngredientNutrition & { unknownFields: NutritionKey[] };
+  const known: Ing = { ...BUCKWHEAT_RAW, unknownFields: [] };
+  const lookup = (table: Record<string, Ing>) => (name: string) => table[name] ?? null;
+
+  it("is empty when every ingredient is fully known", () => {
+    expect(computeDishUnknownFields([{ nameUk: "A", grams: 100 }], lookup({ A: known }))).toEqual([]);
+  });
+
+  it("inherits a field an ingredient left unknown", () => {
+    const result = computeDishUnknownFields(
+      [
+        { nameUk: "A", grams: 100 },
+        { nameUk: "B", grams: 50 },
+      ],
+      lookup({ A: known, B: { ...known, unknownFields: ["fatG"] } }),
+    );
+    expect(result).toEqual(["fatG"]);
+  });
+
+  it("makes the dish GI unknown when a carb-bearing ingredient's GI is unknown", () => {
+    const result = computeDishUnknownFields([{ nameUk: "A", grams: 100 }], lookup({ A: { ...known, unknownFields: ["gi"] } }));
+    expect(result).toEqual(["gi"]);
+  });
+
+  it("does not make GI unknown for a zero-carb ingredient with no GI (nothing to weight)", () => {
+    const meat: Ing = { ...known, carbsG: 0, unknownFields: ["gi"] };
+    expect(computeDishUnknownFields([{ nameUk: "M", grams: 100 }], lookup({ M: meat }))).toEqual([]);
+  });
+
+  it("makes GI unknown when an ingredient's carbs are unknown, since GI is carb-weighted", () => {
+    const result = computeDishUnknownFields([{ nameUk: "A", grams: 100 }], lookup({ A: { ...known, unknownFields: ["carbsG"] } }));
+    expect(result).toEqual(["carbsG", "gi"]);
   });
 });

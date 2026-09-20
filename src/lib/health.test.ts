@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calcGlycemicLoad, checkBloodSugarRange, checkFatLimit, classifyGi, classifyGl, mealGapWarning } from "./health";
+import { calcGlycemicLoad, checkBloodSugarRange, checkFatLimit, classifyGi, classifyGl, mealGapWarning, mealsLeftToday } from "./health";
 
 describe("calcGlycemicLoad", () => {
   it("computes GI × carbs / 100", () => {
@@ -77,5 +77,16 @@ describe("classifyGl", () => {
     expect(classifyGl(19)).toBe("moderate");
     expect(classifyGl(20)).toBe("high");
     expect(classifyGl(40)).toBe("high");
+  });
+});
+
+describe("mealsLeftToday", () => {
+  it("counts the planned meals still to come", () => {
+    expect(mealsLeftToday(6, 4)).toEqual({ left: 2, planned: 6 });
+    expect(mealsLeftToday(6, 0)).toEqual({ left: 6, planned: 6 });
+  });
+
+  it("never goes negative when more meals were eaten than planned", () => {
+    expect(mealsLeftToday(6, 8)).toEqual({ left: 0, planned: 6 });
   });
 });

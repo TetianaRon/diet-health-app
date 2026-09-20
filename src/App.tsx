@@ -25,6 +25,9 @@ const TABS: { id: TabId; label: string }[] = [
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabId>("today");
   const [autoOpenAddForm, setAutoOpenAddForm] = useState(false);
+  // The meal editor is a dedicated screen: while it's open the tab bar and
+  // settings gear are hidden, so a stray tap can't navigate away mid-draft.
+  const [editorOpen, setEditorOpen] = useState(false);
 
   useEffect(() => {
     // The app's background is white — Style.Light gives dark status bar
@@ -52,6 +55,7 @@ export default function App() {
   return (
     <AuthProvider>
       <div className="app">
+        {!editorOpen && (
         <div className="app-header">
           <button
             type="button"
@@ -65,28 +69,35 @@ export default function App() {
             </svg>
           </button>
         </div>
+        )}
 
-        <main className="app-content">
+        <main className={editorOpen ? "app-content editor-open" : "app-content"}>
           {activeTab === "today" && (
-            <TodayScreen autoOpenAddForm={autoOpenAddForm} onAutoOpenAddFormConsumed={() => setAutoOpenAddForm(false)} />
+            <TodayScreen
+              autoOpenAddForm={autoOpenAddForm}
+              onAutoOpenAddFormConsumed={() => setAutoOpenAddForm(false)}
+              onEditorOpenChange={setEditorOpen}
+            />
           )}
           {activeTab === "foods" && <FoodsScreen />}
           {activeTab === "bloodSugar" && <BloodSugarScreen />}
           {activeTab === "settings" && <SettingsScreen />}
         </main>
 
-        <nav className="tab-bar">
-          {TABS.map((tab) => (
-            <button
-              key={tab.id}
-              className={tab.id === activeTab ? "tab-button active" : "tab-button"}
-              aria-current={tab.id === activeTab ? "page" : undefined}
-              onClick={() => setActiveTab(tab.id)}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </nav>
+        {!editorOpen && (
+          <nav className="tab-bar">
+            {TABS.map((tab) => (
+              <button
+                key={tab.id}
+                className={tab.id === activeTab ? "tab-button active" : "tab-button"}
+                aria-current={tab.id === activeTab ? "page" : undefined}
+                onClick={() => setActiveTab(tab.id)}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </nav>
+        )}
       </div>
     </AuthProvider>
   );

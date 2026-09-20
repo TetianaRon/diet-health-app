@@ -39,6 +39,7 @@ describe("rowToIngredient", () => {
       favorite: true,
       glycemicFlag: "watch",
       giVerified: true,
+      unknownFields: [],
     });
   });
 
@@ -74,6 +75,7 @@ describe("ingredientToRow", () => {
     favorite: false,
     glycemicFlag: "none",
     giVerified: false,
+    unknownFields: [],
   };
 
   it("round-trips through rowToIngredient", () => {
@@ -122,6 +124,7 @@ describe("sortFavoritesFirst", () => {
     dateAdded: "2026-08-13",
     glycemicFlag: "none" as const,
     giVerified: false,
+    unknownFields: [],
   };
 
   it("moves favorites to the front, preserving relative order within each group", () => {
@@ -170,6 +173,7 @@ describe("mergeWithStarterFoods", () => {
       favorite: true,
       glycemicFlag: "none",
       giVerified: false,
+      unknownFields: [],
     };
 
     const merged = mergeWithStarterFoods([savedVersion]);
@@ -196,9 +200,22 @@ describe("mergeWithStarterFoods", () => {
       favorite: false,
       glycemicFlag: "none",
       giVerified: false,
+      unknownFields: [],
     };
     const merged = mergeWithStarterFoods([custom]);
     expect(merged).toHaveLength(STARTER_FOODS.length + 1);
     expect(merged.some((i) => i.nameUk === "Дуже рідкісний продукт")).toBe(true);
+  });
+});
+
+describe("Ingredient unknownFields", () => {
+  it("round-trips through a row", () => {
+    const ingredient: Ingredient = { ...rowToIngredient([]), nameUk: "Щось", unknownFields: ["gi", "fiberG"] };
+    expect(rowToIngredient(ingredientToRow(ingredient)).unknownFields).toEqual(["gi", "fiberG"]);
+  });
+
+  it("reads a row from before the column existed as nothing unknown", () => {
+    const columnIndex = buildColumnIndex(["NameUk", "Carbs_g"]);
+    expect(rowToIngredient(["Гречка", "20"], columnIndex).unknownFields).toEqual([]);
   });
 });

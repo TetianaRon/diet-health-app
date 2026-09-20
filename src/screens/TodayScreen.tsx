@@ -2,50 +2,26 @@ import { useEffect, useMemo, useState } from "react";
 import { App as CapacitorApp } from "@capacitor/app";
 import { uk } from "../i18n/uk";
 import { useAuth } from "../context/AuthContext";
-import { checkBloodSugarRange, checkFatLimit, classifyGl, mealGapWarning } from "../lib/health";
+import { checkBloodSugarRange, checkFatLimit, mealGapWarning, mealsLeftToday } from "../lib/health";
 import { listIngredients, mergeWithStarterFoods, sortFavoritesFirst, type Ingredient } from "../lib/ingredients";
-import { listDishes, type Dish, type IngredientNutrition } from "../lib/dishes";
-import { GLYCEMIC_FLAG_SYMBOL, type GlycemicFlag } from "../lib/glycemicFlag";
+import { listDishes, type Dish } from "../lib/dishes";
 import { mergeWithStarterDishes } from "../data/starter-dishes";
 import { getSettings, type Settings } from "../lib/settings";
 import { wasLastReadFromCache } from "../lib/sheets";
-import { formatDayMonthFromKey, formatTime, fromDatetimeLocalValue, toDatetimeLocalValue } from "../lib/dateFormat";
+import { formatTime } from "../lib/dateFormat";
 import { scheduleMealReminder } from "../lib/reminderScheduler";
 import { latestBloodSugarEntry, listBloodSugarEntries, type BloodSugarEntry } from "../lib/bloodSugar";
 import {
-  MEAL_TYPES,
-  addLogEntry,
-  buildCustomLogEntry,
-  buildLogEntry,
-  computePortionNutrition,
-  deleteLogEntry,
   groupIntoMeals,
   isSameLocalDate,
   listLogEntries,
   localDateKey,
-  moveLogEntryToMeal,
-  recentDayGroups,
-  suggestMealType,
   sumKnownField,
-  updateLogEntry,
   type DailyLogEntry,
   type MealGroup,
-  type MealType,
 } from "../lib/dailyLog";
-
-interface PickableFood {
-  nameUk: string;
-  nameEn: string;
-  glycemicFlag: GlycemicFlag;
-  per100g: IngredientNutrition;
-}
-
-function toPickable(
-  item: { nameUk: string; nameEn: string; glycemicFlag: GlycemicFlag } & IngredientNutrition,
-): PickableFood {
-  const { nameUk, nameEn, glycemicFlag, carbsG, gi, fiberG, sugarsG, proteinG, fatG, caloriesKcal, sodiumMg } = item;
-  return { nameUk, nameEn, glycemicFlag, per100g: { carbsG, gi, fiberG, sugarsG, proteinG, fatG, caloriesKcal, sodiumMg } };
-}
+import MealEditorScreen, { toPickable, type PickableFood } from "./MealEditorScreen";
+import MealStatsLine from "./MealStatsLine";
 
 function ProgressBar({ label, value, target, unit }: { label: string; value: number; target: number; unit: string }) {
   const pct = target > 0 ? Math.min(100, Math.round((value / target) * 100)) : 0;
@@ -64,662 +40,55 @@ function ProgressBar({ label, value, target, unit }: { label: string; value: num
   );
 }
 
-// Shared by Today's list and the recent-days history — one meal occasion's
-// items plus its combined total, so a multi-item meal reads as one thing
-// (matching mom's feedback that it didn't before) rather than N unrelated rows.
-// A custom/estimated item (see AddLogEntryForm's "Власний запис" mode) may
-// have some fields explicitly unknown rather than a real value — shown here
-// as "невідомо" instead of a misleading "0", and meal.totals already
-// excludes them from the sum (see sumKnownField in dailyLog.ts), so
-// hasUnknownValues is purely a display caveat, not a correctness concern.
+// One meal's dishes plus its combined total, so a multi-item meal reads as
+// one thing rather than N unrelated rows. Each dish shows only its weight —
+// the stats belong to the meal line below (a cleaner read); per-dish detail
+// lives in the meal editor. Read-only on purpose: changing a meal goes
+// through one Редагувати button per meal (see MealHeader).
 //
-// siblingMeals is whichever OTHER meal occasions are visible in the same
-// context (today's list, or one history day) — the candidates offered by
-// each entry's "Перенести до іншого прийому" action. onEntryChanged
-// re-fetches the whole entries list after an edit/delete/move succeeds:
-// each of those can change an entry's own identity (timestamp, mealId), so
-// patching local state in place would be more fragile than just re-reading
-// — this list is never large enough for that to be a real cost.
-function MealItemsList({
-  meal,
-  siblingMeals,
-  onEntryChanged,
-}: {
-  meal: MealGroup;
-  siblingMeals: MealGroup[];
-  onEntryChanged: () => void;
-}) {
+// A custom/estimated dish may have some fields unknown — meal.totals already
+// excludes them from the sum (see sumKnownField in dailyLog.ts), and
+// hasUnknownValues (shown by MealStatsLine) is the visible caveat.
+function MealItemsList({ meal, settings }: { meal: MealGroup; settings: Settings | null }) {
   return (
     <>
       <ul className="food-list">
         {meal.entries.map((entry, i) => (
-          <LogEntryRow
-            key={`${entry.timestamp}-${i}`}
-            entry={entry}
-            siblingMeals={siblingMeals}
-            onEntryChanged={onEntryChanged}
-          />
+          <li key={`${entry.timestamp}-${i}`}>
+            <strong>{entry.itemName}</strong> — {uk.today.dishWeight(entry.portionGrams)}
+          </li>
         ))}
       </ul>
-      <p className="today-meal-total">
-        {uk.today.mealTotal(meal.totals.carbsG, meal.totals.caloriesKcal, meal.totals.gl)}
-        {meal.hasUnknownValues && ` ${uk.today.mealHasUnknownSuffix}`}
-      </p>
+      <MealStatsLine meal={meal} settings={settings} />
     </>
   );
 }
 
-// One logged item, with inline edit/move/delete actions. Each row owns its
-// own action state so opening one entry's edit form doesn't affect its
-// siblings in the same meal.
-function LogEntryRow({
-  entry,
-  siblingMeals,
-  onEntryChanged,
+// A meal's title row with its single Редагувати button.
+function MealHeader({
+  title,
+  time,
+  mealType,
+  onEdit,
 }: {
-  entry: DailyLogEntry;
-  siblingMeals: MealGroup[];
-  onEntryChanged: () => void;
+  title: string;
+  time: string;
+  mealType: string;
+  onEdit: () => void;
 }) {
-  const [action, setAction] = useState<"none" | "edit" | "move" | "delete">("none");
-  const [deleting, setDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
-
-  const handleDelete = async () => {
-    setDeleting(true);
-    setDeleteError(null);
-    try {
-      await deleteLogEntry(entry.timestamp, entry.itemName, entry.mealId);
-      onEntryChanged();
-    } catch (err) {
-      setDeleteError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setDeleting(false);
-    }
-  };
-
-  if (action === "edit") {
-    return (
-      <li>
-        <EditEntryForm
-          entry={entry}
-          onSaved={() => {
-            setAction("none");
-            onEntryChanged();
-          }}
-          onCancel={() => setAction("none")}
-        />
-      </li>
-    );
-  }
-
-  if (action === "move") {
-    return (
-      <li>
-        <MoveEntryForm
-          entry={entry}
-          siblingMeals={siblingMeals}
-          onSaved={() => {
-            setAction("none");
-            onEntryChanged();
-          }}
-          onCancel={() => setAction("none")}
-        />
-      </li>
-    );
-  }
-
-  if (action === "delete") {
-    return (
-      <li>
-        <p>{uk.today.deleteConfirm(entry.itemName)}</p>
-        {deleteError && <p className="food-form-error">{deleteError}</p>}
-        <div className="food-form-actions">
-          <button type="button" onClick={() => void handleDelete()} disabled={deleting}>
-            {uk.today.deleteConfirmButton}
-          </button>
-          <button type="button" onClick={() => setAction("none")} disabled={deleting}>
-            {uk.foods.cancelButton}
-          </button>
-        </div>
-      </li>
-    );
-  }
-
-  const carbsText = entry.unknownFields.includes("carbsG") ? uk.today.unknownValueLabel : uk.today.carbsValue(entry.carbsG);
-  const caloriesText = entry.unknownFields.includes("caloriesKcal")
-    ? uk.today.unknownValueLabel
-    : uk.today.caloriesValue(entry.caloriesKcal);
-
   return (
-    <li>
-      <span className="entry-time">{formatTime(entry.timestamp)}</span> <strong>{entry.itemName}</strong> —{" "}
-      {uk.today.entryMeta(entry.portionGrams, carbsText, caloriesText)}
-      <span className="log-entry-actions">
-        <button type="button" onClick={() => setAction("edit")}>
-          {uk.today.editEntryButton}
-        </button>
-        <button type="button" onClick={() => setAction("move")}>
-          {uk.today.moveEntryButton}
-        </button>
-        <button type="button" onClick={() => setAction("delete")}>
-          {uk.today.deleteEntryButton}
-        </button>
-      </span>
-    </li>
-  );
-}
-
-// Edit an already-saved entry — reuses buildCustomLogEntry to re-derive the
-// row from typed values (GL/unknownFields recomputed the same way a custom
-// entry's are), regardless of whether the entry was originally a database
-// pick or already custom. Keeps the entry's existing mealId — reassigning
-// that is MoveEntryForm's job, not this form's, so the two actions stay
-// simple and don't overlap.
-function EditEntryForm({
-  entry,
-  onSaved,
-  onCancel,
-}: {
-  entry: DailyLogEntry;
-  onSaved: () => void;
-  onCancel: () => void;
-}) {
-  const [mealType, setMealType] = useState<MealType>(entry.mealType);
-  const [timestamp, setTimestamp] = useState(() => toDatetimeLocalValue(entry.timestamp));
-  const [itemName, setItemName] = useState(entry.itemName);
-  const [portionGrams, setPortionGrams] = useState(String(entry.portionGrams));
-  const [values, setValues] = useState<Record<keyof IngredientNutrition, string>>(() => {
-    const initial = { ...EMPTY_CUSTOM_VALUES };
-    for (const field of CUSTOM_FIELDS) {
-      if (!entry.unknownFields.includes(field)) initial[field] = String(entry[field]);
-    }
-    return initial;
-  });
-  const [notes, setNotes] = useState(entry.notes);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const parsedPortion = Number(portionGrams);
-  const filledFields = CUSTOM_FIELDS.filter((field) => values[field].trim() !== "");
-  const fieldsValid = filledFields.every((field) => Number.isFinite(Number(values[field])));
-
-  const handleSave = async () => {
-    if (
-      !itemName.trim() ||
-      !Number.isFinite(parsedPortion) ||
-      parsedPortion <= 0 ||
-      timestamp.trim() === "" ||
-      filledFields.length === 0 ||
-      !fieldsValid
-    ) {
-      setError(uk.today.form.customValidationError);
-      return;
-    }
-
-    const nutritionValues: Partial<IngredientNutrition> = {};
-    for (const field of filledFields) nutritionValues[field] = Number(values[field]);
-
-    setSaving(true);
-    setError(null);
-    try {
-      const updated = buildCustomLogEntry(
-        mealType,
-        itemName.trim(),
-        parsedPortion,
-        nutritionValues,
-        notes.trim(),
-        entry.mealId,
-        fromDatetimeLocalValue(timestamp),
-      );
-      await updateLogEntry(entry.timestamp, entry.itemName, entry.mealId, updated);
-      onSaved();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <div className="food-form">
-      <h3>{uk.today.editForm.title}</h3>
-      <label>
-        {uk.today.form.itemLabel}
-        <input value={itemName} onChange={(e) => setItemName(e.target.value)} />
-      </label>
-      <label>
-        {uk.today.form.mealTypeLabel}
-        <select value={mealType} onChange={(e) => setMealType(e.target.value as MealType)}>
-          {MEAL_TYPES.map((type) => (
-            <option key={type} value={type}>
-              {type}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label>
-        {uk.today.form.timestampLabel}
-        <input type="datetime-local" value={timestamp} onChange={(e) => setTimestamp(e.target.value)} />
-      </label>
-      <label>
-        {uk.today.form.portionLabel}
-        <input
-          type="number"
-          inputMode="decimal"
-          step="0.1"
-          value={portionGrams}
-          onChange={(e) => setPortionGrams(e.target.value)}
-        />
-      </label>
-      <div className="food-form-custom-fields">
-        {CUSTOM_FIELDS.map((field) => (
-          <label key={field}>
-            {uk.today.form.customFieldLabels[field]}
-            <input
-              type="number"
-              inputMode="decimal"
-              step="0.1"
-              value={values[field]}
-              placeholder={uk.today.form.customFieldPlaceholder}
-              onChange={(e) => setValues((prev) => ({ ...prev, [field]: e.target.value }))}
-            />
-          </label>
-        ))}
-      </div>
-      <label>
-        {uk.today.form.notesLabel}
-        <input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={uk.today.form.notesPlaceholder} />
-      </label>
-      {error && <p className="food-form-error">{error}</p>}
-      <div className="food-form-actions">
-        <button type="button" onClick={() => void handleSave()} disabled={saving}>
-          {uk.today.editForm.saveButton}
-        </button>
-        <button type="button" onClick={onCancel} disabled={saving}>
-          {uk.foods.cancelButton}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// Reassigns an entry to an existing sibling meal occasion — the "two snacks
-// 5 minutes apart should be one" case, without a dedicated multi-select
-// merge UI (see the 2026-09-11 design decision).
-function MoveEntryForm({
-  entry,
-  siblingMeals,
-  onSaved,
-  onCancel,
-}: {
-  entry: DailyLogEntry;
-  siblingMeals: MealGroup[];
-  onSaved: () => void;
-  onCancel: () => void;
-}) {
-  const [targetMealId, setTargetMealId] = useState(siblingMeals[0]?.mealId ?? "");
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  if (siblingMeals.length === 0) {
-    return (
-      <div className="food-form">
-        <p>{uk.today.moveForm.noOtherMeals}</p>
-        <div className="food-form-actions">
-          <button type="button" onClick={onCancel}>
-            {uk.foods.cancelButton}
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  const handleMove = async () => {
-    const target = siblingMeals.find((m) => m.mealId === targetMealId);
-    if (!target) {
-      setError(uk.today.moveForm.validationError);
-      return;
-    }
-    setSaving(true);
-    setError(null);
-    try {
-      await moveLogEntryToMeal(entry, target.mealId, target.mealType);
-      onSaved();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <div className="food-form">
-      <h3>{uk.today.moveForm.title}</h3>
-      <label>
-        {uk.today.moveForm.targetLabel}
-        <select value={targetMealId} onChange={(e) => setTargetMealId(e.target.value)}>
-          {siblingMeals.map((m) => (
-            <option key={m.mealId} value={m.mealId}>
-              {m.mealType} · {formatTime(m.timestamp)}
-            </option>
-          ))}
-        </select>
-      </label>
-      {error && <p className="food-form-error">{error}</p>}
-      <div className="food-form-actions">
-        <button type="button" onClick={() => void handleMove()} disabled={saving}>
-          {uk.today.moveForm.moveButton}
-        </button>
-        <button type="button" onClick={onCancel} disabled={saving}>
-          {uk.foods.cancelButton}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// The 8 nutrition fields a custom entry can individually fill in or leave
-// blank (= unknown) — see buildCustomLogEntry in dailyLog.ts. Module-level
-// so the object identity is stable across renders (used as a useState
-// initializer/reset value).
-const CUSTOM_FIELDS: (keyof IngredientNutrition)[] = [
-  "caloriesKcal",
-  "carbsG",
-  "fatG",
-  "proteinG",
-  "fiberG",
-  "sugarsG",
-  "sodiumMg",
-  "gi",
-];
-const EMPTY_CUSTOM_VALUES: Record<keyof IngredientNutrition, string> = {
-  carbsG: "",
-  gi: "",
-  fiberG: "",
-  sugarsG: "",
-  proteinG: "",
-  fatG: "",
-  caloriesKcal: "",
-  sodiumMg: "",
-};
-
-function AddLogEntryForm({
-  foods,
-  onSaved,
-  onCancel,
-}: {
-  foods: PickableFood[];
-  onSaved: (entry: DailyLogEntry) => void;
-  onCancel: () => void;
-}) {
-  const [mealType, setMealType] = useState<MealType>(() => suggestMealType(new Date()));
-  // Defaults to "now" but is editable — mom may log a meal after the fact
-  // (e.g. writing it down on paper first, then entering it later). Carries
-  // over across items added in the same form session, same as mealType,
-  // since a multi-item meal was eaten at one time regardless of entry order.
-  const [timestamp, setTimestamp] = useState(() => toDatetimeLocalValue(new Date().toISOString()));
-  const [search, setSearch] = useState("");
-  const [selected, setSelected] = useState<PickableFood | null>(null);
-  const [portionGrams, setPortionGrams] = useState("");
-  const [notes, setNotes] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  // A meal is often several items (e.g. buckwheat + an omelet + kefir at
-  // breakfast) — the form stays open and just resets the item-picking fields
-  // after each save, so mealType carries over instead of forcing it to be
-  // re-picked for every single item. mealId is generated once per form
-  // session (this component instance) and reused across every item saved
-  // while it stays open, so they're grouped as one meal occasion — see
-  // groupIntoMeals in lib/dailyLog.ts. Closing and reopening the form (a
-  // fresh mount) starts a new meal, exactly matching "this is a different
-  // sitting."
-  const [mealId] = useState(() => new Date().toISOString());
-  const [justSaved, setJustSaved] = useState(false);
-
-  // "custom" is for a genuinely one-off item not in the database (restaurant
-  // food, a homemade dish with no exact recipe) — the meal can freely mix
-  // database-picked and custom items, since both share the same mealId
-  // (see buildCustomLogEntry in dailyLog.ts). Custom entries are never
-  // saved to Ingredients; they only ever produce a DailyLog row.
-  const [mode, setMode] = useState<"pick" | "custom">("pick");
-  const [customName, setCustomName] = useState("");
-  const [customValues, setCustomValues] = useState<Record<keyof IngredientNutrition, string>>(EMPTY_CUSTOM_VALUES);
-
-  const switchMode = (next: "pick" | "custom") => {
-    setMode(next);
-    setError(null);
-    setJustSaved(false);
-    setSelected(null);
-    setSearch("");
-    setCustomName("");
-    setCustomValues(EMPTY_CUSTOM_VALUES);
-  };
-
-  const matches =
-    !selected || search !== selected.nameUk
-      ? foods.filter((f) => f.nameUk.toLowerCase().includes(search.toLowerCase()))
-      : [];
-
-  const handlePick = (food: PickableFood) => {
-    setSelected(food);
-    setSearch(food.nameUk);
-  };
-
-  const parsedPortion = Number(portionGrams);
-  const previewNutrition =
-    selected && Number.isFinite(parsedPortion) && parsedPortion > 0
-      ? computePortionNutrition(selected.per100g, parsedPortion)
-      : null;
-  const previewGl =
-    previewNutrition && selected ? Math.round(((selected.per100g.gi * previewNutrition.carbsG) / 100) * 100) / 100 : 0;
-
-  const handleSave = async () => {
-    if (!selected || !Number.isFinite(parsedPortion) || parsedPortion <= 0 || timestamp.trim() === "") {
-      setError(uk.today.form.validationError);
-      return;
-    }
-
-    setSaving(true);
-    setError(null);
-    try {
-      const entry = buildLogEntry(
-        mealType,
-        selected.nameUk,
-        parsedPortion,
-        selected.per100g,
-        notes.trim(),
-        mealId,
-        fromDatetimeLocalValue(timestamp),
-      );
-      await addLogEntry(entry);
-      onSaved(entry);
-      // Reset only the item-picking fields — mealType carries over so the
-      // next item (same meal) doesn't need it re-selected.
-      setSelected(null);
-      setSearch("");
-      setPortionGrams("");
-      setNotes("");
-      setJustSaved(true);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const filledCustomFields = CUSTOM_FIELDS.filter((field) => customValues[field].trim() !== "");
-  const customFieldsValid = filledCustomFields.every((field) => Number.isFinite(Number(customValues[field])));
-
-  const handleSaveCustom = async () => {
-    if (
-      !customName.trim() ||
-      !Number.isFinite(parsedPortion) ||
-      parsedPortion <= 0 ||
-      timestamp.trim() === "" ||
-      filledCustomFields.length === 0 ||
-      !customFieldsValid
-    ) {
-      setError(uk.today.form.customValidationError);
-      return;
-    }
-
-    const values: Partial<IngredientNutrition> = {};
-    for (const field of filledCustomFields) values[field] = Number(customValues[field]);
-
-    setSaving(true);
-    setError(null);
-    try {
-      const entry = buildCustomLogEntry(
-        mealType,
-        customName.trim(),
-        parsedPortion,
-        values,
-        notes.trim(),
-        mealId,
-        fromDatetimeLocalValue(timestamp),
-      );
-      await addLogEntry(entry);
-      onSaved(entry);
-      setCustomName("");
-      setCustomValues(EMPTY_CUSTOM_VALUES);
-      setPortionGrams("");
-      setNotes("");
-      setJustSaved(true);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <div className="food-form">
-      <label>
-        {uk.today.form.mealTypeLabel}
-        <select value={mealType} onChange={(e) => setMealType(e.target.value as MealType)}>
-          {MEAL_TYPES.map((type) => (
-            <option key={type} value={type}>
-              {type}
-            </option>
-          ))}
-        </select>
-      </label>
-
-      <label>
-        {uk.today.form.timestampLabel}
-        <input type="datetime-local" value={timestamp} onChange={(e) => setTimestamp(e.target.value)} />
-      </label>
-
-      <button type="button" className="food-form-mode-toggle" onClick={() => switchMode(mode === "pick" ? "custom" : "pick")}>
-        {mode === "pick" ? uk.today.form.switchToCustomButton : uk.today.form.switchToPickButton}
+    <div className="meal-header">
+      <h2>
+        {title} <span className="entry-time">· {time}</span>
+      </h2>
+      <button
+        type="button"
+        className="button-secondary meal-edit-button"
+        aria-label={uk.today.editMealLabel(mealType)}
+        onClick={onEdit}
+      >
+        {uk.today.editMealButton}
       </button>
-
-      {justSaved && <p className="food-form-source">{uk.today.addAnotherHint}</p>}
-
-      {mode === "pick" ? (
-        <>
-          <label>
-            {uk.today.form.itemLabel}
-            <input
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setSelected(null);
-                setJustSaved(false);
-              }}
-              placeholder={uk.today.form.itemPlaceholder}
-            />
-          </label>
-
-          {matches.length > 0 && (
-            <ul className="food-list">
-              {matches.slice(0, 20).map((food) => (
-                <li key={food.nameUk} className="food-list-item-with-action">
-                  <span>
-                    {food.glycemicFlag !== "none" && (
-                      <span aria-hidden="true" className={`glycemic-inline ${food.glycemicFlag}`}>
-                        {GLYCEMIC_FLAG_SYMBOL[food.glycemicFlag]}{" "}
-                      </span>
-                    )}
-                    <strong>{food.nameUk}</strong> <span className="food-name-en">({food.nameEn})</span> —{" "}
-                    {food.per100g.carbsG} г вуглеводів/100г
-                  </span>
-                  <button type="button" onClick={() => handlePick(food)}>
-                    {uk.foods.form.pickButton}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-          {search && matches.length === 0 && !selected && <p>{uk.today.form.noMatches}</p>}
-        </>
-      ) : (
-        <label>
-          {uk.today.form.customNameLabel}
-          <input
-            value={customName}
-            onChange={(e) => {
-              setCustomName(e.target.value);
-              setJustSaved(false);
-            }}
-            placeholder={uk.today.form.customNamePlaceholder}
-          />
-        </label>
-      )}
-
-      <label>
-        {uk.today.form.portionLabel}
-        <input
-          type="number"
-          inputMode="decimal"
-          step="0.1"
-          value={portionGrams}
-          onChange={(e) => setPortionGrams(e.target.value)}
-        />
-      </label>
-
-      {mode === "pick" && previewNutrition && (
-        <p className="food-form-source">
-          {uk.today.form.preview(previewNutrition.carbsG, previewNutrition.caloriesKcal, previewGl)} (
-          {uk.health.gl[classifyGl(previewGl)]})
-        </p>
-      )}
-
-      {mode === "custom" && (
-        <div className="food-form-custom-fields">
-          <p className="food-form-source">{uk.today.form.customHint}</p>
-          {CUSTOM_FIELDS.map((field) => (
-            <label key={field}>
-              {uk.today.form.customFieldLabels[field]}
-              <input
-                type="number"
-                inputMode="decimal"
-                step="0.1"
-                value={customValues[field]}
-                placeholder={uk.today.form.customFieldPlaceholder}
-                onChange={(e) => setCustomValues((prev) => ({ ...prev, [field]: e.target.value }))}
-              />
-            </label>
-          ))}
-        </div>
-      )}
-
-      <label>
-        {uk.today.form.notesLabel}
-        <input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={uk.today.form.notesPlaceholder} />
-      </label>
-
-      {error && <p className="food-form-error">{error}</p>}
-
-      <div className="food-form-actions">
-        <button type="button" onClick={() => void (mode === "pick" ? handleSave() : handleSaveCustom())} disabled={saving}>
-          {uk.today.form.saveButton}
-        </button>
-        <button type="button" onClick={onCancel} disabled={saving}>
-          {uk.today.doneButton}
-        </button>
-      </div>
     </div>
   );
 }
@@ -727,9 +96,13 @@ function AddLogEntryForm({
 export default function TodayScreen({
   autoOpenAddForm = false,
   onAutoOpenAddFormConsumed,
+  onEditorOpenChange,
 }: {
   autoOpenAddForm?: boolean;
   onAutoOpenAddFormConsumed?: () => void;
+  // Lets the app shell hide the tab bar/gear while the meal editor is open,
+  // so it behaves as its own screen and a stray tab tap can't discard a draft.
+  onEditorOpenChange?: (open: boolean) => void;
 } = {}) {
   const { signedIn, initializing, signIn } = useAuth();
   const [ingredients, setIngredients] = useState<Ingredient[] | null>(null);
@@ -738,15 +111,16 @@ export default function TodayScreen({
   const [entries, setEntries] = useState<DailyLogEntry[] | null>(null);
   const [bloodSugarEntries, setBloodSugarEntries] = useState<BloodSugarEntry[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [showAddForm, setShowAddForm] = useState(false);
+  // null = closed; { meal: null } = composing a new meal; { meal } = editing that one.
+  const [editor, setEditor] = useState<{ meal: MealGroup | null } | null>(null);
   // True if any of the reads below fell back to cached data (see
   // wasLastReadFromCache() in sheets.ts) — reset at the start of each
   // refresh, then set by whichever read(s) actually used the cache.
   const [showingCachedData, setShowingCachedData] = useState(false);
 
-  // Re-fetches just the log entries — used after an edit/delete/move
-  // succeeds (see LogEntryRow), since each of those can change an entry's
-  // own identity in ways that make patching local state in place fragile.
+  // Re-fetches just the log entries — used after the meal editor saves or
+  // deletes, since either can change entries' identity (timestamp, type) in
+  // ways that make patching local state in place fragile.
   const refreshEntries = () => {
     listLogEntries()
       .then(setEntries)
@@ -755,10 +129,15 @@ export default function TodayScreen({
 
   useEffect(() => {
     if (autoOpenAddForm) {
-      setShowAddForm(true);
+      setEditor({ meal: null });
       onAutoOpenAddFormConsumed?.();
     }
   }, [autoOpenAddForm, onAutoOpenAddFormConsumed]);
+
+  useEffect(() => {
+    onEditorOpenChange?.(editor !== null);
+    return () => onEditorOpenChange?.(false);
+  }, [editor, onEditorOpenChange]);
 
   useEffect(() => {
     if (!signedIn) return;
@@ -853,9 +232,9 @@ export default function TodayScreen({
   // several times a day, so grouping by mealId (not mealType) is what
   // actually keeps those separate.
   const todayMeals = groupIntoMeals(todayEntries).sort((a, b) => (a.timestamp < b.timestamp ? -1 : 1));
-  // Lightweight stopgap ahead of a proper History tab — mom asked to see
-  // recent days without leaving Today, not a full history browsing UI yet.
-  const historyGroups = recentDayGroups(entries ?? [], new Date(), 3);
+  // Only today is shown here — the old "last 3 days" list was dropped to keep
+  // this screen a clean read; past days will get their own History screen.
+  const mealsLeft = settings ? mealsLeftToday(settings.mealsPerDay, todayMeals.length) : null;
 
   // sumKnownField excludes an entry from a specific total when that exact
   // field is unknown (a custom/estimated item — see AddLogEntryForm), rather
@@ -918,12 +297,30 @@ export default function TodayScreen({
     );
   }
 
+  if (editor) {
+    return (
+      <MealEditorScreen
+        original={editor.meal}
+        foods={foods}
+        settings={settings}
+        allEntries={entries ?? []}
+        onSaved={() => {
+          setEditor(null);
+          refreshEntries();
+        }}
+        onCancel={() => setEditor(null)}
+      />
+    );
+  }
+
   return (
     <section className="screen">
       <h1>{uk.today.title}</h1>
 
       {loadError && <p className="food-form-error">{loadError}</p>}
       {showingCachedData && <p className="today-warning">{uk.today.offlineNotice}</p>}
+
+      {mealsLeft && <p className="meals-left">{uk.today.mealsLeft(mealsLeft.left, mealsLeft.planned)}</p>}
 
       {settings && (settings.showCarbsProgress || settings.showCaloriesProgress || settings.showGlycemicLoadProgress) && (
         <div className="progress-block">
@@ -973,58 +370,24 @@ export default function TodayScreen({
         </p>
       ))}
 
-      {showAddForm ? (
-        <AddLogEntryForm
-          foods={foods}
-          onSaved={(entry) => {
-            setEntries((prev) => [...(prev ?? []), entry]);
-          }}
-          onCancel={() => setShowAddForm(false)}
-        />
-      ) : (
-        <button type="button" onClick={() => setShowAddForm(true)}>
-          {uk.today.addButton}
-        </button>
-      )}
+      <button type="button" onClick={() => setEditor({ meal: null })}>
+        {uk.today.addButton}
+      </button>
 
       {entries === null && !loadError && <p>{uk.today.loading}</p>}
-      {entries !== null && todayEntries.length === 0 && !showAddForm && <p>{uk.today.empty}</p>}
+      {entries !== null && todayEntries.length === 0 && <p>{uk.today.empty}</p>}
 
-      {todayMeals.map((meal, i) => (
+      {todayMeals.map((meal) => (
         <div key={meal.mealId} className="today-meal-group">
-          <h2>
-            {uk.today.mealHeading(i + 1, meal.mealType)} <span className="entry-time">· {formatTime(meal.timestamp)}</span>
-          </h2>
-          <MealItemsList
-            meal={meal}
-            siblingMeals={todayMeals.filter((m) => m.mealId !== meal.mealId)}
-            onEntryChanged={refreshEntries}
+          <MealHeader
+            title={meal.mealType}
+            time={formatTime(meal.timestamp)}
+            mealType={meal.mealType}
+            onEdit={() => setEditor({ meal })}
           />
+          <MealItemsList meal={meal} settings={settings} />
         </div>
       ))}
-
-      <h2 className="history-title">{uk.today.historyTitle}</h2>
-      {historyGroups.length === 0 && <p>{uk.today.historyEmpty}</p>}
-      {historyGroups.map((group) => {
-        const dayMeals = groupIntoMeals(group.entries).sort((a, b) => (a.timestamp < b.timestamp ? -1 : 1));
-        return (
-          <div key={group.dateKey} className="today-meal-group">
-            <h3>{formatDayMonthFromKey(group.dateKey)}</h3>
-            {dayMeals.map((meal) => (
-              <div key={meal.mealId} className="history-meal">
-                <p className="history-meal-label">
-                  <strong>{meal.mealType}</strong> · {formatTime(meal.timestamp)}
-                </p>
-                <MealItemsList
-                  meal={meal}
-                  siblingMeals={dayMeals.filter((m) => m.mealId !== meal.mealId)}
-                  onEntryChanged={refreshEntries}
-                />
-              </div>
-            ))}
-          </div>
-        );
-      })}
     </section>
   );
 }

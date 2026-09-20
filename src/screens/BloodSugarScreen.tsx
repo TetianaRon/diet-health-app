@@ -5,6 +5,7 @@ import { checkBloodSugarRange } from "../lib/health";
 import { formatDateTime } from "../lib/dateFormat";
 import { getSettings, type Settings } from "../lib/settings";
 import { listLogEntries, mealsBeforeTimestamp, type DailyLogEntry } from "../lib/dailyLog";
+import Breadcrumb from "./Breadcrumb";
 import {
   BLOOD_SUGAR_CONTEXTS,
   addBloodSugarEntry,
@@ -143,6 +144,25 @@ export default function BloodSugarScreen() {
     );
   }
 
+  // The add form is its own screen with a breadcrumb back at the top, like the other editors.
+  if (showAddForm) {
+    return (
+      <section className="screen">
+        <Breadcrumb
+          trail={[{ label: uk.bloodSugar.title, onClick: () => setShowAddForm(false) }]}
+          current={uk.bloodSugar.addButton}
+        />
+        <AddBloodSugarForm
+          onSaved={(entry) => {
+            setEntries((prev) => [...(prev ?? []), entry]);
+            setShowAddForm(false);
+          }}
+          onCancel={() => setShowAddForm(false)}
+        />
+      </section>
+    );
+  }
+
   const latest = entries ? latestBloodSugarEntry(entries) : null;
   const sortedEntries = [...(entries ?? [])].sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1));
 
@@ -165,22 +185,12 @@ export default function BloodSugarScreen() {
         </p>
       )}
 
-      {showAddForm ? (
-        <AddBloodSugarForm
-          onSaved={(entry) => {
-            setEntries((prev) => [...(prev ?? []), entry]);
-            setShowAddForm(false);
-          }}
-          onCancel={() => setShowAddForm(false)}
-        />
-      ) : (
-        <button type="button" onClick={() => setShowAddForm(true)}>
-          {uk.bloodSugar.addButton}
-        </button>
-      )}
+      <button type="button" onClick={() => setShowAddForm(true)}>
+        {uk.bloodSugar.addButton}
+      </button>
 
       {entries === null && !loadError && <p>{uk.bloodSugar.loading}</p>}
-      {entries !== null && entries.length === 0 && !showAddForm && <p>{uk.bloodSugar.empty}</p>}
+      {entries !== null && entries.length === 0 && <p>{uk.bloodSugar.empty}</p>}
 
       <ul className="food-list">
         {sortedEntries.map((entry, i) => {

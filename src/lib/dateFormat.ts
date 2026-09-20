@@ -3,18 +3,27 @@
 // data (see the comment in formatDateTime), which isn't ours to verify;
 // these are thin wrappers, same "IO/platform glue" convention as sheets.ts.
 
+// The app-wide 24h/12h preference (Settings.timeFormat). Module state rather
+// than a parameter so the many formatTime() call sites don't each need to
+// thread settings through; settings.ts's getSettings() keeps it current.
+let hour12 = false;
+
+export function setTimeFormat(format: "24h" | "12h"): void {
+  hour12 = format === "12h";
+}
+
 /** "10 вересня, 14:30" — day + genitive Ukrainian month name (via uk-UA ICU data, not a hand-rolled name list) + time. */
 export function formatDateTime(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleString("uk-UA", { day: "2-digit", month: "long", hour: "2-digit", minute: "2-digit" });
+  return d.toLocaleString("uk-UA", { day: "2-digit", month: "long", hour: "2-digit", minute: "2-digit", hour12 });
 }
 
 /** "14:30" — time only, for listing several same-day items without repeating the date. */
 export function formatTime(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleString("uk-UA", { hour: "2-digit", minute: "2-digit" });
+  return d.toLocaleString("uk-UA", { hour: "2-digit", minute: "2-digit", hour12 });
 }
 
 /**

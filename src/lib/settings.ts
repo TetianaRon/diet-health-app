@@ -3,12 +3,25 @@
 // (append-only), Settings rows already exist from the starter template, so
 // updates target each key's existing row rather than appending.
 import { batchUpdateRanges, readRange } from "./sheets";
+import { setTimeFormat } from "./dateFormat";
+
+// How times are shown and picked. Ukrainian UI defaults to 24h; 12h (AM/PM) is
+// an opt-in — see TimeInput.tsx and formatTime in dateFormat.ts.
+export type TimeFormat = "24h" | "12h";
 
 export interface Settings {
   dailyCarbsTarget: number;
   fatPerMealLimit: number;
   dailyCaloriesTarget: number;
   mealsPerDay: number;
+  // How many of mealsPerDay are snacks (the rest are full meals) — only used
+  // by the meal-size recommendation (src/lib/mealRecommendation.ts), which
+  // weighs a snack lighter than a full meal when splitting the day's limits.
+  snacksPerDay: number;
+  // What percent of each daily limit (calories, carbs, GL) one FULL meal gets;
+  // a snack's share is derived from what's left — see mealShares in
+  // src/lib/mealRecommendation.ts, which also explains the default.
+  fullMealSharePercent: number;
   maxGapHours: number;
   bloodSugarMin: number;
   bloodSugarMax: number;
@@ -16,6 +29,7 @@ export interface Settings {
   // to suppress notifications during sleep — not a numeric target like the fields above.
   wakeTime: string;
   sleepTime: string;
+  timeFormat: TimeFormat;
   // Glycemic Load has an actual sourced daily target, unlike fat/sugars/
   // protein/sodium below (only fatPerMealLimit, a *per-meal* limit tied to
   // the no-gallbladder constraint, already covered above) — so this is the
@@ -46,6 +60,8 @@ const NUMERIC_FIELDS = [
   "fatPerMealLimit",
   "dailyCaloriesTarget",
   "mealsPerDay",
+  "snacksPerDay",
+  "fullMealSharePercent",
   "maxGapHours",
   "bloodSugarMin",
   "bloodSugarMax",
@@ -76,11 +92,14 @@ export const SETTINGS_KEYS: Record<keyof Settings, string> = {
   fatPerMealLimit: "FatPerMealLimit",
   dailyCaloriesTarget: "DailyCaloriesTarget",
   mealsPerDay: "MealsPerDay",
+  snacksPerDay: "SnacksPerDay",
+  fullMealSharePercent: "FullMealSharePercent",
   maxGapHours: "MaxGapHours",
   bloodSugarMin: "BloodSugarMin",
   bloodSugarMax: "BloodSugarMax",
   wakeTime: "WakeTime",
   sleepTime: "SleepTime",
+  timeFormat: "TimeFormat",
   dailyGlycemicLoadTarget: "DailyGlycemicLoadTarget",
   showCarbsProgress: "ShowCarbsProgress",
   showCaloriesProgress: "ShowCaloriesProgress",
@@ -101,11 +120,14 @@ export const DEFAULT_SETTINGS: Settings = {
   fatPerMealLimit: 18,
   dailyCaloriesTarget: 1800,
   mealsPerDay: 6,
+  snacksPerDay: 3, // 3 main + 3 snacks — the split from mom's interview (docs/requirements-open-questions.md)
+  fullMealSharePercent: 25, // a starting point, not a citation — see mealRecommendation.ts
   maxGapHours: 3,
   bloodSugarMin: 4.0,
   bloodSugarMax: 7.8,
   wakeTime: "06:30",
   sleepTime: "00:00",
+  timeFormat: "24h",
   dailyGlycemicLoadTarget: 80,
   showCarbsProgress: false,
   showCaloriesProgress: true,
@@ -138,6 +160,8 @@ export function parseSettingsRows(rows: unknown[][]): Settings {
     const raw = byKey.get(SETTINGS_KEYS[field]);
     if (raw !== undefined) result[field] = toBoolean(raw);
   }
+  // Anything other than an explicit "12h" (blank, a typo) stays the 24h default.
+  if (byKey.get(SETTINGS_KEYS.timeFormat)?.trim().toLowerCase() === "12h") result.timeFormat = "12h";
   return result;
 }
 
@@ -183,12 +207,17 @@ export function settingsToRows(settings: Settings): unknown[][] {
 }
 
 export async function getSettings(): Promise<Settings> {
-  const rows = await readRange("Settings", "A2:B20");
-  return parseSettingsRows(rows);
+  const rows = await readRange("Settings", "A2:B60");
+  const settings = parseSettingsRows(rows);
+  // Time display is app-wide, but formatTime() is called from screens that
+  // never read Settings — so every settings read also refreshes the shared
+  // preference (see dateFormat.ts).
+  setTimeFormat(settings.timeFormat);
+  return settings;
 }
 
 export async function updateSettings(settings: Settings): Promise<void> {
-  const rows = await readRange("Settings", "A2:B20");
+  const rows = await readRange("Settings", "A2:B60");
   const updates = computeSettingsUpdates(settings, rows);
   if (updates.length > 0) {
     await batchUpdateRanges(updates);

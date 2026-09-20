@@ -111,6 +111,7 @@ export const STARTER_DISHES: Omit<Dish, "dateAdded">[] = STARTER_DISH_SPECS.map(
     source: "starter",
     glycemicFlag: "none",
     giVerified: false,
+    unknownFields: [],
     ...nutrition,
   };
 });

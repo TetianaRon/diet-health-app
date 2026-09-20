@@ -29,6 +29,32 @@ export interface IngredientNutrition {
   sodiumMg: number;
 }
 
+export type NutritionKey = keyof IngredientNutrition;
+
+// Canonical order — also the order unknown fields are serialized in.
+export const NUTRITION_KEYS: readonly NutritionKey[] = [
+  "carbsG",
+  "gi",
+  "fiberG",
+  "sugarsG",
+  "proteinG",
+  "fatG",
+  "caloriesKcal",
+  "sodiumMg",
+];
+
+/**
+ * Parses an UnknownFields cell (comma-separated field names) into a typed
+ * list, dropping anything unrecognized. A blank cell (every row saved before
+ * this column existed) is "nothing unknown" — the additive-column default.
+ */
+export function parseUnknownNutritionFields(value: unknown): NutritionKey[] {
+  const raw = String(value ?? "").trim();
+  if (raw === "") return [];
+  const wanted = new Set(raw.split(",").map((s) => s.trim()));
+  return NUTRITION_KEYS.filter((key) => wanted.has(key));
+}
+
 export interface Dish extends IngredientNutrition {
   nameUk: string;
   nameEn: string;
@@ -42,6 +68,13 @@ export interface Dish extends IngredientNutrition {
   // even for starter dishes, since a computed carb-weighted average (see
   // computeDishNutrition) is never itself a confirmation.
   giVerified: boolean;
+  // Nutrition fields the person explicitly left blank rather than entered —
+  // stored as 0 in the sheet (a safe, writable default) but never treated as
+  // a real zero: logging this dish carries the gap into the meal entry (see
+  // buildLogEntry) so totals exclude it instead of silently understating.
+  // Also set automatically by computeDishUnknownFields when an ingredient
+  // it's built from has an unknown value.
+  unknownFields: NutritionKey[];
 }
 
 function round2(value: number): number {
@@ -112,6 +145,30 @@ export function computeDishNutrition(
 }
 
 /**
+ * Which of a dish's fields can't be trusted because an ingredient it's built
+ * from has that field unknown (see Ingredient.unknownFields) — the dish
+ * total for such a field would silently omit that ingredient's real
+ * contribution, so it's marked unknown instead. GI is weighted by carbs, so
+ * it's unknown whenever a contributing ingredient's GI is unknown (unless
+ * that ingredient has no carbs to weight by) or its carbs are unknown.
+ */
+export function computeDishUnknownFields(
+  ingredients: DishIngredientRef[],
+  lookupIngredient: (nameUk: string) => (IngredientNutrition & { unknownFields: NutritionKey[] }) | null,
+): NutritionKey[] {
+  const unknown = new Set<NutritionKey>();
+  for (const ref of ingredients) {
+    const ingredient = lookupIngredient(ref.nameUk);
+    if (!ingredient) continue;
+    for (const key of ingredient.unknownFields) if (key !== "gi") unknown.add(key);
+    const carbsUnknown = ingredient.unknownFields.includes("carbsG");
+    const giUnknown = ingredient.unknownFields.includes("gi");
+    if (carbsUnknown || (giUnknown && ingredient.carbsG > 0)) unknown.add("gi");
+  }
+  return NUTRITION_KEYS.filter((key) => unknown.has(key));
+}
+
+/**
  * Derived, non-persisted hint: does this dish contain an ingredient
  * currently flagged watch/avoid? Computed live from the dish's stored
  * ingredient references cross-referenced against current ingredient flags —
@@ -179,12 +236,13 @@ export const DISHES_HEADERS = [
   "DateAdded",
   "GlycemicFlag",
   "GiVerified",
+  "UnknownFields",
 ] as const;
 const DEFAULT_COLUMN_INDEX = buildColumnIndex(DISHES_HEADERS);
 
-const DISHES_RANGE = "A1:P1000"; // includes the header row (row 1), needed to resolve columns by name
-const DISHES_APPEND_RANGE = "A:P";
-const DISHES_WIDTH = "P";
+const DISHES_RANGE = "A1:Q1000"; // includes the header row (row 1), needed to resolve columns by name
+const DISHES_APPEND_RANGE = "A:Q";
+const DISHES_WIDTH = "Q";
 
 export function rowToDish(row: unknown[], columnIndex: ColumnIndex = DEFAULT_COLUMN_INDEX): Dish {
   return {
@@ -204,6 +262,7 @@ export function rowToDish(row: unknown[], columnIndex: ColumnIndex = DEFAULT_COL
     dateAdded: String(cell(row, columnIndex, "DateAdded") ?? ""),
     glycemicFlag: toGlycemicFlag(cell(row, columnIndex, "GlycemicFlag")),
     giVerified: toBoolean(cell(row, columnIndex, "GiVerified")),
+    unknownFields: parseUnknownNutritionFields(cell(row, columnIndex, "UnknownFields")),
   };
 }
 
@@ -226,6 +285,7 @@ export function dishToRow(dish: Dish, columnIndex: ColumnIndex = DEFAULT_COLUMN_
       DateAdded: dish.dateAdded,
       GlycemicFlag: dish.glycemicFlag,
       GiVerified: dish.giVerified,
+      UnknownFields: dish.unknownFields.join(","),
     },
     columnIndex,
   );

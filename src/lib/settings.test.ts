@@ -85,7 +85,7 @@ describe("computeSettingsUpdates", () => {
 describe("settingsToRows", () => {
   it("emits one Key/Value row per setting, round-tripping cleanly through parseSettingsRows", () => {
     const rows = settingsToRows(DEFAULT_SETTINGS);
-    expect(rows).toHaveLength(17);
+    expect(rows).toHaveLength(20);
     expect(rows).toContainEqual(["DailyCarbsTarget", 140]);
     expect(parseSettingsRows(rows)).toEqual(DEFAULT_SETTINGS);
   });
@@ -94,5 +94,18 @@ describe("settingsToRows", () => {
     const rows = settingsToRows(DEFAULT_SETTINGS);
     expect(rows).toContainEqual(["ShowCarbsProgress", "FALSE"]);
     expect(rows).toContainEqual(["ShowCaloriesProgress", "TRUE"]);
+  });
+});
+
+describe("timeFormat", () => {
+  it("defaults to 24h", () => {
+    expect(DEFAULT_SETTINGS.timeFormat).toBe("24h");
+    expect(parseSettingsRows([]).timeFormat).toBe("24h");
+  });
+
+  it("reads 12h, case-insensitively, and treats anything else as 24h", () => {
+    expect(parseSettingsRows([["TimeFormat", "12h"]]).timeFormat).toBe("12h");
+    expect(parseSettingsRows([["TimeFormat", " 12H "]]).timeFormat).toBe("12h");
+    expect(parseSettingsRows([["TimeFormat", "am/pm"]]).timeFormat).toBe("24h");
   });
 });

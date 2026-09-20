@@ -80,6 +80,7 @@ describe("mergeWithStarterDishes", () => {
       dateAdded: "2026-08-13",
       glycemicFlag: "none",
       giVerified: false,
+      unknownFields: [],
     };
     const merged = mergeWithStarterDishes([custom]);
     expect(merged).toHaveLength(STARTER_DISHES.length + 1);

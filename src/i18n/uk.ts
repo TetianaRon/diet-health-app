@@ -39,16 +39,12 @@ export const uk = {
     fatWarning: (mealType: string, overByGrams: number) =>
       `${mealType}: жиру забагато на ${overByGrams.toFixed(1)} г понад ліміт на прийом їжі.`,
     addButton: "Додати прийом їжі",
-    addAnotherHint: "Продукт додано. Можете додати ще один, або натиснути «Зберегти запис».",
-    doneButton: "Зберегти запис",
     empty: "Сьогодні ще немає записів.",
-    historyTitle: "Останні 3 дні",
-    historyEmpty: "За останні 3 дні записів немає.",
+    mealsLeft: (left: number, planned: number) => `Залишилось прийомів їжі: ${left}/${planned}`,
     latestBloodSugar: (valueMmolL: number, contextLabel: string) => `${valueMmolL} ммоль/л (${contextLabel})`,
-    // carbsText/caloriesText are pre-formatted (see carbsValue/caloriesValue
-    // below or unknownValueLabel) rather than raw numbers, so a custom
-    // entry's unknown field can show "невідомо" instead of a misleading "0".
-    entryMeta: (portionGrams: number, carbsText: string, caloriesText: string) => `${portionGrams} г — ${carbsText}, ${caloriesText}`,
+    // A dish's line inside a meal on Today — weight only; the meal's own
+    // line carries the full stats (see mealStat below).
+    dishWeight: (portionGrams: number) => `${portionGrams} г`,
     carbsValue: (g: number) => `${g} г вуглеводів`,
     caloriesValue: (kcal: number) => `${kcal} ккал`,
     unknownValueLabel: "невідомо",
@@ -57,31 +53,81 @@ export const uk = {
     // these are purely "something here has a gap," not a correctness fix.
     mealHasUnknownSuffix: "(є позиції з невідомими значеннями)",
     unknownValuesNotice: (count: number) => `Позицій з невідомими значеннями: ${count} (не враховано в підсумках вище).`,
-    // Per-entry edit/move/delete actions — the first time this app lets
-    // someone change or remove an already-saved log row (see the
-    // 2026-09-11 build-log entry: originally a deliberate gap).
-    editEntryButton: "Редагувати",
-    moveEntryButton: "Перенести",
-    deleteEntryButton: "Видалити",
-    deleteConfirm: (itemName: string) => `Видалити запис «${itemName}»? Цю дію не можна скасувати.`,
-    deleteConfirmButton: "Так, видалити",
-    editForm: {
-      title: "Редагувати запис",
-      saveButton: "Зберегти зміни",
+    // One edit button per meal (opens the meal editor) — replaced the old
+    // per-dish Редагувати/Перенести/Видалити row, which was too crowded.
+    editMealButton: "Редагувати",
+    editMealLabel: (mealType: string) => `Редагувати прийом їжі: ${mealType}`,
+    // The same stats the daily status shows (Settings' show* toggles), plus
+    // the meal's weight — see mealStatItems in lib/mealStats.ts.
+    mealStat: {
+      weight: (g: number) => `Вага: ${g} г`,
+      carbs: (g: number) => `Вуглеводи: ${g} г`,
+      calories: (kcal: number) => `Калорії: ${kcal} ккал`,
+      gl: (gl: number) => `ГН: ${gl}`,
+      fat: (g: number) => `Жири: ${g} г`,
+      sugars: (g: number) => `Цукри: ${g} г`,
+      protein: (g: number) => `Білки: ${g} г`,
+      sodium: (mg: number) => `Натрій: ${mg} мг`,
     },
-    moveForm: {
-      title: "Перенести до іншого прийому",
-      targetLabel: "Перенести до:",
-      moveButton: "Перенести",
-      noOtherMeals: "Сьогодні немає інших прийомів їжі, до яких можна перенести цей запис.",
-      validationError: "Оберіть прийом їжі, до якого перенести запис.",
+    // Label-only forms of the mealStat entries, for a stat with no known value ("Калорії: невідомо").
+    mealStatLabel: {
+      weight: "Вага",
+      carbs: "Вуглеводи",
+      calories: "Калорії",
+      gl: "ГН",
+      fat: "Жири",
+      sugars: "Цукри",
+      protein: "Білки",
+      sodium: "Натрій",
     },
-    // "1. Сніданок" — a simple running count of today's meal occasions, so
-    // mom can tell apart e.g. her 2nd snack of the day from her 1st at a
-    // glance, without needing to read the clock time next to it.
-    mealHeading: (index: number, mealType: string) => `${index}. ${mealType}`,
-    mealTotal: (carbsG: number, caloriesKcal: number, gl: number) =>
-      `Разом за прийом: ${carbsG} г вуглеводів, ${caloriesKcal} ккал, ГН ${gl}`,
+    mealEditor: {
+      newTitle: "Новий прийом їжі",
+      editTitle: "Редагувати прийом їжі",
+      dishesTitle: "Страви в цьому прийомі",
+      noDishes: "Страв ще не додано.",
+      addDishButton: "+ Додати страву",
+      selectDishLabel: (name: string) => `Позначити «${name}»`,
+      editDishLabel: (name: string) => `Редагувати страву «${name}»`,
+      deleteSelectedButton: (count: number) => `Видалити вибрані (${count})`,
+      totalsLabel: "Разом у цьому прийомі",
+      saveButton: "Зберегти прийом їжі",
+      cancelButton: "Скасувати",
+      discardConfirm: "Відхилити внесені зміни?",
+      discardYes: "Так, відхилити",
+      discardNo: "Продовжити редагування",
+      deleteMealButton: "Видалити весь прийом їжі",
+      deleteMealConfirm: "Видалити весь цей прийом їжі разом з усіма стравами? Цю дію не можна скасувати.",
+      deleteMealYes: "Так, видалити",
+      emptyMealError: "Додайте хоча б одну страву або видаліть весь прийом їжі.",
+      timeError: "Вкажіть час прийому їжі.",
+      addDish: {
+        title: "Додати страву",
+        addButton: "Додати до прийому",
+      },
+      editDish: {
+        title: "Редагувати страву",
+        saveButton: "Зберегти страву",
+      },
+    },
+    // A plain arithmetic split of the person's own daily limits — never
+    // medical advice, and the disclaimer below must stay next to the numbers.
+    recommendation: {
+      title: "Орієнтир на цей прийом",
+      disclaimer:
+        "Це лише математичний розрахунок рівномірного розподілу ваших власних денних лімітів, а не медична порада. Питання харчування й лікування обговорюйте з лікарем.",
+      basis: (mealsSharing: number, fullPercent: number, snackPercent: number | null) =>
+        `Залишок денних лімітів поділено на заплановані прийоми, що ще залишилися (${mealsSharing}). Повний прийом — ${fullPercent} % денного ліміту (налаштування)${
+          snackPercent !== null ? `, перекус — ${Math.round(snackPercent * 10) / 10} % (розраховано з решти)` : ""
+        }.`,
+      dailyLeft: (left: number, target: number, unit: string) => `Залишиться за день: ${left} із ${target}${unit}`,
+      dailyOver: (over: number, unit: string) => `Ліміт на день перевищено на ${over}${unit}`,
+      calories: (current: number, recommended: number) => `Калорії: ${current} із ≈${recommended} ккал`,
+      carbs: (current: number, recommended: number) => `Вуглеводи: ${current} із ≈${recommended} г`,
+      gl: (current: number, recommended: number) => `ГН: ${current} із ≈${recommended}`,
+      fat: (current: number, limit: number) => `Жири: ${current} г (ліміт на прийом ${limit} г)`,
+      fewerFitNote:
+        "До вашого часу сну за звичайного інтервалу вже не встигнуть усі заплановані прийоми. Залишок не переноситься на пізніші прийоми — це лише орієнтир.",
+    },
     form: {
       mealTypeLabel: "Прийом їжі",
       timestampLabel: "Час",
@@ -91,8 +137,9 @@ export const uk = {
       notesLabel: "Примітка",
       notesPlaceholder: "необов'язково",
       noMatches: "Нічого не знайдено. Спочатку додайте продукт на вкладці «Продукти».",
-      preview: (carbsG: number, caloriesKcal: number, gl: number) =>
-        `${carbsG} г вуглеводів, ${caloriesKcal} ккал, ГЛ ${gl}`,
+      // Pre-formatted pieces (see carbsValue/caloriesValue/unknownValueLabel)
+      // so an unknown value shows "невідомо" rather than a misleading 0.
+      preview: (carbsText: string, caloriesText: string, glText: string) => `${carbsText}, ${caloriesText}, ГЛ ${glText}`,
       saveButton: "Додати",
       validationError: "Оберіть продукт, вкажіть порцію у грамах і час прийому їжі.",
       // Custom/estimated entries — a genuinely one-off item not in the
@@ -139,7 +186,7 @@ export const uk = {
       nameUkLabel: "Назва (укр.)",
       nameEnLabel: "Назва (англ., необов'язково)",
       saveButton: "Зберегти зміни",
-      validationError: "Заповніть назву і всі числові поля коректними значеннями.",
+      validationError: "Вкажіть назву. Числові поля можна залишити порожніми, але вписане має бути числом не менше 0.",
     },
     glycemicFlag: {
       none: "Без позначки",
@@ -167,7 +214,11 @@ export const uk = {
         "Це буде назва продукту у вашому списку. Якщо ви шукали загальну назву (наприклад «квасоля») і обрали конкретний варіант, уточніть назву тут — так кілька варіантів не переплутаються між собою.",
       saveButton: "Зберегти",
       notFound: "Не знайдено — введіть дані вручну.",
-      validationError: "Заповніть назву для збереження і всі числові поля коректними значеннями.",
+      validationError:
+        "Вкажіть назву для збереження. Числові поля можна залишити порожніми, але вписане має бути числом не менше 0.",
+      unknownHint:
+        "Невідомі значення (наприклад, ГІ) можна залишити порожніми — вони збережуться як «невідомо» і не враховуватимуться в підсумках.",
+      unknownPlaceholder: "невідомо",
       duplicateNameWarning: (name: string) =>
         `Продукт «${name}» вже є у вашому списку. Зберегти однаково? Існуючий запис буде замінено новими даними.`,
       confirmOverwriteButton: "Так, замінити",
@@ -195,7 +246,8 @@ export const uk = {
     noResults: "Нічого не знайдено.",
     editLabel: "Редагувати",
     composeLinkLabel: "Створити власний рецепт з кількох продуктів",
-    backToStarterLabel: "← Назад до готових страв",
+    editTitle: "Редагувати страву",
+    customRecipeCrumb: "Власний рецепт",
     containsFlaggedIngredientHint: "△ Містить продукт із позначкою — можливо, варто перевірити склад",
     approximateGiNote:
       "≈ ГІ страви — приблизний розрахунок за інгредієнтами, а не лабораторний вимір. Для страв, де все готується разом (суп, рагу), реальний ГІ може відрізнятися — спосіб приготування та поєднання продуктів впливають на нього, а це неможливо точно порахувати.",
@@ -218,6 +270,8 @@ export const uk = {
       removeIngredientButton: "Прибрати",
       yieldLabel: "Вага готової страви (г)",
       yieldHint: "Загальна вага після приготування — вода додає вагу, але не калорії.",
+      unknownFromIngredients: (fields: string) =>
+        `Деякі інгредієнти мають невідомі значення (${fields}) — для страви вони теж збережуться як невідомі.`,
       unresolvedIngredient: "Такого продукту немає в базі — спочатку додайте його на вкладці «Продукти».",
       // giVerifiedMarker: "" once she's checked "Я перевірив(ла)...", "≈" until then.
       preview: (carbsG: number, caloriesKcal: number, gi: number, giVerifiedMarker: string) =>
@@ -268,6 +322,16 @@ export const uk = {
     saveButton: "Зберегти",
     saved: "Збережено!",
     validationError: "Заповніть усі поля коректними числовими значеннями.",
+    timeFormatOptions: { "24h": "24 години (14:30)", "12h": "12 годин (2:30 PM)" },
+    fullMealShareError:
+      "Частка повного прийому має бути більше 0, і разом з усіма повними прийомами не перевищувати 100 % — інакше на перекуси нічого не лишається.",
+    shareSummary: {
+      full: (percent: number, kcal: number | null) =>
+        `Повний прийом: ${percent} % денного ліміту${kcal !== null ? ` (≈${kcal} ккал)` : ""}.`,
+      snack: (percent: number, kcal: number | null) =>
+        `Перекус (розраховується з решти): ${percent} %${kcal !== null ? ` (≈${kcal} ккал)` : ""}.`,
+    },
+    snacksValidationError: "Кількість перекусів має бути від 0 до кількості прийомів їжі на день.",
     privacyPolicyLink: "Політика конфіденційності",
     account: {
       title: "Обліковий запис Google",
@@ -321,11 +385,14 @@ export const uk = {
       fatPerMealLimit: "Ліміт жиру на прийом їжі (г)",
       dailyCaloriesTarget: "Денна норма калорій (ккал)",
       mealsPerDay: "Прийомів їжі на день",
+      snacksPerDay: "З них перекусів",
+      fullMealSharePercent: "Частка денного ліміту на повний прийом (%)",
       maxGapHours: "Макс. проміжок між прийомами їжі (год)",
       bloodSugarMin: "Мінімальний цукор (ммоль/л)",
       bloodSugarMax: "Максимальний цукор (ммоль/л)",
       wakeTime: "Час пробудження",
       sleepTime: "Час сну",
+      timeFormat: "Формат часу",
       dailyGlycemicLoadTarget: "Денна норма глікемічного навантаження",
       showCarbsProgress: "Показувати вуглеводи на екрані «Сьогодні»",
       showCaloriesProgress: "Показувати калорії на екрані «Сьогодні»",
@@ -335,6 +402,13 @@ export const uk = {
       showProteinTotal: "Показувати денну суму білків на екрані «Сьогодні»",
       showSodiumTotal: "Показувати денну суму натрію на екрані «Сьогодні»",
     },
+  },
+  breadcrumb: { label: "Навігація" },
+  timeInput: {
+    hour: "Година",
+    minute: "Хвилини",
+    period: "До/після полудня",
+    date: "Дата",
   },
   reminders: {
     notificationTitle: "Трекер харчування",

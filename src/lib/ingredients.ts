@@ -7,6 +7,7 @@ import { batchUpdateRanges, readRange, writeRange } from "./sheets";
 import { buildColumnIndex, buildRow, cell, columnLetter, readColumnIndex, type ColumnIndex } from "./sheetRow";
 import { STARTER_FOODS } from "../data/starter-foods";
 import { toGlycemicFlag, type GlycemicFlag } from "./glycemicFlag";
+import { parseUnknownNutritionFields, type NutritionKey } from "./dishes";
 
 export type IngredientSource = "starter" | "usda" | "manual";
 
@@ -32,6 +33,12 @@ export interface Ingredient {
   // the 2026-09-10 build-log entry for why "we researched it" still isn't
   // the same as "a person confirmed it."
   giVerified: boolean;
+  // Nutrition fields left blank on purpose ("I don't know / don't care") —
+  // stored as 0 in the sheet but never treated as a real zero downstream:
+  // logging this ingredient carries the gap into the meal entry, and a dish
+  // built from it inherits it (see computeDishUnknownFields). Additive
+  // UnknownFields column; a blank cell means nothing is unknown.
+  unknownFields: NutritionKey[];
 }
 
 // Canonical column order — what a brand-new sheet gets initialized with (see
@@ -55,12 +62,13 @@ export const INGREDIENTS_HEADERS = [
   "Favorite",
   "GlycemicFlag",
   "GiVerified",
+  "UnknownFields",
 ] as const;
 const DEFAULT_COLUMN_INDEX = buildColumnIndex(INGREDIENTS_HEADERS);
 
-const INGREDIENTS_RANGE = "A1:O1000"; // includes the header row (row 1), needed to resolve columns by name
-const INGREDIENTS_APPEND_RANGE = "A:O";
-const INGREDIENTS_WIDTH = "O";
+const INGREDIENTS_RANGE = "A1:P1000"; // includes the header row (row 1), needed to resolve columns by name
+const INGREDIENTS_APPEND_RANGE = "A:P";
+const INGREDIENTS_WIDTH = "P";
 
 function toNumber(value: unknown): number {
   const n = Number(value);
@@ -93,6 +101,7 @@ export function rowToIngredient(row: unknown[], columnIndex: ColumnIndex = DEFAU
     favorite: toBoolean(cell(row, columnIndex, "Favorite")),
     glycemicFlag: toGlycemicFlag(cell(row, columnIndex, "GlycemicFlag")),
     giVerified: toBoolean(cell(row, columnIndex, "GiVerified")),
+    unknownFields: parseUnknownNutritionFields(cell(row, columnIndex, "UnknownFields")),
   };
 }
 
@@ -115,6 +124,7 @@ export function ingredientToRow(ingredient: Ingredient, columnIndex: ColumnIndex
       Favorite: ingredient.favorite,
       GlycemicFlag: ingredient.glycemicFlag,
       GiVerified: ingredient.giVerified,
+      UnknownFields: ingredient.unknownFields.join(","),
     },
     columnIndex,
   );
@@ -126,7 +136,7 @@ export function sortFavoritesFirst<T extends { favorite: boolean }>(items: T[]):
 }
 
 function starterFoodToIngredient(food: (typeof STARTER_FOODS)[number]): Ingredient {
-  return { ...food, source: "starter", dateAdded: "", favorite: false, glycemicFlag: "none", giVerified: false };
+  return { ...food, source: "starter", dateAdded: "", favorite: false, glycemicFlag: "none", giVerified: false, unknownFields: [] };
 }
 
 /**

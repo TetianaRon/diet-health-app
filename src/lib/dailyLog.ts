@@ -4,10 +4,10 @@
 // (a later edit to the Ingredients/Dishes bundle shouldn't retroactively
 // change what was actually eaten) — or a custom/estimated entry (restaurant
 // food, etc.) with some values entered directly and possibly left unknown.
-import { batchUpdateRanges, clearRange, readRange, writeRange } from "./sheets";
-import { buildColumnIndex, buildRow, cell, columnLetter, readColumnIndex, type ColumnIndex } from "./sheetRow";
+import { batchUpdateRanges, readRange } from "./sheets";
+import { buildColumnIndex, buildRow, cell, columnLetter, type ColumnIndex } from "./sheetRow";
 import { calcGlycemicLoad } from "./health";
-import type { IngredientNutrition } from "./dishes";
+import type { IngredientNutrition, NutritionKey } from "./dishes";
 
 export const MEAL_TYPES = ["Сніданок", "Обід", "Вечеря", "Перекус"] as const;
 export type MealType = (typeof MEAL_TYPES)[number];
@@ -31,8 +31,9 @@ export interface DailyLogEntry extends IngredientNutrition {
   mealId: string;
   // Which of this entry's own numeric fields are estimates the person
   // explicitly didn't know, rather than a real (even if zero) value — set
-  // by buildCustomLogEntry for a custom/restaurant entry, always empty for
-  // a database-picked item (buildLogEntry). The field itself still stores 0
+  // by buildCustomLogEntry for a custom/restaurant entry, or inherited by
+  // buildLogEntry from a database item that itself has unknown values
+  // (Ingredient/Dish.unknownFields). The field itself still stores 0
   // for an unknown value (writable to Sheets, safe default), but totals
   // computations (sumKnownField, groupIntoMeals) exclude it from sums
   // rather than silently letting it read as "definitely zero" — see the
@@ -68,8 +69,6 @@ export const DAILY_LOG_HEADERS = [
 const DEFAULT_COLUMN_INDEX = buildColumnIndex(DAILY_LOG_HEADERS);
 
 const LOG_RANGE = "A1:P5000"; // includes the header row (row 1), needed to resolve columns by name
-const LOG_APPEND_RANGE = "A:P";
-const LOG_WIDTH = "P";
 
 function round2(value: number): number {
   return Math.round(value * 100) / 100;
@@ -133,8 +132,11 @@ export function computePortionNutrition(per100g: IngredientNutrition, portionGra
 
 /**
  * Builds a full log entry (including GL) from an item's per-100g nutrition
- * and a logged portion. `mealId` ties this item to whichever other items
- * were logged in the same sitting (see groupIntoMeals) — callers adding
+ * and a logged portion. `itemUnknownFields` are the picked Ingredient/Dish's
+ * own unknown fields (see Ingredient.unknownFields) — carried into the entry
+ * so its totals exclude them rather than reading the stored 0 as real; GL is
+ * additionally unknown whenever GI or carbs is, same rule as a custom entry.
+ * `mealId` ties this item to whichever other items were logged in the same sitting (see groupIntoMeals) — callers adding
  * several items to one meal should generate it once and reuse it across
  * every item in that meal, not per-item.
  */
@@ -146,18 +148,22 @@ export function buildLogEntry(
   notes: string,
   mealId: string,
   timestamp: string = new Date().toISOString(),
+  itemUnknownFields: NutritionKey[] = [],
 ): DailyLogEntry {
   const portion = computePortionNutrition(per100g, portionGrams);
+  const unknownFields: NutritionField[] = [...itemUnknownFields];
+  const glUnknown = itemUnknownFields.includes("gi") || itemUnknownFields.includes("carbsG");
+  if (glUnknown) unknownFields.push("gl");
   return {
     timestamp,
     mealType,
     itemName,
     portionGrams,
     ...portion,
-    gl: round2(calcGlycemicLoad(portion.gi, portion.carbsG)),
+    gl: glUnknown ? 0 : round2(calcGlycemicLoad(portion.gi, portion.carbsG)),
     notes,
     mealId,
-    unknownFields: [], // a database Ingredient/Dish pick never has an unknown value
+    unknownFields,
   };
 }
 
@@ -267,6 +273,9 @@ export interface MealGroup {
   timestamp: string; // earliest item's timestamp in the meal
   entries: DailyLogEntry[]; // chronological (oldest item first)
   totals: IngredientNutrition & { gl: number };
+  // Sum of the items' portions — the portion is always a real, known number
+  // (unlike the nutrition fields), so this needs no unknown-handling.
+  totalGrams: number;
   // True if any item in this meal has an unknown field — a UI caveat hook,
   // not per-field detail (see sumKnownField for the actual per-field
   // exclusion that keeps `totals` correct regardless of this flag).
@@ -308,6 +317,7 @@ export function groupIntoMeals(entries: DailyLogEntry[]): MealGroup[] {
       timestamp: sorted[0].timestamp,
       entries: sorted,
       totals,
+      totalGrams: round2(sorted.reduce((sum, e) => sum + e.portionGrams, 0)),
       hasUnknownValues: sorted.some((e) => e.unknownFields.length > 0),
     };
   });
@@ -336,8 +346,9 @@ export interface DayGroup {
  * Groups entries from the `days` calendar days immediately before
  * `referenceDate` (today itself is deliberately excluded — the Today screen
  * already shows it separately), most-recent-day-first, each day's entries
- * most-recent-first. Powers Today's lightweight "last 3 days" history —
- * a stopgap ahead of a proper History tab, per docs/build-log.md.
+ * most-recent-first. Not used by the app at the moment: Today's "last 3
+ * days" list was removed on 2026-09-20 — kept (and tested) for the planned
+ * History screen.
  */
 export function recentDayGroups(entries: DailyLogEntry[], referenceDate: Date, days: number): DayGroup[] {
   const todayKey = localDateKey(referenceDate);
@@ -425,73 +436,91 @@ export async function listLogEntries(): Promise<DailyLogEntry[]> {
   return dataRows.filter((row) => row.length > 0).map((row) => rowToLogEntry(row, columnIndex));
 }
 
-export async function addLogEntry(entry: DailyLogEntry): Promise<void> {
-  const columnIndex = await readColumnIndex("DailyLog", LOG_WIDTH);
-  await writeRange("DailyLog", LOG_APPEND_RANGE, [logEntryToRow(entry, columnIndex)]);
+// --- Whole-meal save/delete (the meal editor) ---
+//
+// The meal editor works on a whole meal at a time (add dishes, edit dishes,
+// remove dishes, change type/time) and applies everything on Save, so this
+// computes ONE batch of row writes from "what the meal was" vs "what it is
+// now" instead of a request per dish:
+//   - a draft dish that came from an existing row overwrites that row in place;
+//   - an existing row no dish claims any more is blanked — a blank row reads
+//     as never there, since every listX() filters `row.length > 0`, and it's
+//     simpler and safer than shifting the rows below it up;
+//   - a brand-new dish takes a freed row first, else goes after the last row.
+// All of it is a single values:batchUpdate, so a failure can't leave the meal
+// half-saved (an append + separate update would).
+
+export interface MealDraftItem {
+  entry: DailyLogEntry;
+  /** The saved row this dish came from, exactly as it was loaded — null for a dish added in this session. */
+  original: DailyLogEntry | null;
 }
 
-// Finding a specific row to edit/delete/move: DailyLog has no surrogate row
-// ID, so — same content-based-matching convention as
-// findIngredientRow/findDishRow — a row is identified by its (timestamp,
-// itemName, mealId) triple, which is unique enough in practice (items in
-// one meal get distinct timestamps as they're added one at a time).
-async function findLogEntryRow(
-  timestamp: string,
-  itemName: string,
-  mealId: string,
-): Promise<{ rowNumber: number; columnIndex: ColumnIndex }> {
-  const { columnIndex, dataRows } = await readLogSheet();
-  const rowIndex = dataRows.findIndex((row) => {
-    const rowTimestamp = String(cell(row, columnIndex, "Timestamp") ?? "");
-    return (
-      rowTimestamp === timestamp &&
-      String(cell(row, columnIndex, "ItemName") ?? "") === itemName &&
-      toMealId(cell(row, columnIndex, "MealId"), rowTimestamp) === mealId
+function sameLogRow(a: DailyLogEntry, b: DailyLogEntry): boolean {
+  return a.timestamp === b.timestamp && a.itemName === b.itemName && a.mealId === b.mealId;
+}
+
+/**
+ * Pure planner behind saveMeal — see the block comment above. `dataRows` are
+ * the sheet's rows below the header, in order (row N of the sheet is
+ * dataRows[N - 2]). Throws if an original can't be found (changed on another
+ * device since it was loaded) rather than guessing at a different row.
+ */
+export function planMealSave(
+  originals: DailyLogEntry[],
+  drafts: MealDraftItem[],
+  dataRows: unknown[][],
+  columnIndex: ColumnIndex,
+): { range: string; values: unknown[][] }[] {
+  const lastCol = columnLetter(Math.max(...columnIndex.values()));
+  const width = Math.max(...columnIndex.values()) + 1;
+  const rangeFor = (rowNumber: number) => `DailyLog!A${rowNumber}:${lastCol}${rowNumber}`;
+
+  const claimed = new Set<number>();
+  const rowNumberFor = new Map<DailyLogEntry, number>();
+  for (const original of originals) {
+    const rowIndex = dataRows.findIndex(
+      (row, i) => !claimed.has(i) && sameLogRow(rowToLogEntry(row, columnIndex), original),
     );
-  });
-  if (rowIndex === -1) {
-    throw new Error(`Log entry "${itemName}" at ${timestamp} not found`);
+    if (rowIndex === -1) throw new Error(`Log entry "${original.itemName}" at ${original.timestamp} not found`);
+    claimed.add(rowIndex);
+    rowNumberFor.set(original, rowIndex + 2); // +2: 1-based rows, plus the header row
   }
-  return { rowNumber: rowIndex + 2, columnIndex }; // +2: 1-based rows, plus the header row
+
+  const updates: { range: string; values: unknown[][] }[] = [];
+  const keptOriginals = new Set(drafts.map((d) => d.original).filter((o): o is DailyLogEntry => o !== null));
+  const freedRows: number[] = [];
+  for (const original of originals) {
+    if (!keptOriginals.has(original)) {
+      const rowNumber = rowNumberFor.get(original)!;
+      freedRows.push(rowNumber);
+    }
+  }
+
+  let nextFreshRow = dataRows.length + 2;
+  for (const draft of drafts) {
+    const row = logEntryToRow(draft.entry, columnIndex);
+    if (draft.original) {
+      updates.push({ range: rangeFor(rowNumberFor.get(draft.original)!), values: [row] });
+    } else {
+      const rowNumber = freedRows.shift() ?? nextFreshRow++;
+      updates.push({ range: rangeFor(rowNumber), values: [row] });
+    }
+  }
+  for (const rowNumber of freedRows) {
+    updates.push({ range: rangeFor(rowNumber), values: [new Array(width).fill("")] });
+  }
+  return updates;
 }
 
-/**
- * Overwrites an existing DailyLog row in place, found by its *current*
- * timestamp/itemName/mealId (i.e. before any change in `entry`) — the edit
- * flow's counterpart to addLogEntry's always-append behavior. Same
- * principle as updateIngredient/updateDish.
- */
-export async function updateLogEntry(
-  currentTimestamp: string,
-  currentItemName: string,
-  currentMealId: string,
-  entry: DailyLogEntry,
-): Promise<void> {
-  const { rowNumber, columnIndex } = await findLogEntryRow(currentTimestamp, currentItemName, currentMealId);
-  const lastCol = columnLetter(Math.max(...columnIndex.values()));
-  await batchUpdateRanges([
-    { range: `DailyLog!A${rowNumber}:${lastCol}${rowNumber}`, values: [logEntryToRow(entry, columnIndex)] },
-  ]);
+/** Saves a whole meal in one batch — see planMealSave. `originals` is empty for a brand-new meal. */
+export async function saveMeal(originals: DailyLogEntry[], drafts: MealDraftItem[]): Promise<void> {
+  const { columnIndex, dataRows } = await readLogSheet();
+  const updates = planMealSave(originals, drafts, dataRows, columnIndex);
+  if (updates.length > 0) await batchUpdateRanges(updates);
 }
 
-/** Removes a logged entry — clears its row rather than shifting rows below it up (see clearRange in sheets.ts). Irreversible; callers should confirm with the user first. */
-export async function deleteLogEntry(timestamp: string, itemName: string, mealId: string): Promise<void> {
-  const { rowNumber, columnIndex } = await findLogEntryRow(timestamp, itemName, mealId);
-  const lastCol = columnLetter(Math.max(...columnIndex.values()));
-  await clearRange("DailyLog", `A${rowNumber}:${lastCol}${rowNumber}`);
-}
-
-/**
- * Reassigns an entry to join a different, already-existing meal occasion —
- * e.g. "this snack was actually part of the lunch 5 minutes earlier."
- * `targetMealType` should match the target meal's own mealType, since
- * groupIntoMeals derives a group's displayed mealType from its earliest
- * entry, not from every member individually.
- */
-export async function moveLogEntryToMeal(entry: DailyLogEntry, targetMealId: string, targetMealType: MealType): Promise<void> {
-  await updateLogEntry(entry.timestamp, entry.itemName, entry.mealId, {
-    ...entry,
-    mealId: targetMealId,
-    mealType: targetMealType,
-  });
+/** Deletes every row of a meal in one batch. Irreversible; callers must confirm with the user first. */
+export async function deleteMeal(originals: DailyLogEntry[]): Promise<void> {
+  await saveMeal(originals, []);
 }

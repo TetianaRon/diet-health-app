@@ -23,7 +23,9 @@ All architecture decisions and requirements live in `docs/` in this repo (migrat
 - `src/lib/ingredients.ts` — typed data-access layer over the Ingredients tab: `Ingredient` type, pure `rowToIngredient`/`ingredientToRow` mappers (unit-tested), `listIngredients()`/`addIngredient()`.
 - `src/lib/nutrition.ts` — nutrition lookups: checks `src/data/starter-foods.ts` (bundled common foods) first, falls back to USDA FoodData Central only for foods not in the bundle. `src/data/gi-table.ts` is the static Glycemic Index reference — GI is never fetched from an API, none exist for it. Claude/Anthropic is **not** part of this path (dropped 2026-08-13 due to cost — see `docs/build-log.md`); don't reintroduce a Claude-based lookup without checking that decision first.
 - `src/context/` — React context providers for cross-screen state. `AuthContext.tsx` wraps `sheets.ts`'s auth functions (`useAuth()` gives `{ signedIn, initializing, signIn, signOut }`).
-- `src/screens/` — one file per tab screen once it's more than a placeholder (started with `FoodsScreen.tsx`). Screens still in placeholder form stay inline in `App.tsx` until they get built out the same way.
+- `src/screens/` — one file per tab screen once it's more than a placeholder (started with `FoodsScreen.tsx`). Screens still in placeholder form stay inline in `App.tsx` until they get built out the same way. `MealEditorScreen.tsx` is the dedicated add/edit-a-meal screen opened from Today (see `docs/technical-spec.md` → Meal editor); `MealStatsLine.tsx` is the shared per-meal stats line.
+- `src/lib/mealStats.ts` / `src/lib/mealRecommendation.ts` — pure, unit-tested: which stats a meal shows (mirrors the daily-status toggles), and the arithmetic split of daily limits into a per-meal recommendation. The recommendation is **math on the user's own settings, never medical advice** — keep the disclaimer next to the numbers.
+- Ingredients/Dishes/log entries can carry `unknownFields` — values left blank on purpose, stored as 0 but excluded from totals (never a real zero). See `docs/technical-spec.md`.
 
 ## Your Role (Default — Development Mode)
 

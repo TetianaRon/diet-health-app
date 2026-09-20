@@ -428,27 +428,10 @@ select {
   margin: 4px 0 0;
 }
 
-.history-meal {
-  margin-top: 10px;
-}
-
-.history-meal-label {
-  font-size: 0.9rem;
-  color: #4a4a4a;
-  margin: 0 0 4px;
-}
-
 .entry-time {
   /* Same contrast fix as .food-name-en above — was 2.81:1, now 5.33:1. */
   color: #6b6b6b;
   font-size: 0.9em;
-}
-
-.history-title {
-  font-size: 1.1rem;
-  margin: 24px 0 4px;
-  padding-top: 16px;
-  border-top: 1px solid #eef1ee;
 }
 
 .blood-sugar-latest {
@@ -540,4 +523,235 @@ select {
 .meals-before-list.food-list li {
   padding: 8px 0;
   font-size: 0.9rem;
+}
+
+/* --- Meal editor (dedicated screen) and per-meal header --- */
+
+/* The tab bar is hidden while the editor is open, so its reserved bottom
+   padding isn't needed — the sticky footer below sits at the screen bottom. */
+.app-content.editor-open {
+  padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+}
+
+.button-secondary {
+  background: #ffffff;
+  color: #2f7a4f;
+}
+
+.button-danger {
+  background: #ffffff;
+  color: #b3261e;
+  border-color: #b3261e;
+}
+
+/* Overrides the generic ".food-form-actions button:last-child" outline style
+   for a confirm row whose *first* button is the destructive one. */
+.today-warning .food-form-actions button {
+  background: #ffffff;
+}
+
+.meal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.meal-header h2,
+.meal-header p {
+  margin: 0;
+}
+
+.meal-edit-button {
+  flex-shrink: 0;
+  padding: 8px 14px;
+  min-height: 44px;
+}
+
+.meal-editor .meal-editor-section {
+  font-size: 1.05rem;
+  margin: 20px 0 4px;
+}
+
+.dish-rows {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0;
+}
+
+.dish-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid #eef1ee;
+}
+
+.dish-row-check {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  margin: 0 4px;
+}
+
+.dish-row-text {
+  flex: 1;
+  min-width: 0;
+  font-size: 1rem;
+  overflow-wrap: anywhere;
+}
+
+.meal-editor-totals-label {
+  margin: 12px 0 0;
+  font-size: 0.85rem !important;
+  color: #6b6b6b !important;
+}
+
+.meal-editor-dish-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+/* Meal-level actions live in their own footer, visually apart from the
+   dish-level "add a dish" button above — so the two can't be confused. */
+.meal-editor-footer {
+  position: sticky;
+  bottom: 0;
+  margin-top: 20px;
+  padding: 12px 0 calc(8px + env(safe-area-inset-bottom, 0px));
+  background: #ffffff;
+  border-top: 1px solid #e2e6e2;
+}
+
+.meal-editor-footer .food-form-actions button {
+  flex: 1;
+}
+
+.meal-editor-delete {
+  width: 100%;
+  margin-top: 16px;
+}
+
+.recommendation-box {
+  margin: 16px 0 0;
+  padding: 12px;
+  background: #eef5f0;
+  border-radius: 8px;
+}
+
+.recommendation-box h2 {
+  font-size: 1rem;
+  margin: 0 0 6px;
+  color: #2f7a4f;
+}
+
+.recommendation-box ul {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 0.95rem;
+}
+
+.recommendation-box li.over-limit {
+  color: #b3261e;
+}
+
+.screen .recommendation-note {
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: #4a4a4a;
+  margin: 8px 0 0;
+}
+
+/* --- 24h/12h time and date-time inputs (see TimeInput.tsx) --- */
+
+.time-input,
+.datetime-input {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.datetime-input {
+  flex-wrap: wrap;
+}
+
+.datetime-input > input[type="date"] {
+  flex: 1 1 100%;
+}
+
+.time-input select {
+  width: auto;
+  flex: 1;
+  min-width: 64px;
+}
+
+.datetime-input > .time-input {
+  flex: 1 1 100%;
+}
+
+/* --- Breadcrumb: the always-visible way back at the top of every editor --- */
+
+.breadcrumb {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  /* Extra right padding keeps it clear of the settings gear, which floats
+     over the top-right corner of every screen that shows it. */
+  padding: 4px 48px 4px 0;
+  margin: -8px 0 12px;
+  background: #ffffff;
+  border-bottom: 1px solid #eef1ee;
+  font-size: 0.95rem;
+}
+
+.breadcrumb-item {
+  display: inline-flex;
+  align-items: center;
+}
+
+.breadcrumb-link {
+  background: none;
+  border: none;
+  color: #2f7a4f;
+  font-size: 0.95rem;
+  padding: 10px 4px;
+  min-height: 44px;
+  text-decoration: underline;
+}
+
+.breadcrumb-sep {
+  color: #6b6b6b;
+  padding: 0 2px;
+}
+
+.breadcrumb-current {
+  color: #1a1a1a;
+  font-weight: 600;
+  padding: 10px 4px;
+}
+
+.recommendation-box .daily-left {
+  display: block;
+  font-size: 0.85rem;
+  color: #4a4a4a;
+}
+
+.recommendation-box .daily-left.over-limit {
+  color: #b3261e;
+}
+
+.screen .meals-left {
+  display: inline-block;
+  margin: 0 0 14px;
+  padding: 6px 12px;
+  border-radius: 16px;
+  background: #eef5f0;
+  color: #2f7a4f;
+  font-size: 0.95rem;
+  font-weight: 600;
 }

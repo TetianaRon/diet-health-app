@@ -65,3 +65,17 @@ export function classifyGl(gl: number): GlCategory {
   if (gl <= 19) return "moderate";
   return "high";
 }
+
+export interface MealsLeft {
+  left: number;
+  planned: number;
+}
+
+/**
+ * How many of the day's planned meals (Settings.mealsPerDay) are still to come.
+ * Never negative — eating more meals than planned just reads 0 left.
+ */
+export function mealsLeftToday(mealsPerDay: number, mealsEaten: number): MealsLeft {
+  const planned = Math.max(0, Math.round(mealsPerDay));
+  return { left: Math.max(0, planned - mealsEaten), planned };
+}
