@@ -4,7 +4,7 @@
 // so a reordered sheet — deliberately or by someone dragging a column in the
 // Sheets UI — still parses correctly.
 import { batchUpdateRanges, readRange, writeRange } from "./sheets";
-import { buildColumnIndex, buildRow, cell, columnLetter, readColumnIndex, type ColumnIndex } from "./sheetRow";
+import { buildColumnIndex, buildRow, cell, columnLetter, parseTab, readColumnIndex, SCAN_LAST_COLUMN, type ColumnIndex, type ParsedTab } from "./sheetRow";
 import { STARTER_FOODS } from "../data/starter-foods";
 import { toGlycemicFlag, type GlycemicFlag } from "./glycemicFlag";
 import { parseUnknownNutritionFields, type NutritionKey } from "./dishes";
@@ -66,9 +66,8 @@ export const INGREDIENTS_HEADERS = [
 ] as const;
 const DEFAULT_COLUMN_INDEX = buildColumnIndex(INGREDIENTS_HEADERS);
 
-const INGREDIENTS_RANGE = "A1:P1000"; // includes the header row (row 1), needed to resolve columns by name
-const INGREDIENTS_APPEND_RANGE = "A:P";
-const INGREDIENTS_WIDTH = "P";
+const INGREDIENTS_RANGE = `A1:${SCAN_LAST_COLUMN}1000`; // includes the header row (row 1), needed to resolve columns by name
+const INGREDIENTS_APPEND_RANGE = `A:${SCAN_LAST_COLUMN}`;
 
 function toNumber(value: unknown): number {
   const n = Number(value);
@@ -161,10 +160,8 @@ export function mergeWithStarterFoods(sheetIngredients: Ingredient[]): Ingredien
   return [...byKey.values()];
 }
 
-async function readIngredientsSheet(): Promise<{ columnIndex: ColumnIndex; dataRows: unknown[][] }> {
-  const rows = await readRange("Ingredients", INGREDIENTS_RANGE);
-  const [header, ...dataRows] = rows;
-  return { columnIndex: header ? buildColumnIndex(header) : DEFAULT_COLUMN_INDEX, dataRows };
+async function readIngredientsSheet(): Promise<ParsedTab> {
+  return parseTab("Ingredients", await readRange("Ingredients", INGREDIENTS_RANGE), INGREDIENTS_HEADERS);
 }
 
 export async function listIngredients(): Promise<Ingredient[]> {
@@ -183,19 +180,19 @@ export async function addIngredient(
     favorite,
     glycemicFlag,
   };
-  const columnIndex = await readColumnIndex("Ingredients", INGREDIENTS_WIDTH);
+  const columnIndex = await readColumnIndex("Ingredients", INGREDIENTS_HEADERS);
   await writeRange("Ingredients", INGREDIENTS_APPEND_RANGE, [ingredientToRow(withDate, columnIndex)]);
 }
 
 async function findIngredientRow(nameUk: string): Promise<{ rowNumber: number; columnIndex: ColumnIndex }> {
-  const { columnIndex, dataRows } = await readIngredientsSheet();
+  const { columnIndex, dataRows, firstDataRow } = await readIngredientsSheet();
   const rowIndex = dataRows.findIndex(
     (row) => String(cell(row, columnIndex, "NameUk") ?? "").trim().toLowerCase() === nameUk.trim().toLowerCase(),
   );
   if (rowIndex === -1) {
     throw new Error(`"${nameUk}" not found in Ingredients`);
   }
-  return { rowNumber: rowIndex + 2, columnIndex }; // +2: 1-based rows, plus the header row
+  return { rowNumber: rowIndex + firstDataRow, columnIndex };
 }
 
 function requireColumn(columnIndex: ColumnIndex, headerName: string, tab: string): number {

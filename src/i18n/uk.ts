@@ -368,17 +368,26 @@ export const uk = {
       connectDevSaved: "Підключено dev-таблицю!",
       checking: "Перевірка структури таблиці...",
       tabsOk: "✓ Усі потрібні вкладки та стовпці знайдено.",
-      tabsMissing: (missing: string[]) =>
-        `У цій таблиці відсутні вкладки: ${missing.join(", ")}. Це трапляється з новою порожньою таблицею Google Sheets. Натисніть «Ініціалізувати», щоб створити їх автоматично.`,
-      initializeButton: "Ініціалізувати таблицю",
-      initializing: "Створення вкладок...",
-      initializeError: "Не вдалося ініціалізувати таблицю.",
-      initializeDone: "Готово! Таблицю налаштовано.",
-      schemaGapsFound: (gaps: string[]) =>
-        `У цій таблиці бракує деяких стовпців чи налаштувань: ${gaps.join("; ")}. Це трапляється, коли додаток оновлюється, а таблиця — ще ні. Натисніть «Оновити структуру», щоб додати їх автоматично.`,
-      topUpButton: "Оновити структуру",
-      toppingUp: "Оновлення структури...",
-      topUpDone: "Готово! Структуру таблиці оновлено.",
+      problemsFound: "Структура таблиці потребує виправлення:",
+      issueMissingTab: (tab: string) => `Немає вкладки «${tab}» — її буде створено.`,
+      issueNotAppLayout: (tab: string) =>
+        `Вкладка «${tab}» має стовпці, яких додаток не знає. Автоматично це виправити не можна: виправте вкладку вручну або створіть нову таблицю (вище).`,
+      issueMissingColumns: (tab: string, headers: string[]) =>
+        `«${tab}»: бракує стовпців ${headers.join(", ")} — їх буде додано в кінці.`,
+      issueDuplicateColumns: (tab: string, headers: string[]) =>
+        headers.length === 1
+          ? `«${tab}»: стовпець ${headers[0]} повторюється — залишиться той, де є дані, значення з дубліката буде перенесено в нього, а зайвий стовпець видалено.`
+          : `«${tab}»: ${headers.length} стовпців повторюються (${headers.join(", ")}) — залишиться по одному (той, де є дані), значення з дублікатів буде перенесено, а зайві стовпці видалено.`,
+      issueDuplicateConflict: (tab: string, header: string, columns: string[], rows: number[]) =>
+        `«${tab}»: стовпець ${header} повторюється (${columns.join(", ")}), і в рядках ${rows.join(", ")} значення різні. Автоматично це виправити не можна — залиште один стовпець вручну.`,
+      issueFormatUpgrade: (tab: string) =>
+        `«${tab}»: заголовки буде оновлено — у першому рядку службові назви стовпців, у другому зрозумілі назви.`,
+      issueMissingSettingsKeys: (keys: string[]) => `Налаштування: бракує ${keys.join(", ")} — буде додано зі стандартними значеннями.`,
+      repairBackupNote:
+        "Перед змінами кожну вкладку, яку буде змінено, буде скопійовано в нову вкладку «… — копія …», тож жодні дані не загубляться.",
+      unfixableNote: "Вкладки з проблемами, які не можна виправити автоматично, змінено не буде.",
+      repairButton: "Виправити таблицю",
+      repairing: "Виправлення таблиці...",
     },
     fields: {
       dailyCarbsTarget: "Денна норма вуглеводів (г)",
@@ -402,6 +411,60 @@ export const uk = {
       showProteinTotal: "Показувати денну суму білків на екрані «Сьогодні»",
       showSodiumTotal: "Показувати денну суму натрію на екрані «Сьогодні»",
     },
+  },
+  sheetStructure: {
+    brokenTab: (tab: string) =>
+      `Вкладка «${tab}» у таблиці має неправильну структуру, тому дані з неї не можна безпечно прочитати чи зберегти. Відкрийте Налаштування (⚙) і натисніть «Виправити таблицю».`,
+    dialogTitleBlocking: "Таблицю потрібно виправити",
+    dialogSpreadsheet: (name: string) => `Таблиця: «${name}»`,
+    dialogTitleSuggested: "Таблицю можна оновити",
+    dialogIntroBlocking: "Поки структуру таблиці не виправлено, дані не читаються й не зберігаються. Ось що знайдено:",
+    dialogIntroSuggested: "Таблиця працює, але її можна оновити до поточного формату:",
+    dialogUnfixable:
+      "Частину проблем неможливо виправити автоматично. Виправте ці вкладки в таблиці вручну або створіть нову таблицю в Налаштуваннях (⚙).",
+    dialogRepairFailed: (error: string) =>
+      `Автоматичне виправлення не вдалося: ${error}. Виправте таблицю вручну або створіть нову в Налаштуваннях (⚙). Резервні копії вкладок, якщо їх уже створено, залишаються в таблиці.`,
+    updateButton: "Оновити таблицю",
+    openSettings: "Відкрити налаштування",
+    later: "Пізніше",
+    close: "Закрити",
+  },
+  // Readable names written into row 2 of every tab (row 1 keeps the fixed
+  // keys the app reads — they never change with the language). Adding a
+  // language = another object of the same shape (see sheetLabels.ts).
+  sheetLabels: {
+    columns: {
+      NameUk: "Назва (укр.)",
+      NameEn: "Назва (англ.)",
+      IngredientsJson: "Інгредієнти (JSON)",
+      YieldGrams: "Вихід, г",
+      Carbs_g: "Вуглеводи, г",
+      GI: "Глікемічний індекс",
+      Fiber_g: "Клітковина, г",
+      Sugars_g: "Цукри, г",
+      Protein_g: "Білки, г",
+      Fat_g: "Жири, г",
+      Calories_kcal: "Калорії, ккал",
+      Sodium_mg: "Натрій, мг",
+      Source: "Джерело",
+      DateAdded: "Дата додавання",
+      Favorite: "Улюблене",
+      GlycemicFlag: "Глікемічна позначка",
+      GiVerified: "ГІ перевірено",
+      UnknownFields: "Невідомі значення",
+      Timestamp: "Час",
+      MealType: "Прийом їжі",
+      ItemName: "Назва продукту/страви",
+      PortionGrams: "Порція, г",
+      GL: "Глікемічне навантаження",
+      Notes: "Примітки",
+      MealId: "Ідентифікатор прийому їжі",
+      ValueMmolL: "Цукор, ммоль/л",
+      Context: "Контекст",
+      Key: "Ключ",
+      Value: "Значення",
+      Label: "Назва",
+    } as Record<string, string>,
   },
   breadcrumb: { label: "Навігація" },
   timeInput: {

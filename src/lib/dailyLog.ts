@@ -5,7 +5,7 @@
 // change what was actually eaten) — or a custom/estimated entry (restaurant
 // food, etc.) with some values entered directly and possibly left unknown.
 import { batchUpdateRanges, readRange } from "./sheets";
-import { buildColumnIndex, buildRow, cell, columnLetter, type ColumnIndex } from "./sheetRow";
+import { buildColumnIndex, buildRow, cell, columnLetter, parseTab, SCAN_LAST_COLUMN, type ColumnIndex, type ParsedTab } from "./sheetRow";
 import { calcGlycemicLoad } from "./health";
 import type { IngredientNutrition, NutritionKey } from "./dishes";
 
@@ -68,7 +68,7 @@ export const DAILY_LOG_HEADERS = [
 ] as const;
 const DEFAULT_COLUMN_INDEX = buildColumnIndex(DAILY_LOG_HEADERS);
 
-const LOG_RANGE = "A1:P5000"; // includes the header row (row 1), needed to resolve columns by name
+const LOG_RANGE = `A1:${SCAN_LAST_COLUMN}5000`; // includes the header row (row 1), needed to resolve columns by name
 
 function round2(value: number): number {
   return Math.round(value * 100) / 100;
@@ -425,10 +425,8 @@ export function logEntryToRow(entry: DailyLogEntry, columnIndex: ColumnIndex = D
   );
 }
 
-async function readLogSheet(): Promise<{ columnIndex: ColumnIndex; dataRows: unknown[][] }> {
-  const rows = await readRange("DailyLog", LOG_RANGE);
-  const [header, ...dataRows] = rows;
-  return { columnIndex: header ? buildColumnIndex(header) : DEFAULT_COLUMN_INDEX, dataRows };
+async function readLogSheet(): Promise<ParsedTab> {
+  return parseTab("DailyLog", await readRange("DailyLog", LOG_RANGE), DAILY_LOG_HEADERS);
 }
 
 export async function listLogEntries(): Promise<DailyLogEntry[]> {
@@ -462,8 +460,8 @@ function sameLogRow(a: DailyLogEntry, b: DailyLogEntry): boolean {
 
 /**
  * Pure planner behind saveMeal — see the block comment above. `dataRows` are
- * the sheet's rows below the header, in order (row N of the sheet is
- * dataRows[N - 2]). Throws if an original can't be found (changed on another
+ * the sheet's data rows in order, dataRows[0] being sheet row `firstDataRow`
+ * (3 when row 2 holds readable column names, 2 on a sheet not yet upgraded). Throws if an original can't be found (changed on another
  * device since it was loaded) rather than guessing at a different row.
  */
 export function planMealSave(
@@ -471,6 +469,7 @@ export function planMealSave(
   drafts: MealDraftItem[],
   dataRows: unknown[][],
   columnIndex: ColumnIndex,
+  firstDataRow = 2,
 ): { range: string; values: unknown[][] }[] {
   const lastCol = columnLetter(Math.max(...columnIndex.values()));
   const width = Math.max(...columnIndex.values()) + 1;
@@ -484,7 +483,7 @@ export function planMealSave(
     );
     if (rowIndex === -1) throw new Error(`Log entry "${original.itemName}" at ${original.timestamp} not found`);
     claimed.add(rowIndex);
-    rowNumberFor.set(original, rowIndex + 2); // +2: 1-based rows, plus the header row
+    rowNumberFor.set(original, rowIndex + firstDataRow);
   }
 
   const updates: { range: string; values: unknown[][] }[] = [];
@@ -497,7 +496,7 @@ export function planMealSave(
     }
   }
 
-  let nextFreshRow = dataRows.length + 2;
+  let nextFreshRow = dataRows.length + firstDataRow;
   for (const draft of drafts) {
     const row = logEntryToRow(draft.entry, columnIndex);
     if (draft.original) {
@@ -515,8 +514,8 @@ export function planMealSave(
 
 /** Saves a whole meal in one batch — see planMealSave. `originals` is empty for a brand-new meal. */
 export async function saveMeal(originals: DailyLogEntry[], drafts: MealDraftItem[]): Promise<void> {
-  const { columnIndex, dataRows } = await readLogSheet();
-  const updates = planMealSave(originals, drafts, dataRows, columnIndex);
+  const { columnIndex, dataRows, firstDataRow } = await readLogSheet();
+  const updates = planMealSave(originals, drafts, dataRows, columnIndex, firstDataRow);
   if (updates.length > 0) await batchUpdateRanges(updates);
 }
 

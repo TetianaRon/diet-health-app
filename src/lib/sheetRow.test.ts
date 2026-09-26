@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildColumnIndex, buildRow, cell, columnLetter } from "./sheetRow";
+import { buildColumnIndex, buildRow, cell, columnLetter, normalizeHeader, parseTab, resolveColumnIndex, SheetStructureError } from "./sheetRow";
 
 describe("buildColumnIndex / cell", () => {
   it("resolves a value by header name regardless of column order", () => {
@@ -53,5 +53,59 @@ describe("columnLetter", () => {
   it("converts double-letter columns", () => {
     expect(columnLetter(26)).toBe("AA");
     expect(columnLetter(27)).toBe("AB");
+  });
+});
+
+describe("normalizeHeader / bilingual headers", () => {
+  it("drops a trailing parenthesized label and trims", () => {
+    expect(normalizeHeader("Carbs_g (Вуглеводи, г)")).toBe("Carbs_g");
+    expect(normalizeHeader("  GI  ")).toBe("GI");
+    expect(normalizeHeader(undefined)).toBe("");
+  });
+
+  it("lets buildColumnIndex resolve bilingual headers", () => {
+    const columnIndex = buildColumnIndex(["Timestamp (Час)", "ValueMmolL (Цукор, ммоль/л)"]);
+    expect(columnIndex.get("ValueMmolL")).toBe(1);
+  });
+
+  it("keeps the leftmost column when a header repeats", () => {
+    expect(buildColumnIndex(["Timestamp (Час)", "Timestamp"]).get("Timestamp")).toBe(0);
+  });
+});
+
+describe("resolveColumnIndex", () => {
+  const canonical = ["Timestamp", "ValueMmolL", "Context", "Notes"];
+
+  it("returns the index for a sound header row", () => {
+    expect(resolveColumnIndex("BloodSugar", ["Notes", "Timestamp", "Context", "ValueMmolL"], canonical).get("Notes")).toBe(0);
+  });
+
+  it("refuses a header row with a missing column instead of dropping that field", () => {
+    expect(() => resolveColumnIndex("BloodSugar", ["Timestamp", "ValueMmolL", "Context"], canonical)).toThrow(SheetStructureError);
+  });
+
+  it("refuses duplicated headers (mom's sheet after the old top-up)", () => {
+    const header = ["Timestamp (Час)", "ValueMmolL (Цукор)", "Context (Контекст)", "Notes (Примітки)", ...canonical];
+    expect(() => resolveColumnIndex("BloodSugar", header, canonical)).toThrow(SheetStructureError);
+  });
+
+  it("refuses a missing header row", () => {
+    expect(() => resolveColumnIndex("BloodSugar", [], canonical)).toThrow(SheetStructureError);
+  });
+});
+
+describe("parseTab", () => {
+  const canonical = ["Timestamp", "ValueMmolL", "Context", "Notes"];
+
+  it("skips the readable-names row: data starts at sheet row 3", () => {
+    const parsed = parseTab("BloodSugar", [canonical, ["Час", "Цукор, ммоль/л", "Контекст", "Примітки"], ["t1", "6.5", "fasting", ""]], canonical);
+    expect(parsed.firstDataRow).toBe(3);
+    expect(parsed.dataRows).toEqual([["t1", "6.5", "fasting", ""]]);
+  });
+
+  it("keeps working on a sheet without a names row: data starts at sheet row 2", () => {
+    const parsed = parseTab("BloodSugar", [canonical, ["t1", "6.5", "fasting", ""]], canonical);
+    expect(parsed.firstDataRow).toBe(2);
+    expect(parsed.dataRows).toHaveLength(1);
   });
 });

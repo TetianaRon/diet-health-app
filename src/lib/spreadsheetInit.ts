@@ -1,20 +1,39 @@
-// "Initialize a blank spreadsheet" flow — a genuinely blank Google Sheet
-// only has its own single default tab, so every read this app makes fails
-// the same way (each data module hardcodes a specific tab name/range — see
-// ingredients.ts, dishes.ts, dailyLog.ts, bloodSugar.ts, settings.ts). This
-// only ever adds the 5 tabs this app expects and fills them with header rows
-// (Settings also gets full default key/value rows, since it isn't
-// append-only like the others) — never touches or removes anything a sheet
-// already has, so it's safe to run on a partially-set-up sheet too.
-import { addSheetTabs, batchUpdateRanges, listSheetTitles, readRange } from "./sheets";
-import { columnLetter, readColumnIndex, type ColumnIndex } from "./sheetRow";
-import { DEFAULT_SETTINGS, SETTINGS_KEYS, settingsToRows } from "./settings";
+// Spreadsheet setup, structure check and repair — the IO around the pure
+// rules in sheetSchema.ts.
+//
+// Tab layout (every tab): row 1 = fixed column keys the app reads, row 2 =
+// readable names in the user's language (sheetLabels.ts), data from row 3.
+// Settings follows the same idea with a third column: Key | Value | Label,
+// row 2 = readable names of those three, and each key row's Label cell is
+// that setting's readable name.
+//
+// "Initialize a blank spreadsheet": a genuinely blank Google Sheet only has
+// its own single default tab, so every read this app makes fails. The init
+// flow only ever adds the 5 tabs this app expects — never touches or removes
+// anything a sheet already has.
+import { addSheetTabs, batchUpdateRanges, getTabGrids, listSheetTitles, readRange, structuralBatchUpdate } from "./sheets";
+import { columnLetter, SCAN_LAST_COLUMN } from "./sheetRow";
+import { labelFor } from "./sheetLabels";
+import { analyzeDataTab, isBlocking, isTabRepairable, planLabelRepair, planTabRepair, type TabIssue, type TabReport } from "./sheetSchema";
+import { DEFAULT_SETTINGS, SETTINGS_KEYS, settingsToRows, type Settings } from "./settings";
 import { INGREDIENTS_HEADERS } from "./ingredients";
 import { DISHES_HEADERS } from "./dishes";
 import { DAILY_LOG_HEADERS } from "./dailyLog";
 import { BLOOD_SUGAR_HEADERS } from "./bloodSugar";
+import { uk } from "../i18n/uk";
 
 export const REQUIRED_TABS = ["Ingredients", "Dishes", "DailyLog", "BloodSugar", "Settings"] as const;
+
+const DATA_TAB_HEADERS: Record<string, readonly string[]> = {
+  Ingredients: INGREDIENTS_HEADERS,
+  Dishes: DISHES_HEADERS,
+  DailyLog: DAILY_LOG_HEADERS,
+  BloodSugar: BLOOD_SUGAR_HEADERS,
+};
+
+const SETTINGS_HEADERS = ["Key", "Value", "Label"] as const;
+
+type RangeUpdate = { range: string; values: unknown[][] };
 
 /** Which of the 5 required tabs aren't in a spreadsheet's actual tab list — pure, so it's testable without a live sheet. */
 export function missingTabs(existingTitles: string[]): string[] {
@@ -22,27 +41,35 @@ export function missingTabs(existingTitles: string[]): string[] {
   return REQUIRED_TABS.filter((tab) => !present.has(tab));
 }
 
+/** The readable name of a Settings key (its Settings-screen label), for the Settings tab's Label column. */
+export function settingsKeyLabel(key: string): string {
+  const field = (Object.keys(SETTINGS_KEYS) as (keyof Settings)[]).find((f) => SETTINGS_KEYS[f] === key);
+  return field ? uk.settings.fields[field] : "";
+}
+
+function headerAndLabelRows(tab: string, headers: readonly string[]): RangeUpdate {
+  return {
+    range: `${tab}!A1:${columnLetter(headers.length - 1)}2`,
+    values: [[...headers], headers.map((h) => labelFor(h))],
+  };
+}
+
 /**
- * Builds the header (and, for Settings, default-data) range updates for
+ * Builds the header rows (and, for Settings, default-data) updates for
  * whichever tabs are missing. Pure — only tabs actually in `missing` get an
  * update, so re-running this against a partially-initialized sheet can't
  * clobber real data in a tab that already existed for some other reason.
  */
-function headerRowUpdate(tab: string, headers: readonly string[]): { range: string; values: unknown[][] } {
-  return { range: `${tab}!A1:${columnLetter(headers.length - 1)}1`, values: [[...headers]] };
-}
-
-export function buildInitUpdates(missing: string[]): { range: string; values: unknown[][] }[] {
+export function buildInitUpdates(missing: string[]): RangeUpdate[] {
   const missingSet = new Set(missing);
-  const updates: { range: string; values: unknown[][] }[] = [];
-  if (missingSet.has("Ingredients")) updates.push(headerRowUpdate("Ingredients", INGREDIENTS_HEADERS));
-  if (missingSet.has("Dishes")) updates.push(headerRowUpdate("Dishes", DISHES_HEADERS));
-  if (missingSet.has("DailyLog")) updates.push(headerRowUpdate("DailyLog", DAILY_LOG_HEADERS));
-  if (missingSet.has("BloodSugar")) updates.push(headerRowUpdate("BloodSugar", BLOOD_SUGAR_HEADERS));
+  const updates: RangeUpdate[] = [];
+  for (const [tab, headers] of Object.entries(DATA_TAB_HEADERS)) {
+    if (missingSet.has(tab)) updates.push(headerAndLabelRows(tab, headers));
+  }
   if (missingSet.has("Settings")) {
-    const settingsRows = settingsToRows(DEFAULT_SETTINGS);
-    updates.push({ range: "Settings!A1:B1", values: [["Key", "Value"]] });
-    updates.push({ range: `Settings!A2:B${1 + settingsRows.length}`, values: settingsRows });
+    const settingsRows = settingsToRows(DEFAULT_SETTINGS).map(([key, value]) => [key, value, settingsKeyLabel(key as string)]);
+    updates.push(headerAndLabelRows("Settings", SETTINGS_HEADERS));
+    updates.push({ range: `Settings!A3:C${2 + settingsRows.length}`, values: settingsRows });
   }
   return updates;
 }
@@ -61,110 +88,200 @@ export async function initializeSpreadsheet(): Promise<void> {
   await batchUpdateRanges(buildInitUpdates(missing));
 }
 
-// --- Column/key gaps on an EXISTING tab (a level below missing-whole-tab) ---
-//
-// A tab that already exists can still be missing some of the columns this
-// app expects — e.g. an Ingredients tab set up before GiVerified was added.
-// Same additive-only philosophy as initializeSpreadsheet above (only ever
-// appends, never touches/reorders anything already there), just one level
-// finer-grained: per column instead of per tab.
+// --- Settings tab: key/value rows, so checked by row rather than by column ---
 
-const TAB_CANONICAL_HEADERS: Record<string, readonly string[]> = {
-  Ingredients: INGREDIENTS_HEADERS,
-  Dishes: DISHES_HEADERS,
-  DailyLog: DAILY_LOG_HEADERS,
-  BloodSugar: BLOOD_SUGAR_HEADERS,
-};
-
-// Generous cap for a header-row-only scan — comfortably wider than any tab
-// here (max 16 columns), so it finds every real column (including any extra
-// ones a person added of their own, e.g. a personal note column) without
-// reading the whole tab's data.
-const HEADER_SCAN_WIDTH = "AZ";
-
-export interface ColumnGap {
-  tab: string;
-  missingHeaders: string[];
-}
-
-/** Which of a tab's canonical headers its actual live column index doesn't have — pure. */
-export function missingHeadersFor(columnIndex: ColumnIndex, canonicalHeaders: readonly string[]): string[] {
-  return canonicalHeaders.filter((h) => !columnIndex.has(h));
-}
-
-/** Which Settings keys aren't in the sheet's actual Key column — the row-based analog of missingHeadersFor, since Settings is key/value rows, not columns. */
+/** Which Settings keys aren't in the sheet's actual Key column. */
 export function missingSettingsKeysFor(existingRows: unknown[][], settingsKeys: readonly string[]): string[] {
   const present = new Set(existingRows.map((row) => String(row[0] ?? "").trim()).filter(Boolean));
   return settingsKeys.filter((k) => !present.has(k));
 }
 
-/** Builds the range update that appends a tab's missing headers right after its current last column — pure. */
-export function buildColumnTopUpUpdate(
-  tab: string,
-  columnIndex: ColumnIndex,
-  missingHeaders: string[],
-): { range: string; values: unknown[][] } {
-  const startCol = Math.max(-1, ...columnIndex.values()) + 1;
-  const endCol = startCol + missingHeaders.length - 1;
-  return { range: `${tab}!${columnLetter(startCol)}1:${columnLetter(endCol)}1`, values: [missingHeaders] };
-}
-
-/** Builds the range update that appends default rows for whichever Settings keys are missing, right after the sheet's existing rows — pure. */
-export function buildSettingsKeyTopUpUpdate(
-  existingRowCount: number,
-  missingKeys: string[],
-): { range: string; values: unknown[][] } {
+/**
+ * Builds the update that appends default rows (key, value, readable name)
+ * for whichever Settings keys are missing, right after the tab's last row.
+ * `lastRow` is the sheet row number of the tab's current last row.
+ */
+export function buildSettingsKeyTopUpUpdate(lastRow: number, missingKeys: string[]): RangeUpdate {
   const missingSet = new Set(missingKeys);
-  const rows = settingsToRows(DEFAULT_SETTINGS).filter((row) => missingSet.has(row[0] as string));
-  const startRow = existingRowCount + 2; // +2: header row, plus 1-based rows
-  return { range: `Settings!A${startRow}:B${startRow + rows.length - 1}`, values: rows };
+  const rows = settingsToRows(DEFAULT_SETTINGS)
+    .filter((row) => missingSet.has(row[0] as string))
+    .map(([key, value]) => [key, value, settingsKeyLabel(key as string)]);
+  const startRow = lastRow + 1;
+  return { range: `Settings!A${startRow}:C${startRow + rows.length - 1}`, values: rows };
 }
 
-export interface SchemaGaps {
-  columnGaps: ColumnGap[];
-  missingSettingsKeys: string[];
+function hasSettingsLabelRow(rows: unknown[][]): boolean {
+  return String(rows[1]?.[0] ?? "").trim() === labelFor("Key");
+}
+
+/** Checks the Settings tab as read from A1 (Key | Value | Label). Pure. */
+export function analyzeSettingsTab(rows: unknown[][]): TabIssue[] {
+  const issues: TabIssue[] = [];
+  const keys = missingSettingsKeysFor(rows.slice(1), Object.values(SETTINGS_KEYS));
+  if (keys.length > 0) issues.push({ kind: "missingSettingsKeys", keys });
+  if (!hasSettingsLabelRow(rows)) issues.push({ kind: "missingLabelRow" });
+  else if (planSettingsLabelRepair(rows).valueUpdates.length > 0) issues.push({ kind: "staleLabels", columns: [2] });
+  return issues;
+}
+
+/** The Settings counterpart of planLabelRepair: Label header, readable-names row 2, and each key's readable name in column C. Coordinates are after any row insertion. */
+export function planSettingsLabelRepair(rows: unknown[][]): { insertLabelRow: boolean; valueUpdates: RangeUpdate[] } {
+  const insertLabelRow = !hasSettingsLabelRow(rows);
+  const shift = insertLabelRow ? 1 : 0;
+  const valueUpdates: RangeUpdate[] = [];
+  if (SETTINGS_HEADERS.some((h, i) => String(rows[0]?.[i] ?? "").trim() !== h)) {
+    valueUpdates.push({ range: "Settings!A1:C1", values: [[...SETTINGS_HEADERS]] });
+  }
+
+  const wantedLabels = SETTINGS_HEADERS.map((h) => labelFor(h));
+  const labelRow = insertLabelRow ? [] : rows[1];
+  if (wantedLabels.some((label, i) => String(labelRow[i] ?? "").trim() !== label)) {
+    valueUpdates.push({ range: "Settings!A2:C2", values: [wantedLabels] });
+  }
+
+  rows.forEach((row, i) => {
+    if (i === 0 || (!insertLabelRow && i === 1)) return;
+    const label = settingsKeyLabel(String(row[0] ?? "").trim());
+    if (label && String(row[2] ?? "").trim() === "") {
+      valueUpdates.push({ range: `Settings!C${i + 1 + shift}`, values: [[label]] });
+    }
+  });
+  return { insertLabelRow, valueUpdates };
+}
+
+// --- Structure check + repair of existing tabs ---
+//
+// Replaces the old header-only "Оновити структуру" top-up, which treated
+// any header it didn't recognize as a gap and appended a second set of
+// headers after it (what broke mom's bilingual-header sheet — see
+// sheetSchema.ts).
+
+// Same depth the data modules read to (DailyLog/BloodSugar are the longest).
+const DATA_TAB_RANGE = `A1:${SCAN_LAST_COLUMN}5000`;
+const SETTINGS_TAB_RANGE = "A1:C200";
+
+interface HealthScan {
+  reports: TabReport[];
+  rowsByTab: Map<string, unknown[][]>;
+}
+
+async function scanSpreadsheet(): Promise<HealthScan> {
+  const existingTabs = new Set(await listSheetTitles());
+  const reports: TabReport[] = [];
+  const rowsByTab = new Map<string, unknown[][]>();
+
+  for (const tab of REQUIRED_TABS) {
+    if (!existingTabs.has(tab)) {
+      reports.push({ tab, issues: [{ kind: "missingTab" }] });
+      continue;
+    }
+    const isSettings = tab === "Settings";
+    const rows = await readRange(tab, isSettings ? SETTINGS_TAB_RANGE : DATA_TAB_RANGE);
+    rowsByTab.set(tab, rows);
+    const issues = isSettings ? analyzeSettingsTab(rows) : analyzeDataTab(tab, rows, DATA_TAB_HEADERS[tab]).issues;
+    if (issues.length > 0) reports.push({ tab, issues });
+  }
+  return { reports, rowsByTab };
+}
+
+/** Checks every tab's structure without changing anything. Empty result = sound, current-format spreadsheet. */
+export async function checkSpreadsheetHealth(): Promise<TabReport[]> {
+  return (await scanSpreadsheet()).reports;
+}
+
+function backupTabName(tab: string, now: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const stamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
+  return `${tab} — копія ${stamp}`;
 }
 
 /**
- * Checks every already-existing tab for columns (or, for Settings, keys)
- * this app expects but doesn't find — without changing anything. Skips a
- * tab entirely if it doesn't exist yet at all (that's checkSpreadsheetTabs'
- * job, not this one).
+ * Pass 1 — structure: create missing tabs, and for each data tab whose
+ * issues are ALL fixable, back it up (a duplicated tab in the same
+ * spreadsheet) before merging/deleting duplicate columns and adding missing
+ * ones; append missing Settings keys.
  */
-export async function checkSchemaGaps(): Promise<SchemaGaps> {
-  const existingTabs = new Set(await listSheetTitles());
-
-  const columnGaps: ColumnGap[] = [];
-  for (const [tab, headers] of Object.entries(TAB_CANONICAL_HEADERS)) {
-    if (!existingTabs.has(tab)) continue;
-    const columnIndex = await readColumnIndex(tab, HEADER_SCAN_WIDTH);
-    const missing = missingHeadersFor(columnIndex, headers);
-    if (missing.length > 0) columnGaps.push({ tab, missingHeaders: missing });
+async function repairStructure({ reports, rowsByTab }: HealthScan): Promise<void> {
+  const missing = reports.filter((r) => r.issues.some((i) => i.kind === "missingTab")).map((r) => r.tab);
+  if (missing.length > 0) {
+    await addSheetTabs(missing);
+    await batchUpdateRanges(buildInitUpdates(missing));
   }
 
-  let missingSettingsKeys: string[] = [];
-  if (existingTabs.has("Settings")) {
-    const rows = await readRange("Settings", "A2:B200");
-    missingSettingsKeys = missingSettingsKeysFor(rows, Object.values(SETTINGS_KEYS));
+  const plans = reports
+    .filter((r) => r.tab in DATA_TAB_HEADERS && isTabRepairable(r) && r.issues.some(isBlocking))
+    .map((r) => ({ tab: r.tab, plan: planTabRepair(r, rowsByTab.get(r.tab) ?? []) }));
+
+  const valueUpdates = plans.flatMap(({ plan }) => plan.valueUpdates);
+  const settingsRows = rowsByTab.get("Settings") ?? [];
+  for (const issue of reports.find((r) => r.tab === "Settings")?.issues ?? []) {
+    if (issue.kind === "missingSettingsKeys") valueUpdates.push(buildSettingsKeyTopUpUpdate(settingsRows.length, issue.keys));
   }
 
-  return { columnGaps, missingSettingsKeys };
+  if (plans.length > 0) {
+    const grids = await getTabGrids();
+    const now = new Date();
+    const prepare: object[] = [];
+    const deletions: object[] = [];
+    for (const { tab, plan } of plans) {
+      const grid = grids.get(tab);
+      if (!grid) throw new Error(`repairSpreadsheet: tab ${tab} disappeared`);
+      prepare.push({ duplicateSheet: { sourceSheetId: grid.sheetId, newSheetName: backupTabName(tab, now) } });
+      if (plan.requiredColumnCount > grid.columnCount) {
+        prepare.push({
+          appendDimension: { sheetId: grid.sheetId, dimension: "COLUMNS", length: plan.requiredColumnCount - grid.columnCount },
+        });
+      }
+      for (const col of plan.deleteColumns) {
+        deletions.push({ deleteDimension: { range: { sheetId: grid.sheetId, dimension: "COLUMNS", startIndex: col, endIndex: col + 1 } } });
+      }
+    }
+    await structuralBatchUpdate(prepare);
+    if (valueUpdates.length > 0) await batchUpdateRanges(valueUpdates);
+    await structuralBatchUpdate(deletions);
+  } else if (valueUpdates.length > 0) {
+    await batchUpdateRanges(valueUpdates);
+  }
 }
 
-/** Adds whichever missing columns/Settings keys checkSchemaGaps() finds. No-op if there's nothing to add. */
-export async function topUpSchemaGaps(): Promise<void> {
-  const { columnGaps, missingSettingsKeys } = await checkSchemaGaps();
-  const updates: { range: string; values: unknown[][] }[] = [];
+/**
+ * Pass 2 — presentation, on a fresh re-scan so it sees pass 1's result: bare
+ * keys in row 1, readable-names row 2 inserted/refreshed (and frozen along
+ * with row 1). Only for tabs with no blocking issue left. No backup: this
+ * never touches a data cell — the names that were packed into row 1's
+ * bilingual headers end up in row 2.
+ */
+async function repairLabels({ reports, rowsByTab }: HealthScan): Promise<void> {
+  const grids = await getTabGrids();
+  const structural: object[] = [];
+  const valueUpdates: RangeUpdate[] = [];
 
-  for (const gap of columnGaps) {
-    const columnIndex = await readColumnIndex(gap.tab, HEADER_SCAN_WIDTH);
-    updates.push(buildColumnTopUpUpdate(gap.tab, columnIndex, gap.missingHeaders));
+  for (const report of reports) {
+    if (report.issues.some(isBlocking)) continue;
+    const rows = rowsByTab.get(report.tab) ?? [];
+    const plan =
+      report.tab === "Settings" ? planSettingsLabelRepair(rows) : planLabelRepair(report.tab, rows, DATA_TAB_HEADERS[report.tab]);
+    const grid = grids.get(report.tab);
+    if (plan.insertLabelRow && grid) {
+      structural.push(
+        { insertDimension: { range: { sheetId: grid.sheetId, dimension: "ROWS", startIndex: 1, endIndex: 2 }, inheritFromBefore: true } },
+        { updateSheetProperties: { properties: { sheetId: grid.sheetId, gridProperties: { frozenRowCount: 2 } }, fields: "gridProperties.frozenRowCount" } },
+      );
+    }
+    valueUpdates.push(...plan.valueUpdates);
   }
 
-  if (missingSettingsKeys.length > 0) {
-    const rows = await readRange("Settings", "A2:B200");
-    updates.push(buildSettingsKeyTopUpUpdate(rows.length, missingSettingsKeys));
-  }
+  await structuralBatchUpdate(structural);
+  if (valueUpdates.length > 0) await batchUpdateRanges(valueUpdates);
+}
 
-  if (updates.length > 0) await batchUpdateRanges(updates);
+/**
+ * Fixes everything checkSpreadsheetHealth() reports as fixable, re-scanning
+ * first so it acts on the sheet as it is now, not on a stale report. The
+ * steps are separate API calls, so an interruption can leave the sheet
+ * part-way — but every step is idempotent, so re-running finishes the job.
+ */
+export async function repairSpreadsheet(): Promise<void> {
+  await repairStructure(await scanSpreadsheet());
+  await repairLabels(await scanSpreadsheet());
 }

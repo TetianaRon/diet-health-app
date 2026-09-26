@@ -5,7 +5,7 @@
 // deliberately or by someone dragging a column in the Sheets UI — still
 // parses correctly.
 import { readRange, writeRange } from "./sheets";
-import { buildColumnIndex, buildRow, cell, readColumnIndex, type ColumnIndex } from "./sheetRow";
+import { buildColumnIndex, buildRow, cell, parseTab, readColumnIndex, SCAN_LAST_COLUMN, type ColumnIndex } from "./sheetRow";
 
 export const BLOOD_SUGAR_CONTEXTS = ["fasting", "after-meal", "other"] as const;
 export type BloodSugarContext = (typeof BLOOD_SUGAR_CONTEXTS)[number];
@@ -24,9 +24,8 @@ export interface BloodSugarEntry {
 export const BLOOD_SUGAR_HEADERS = ["Timestamp", "ValueMmolL", "Context", "Notes"] as const;
 const DEFAULT_COLUMN_INDEX = buildColumnIndex(BLOOD_SUGAR_HEADERS);
 
-const RANGE = "A1:D5000"; // includes the header row (row 1), needed to resolve columns by name
-const APPEND_RANGE = "A:D";
-const WIDTH = "D";
+const RANGE = `A1:${SCAN_LAST_COLUMN}5000`; // includes the header row (row 1), needed to resolve columns by name
+const APPEND_RANGE = `A:${SCAN_LAST_COLUMN}`;
 
 function toNumber(value: unknown): number {
   const n = Number(value);
@@ -54,15 +53,13 @@ export function bloodSugarEntryToRow(entry: BloodSugarEntry, columnIndex: Column
 }
 
 export async function listBloodSugarEntries(): Promise<BloodSugarEntry[]> {
-  const rows = await readRange("BloodSugar", RANGE);
-  const [header, ...dataRows] = rows;
-  const columnIndex = header ? buildColumnIndex(header) : DEFAULT_COLUMN_INDEX;
+  const { columnIndex, dataRows } = parseTab("BloodSugar", await readRange("BloodSugar", RANGE), BLOOD_SUGAR_HEADERS);
   return dataRows.filter((row) => row.length > 0).map((row) => rowToBloodSugarEntry(row, columnIndex));
 }
 
 export async function addBloodSugarEntry(entry: Omit<BloodSugarEntry, "timestamp">): Promise<void> {
   const withTimestamp: BloodSugarEntry = { ...entry, timestamp: new Date().toISOString() };
-  const columnIndex = await readColumnIndex("BloodSugar", WIDTH);
+  const columnIndex = await readColumnIndex("BloodSugar", BLOOD_SUGAR_HEADERS);
   await writeRange("BloodSugar", APPEND_RANGE, [bloodSugarEntryToRow(withTimestamp, columnIndex)]);
 }
 

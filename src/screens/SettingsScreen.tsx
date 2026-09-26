@@ -16,7 +16,9 @@ import {
   getSpreadsheetName,
   createSpreadsheetInAppFolder,
 } from "../lib/sheets";
-import { checkSchemaGaps, checkSpreadsheetTabs, initializeSpreadsheet, topUpSchemaGaps, type ColumnGap } from "../lib/spreadsheetInit";
+import { initializeSpreadsheet } from "../lib/spreadsheetInit";
+import { useSheetHealth } from "../context/SheetHealthContext";
+import { SheetHealthIssueList, summarizeIssues } from "./SheetHealthIssues";
 
 const NUMERIC_FIELDS = [
   "dailyCarbsTarget",
@@ -78,35 +80,11 @@ const PRIVACY_POLICY_URL = "https://tetianaron.github.io/diet-health-app/";
 // VITE_SPREADSHEET_ID is one value baked into the build, so every install
 // shared it until this override existed.
 
-// Result of checking a connected spreadsheet's structure — null fields
-// before the first check, or when not signed in yet (the check needs a real
-// API call, so it can't run pre-sign-in; see the "Spreadsheet selection"
-// comment in sheets.ts for why the ID itself is settable pre-sign-in anyway).
-// columnGaps/missingSettingsKeys are only meaningful once missingTabs is
-// known to be empty — no point checking a tab's columns before it exists.
-type TabCheckState = {
-  checking: boolean;
-  missingTabs: string[] | null;
-  columnGaps: ColumnGap[] | null;
-  missingSettingsKeys: string[] | null;
-  error: string | null;
-};
-
-const EMPTY_TAB_CHECK: TabCheckState = {
-  checking: false,
-  missingTabs: null,
-  columnGaps: null,
-  missingSettingsKeys: null,
-  error: null,
-};
-
 function SpreadsheetSection({ signedIn }: { signedIn: boolean }) {
   const [value, setValue] = useState(() => getSpreadsheetId());
   const [error, setError] = useState<string | null>(null);
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
-  const [tabCheck, setTabCheck] = useState<TabCheckState>(EMPTY_TAB_CHECK);
-  const [initializing, setInitializing] = useState(false);
-  const [toppingUp, setToppingUp] = useState(false);
+  const health = useSheetHealth();
   const [newName, setNewName] = useState<string>(uk.settings.spreadsheet.newNameDefault);
   const [creatingNew, setCreatingNew] = useState(false);
   // The connected spreadsheet's own title — shown as a hyperlink so it's
@@ -119,55 +97,22 @@ function SpreadsheetSection({ signedIn }: { signedIn: boolean }) {
   const testSpreadsheetId = getTestSpreadsheetId();
   const devSpreadsheetId = getDevSpreadsheetId();
 
+  // The structure check itself is app-wide (SheetHealthContext, which also
+  // runs it on sign-in); this re-runs it after switching spreadsheets and
+  // refreshes the connected sheet's name alongside.
   const runTabCheck = async () => {
-    setTabCheck({ ...EMPTY_TAB_CHECK, checking: true });
     setSpreadsheetName(null);
-    try {
-      const [missingTabs, name] = await Promise.all([checkSpreadsheetTabs(), getSpreadsheetName()]);
-      setSpreadsheetName(name);
-      if (missingTabs.length > 0) {
-        setTabCheck({ ...EMPTY_TAB_CHECK, missingTabs });
-        return;
-      }
-      const { columnGaps, missingSettingsKeys } = await checkSchemaGaps();
-      setTabCheck({ ...EMPTY_TAB_CHECK, missingTabs: [], columnGaps, missingSettingsKeys });
-    } catch (err) {
-      setTabCheck({ ...EMPTY_TAB_CHECK, error: err instanceof Error ? err.message : String(err) });
-    }
+    const [name] = await Promise.all([getSpreadsheetName().catch(() => null), health.check()]);
+    setSpreadsheetName(name);
   };
 
-  // Re-checks whenever sign-in becomes available (covers pasting an ID
-  // before signing in) and right after connecting to a different spreadsheet.
   useEffect(() => {
-    if (signedIn) void runTabCheck();
+    if (signedIn) void getSpreadsheetName().then(setSpreadsheetName, () => setSpreadsheetName(null));
   }, [signedIn]);
 
-  const handleInitialize = async () => {
-    setInitializing(true);
+  const handleRepair = async () => {
     setSavedMessage(null);
-    try {
-      await initializeSpreadsheet();
-      await runTabCheck();
-      setSavedMessage(uk.settings.spreadsheet.initializeDone);
-    } catch (err) {
-      setTabCheck((prev) => ({ ...prev, error: err instanceof Error ? err.message : String(err) }));
-    } finally {
-      setInitializing(false);
-    }
-  };
-
-  const handleTopUpSchema = async () => {
-    setToppingUp(true);
-    setSavedMessage(null);
-    try {
-      await topUpSchemaGaps();
-      await runTabCheck();
-      setSavedMessage(uk.settings.spreadsheet.topUpDone);
-    } catch (err) {
-      setTabCheck((prev) => ({ ...prev, error: err instanceof Error ? err.message : String(err) }));
-    } finally {
-      setToppingUp(false);
-    }
+    await health.repair();
   };
 
   const handleCreateNew = async () => {
@@ -230,13 +175,7 @@ function SpreadsheetSection({ signedIn }: { signedIn: boolean }) {
     if (signedIn) void runTabCheck();
   };
 
-  // Flattened "Tab: header1, header2" / "Settings: key1, key2" lines for display.
-  const schemaGapDescriptions = [
-    ...(tabCheck.columnGaps ?? []).map((gap) => `${gap.tab}: ${gap.missingHeaders.join(", ")}`),
-    ...(tabCheck.missingSettingsKeys && tabCheck.missingSettingsKeys.length > 0
-      ? [`Settings: ${tabCheck.missingSettingsKeys.join(", ")}`]
-      : []),
-  ];
+  const { lines, anyIssues, anyFixable, anyUnfixable, makesBackups } = summarizeIssues(health.reports);
 
   return (
     <div className="settings-account">
@@ -302,31 +241,26 @@ function SpreadsheetSection({ signedIn }: { signedIn: boolean }) {
         )}
       </div>
 
-      {signedIn && tabCheck.checking && <p>{uk.settings.spreadsheet.checking}</p>}
-      {signedIn && tabCheck.error && <p className="food-form-error">{tabCheck.error}</p>}
+      {signedIn && health.checking && <p>{uk.settings.spreadsheet.checking}</p>}
+      {signedIn && health.checkError && <p className="food-form-error">{health.checkError}</p>}
+      {signedIn && health.repairError && <p className="food-form-error">{uk.sheetStructure.dialogRepairFailed(health.repairError)}</p>}
 
-      {signedIn && tabCheck.missingTabs && tabCheck.missingTabs.length > 0 && (
+      {signedIn && health.reports && !anyIssues && <p>{uk.settings.spreadsheet.tabsOk}</p>}
+
+      {signedIn && anyIssues && (
         <div className="today-warning">
-          <p>{uk.settings.spreadsheet.tabsMissing(tabCheck.missingTabs)}</p>
-          <button type="button" onClick={() => void handleInitialize()} disabled={initializing}>
-            {initializing ? uk.settings.spreadsheet.initializing : uk.settings.spreadsheet.initializeButton}
-          </button>
-        </div>
-      )}
-
-      {signedIn && tabCheck.missingTabs && tabCheck.missingTabs.length === 0 && (
-        <>
-          {schemaGapDescriptions.length === 0 ? (
-            <p>{uk.settings.spreadsheet.tabsOk}</p>
-          ) : (
-            <div className="today-warning">
-              <p>{uk.settings.spreadsheet.schemaGapsFound(schemaGapDescriptions)}</p>
-              <button type="button" onClick={() => void handleTopUpSchema()} disabled={toppingUp}>
-                {toppingUp ? uk.settings.spreadsheet.toppingUp : uk.settings.spreadsheet.topUpButton}
+          <p>{uk.settings.spreadsheet.problemsFound}</p>
+          <SheetHealthIssueList lines={lines} />
+          {anyUnfixable && <p>{uk.settings.spreadsheet.unfixableNote}</p>}
+          {anyFixable && (
+            <>
+              {makesBackups && <p>{uk.settings.spreadsheet.repairBackupNote}</p>}
+              <button type="button" onClick={() => void handleRepair()} disabled={health.repairing}>
+                {health.repairing ? uk.settings.spreadsheet.repairing : uk.settings.spreadsheet.repairButton}
               </button>
-            </div>
+            </>
           )}
-        </>
+        </div>
       )}
     </div>
   );

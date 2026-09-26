@@ -206,8 +206,12 @@ export function settingsToRows(settings: Settings): unknown[][] {
   });
 }
 
+// Key/Value rows below the header — shared with the structure check
+// (spreadsheetInit.ts) so a key it counts as present is one this reads.
+export const SETTINGS_RANGE = "A2:B200";
+
 export async function getSettings(): Promise<Settings> {
-  const rows = await readRange("Settings", "A2:B60");
+  const rows = await readRange("Settings", SETTINGS_RANGE);
   const settings = parseSettingsRows(rows);
   // Time display is app-wide, but formatTime() is called from screens that
   // never read Settings — so every settings read also refreshes the shared
@@ -217,7 +221,7 @@ export async function getSettings(): Promise<Settings> {
 }
 
 export async function updateSettings(settings: Settings): Promise<void> {
-  const rows = await readRange("Settings", "A2:B60");
+  const rows = await readRange("Settings", SETTINGS_RANGE);
   const updates = computeSettingsUpdates(settings, rows);
   if (updates.length > 0) {
     await batchUpdateRanges(updates);

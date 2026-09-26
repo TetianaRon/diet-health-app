@@ -454,14 +454,30 @@ export async function readRange(tab: string, range: string): Promise<unknown[][]
   }
 }
 
-/** Appends rows to a tab, e.g. writeRange("DailyLog", "A:J", [[...]]). */
+function isBlankRow(row: unknown[]): boolean {
+  return row.every((v) => v === undefined || v === null || String(v).trim() === "");
+}
+
+/**
+ * Appends rows to a tab, e.g. writeRange("DailyLog", "A:J", [[...]]).
+ * Refuses a blank row, and checks Google's reply actually reports written
+ * cells — an append that writes nothing is still an HTTP 200, which is
+ * exactly how mom's readings "saved" without ever reaching her sheet.
+ */
 export async function writeRange(tab: string, range: string, values: unknown[][]): Promise<void> {
+  if (values.length === 0 || values.some(isBlankRow)) {
+    throw new Error(`writeRange: refusing to append a blank row to ${tab}`);
+  }
   const spreadsheetId = getSpreadsheetId();
-  await authorizedFetch(`${spreadsheetId}/values/${tab}!${range}:append?valueInputOption=USER_ENTERED`, {
+  const response = await authorizedFetch(`${spreadsheetId}/values/${tab}!${range}:append?valueInputOption=USER_ENTERED`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ values }),
   });
+  const data = await response.json().catch(() => null);
+  if (data?.updates?.updatedCells === 0) {
+    throw new Error(`writeRange: Google reported no cells written to ${tab}`);
+  }
 }
 
 /**
@@ -514,14 +530,38 @@ export async function getSpreadsheetName(): Promise<string> {
  */
 export async function addSheetTabs(titles: string[]): Promise<void> {
   if (titles.length === 0) return;
+  await structuralBatchUpdate(titles.map((title) => ({ addSheet: { properties: { title } } })));
+}
+
+/**
+ * Runs raw spreadsheets.batchUpdate requests (addSheet, duplicateSheet,
+ * deleteDimension, appendDimension, ...) — the structural edits values
+ * updates can't do. Google applies one call's requests atomically, in order.
+ */
+export async function structuralBatchUpdate(requests: object[]): Promise<void> {
+  if (requests.length === 0) return;
   const spreadsheetId = getSpreadsheetId();
   await authorizedFetch(`${spreadsheetId}:batchUpdate`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      requests: titles.map((title) => ({ addSheet: { properties: { title } } })),
-    }),
+    body: JSON.stringify({ requests }),
   });
+}
+
+export interface TabGrid {
+  sheetId: number;
+  columnCount: number;
+}
+
+/** Each tab's numeric sheetId (what structural requests address a tab by) and current grid width, keyed by title. */
+export async function getTabGrids(): Promise<Map<string, TabGrid>> {
+  const spreadsheetId = getSpreadsheetId();
+  const response = await authorizedFetch(`${spreadsheetId}?fields=sheets.properties(sheetId,title,gridProperties.columnCount)`);
+  const data = await response.json();
+  const sheets = (data.sheets ?? []) as { properties: { sheetId: number; title: string; gridProperties?: { columnCount?: number } } }[];
+  return new Map(
+    sheets.map((s) => [s.properties.title, { sheetId: s.properties.sheetId, columnCount: s.properties.gridProperties?.columnCount ?? 26 }]),
+  );
 }
 
 // --- Creating a brand-new spreadsheet from the app ---

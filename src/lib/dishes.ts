@@ -8,7 +8,7 @@
 // first, Source/DateAdded last, same nutrient column names in between —
 // only IngredientsJson/YieldGrams are Dish-specific, inserted in the middle.
 import { batchUpdateRanges, readRange, writeRange } from "./sheets";
-import { buildColumnIndex, buildRow, cell, columnLetter, readColumnIndex, type ColumnIndex } from "./sheetRow";
+import { buildColumnIndex, buildRow, cell, columnLetter, parseTab, readColumnIndex, SCAN_LAST_COLUMN, type ColumnIndex, type ParsedTab } from "./sheetRow";
 import { toGlycemicFlag, type GlycemicFlag } from "./glycemicFlag";
 
 export type DishSource = "starter" | "manual";
@@ -240,9 +240,8 @@ export const DISHES_HEADERS = [
 ] as const;
 const DEFAULT_COLUMN_INDEX = buildColumnIndex(DISHES_HEADERS);
 
-const DISHES_RANGE = "A1:Q1000"; // includes the header row (row 1), needed to resolve columns by name
-const DISHES_APPEND_RANGE = "A:Q";
-const DISHES_WIDTH = "Q";
+const DISHES_RANGE = `A1:${SCAN_LAST_COLUMN}1000`; // includes the header row (row 1), needed to resolve columns by name
+const DISHES_APPEND_RANGE = `A:${SCAN_LAST_COLUMN}`;
 
 export function rowToDish(row: unknown[], columnIndex: ColumnIndex = DEFAULT_COLUMN_INDEX): Dish {
   return {
@@ -291,10 +290,8 @@ export function dishToRow(dish: Dish, columnIndex: ColumnIndex = DEFAULT_COLUMN_
   );
 }
 
-async function readDishesSheet(): Promise<{ columnIndex: ColumnIndex; dataRows: unknown[][] }> {
-  const rows = await readRange("Dishes", DISHES_RANGE);
-  const [header, ...dataRows] = rows;
-  return { columnIndex: header ? buildColumnIndex(header) : DEFAULT_COLUMN_INDEX, dataRows };
+async function readDishesSheet(): Promise<ParsedTab> {
+  return parseTab("Dishes", await readRange("Dishes", DISHES_RANGE), DISHES_HEADERS);
 }
 
 export async function listDishes(): Promise<Dish[]> {
@@ -307,19 +304,19 @@ export async function addDish(
   glycemicFlag: GlycemicFlag = "none",
 ): Promise<void> {
   const withDate: Dish = { ...dish, dateAdded: new Date().toISOString().slice(0, 10), glycemicFlag };
-  const columnIndex = await readColumnIndex("Dishes", DISHES_WIDTH);
+  const columnIndex = await readColumnIndex("Dishes", DISHES_HEADERS);
   await writeRange("Dishes", DISHES_APPEND_RANGE, [dishToRow(withDate, columnIndex)]);
 }
 
 async function findDishRow(nameUk: string): Promise<{ rowNumber: number; columnIndex: ColumnIndex }> {
-  const { columnIndex, dataRows } = await readDishesSheet();
+  const { columnIndex, dataRows, firstDataRow } = await readDishesSheet();
   const rowIndex = dataRows.findIndex(
     (row) => String(cell(row, columnIndex, "NameUk") ?? "").trim().toLowerCase() === nameUk.trim().toLowerCase(),
   );
   if (rowIndex === -1) {
     throw new Error(`"${nameUk}" not found in Dishes`);
   }
-  return { rowNumber: rowIndex + 2, columnIndex }; // +2: 1-based rows, plus the header row
+  return { rowNumber: rowIndex + firstDataRow, columnIndex };
 }
 
 /** Sets the GlycemicFlag column for an existing Dishes row, found by exact nameUk match. */

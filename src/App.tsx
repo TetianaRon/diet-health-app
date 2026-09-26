@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState, type ReactNode } from "react";
 import { Capacitor } from "@capacitor/core";
 import { LocalNotifications } from "@capacitor/local-notifications";
 import { StatusBar, Style } from "@capacitor/status-bar";
 import { uk } from "./i18n/uk";
 import { AuthProvider } from "./context/AuthContext";
+import { SheetHealthProvider, useSheetHealth } from "./context/SheetHealthContext";
+import SheetHealthDialog from "./screens/SheetHealthDialog";
 import { initMealReminders } from "./lib/reminderScheduler";
 import TodayScreen from "./screens/TodayScreen";
 import FoodsScreen from "./screens/FoodsScreen";
@@ -54,6 +56,7 @@ export default function App() {
 
   return (
     <AuthProvider>
+      <SheetHealthProvider>
       <div className="app">
         {!editorOpen && (
         <div className="app-header">
@@ -71,6 +74,8 @@ export default function App() {
         </div>
         )}
 
+        {/* Keyed on the repair count: a repaired spreadsheet remounts the screens so they re-read it. */}
+        <ScreensAfterRepair>
         <main className={editorOpen ? "app-content editor-open" : "app-content"}>
           {activeTab === "today" && (
             <TodayScreen
@@ -83,6 +88,9 @@ export default function App() {
           {activeTab === "bloodSugar" && <BloodSugarScreen />}
           {activeTab === "settings" && <SettingsScreen />}
         </main>
+        </ScreensAfterRepair>
+
+        <SheetHealthDialog onOpenSettings={() => setActiveTab("settings")} />
 
         {!editorOpen && (
           <nav className="tab-bar">
@@ -99,6 +107,12 @@ export default function App() {
           </nav>
         )}
       </div>
+      </SheetHealthProvider>
     </AuthProvider>
   );
+}
+
+function ScreensAfterRepair({ children }: { children: ReactNode }) {
+  const { version } = useSheetHealth();
+  return <Fragment key={version}>{children}</Fragment>;
 }

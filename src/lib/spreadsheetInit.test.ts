@@ -1,14 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
-  buildColumnTopUpUpdate,
   buildInitUpdates,
+  analyzeSettingsTab,
   buildSettingsKeyTopUpUpdate,
-  missingHeadersFor,
+  planSettingsLabelRepair,
   missingSettingsKeysFor,
   missingTabs,
   REQUIRED_TABS,
 } from "./spreadsheetInit";
-import { buildColumnIndex } from "./sheetRow";
 
 describe("missingTabs", () => {
   it("returns all 5 tabs for a genuinely blank spreadsheet", () => {
@@ -31,40 +30,32 @@ describe("buildInitUpdates", () => {
 
   it("only touches the tabs actually missing, not ones that already exist", () => {
     const updates = buildInitUpdates(["BloodSugar"]);
-    expect(updates).toEqual([{ range: "BloodSugar!A1:D1", values: [["Timestamp", "ValueMmolL", "Context", "Notes"]] }]);
+    expect(updates).toEqual([
+      {
+        range: "BloodSugar!A1:D2",
+        values: [
+          ["Timestamp", "ValueMmolL", "Context", "Notes"],
+          ["Час", "Цукор, ммоль/л", "Контекст", "Примітки"],
+        ],
+      },
+    ]);
   });
 
-  it("gives Settings both a header row and a full set of default data rows", () => {
+  it("gives Settings keys + a names row, then default data rows (from row 3) each with its readable name", () => {
     const updates = buildInitUpdates(["Settings"]);
     expect(updates).toEqual([
-      { range: "Settings!A1:B1", values: [["Key", "Value"]] },
-      expect.objectContaining({ range: expect.stringMatching(/^Settings!A2:B\d+$/) as unknown as string }),
+      { range: "Settings!A1:C2", values: [["Key", "Value", "Label"], ["Ключ", "Значення", "Назва"]] },
+      expect.objectContaining({ range: expect.stringMatching(/^Settings!A3:C\d+$/) as unknown as string }),
     ]);
     const dataUpdate = updates[1];
-    expect(dataUpdate.values).toContainEqual(["DailyCarbsTarget", 140]);
-    expect(dataUpdate.values).toContainEqual(["ShowCarbsProgress", "FALSE"]);
-    expect(dataUpdate.values).toContainEqual(["ShowCaloriesProgress", "TRUE"]);
+    expect(dataUpdate.values).toContainEqual(["DailyCarbsTarget", 140, "Денна норма вуглеводів (г)"]);
+    expect(dataUpdate.values).toContainEqual(["ShowCarbsProgress", "FALSE", "Показувати вуглеводи на екрані «Сьогодні»"]);
   });
 
   it("produces one update per non-Settings tab, plus two for Settings, when everything is missing", () => {
     const updates = buildInitUpdates([...REQUIRED_TABS]);
     // Ingredients, Dishes, DailyLog, BloodSugar (1 each) + Settings (header + data)
     expect(updates).toHaveLength(6);
-  });
-});
-
-describe("missingHeadersFor", () => {
-  it("returns headers not present in the live column index", () => {
-    const columnIndex = buildColumnIndex(["NameUk", "NameEn", "Carbs_g", "GI"]);
-    expect(missingHeadersFor(columnIndex, ["NameUk", "NameEn", "Carbs_g", "GI", "Favorite", "GiVerified"])).toEqual([
-      "Favorite",
-      "GiVerified",
-    ]);
-  });
-
-  it("returns nothing when every canonical header is present, regardless of order", () => {
-    const columnIndex = buildColumnIndex(["GI", "NameUk", "Carbs_g"]);
-    expect(missingHeadersFor(columnIndex, ["NameUk", "Carbs_g", "GI"])).toEqual([]);
   });
 });
 
@@ -85,34 +76,48 @@ describe("missingSettingsKeysFor", () => {
   });
 });
 
-describe("buildColumnTopUpUpdate", () => {
-  it("appends missing headers right after the current last column", () => {
-    const columnIndex = buildColumnIndex(["NameUk", "NameEn", "Carbs_g"]); // last used index = 2 (column C)
-    const update = buildColumnTopUpUpdate("Ingredients", columnIndex, ["Favorite", "GiVerified"]);
-    expect(update).toEqual({ range: "Ingredients!D1:E1", values: [["Favorite", "GiVerified"]] });
-  });
-
-  it("never touches an existing column, even one this app doesn't recognize", () => {
-    // Mirrors mom adding her own note column at the end.
-    const columnIndex = buildColumnIndex(["NameUk", "NameEn", "MyOwnNotes"]);
-    const update = buildColumnTopUpUpdate("Ingredients", columnIndex, ["Favorite"]);
-    expect(update.range).toBe("Ingredients!D1:D1");
-  });
-});
-
 describe("buildSettingsKeyTopUpUpdate", () => {
-  it("appends default rows for the missing keys after the existing rows", () => {
-    const update = buildSettingsKeyTopUpUpdate(7, ["DailyGlycemicLoadTarget"]);
-    expect(update.range).toBe("Settings!A9:B9");
-    expect(update.values).toEqual([["DailyGlycemicLoadTarget", 80]]);
+  it("appends default rows, with readable names, right after the tab's last row", () => {
+    const update = buildSettingsKeyTopUpUpdate(8, ["DailyGlycemicLoadTarget"]);
+    expect(update).toEqual({
+      range: "Settings!A9:C9",
+      values: [["DailyGlycemicLoadTarget", 80, "Денна норма глікемічного навантаження"]],
+    });
   });
 
   it("writes multiple missing keys as consecutive rows", () => {
-    const update = buildSettingsKeyTopUpUpdate(0, ["ShowFatTotal", "ShowSugarsTotal"]);
-    expect(update.range).toBe("Settings!A2:B3");
-    expect(update.values).toEqual([
-      ["ShowFatTotal", "FALSE"],
-      ["ShowSugarsTotal", "FALSE"],
-    ]);
+    const update = buildSettingsKeyTopUpUpdate(2, ["ShowFatTotal", "ShowSugarsTotal"]);
+    expect(update.range).toBe("Settings!A3:C4");
+    expect(update.values.map((row) => row[0])).toEqual(["ShowFatTotal", "ShowSugarsTotal"]);
+  });
+});
+
+describe("Settings tab names", () => {
+  // Mom's Settings tab as of 2026-09-26 (abridged): bilingual header, no names row, no Label column.
+  const momSettings = [
+    ["Key (Ключ)", "Value (Значення)"],
+    ["DailyCarbsTarget", "140"],
+    ["MealsPerDay", "6"],
+  ];
+
+  it("proposes the names row and Label column for an older Settings tab", () => {
+    expect(analyzeSettingsTab(momSettings)).toContainEqual({ kind: "missingLabelRow" });
+  });
+
+  it("plans the Label header, the names row, and each key's name — shifted down by the inserted row", () => {
+    expect(planSettingsLabelRepair(momSettings)).toEqual({
+      insertLabelRow: true,
+      valueUpdates: [
+        { range: "Settings!A1:C1", values: [["Key", "Value", "Label"]] },
+        { range: "Settings!A2:C2", values: [["Ключ", "Значення", "Назва"]] },
+        { range: "Settings!C3", values: [["Денна норма вуглеводів (г)"]] },
+        { range: "Settings!C4", values: [["Прийомів їжі на день"]] },
+      ],
+    });
+  });
+
+  it("reports nothing extra for an up-to-date Settings tab", () => {
+    const rows = buildInitUpdates(["Settings"]).flatMap((u) => u.values);
+    expect(analyzeSettingsTab(rows)).toEqual([]);
   });
 });
