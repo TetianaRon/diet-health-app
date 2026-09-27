@@ -23,3 +23,6 @@ build/
 
 # Local Claude Code settings (machine-specific)
 .claude/settings.local.json
+
+# Raw user food-data contributions (private; only reviewed, sourced entries are committed to src/data)
+contributions/
