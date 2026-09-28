@@ -10,6 +10,7 @@ import { getSettings, type Settings } from "../lib/settings";
 import { wasLastReadFromCache } from "../lib/sheets";
 import { formatTime } from "../lib/dateFormat";
 import { scheduleMealReminder } from "../lib/reminderScheduler";
+import ReminderAccessNotice from "./ReminderAccessNotice";
 import { latestBloodSugarEntry, listBloodSugarEntries, type BloodSugarEntry } from "../lib/bloodSugar";
 import {
   groupIntoMeals,
@@ -317,6 +318,12 @@ export default function TodayScreen({
     <section className="screen">
       <h1>{uk.today.title}</h1>
 
+      {/* Two groups: on phones they simply stack (no visual change); on desktop
+          (index.css, min-width 1000px) the day's summary sits in a column
+          beside the meals. */}
+      <div className="today-layout">
+      <div className="today-summary">
+      <ReminderAccessNotice />
       {loadError && <p className="food-form-error">{loadError}</p>}
       {showingCachedData && <p className="today-warning">{uk.today.offlineNotice}</p>}
 
@@ -370,10 +377,12 @@ export default function TodayScreen({
         </p>
       ))}
 
-      <button type="button" onClick={() => setEditor({ meal: null })}>
+      <button type="button" className="today-add" onClick={() => setEditor({ meal: null })}>
         {uk.today.addButton}
       </button>
+      </div>
 
+      <div className="today-meals">
       {entries === null && !loadError && <p>{uk.today.loading}</p>}
       {entries !== null && todayEntries.length === 0 && <p>{uk.today.empty}</p>}
 
@@ -388,6 +397,8 @@ export default function TodayScreen({
           <MealItemsList meal={meal} settings={settings} />
         </div>
       ))}
+      </div>
+      </div>
     </section>
   );
 }

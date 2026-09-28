@@ -52,7 +52,12 @@ export interface NutritionEstimate {
   source: "starter" | "usda";
 }
 
-const USDA_SEARCH_URL = "https://api.nal.usda.gov/fdc/v1/foods/search";
+// USDA search goes through our own proxy (api/usda.js), which adds the API
+// key on the server — the key is no longer baked into the web bundle or the
+// APK (2026-09-28). Same-origin "/api/usda" on the web; the Android build
+// sets VITE_USDA_PROXY_URL to the deployed absolute URL; `npm run dev`
+// proxies "/api/usda" to USDA in vite.config.ts.
+const USDA_SEARCH_URL = import.meta.env.VITE_USDA_PROXY_URL || "/api/usda";
 
 // USDA's search returns multiple ranked matches per query (its API supports
 // up to 200 per page) — fetching a generous batch up front, in one request,
@@ -115,15 +120,13 @@ function usdaFoodToEstimate(food: UsdaFood): NutritionEstimate {
 }
 
 /**
- * Queries USDA FoodData Central and returns up to USDA_CANDIDATE_COUNT
- * ranked matches — safe client-side, it's a free public-data API. An empty
- * array means USDA had no matches at all.
+ * Queries USDA FoodData Central (via the api/usda proxy) and returns up to
+ * USDA_CANDIDATE_COUNT ranked matches. An empty array means USDA had no
+ * matches at all.
  */
 export async function searchUsda(nameEn: string): Promise<NutritionEstimate[]> {
-  const apiKey = import.meta.env.VITE_USDA_API_KEY;
   const params = new URLSearchParams({
     query: nameEn,
-    api_key: apiKey,
     pageSize: String(USDA_CANDIDATE_COUNT),
     dataType: "Foundation,SR Legacy",
   });

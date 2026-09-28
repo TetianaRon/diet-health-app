@@ -67,10 +67,12 @@ type BooleanField = (typeof BOOLEAN_FIELDS)[number];
 const FIELDS = [...NUMERIC_FIELDS, ...TIME_FIELDS, ...BOOLEAN_FIELDS] as const satisfies readonly (keyof Settings)[];
 
 // Google Play's User Data policy requires the privacy policy to be reachable
-// from inside the app itself, not just the Play Console listing field — see
-// docs/privacy-policy.html (published via GitHub Pages, kept isolated from
-// this repo's other docs/ files on its own gh-pages branch).
-const PRIVACY_POLICY_URL = "https://tetianaron.github.io/diet-health-app/";
+// from inside the app itself, not just the Play Console listing field. Served
+// by the roncreator.com site (repo roncreator-site) since 2026-09-28 — the
+// English (root) page is the primary one for publishing requirements; the old
+// GitHub Pages copy (gh-pages branch) stays up until installs with the old
+// link are gone.
+const PRIVACY_POLICY_URL = "https://roncreator.com/track-my-meals/privacy";
 
 // Not gated behind sign-in — which spreadsheet this device talks to is a
 // local, per-device setting independent of the signed-in Google account

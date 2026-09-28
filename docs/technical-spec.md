@@ -107,10 +107,12 @@ Shown in the meal editor as "Орієнтир на цей прийом": what's 
 ### BloodSugar
 | Column | Notes |
 |---|---|
-| Timestamp | |
+| Timestamp | When the test was **taken** (not when it was written down) — set in the form, default now (2026-09-27) |
 | ValueMmolL | |
 | Context | fasting / after-meal / other |
 | Notes | |
+
+The Цукор screen lists readings grouped by day (Сьогодні / date), each led by its time like a meal. **Today's readings can be edited** («Редагувати» opens the same form, including the time); the tab has no row ID, so `updateBloodSugarEntry()` finds the row by timestamp + value (`planBloodSugarUpdate()`, unit-tested) and rewrites it in place. A time in the future is rejected.
 
 ### Settings
 Key/value rows, pre-filled with Project Brief defaults; mom's interview tunes the values, not the schema.
@@ -193,7 +195,7 @@ Flow: mom types a Ukrainian name → checked against the bundle first → if not
 
 The bundled starter data (`src/data/starter-foods.ts`, `src/data/starter-dishes.ts`) is usable everywhere ingredients or dishes are browsed or picked from — the Продукти tab's lists, the Dish composer's ingredient picker, and the Today screen's meal-logging picker — **without first being individually saved to the Ingredients/Dishes sheet**. `mergeWithStarterFoods()` (`src/lib/ingredients.ts`) and `mergeWithStarterDishes()` (`src/data/starter-dishes.ts`, to avoid a circular import with `lib/dishes.ts`) merge the bundle with whatever's actually in the personal sheet at read time, keyed by name — a sheet row (an edit, or a favorited entry) always overrides the bundle default for the same name. Nothing needs "approval" to be *used* this way; approval (the flow above) is only needed for a genuinely new food not in the bundle, or to make a bundle item's row permanent — e.g. to edit its values, or to favorite it (see below).
 
-A Dish composed from a bundle-only ingredient (never saved to the Ingredients sheet) is allowed — its `IngredientsJson` reference may not resolve to an actual Ingredients row if read back later, but nothing re-resolves it after the Dish is saved (its nutrition is computed once, at save time, and stored as static columns), so this is a harmless, accepted gap rather than a bug.
+A Dish composed from a bundle-only ingredient (never saved to the Ingredients sheet) is allowed — its `IngredientsJson` reference may not resolve to an actual Ingredients row if read back later, but nothing re-resolves it after the Dish is saved (its nutrition is computed once, at save time, and stored as static columns), so this is a harmless, accepted gap rather than a bug. *(Planned change: once ingredient edits offer to recompute the dishes that use them, bundle-only references are resolved from the bundle — see "Label photos, drafts and the 3-day update window".)*
 
 ## Favorites
 
@@ -244,6 +246,7 @@ The web/PWA codebase is also wrapped as an Android app via [Capacitor](https://c
 - **Platform glue** (`src/lib/reminderScheduler.ts`, not unit-tested — thin IO wrapper, same convention as `sheets.ts`): `initMealReminders()` (requests notification permission, creates a high-importance/lock-screen-visible channel — call once at app startup) and `scheduleMealReminder(lastMealTime, settings)` via `@capacitor/local-notifications`. Both are no-ops outside a native build (`Capacitor.isNativePlatform()`), so calling them from the shared React code is always safe.
 - **Trigger points**: `TodayScreen` reschedules whenever its most-recent `DailyLog` entry or `Settings` change — this covers both "just logged a meal" and "reopened the app" (a `@capacitor/app` `resume` listener re-reads the sheet on foreground, refreshing a possibly-stale cached state — see the build-log entry for the accepted cross-device gap this doesn't fully close). Tapping the notification (`localNotificationActionPerformed`, handled in `App.tsx`) deep-links into Today's quick-add form.
 - **Android manifest** (`android/app/src/main/AndroidManifest.xml`): `POST_NOTIFICATIONS` (Android 13+ runtime permission), `SCHEDULE_EXACT_ALARM` (Android 12+, for on-time delivery), `RECEIVE_BOOT_COMPLETED`.
+- **Fixed 2026-09-27 — reminders only arrived when the app was opened:** the notification was scheduled without `allowWhileIdle`, so Doze held it while the phone was idle; opening the app then found it overdue and fired it 5 s later. Now scheduled with `allowWhileIdle: true`. Also, Android 14+ leaves "Alarms & reminders" (exact alarms) **off by default** for new installs even though the manifest declares it: `getReminderAccess()` checks notification permission and `checkExactNotificationSetting()`, and `ReminderAccessNotice` (top of Today, native only) explains what's missing with one button (`requestReminderAccess()` → permission prompt / system settings screen), re-checked on resume, plus a hint about battery optimisation on aggressive OEMs. **Needs an on-device test with the screen off.**
 - **Release signing**: `android/app/build.gradle` reads `android/keystore.properties` (gitignored) if present, else falls back to debug signing. See `android/keystore.properties.example` for the one-time `keytool` setup — needs a JDK, so it's done once on whichever machine has Android Studio, not regenerated per build.
 - **Resolved 2026-09-10**: `./gradlew assembleRelease` needs a JDK + Android SDK (Android Studio), which the primary dev machine lacks — but access to a separate Android Studio machine was available the same day this was written, and the release keystore, signed builds, and on-device testing have all been done from there since.
 
@@ -253,6 +256,21 @@ The web/PWA codebase is also wrapped as an Android app via [Capacitor](https://c
 GL = (GI × Carbs_g_in_portion) / 100
 ```
 Implemented as a pure function in `src/lib/health.ts`.
+
+**Dishes today** (`computeDishNutrition` in `src/lib/dishes.ts`): nutrients = Σ (each ingredient's per-100 g value × grams entered), divided by the finished yield weight. GI = carb-weighted mean of the ingredients' GIs (the standard mixed-meal method, Wolever). Known gaps: GI depends strongly on cooking state (raw vs boiled carrot; potato/pasta by cooking time; mashing/blending raises it, cooling lowers it), and the composer can't tell whether an ingredient row is raw or cooked — so a raw weight entered against a cooked row (e.g. «гречка варена» ~92 kcal/100 g weighed dry) understates carbs ~3.5×.
+
+### Planned: food families with cooking states (designed 2026-09-27, not built)
+
+Chosen with the developer: **option B (families with states) as the mechanism, option D (published whole-dish GI) only as a verification/visibility aid** — never replacing B's result.
+
+- **Scope first: carb-rich foods only** (grains, pasta, potatoes, legumes, root vegetables, corn, fruit — roughly 20–30 families). Ingredients with negligible carbs (meat, fish, eggs, oil, most leafy/non-starchy vegetables) contribute ~nothing to GL, so their state doesn't matter and the composer doesn't ask about it.
+- **Data:** each family (e.g. Картопля) has state variants — сира, варена, печена, пюре, смажена, консервована… — each with its own per-100 g values, GI, source and reliability (as on the review page). Ingredients gain `Family` + `State`.
+- **Composer:** for a carb-rich ingredient she enters the **raw weight** and picks **«стан у готовій страві»** per ingredient (so "potatoes boiled, dill added raw at the end" works). The dish's final weight stays as today.
+- **Why no cooked weight per ingredient is needed:** carbs (and protein/fat) are conserved through cooking — only water moves. So the ingredient's carbs = *raw* variant carbs × raw grams, the dish per-100 g = totals ÷ final weight (mass balance, as today), and the *cooked-state* GI is applied to exactly those carbs in the carb-weighted mean. The cooked weight of each ingredient never enters the GL maths.
+- **Where a raw→cooked weight factor is still useful** (the developer's density idea): (a) estimating the dish's final weight when the pot wasn't weighed, (b) sanity-checking an entered final weight, (c) converting when only a cooked weight is known. Factor = raw per-100 g ÷ cooked per-100 g of the same family, computed from **carbs** for carb-rich foods (carbs are conserved even when oil is added in frying) and from kcal only as a fallback (kcal shifts when fat is absorbed or rendered out). E.g. rice 80 g carbs raw vs 28 g boiled → ×2.8.
+- **Missing state GI:** use the nearest state with a lower reliability label and a written reason; the dish GI is always labelled an **estimate** («розрахунок з інгредієнтів») with an ⓘ noting that fat, protein, fibre and acidity in a dish usually lower the real response.
+- **Option D as verification:** where a published GI exists for a comparable whole dish, show it next to the computed estimate («у дослідженнях схожої страви: 48») with its source — for visibility, not as the value used.
+- Also fixes the raw/cooked weight mix-up above, since each ingredient's state is explicit.
 
 ## Per-meal fat limit logic
 
@@ -265,6 +283,57 @@ Track time since the last logged meal; warn when approaching `Settings.MaxGapHou
 ## New product validation flow
 
 App suggests (bundle match or USDA lookup) → mom reviews the estimate → mom approves → row saved to Ingredients with `Source = starter`/`usda`/`manual` as appropriate. Never auto-saves without approval.
+
+## Label photos, drafts and the 3-day update window (planned 2026-09-27)
+
+> **Status:** 📝 Designed with the developer, not built yet. Changes the "meals are static records" rule — see *3-day update window* below.
+
+**Why:** package print is too small for mom to read, and she prefers entering data on the computer (vision), while taking a photo is easier on the phone. So the phone captures, the computer types — and neither step blocks eating: an item that exists only as a photo can already be logged in a meal.
+
+### Build order
+1. **Item IDs** (foundation, invisible) — see below.
+2. **Label photo + zoom viewer + Drive storage.**
+3. **Drafts** — photo-only items, captured on the phone, completed on the computer, loggable in meals.
+4. **3-day update prompt.**
+5. **«Прочитати через Google Lens»** — optional text reading of the same photos (Android only).
+
+### 1. Item IDs
+Ingredients, Dishes and DailyLog rows are matched **by name** today (`findIngredientRow`/`findDishRow`; DailyLog stores only `ItemName`). A draft has no name, and a name changes when a draft is completed or renamed — so:
+- **Ingredients / Dishes gain an `Id` column** (generated once on creation, never changes; additive column via the structure check). Existing rows get an ID on first read-and-repair. Bundle-only items (never saved to the sheet) use a stable derived ID, e.g. `starter:<nameUk>`.
+- **DailyLog gains `ItemId`** — which item a row was logged from (blank for custom entries and for rows logged before this existed; those stay name-only and are never updated by the 3-day window).
+- `ItemName` stays in DailyLog as the human-readable snapshot.
+- **Duplicate-name check** (developer, 2026-09-27) — part of this step, because today's name-matching would let two items called «хліб» be picked or updated in place of each other. In a hurry she'll type «хліб» for a new bread even though one exists:
+  - Wherever an item is named (item editor, draft, quick add from a meal), the name is checked as she types against her items, drafts and the bundled list, **normalised**: case-insensitive, trimmed, repeated spaces collapsed, Latin look-alike letters mapped to Cyrillic (`i`→`і`, `o`→`о`, `a`→`а`, …).
+  - On a match, under the field: «Продукт «хліб» уже є» + a card of the existing item (photo thumbnail if any, calories, source) + two buttons: **«Це він — використати наявний»** (nothing is created; the meal uses the existing item) and **«Це інший — назвати «хліб 2»»** (next free number: 2, 3, …). A hint suggests the better option: «Краще додати марку чи вид — так легше розрізнити».
+  - An exact (normalised) duplicate can't be saved without one of these choices.
+  - Because a number says little later, lists and pickers show each item's photo thumbnail next to its name (step 2), and a numbered draft can be renamed when it's completed — safe once meals point to `ItemId`, not the name.
+
+### 2. Label photo + zoom viewer
+- In the item editor: **«Сфотографувати етикетку»** (phone/tablet: camera via the Capacitor Camera plugin / `capture`) or **«Додати фото етикетки»** (computer: file picker). Two photo slots: **«Назва / упаковка»** and **«Таблиця поживності»** — each optional, at least one; retake/remove per slot.
+- **The photo stays visible while typing:** next to the fields on tablet/computer, pinned above them on the phone (collapsible). Pinch / double-tap zoom, drag to pan, full-screen button; the zoom and position are kept while she moves between fields, so the nutrition table stays big and in place.
+- **Storage: her Google Drive**, folder «Diabetes Tracker / Етикетки», using the **`drive.file`** scope (the app sees only files it created; non-sensitive scope). JPEG downscaled to ~1600 px (~300–500 KB). Offline: kept on the device and uploaded on the next connection. The item row stores the Drive file IDs in a new column (`PhotoIds`, comma-separated, slot-tagged).
+- **Source:** an item filled from a photo records `Source = label` and its ⓘ opens the photo — the app's rule that every value shows its source, here with the original evidence attached.
+- **To verify before building:** that a Drive file created by the Android app (native OAuth client) is visible to the web app (web OAuth client) under `drive.file` — expected when both clients belong to the same Google Cloud project.
+
+### 3. Drafts
+- **What a draft needs: at least a photo *or* a name** (developer, 2026-09-27). Photo-only and name-only drafts are both allowed; an empty draft (ID only) is not — «Зберегти чернетку» stays disabled until there is a photo or a name, because an item with neither can't be recognised later when it's time to fill it in. No values are required.
+- **Phone:** «Сфотографувати новий продукт» → the two photo slots (and/or a quickly typed name) → «Зберегти чернетку». A name-only draft can also be started on any device, e.g. the name of something she ate but couldn't photograph. Saved as an Ingredients (or Dishes) row with `Status = draft` (new column), an `Id`, the photos and/or name, and every nutrient field listed in `UnknownFields`.
+- **Computer:** Продукти shows **«Чернетки (N)»**, each draft as its photo thumbnail and/or its name. Opening one opens the normal item editor with both photos beside the fields. It becomes a normal item once it has **a name and calories**; anything still blank stays in `UnknownFields` (excluded from totals, as today).
+- **Loggable in meals before it's filled** (developer's decision, 2026-09-27 — same idea as a restaurant «Власний запис»: add it for visibility even when the values are unknown). In the meal pickers a draft shows as its thumbnail and/or name + «Чернетка — дані ще не заповнені». The logged row carries `ItemId` and all fields unknown, and the meal/day show the existing clear warning that some values are missing and excluded from totals. Completing the draft later feeds those meals through the 3-day window below.
+
+### 4. 3-day update window
+Replaces "a logged meal is a static record forever" with: **DailyLog rows older than 3 days are frozen history; rows from the last 3 days can be updated from their item — but only after asking.** No silent overwrite: an item can change legitimately (a recipe changes, a brand reformulates), and old meals must keep what was true when they were eaten; but values that were missing or plainly wrong can still be corrected where it matters.
+- **When it asks:** primarily **when an item is saved in the editor** (she knows why it changed) — e.g. «Цей продукт є у 2 прийомах їжі за останні 3 дні (вчора обід, сьогодні сніданок). Оновити їх: 250 → 230 ккал?» → **[Оновити]** / **[Залишити як було]**. Secondary safety net: a quiet check on the Today screen for changes saved on another device.
+- **Two wordings:** *missing values filled in* (draft completed, unknown → known): «Доповнити дані в прийомах їжі?»; *existing values changed*: shows old → new for each affected meal.
+- **Hand-edited meals are left alone:** a row is offered only if its stored values still equal what the *previous* version of the item gives for that portion (or were unknown). If she adjusted it in the meal editor, it isn't touched.
+- **Dishes built from ingredients:** changing an ingredient makes composed dishes that use it stale, so the same prompt offers «Також використовується у N стравах — перерахувати їх?»; recomputed dishes then flow into the meal check. (Dishes referencing bundle-only ingredients resolve them from the bundle.)
+- **Window length** is one constant (`LIVE_LOG_DAYS = 3`), easy to change.
+- Custom/restaurant entries (no `ItemId`) and rows logged before `ItemId` existed are never updated.
+
+### 5. «Прочитати через Google Lens» (Android)
+- Appears under the label photo once taken. Sends the **same photo** to Google Lens (Android share-to-Lens intent); she selects all text → «Копіювати» → returns; on resume the app offers «Вставити текст з етикетки?» (Capacitor Clipboard) and a parser fills kcal/protein/fat/carbs/sugars/fibre, preferring the "на 100 г" column and leaving a field empty rather than guessing. Every prefilled field is highlighted for her to check against the photo beside it. A plain «Вставити текст» box also works on the computer.
+- **Tuning data:** for each Lens use, a small text file next to the photo in Drive holds the Lens text, the parsed values and the values she finally saved; manual fills keep the photo + final values. These become parser unit tests.
+- **To check on her phone first:** that Lens opens from the app with the photo, and whether Lens offers «Поділитися» for selected text (if so the app can register as a share target and skip copy/paste).
 
 ## Daily summary and progress indicators
 
@@ -281,6 +350,16 @@ Today screen shows: running totals vs. Settings targets (carbs, calories), time-
 
 ## Deployment and access
 
-- Hosted on Vercel as a static PWA — no serverless functions needed now that nutrition lookup doesn't require hiding a paid API key.
-- Mom opens the same URL in her phone browser and installs it to her home screen; on Windows, the developer (or mom) installs it from the browser's "Install app" menu.
-- No app store, no separate installer.
+- **Web app:** Vercel project from this repo, served at **`https://track-my-meals.roncreator.com`** (Cloudflare CNAME, DNS only). **Unlisted** while in closed testing: `noindex` meta + `robots.txt` disallow, no link from roncreator.com; testers get the direct link. Sign-in still limited to the OAuth test-user list.
+- **One serverless function, `api/usda.js`:** a USDA FoodData Central search proxy that adds the API key on the server (`USDA_API_KEY`), so the key is in neither the web bundle nor the APK. Same-origin for the web app; the Android build calls it at `VITE_USDA_PROXY_URL` (CORS allows `https://localhost`, Capacitor's WebView origin). Only `query`/`pageSize`/`dataType` are forwarded; responses are edge-cached for a day. `npm run dev` proxies `/api/usda` via `vite.config.ts`.
+- **Vercel env vars (web):** `VITE_GOOGLE_CLIENT_ID`, `VITE_SPREADSHEET_ID` (the testers' default sheet), `USDA_API_KEY`. Deliberately **not** set: `VITE_DEFAULT_SPREADSHEET_ID` (mom's sheet) and `VITE_DEV_SPREADSHEET_ID` — Settings hides their buttons when unset, so personal sheet IDs never reach the public bundle.
+- Google OAuth web client: `https://track-my-meals.roncreator.com` in Authorized JavaScript origins.
+- The landing page and privacy policy live on roncreator.com (separate repo `roncreator-site`).
+- Android: Capacitor app from the same code, released through Google Play (internal/closed testing).
+
+## Planned: English version (postponed 2026-09-28)
+
+Deferred by the developer; the decisions are already made:
+- **Language choice:** first start follows the device language (Ukrainian if it's Ukrainian, otherwise English); a switch in Settings overrides it and is remembered per device. Mom's devices stay Ukrainian.
+- **Spreadsheet readable-names row (row 2):** a new sheet gets names in the app's language at creation; existing sheets keep theirs.
+- **Implementation notes:** all UI text is in `src/i18n/uk.ts` (~500 lines, 16 importing files) → an `en.ts` with the same shape plus a small language module. Meal types are stored in the sheet as Ukrainian words (`MEAL_TYPES` in `dailyLog.ts`) — keep them as stored keys and map to English only for display. Built-in foods already carry `nameEn`. Dates use `uk-UA` in `src/lib/dateFormat.ts` → follow the app language. Names people type themselves are never translated.

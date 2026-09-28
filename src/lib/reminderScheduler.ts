@@ -51,9 +51,39 @@ export async function scheduleMealReminder(lastMealTime: Date, settings: Setting
         channelId: MEAL_REMINDER_CHANNEL_ID,
         title: uk.reminders.notificationTitle,
         body: uk.reminders.notificationBody,
-        schedule: { at: fireTime },
+        // Without allowWhileIdle Android's Doze mode holds the alarm while the
+        // phone sits idle with the screen off, so it only arrived once the app
+        // was opened (and the overdue branch above re-fired it) — 2026-09-27.
+        schedule: { at: fireTime, allowWhileIdle: true },
         extra: { screen: "today", action: "addMeal" },
       },
     ],
   });
+}
+
+/**
+ * What the reminder is still missing on this phone: notification permission
+ * and Android 12+'s "Alarms & reminders" (exact alarms), which Android 14+
+ * leaves off by default for new installs — without it the reminder can come
+ * late. Null outside a native build (nothing to ask for).
+ */
+export interface ReminderAccess {
+  notifications: boolean;
+  exactAlarms: boolean;
+}
+
+export async function getReminderAccess(): Promise<ReminderAccess | null> {
+  if (!Capacitor.isNativePlatform()) return null;
+  const [perm, exact] = await Promise.all([
+    LocalNotifications.checkPermissions(),
+    LocalNotifications.checkExactNotificationSetting(),
+  ]);
+  return { notifications: perm.display === "granted", exactAlarms: exact.exact_alarm === "granted" };
+}
+
+/** Asks for whatever is missing: the notification prompt, or opens the system "Alarms & reminders" screen. */
+export async function requestReminderAccess(access: ReminderAccess): Promise<void> {
+  if (!Capacitor.isNativePlatform()) return;
+  if (!access.notifications) await LocalNotifications.requestPermissions();
+  if (!access.exactAlarms) await LocalNotifications.changeExactNotificationSetting();
 }

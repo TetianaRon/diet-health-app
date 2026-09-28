@@ -2,15 +2,18 @@ import { useEffect, useState } from "react";
 import { uk } from "../i18n/uk";
 import { useAuth } from "../context/AuthContext";
 import { checkBloodSugarRange } from "../lib/health";
-import { formatDateTime } from "../lib/dateFormat";
+import { formatDayMonthFromKey, formatTime, fromDatetimeLocalValue, toDatetimeLocalValue } from "../lib/dateFormat";
 import { getSettings, type Settings } from "../lib/settings";
-import { listLogEntries, mealsBeforeTimestamp, type DailyLogEntry } from "../lib/dailyLog";
+import { listLogEntries, localDateKey, mealsBeforeTimestamp, type DailyLogEntry } from "../lib/dailyLog";
+import { DateTimeInput } from "./TimeInput";
 import Breadcrumb from "./Breadcrumb";
 import {
   BLOOD_SUGAR_CONTEXTS,
   addBloodSugarEntry,
+  groupBloodSugarByDay,
   latestBloodSugarEntry,
   listBloodSugarEntries,
+  updateBloodSugarEntry,
   type BloodSugarContext,
   type BloodSugarEntry,
 } from "../lib/bloodSugar";
@@ -27,34 +30,52 @@ function formatTimeBefore(mealTimestamp: string, readingTimestamp: string): stri
   return hours < 1 ? uk.bloodSugar.mealsBefore.lessThanHourAgo : uk.bloodSugar.mealsBefore.hoursAgo(hours);
 }
 
-function AddBloodSugarForm({
+// Add and edit share one form. The time is the moment of the test, which can
+// differ from when it's written down, so it's an editable field (default: now).
+function BloodSugarForm({
+  original,
+  settings,
   onSaved,
   onCancel,
 }: {
+  original?: BloodSugarEntry;
+  settings: Settings | null;
   onSaved: (entry: BloodSugarEntry) => void;
   onCancel: () => void;
 }) {
-  const [value, setValue] = useState("");
-  const [context, setContext] = useState<BloodSugarContext>("fasting");
-  const [notes, setNotes] = useState("");
+  const [value, setValue] = useState(original ? String(original.valueMmolL) : "");
+  const [context, setContext] = useState<BloodSugarContext>(original?.context ?? "fasting");
+  const [notes, setNotes] = useState(original?.notes ?? "");
+  const [time, setTime] = useState(() => toDatetimeLocalValue(original?.timestamp ?? new Date().toISOString()));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleSave = async () => {
-    const parsed = Number(value);
+    const parsed = Number(value.replace(",", "."));
     if (!Number.isFinite(parsed) || parsed <= 0) {
       setError(uk.bloodSugar.form.validationError);
+      return;
+    }
+    const timestamp = fromDatetimeLocalValue(time);
+    if (new Date(timestamp).getTime() > Date.now() + 60_000) {
+      setError(uk.bloodSugar.form.futureError);
       return;
     }
 
     setSaving(true);
     setError(null);
     try {
-      const toSave = { valueMmolL: parsed, context, notes: notes.trim() };
-      await addBloodSugarEntry(toSave);
-      onSaved({ ...toSave, timestamp: new Date().toISOString() });
+      const fields = { valueMmolL: parsed, context, notes: notes.trim() };
+      if (original) {
+        const updated: BloodSugarEntry = { ...fields, timestamp };
+        await updateBloodSugarEntry(original, updated);
+        onSaved(updated);
+      } else {
+        onSaved(await addBloodSugarEntry(fields, timestamp));
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message === "BloodSugar entry not found" ? uk.bloodSugar.editNotFound : message);
     } finally {
       setSaving(false);
     }
@@ -66,6 +87,17 @@ function AddBloodSugarForm({
         {uk.bloodSugar.form.valueLabel}
         <input type="number" inputMode="decimal" step="0.1" value={value} onChange={(e) => setValue(e.target.value)} />
       </label>
+
+      <label>
+        {uk.bloodSugar.form.timeLabel}
+        <DateTimeInput
+          ariaLabel={uk.bloodSugar.form.timeLabel}
+          format={settings?.timeFormat ?? "24h"}
+          value={time}
+          onChange={setTime}
+        />
+      </label>
+      <p className="food-form-hint">{uk.bloodSugar.form.timeHint}</p>
 
       <label>
         {uk.bloodSugar.form.contextLabel}
@@ -108,6 +140,8 @@ export default function BloodSugarScreen() {
   const [logEntries, setLogEntries] = useState<DailyLogEntry[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
+  // The reading being edited (only today's readings offer «Редагувати»).
+  const [editing, setEditing] = useState<BloodSugarEntry | null>(null);
   const [expandedEntryKey, setExpandedEntryKey] = useState<string | null>(null);
 
   useEffect(() => {
@@ -144,27 +178,35 @@ export default function BloodSugarScreen() {
     );
   }
 
-  // The add form is its own screen with a breadcrumb back at the top, like the other editors.
-  if (showAddForm) {
+  // The add/edit form is its own screen with a breadcrumb back at the top, like the other editors.
+  if (showAddForm || editing) {
+    const close = () => {
+      setShowAddForm(false);
+      setEditing(null);
+    };
     return (
       <section className="screen">
         <Breadcrumb
-          trail={[{ label: uk.bloodSugar.title, onClick: () => setShowAddForm(false) }]}
-          current={uk.bloodSugar.addButton}
+          trail={[{ label: uk.bloodSugar.title, onClick: close }]}
+          current={editing ? uk.bloodSugar.editTitle : uk.bloodSugar.addButton}
         />
-        <AddBloodSugarForm
+        <BloodSugarForm
+          key={editing?.timestamp ?? "new"}
+          original={editing ?? undefined}
+          settings={settings}
           onSaved={(entry) => {
-            setEntries((prev) => [...(prev ?? []), entry]);
-            setShowAddForm(false);
+            setEntries((prev) => [...(prev ?? []).filter((e) => e !== editing), entry]);
+            close();
           }}
-          onCancel={() => setShowAddForm(false)}
+          onCancel={close}
         />
       </section>
     );
   }
 
   const latest = entries ? latestBloodSugarEntry(entries) : null;
-  const sortedEntries = [...(entries ?? [])].sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1));
+  const days = groupBloodSugarByDay(entries ?? []);
+  const todayKey = localDateKey(new Date());
 
   return (
     <section className="screen">
@@ -192,45 +234,65 @@ export default function BloodSugarScreen() {
       {entries === null && !loadError && <p>{uk.bloodSugar.loading}</p>}
       {entries !== null && entries.length === 0 && <p>{uk.bloodSugar.empty}</p>}
 
-      <ul className="food-list">
-        {sortedEntries.map((entry, i) => {
-          const key = `${entry.timestamp}-${i}`;
-          const isExpanded = expandedEntryKey === key;
-          const meals = logEntries ? mealsBeforeTimestamp(logEntries, entry.timestamp) : [];
-          return (
-            <li key={key}>
-              {formatDateTime(entry.timestamp)} — <strong>{entry.valueMmolL} ммоль/л</strong> (
-              {uk.bloodSugar.context[entry.context]})
-              {settings &&
-                !checkBloodSugarRange(entry.valueMmolL, settings.bloodSugarMin, settings.bloodSugarMax).inRange && (
-                  <span className="blood-sugar-flag"> — {statusLabel(entry, settings)}</span>
-                )}
-              {entry.notes && <span className="food-name-en"> — {entry.notes}</span>}
-              <button
-                type="button"
-                className="link-button"
-                onClick={() => setExpandedEntryKey(isExpanded ? null : key)}
-              >
-                {isExpanded ? "▾ " : "▸ "}
-                {uk.bloodSugar.mealsBefore.toggleLabel}
-              </button>
-              {isExpanded &&
-                (meals.length === 0 ? (
-                  <p className="food-form-hint">{uk.bloodSugar.mealsBefore.empty}</p>
-                ) : (
-                  <ul className="food-list meals-before-list">
-                    {meals.map((meal) => (
-                      <li key={meal.mealId}>
-                        <strong>{meal.mealType}</strong> ({meal.entries.map((e) => e.itemName).join(", ")}) —{" "}
-                        {formatTimeBefore(meal.timestamp, entry.timestamp)}
-                      </li>
+      {days.map((day) => (
+        <div key={day.dateKey} className="blood-sugar-day">
+          <h2>{day.dateKey === todayKey ? uk.bloodSugar.todayLabel : formatDayMonthFromKey(day.dateKey)}</h2>
+          <ul className="food-list">
+            {day.entries.map((entry, i) => {
+              const key = `${entry.timestamp}-${i}`;
+              const isExpanded = expandedEntryKey === key;
+              const meals = logEntries ? mealsBeforeTimestamp(logEntries, entry.timestamp) : [];
+              const time = formatTime(entry.timestamp);
+              return (
+                <li key={key}>
+                  <div className="meal-header">
+                    <p>
+                      <strong className="reading-time">{time}</strong> · <strong>{entry.valueMmolL} ммоль/л</strong> (
+                      {uk.bloodSugar.context[entry.context]})
+                      {settings &&
+                        !checkBloodSugarRange(entry.valueMmolL, settings.bloodSugarMin, settings.bloodSugarMax).inRange && (
+                          <span className="blood-sugar-flag"> — {statusLabel(entry, settings)}</span>
+                        )}
+                    </p>
+                    {day.dateKey === todayKey && (
+                      <button
+                        type="button"
+                        className="button-secondary meal-edit-button"
+                        aria-label={uk.bloodSugar.editEntryLabel(time)}
+                        onClick={() => setEditing(entry)}
+                      >
+                        {uk.bloodSugar.editButton}
+                      </button>
+                    )}
+                  </div>
+                  {entry.notes && <p className="food-name-en">{entry.notes}</p>}
+                  <button
+                    type="button"
+                    className="link-button"
+                    onClick={() => setExpandedEntryKey(isExpanded ? null : key)}
+                  >
+                    {isExpanded ? "▾ " : "▸ "}
+                    {uk.bloodSugar.mealsBefore.toggleLabel}
+                  </button>
+                  {isExpanded &&
+                    (meals.length === 0 ? (
+                      <p className="food-form-hint">{uk.bloodSugar.mealsBefore.empty}</p>
+                    ) : (
+                      <ul className="food-list meals-before-list">
+                        {meals.map((meal) => (
+                          <li key={meal.mealId}>
+                            <strong>{meal.mealType}</strong> ({meal.entries.map((e) => e.itemName).join(", ")}) —{" "}
+                            {formatTimeBefore(meal.timestamp, entry.timestamp)}
+                          </li>
+                        ))}
+                      </ul>
                     ))}
-                  </ul>
-                ))}
-            </li>
-          );
-        })}
-      </ul>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
     </section>
   );
 }

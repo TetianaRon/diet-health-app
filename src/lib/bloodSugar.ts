@@ -4,8 +4,9 @@
 // HEADER NAME (see sheetRow.ts), not fixed position, so a reordered sheet —
 // deliberately or by someone dragging a column in the Sheets UI — still
 // parses correctly.
-import { readRange, writeRange } from "./sheets";
-import { buildColumnIndex, buildRow, cell, parseTab, readColumnIndex, SCAN_LAST_COLUMN, type ColumnIndex } from "./sheetRow";
+import { batchUpdateRanges, readRange, writeRange } from "./sheets";
+import { buildColumnIndex, buildRow, cell, columnLetter, parseTab, readColumnIndex, SCAN_LAST_COLUMN, type ColumnIndex } from "./sheetRow";
+import { localDateKey } from "./dailyLog";
 
 export const BLOOD_SUGAR_CONTEXTS = ["fasting", "after-meal", "other"] as const;
 export type BloodSugarContext = (typeof BLOOD_SUGAR_CONTEXTS)[number];
@@ -57,10 +58,70 @@ export async function listBloodSugarEntries(): Promise<BloodSugarEntry[]> {
   return dataRows.filter((row) => row.length > 0).map((row) => rowToBloodSugarEntry(row, columnIndex));
 }
 
-export async function addBloodSugarEntry(entry: Omit<BloodSugarEntry, "timestamp">): Promise<void> {
-  const withTimestamp: BloodSugarEntry = { ...entry, timestamp: new Date().toISOString() };
+/**
+ * Appends a reading. `timestamp` is when the test was taken — it can differ
+ * from when it's written down, so the form lets her set it (defaults to now).
+ */
+export async function addBloodSugarEntry(
+  entry: Omit<BloodSugarEntry, "timestamp">,
+  timestamp: string = new Date().toISOString(),
+): Promise<BloodSugarEntry> {
+  const withTimestamp: BloodSugarEntry = { ...entry, timestamp };
   const columnIndex = await readColumnIndex("BloodSugar", BLOOD_SUGAR_HEADERS);
   await writeRange("BloodSugar", APPEND_RANGE, [bloodSugarEntryToRow(withTimestamp, columnIndex)]);
+  return withTimestamp;
+}
+
+/**
+ * The single range write that replaces `original` with `updated`, or null if
+ * `original` isn't in the sheet any more. The BloodSugar tab has no row ID, so
+ * the row is found by its content (timestamp + value), the same content-based
+ * matching planMealSave uses for DailyLog. `dataRows[0]` is sheet row
+ * `firstDataRow`.
+ */
+export function planBloodSugarUpdate(
+  original: BloodSugarEntry,
+  updated: BloodSugarEntry,
+  dataRows: unknown[][],
+  columnIndex: ColumnIndex,
+  firstDataRow = 2,
+): { range: string; values: unknown[][] } | null {
+  const rowIndex = dataRows.findIndex((row) => {
+    const e = rowToBloodSugarEntry(row, columnIndex);
+    return e.timestamp === original.timestamp && e.valueMmolL === original.valueMmolL;
+  });
+  if (rowIndex < 0) return null;
+  const rowNumber = rowIndex + firstDataRow;
+  const lastCol = columnLetter(Math.max(...columnIndex.values()));
+  return { range: `BloodSugar!A${rowNumber}:${lastCol}${rowNumber}`, values: [bloodSugarEntryToRow(updated, columnIndex)] };
+}
+
+/** Rewrites one reading in place. Throws if it can't be found (e.g. changed on another device meanwhile). */
+export async function updateBloodSugarEntry(original: BloodSugarEntry, updated: BloodSugarEntry): Promise<void> {
+  const { columnIndex, dataRows, firstDataRow } = parseTab("BloodSugar", await readRange("BloodSugar", RANGE), BLOOD_SUGAR_HEADERS);
+  const update = planBloodSugarUpdate(original, updated, dataRows, columnIndex, firstDataRow);
+  if (!update) throw new Error("BloodSugar entry not found");
+  await batchUpdateRanges([update]);
+}
+
+export interface BloodSugarDay {
+  dateKey: string; // local yyyy-mm-dd
+  entries: BloodSugarEntry[]; // newest first
+}
+
+/** Readings grouped by local calendar day, newest day first and newest reading first within a day. */
+export function groupBloodSugarByDay(entries: BloodSugarEntry[]): BloodSugarDay[] {
+  const sorted = [...entries]
+    .filter((e) => !Number.isNaN(new Date(e.timestamp).getTime()))
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  const days: BloodSugarDay[] = [];
+  for (const entry of sorted) {
+    const key = localDateKey(new Date(entry.timestamp));
+    const last = days[days.length - 1];
+    if (last && last.dateKey === key) last.entries.push(entry);
+    else days.push({ dateKey: key, entries: [entry] });
+  }
+  return days;
 }
 
 /** Most recent entry by timestamp, or null if there are none. */
