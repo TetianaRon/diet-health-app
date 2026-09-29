@@ -68,7 +68,8 @@ Spec: "Planned: food families with cooking states". Raw weight + state in the fi
 ## Intake (new feedback, not yet placed)
 - **Android: stale screens after an update** (2026-09-29) — after installing 1.5 the app may keep showing the previous version until restarted/cache cleared; likely the PWA service worker caching inside the Capacitor build. Candidate fix: don't register the service worker in the native build. Place into the next Android release.
 
-- **Can't switch the keyboard language inside the app** (2026-09-29, developer's Pixel) — likely important for mom (Ukrainian food names). Details requested: which fields, text vs number fields, switch method, app vs web, since 1.5 or before, keyboard app. Place once reproduced.
+- 🔴 **High priority — can't switch the keyboard language inside the Android app** (2026-09-29, developer's Pixel, Gboard): in **all text fields**, long-press on the space bar opens the language list, which flickers, and the keyboard closes. Existed before 1.5. Not reproduced yet: no app lifecycle/focus handler explains it (the "resume" listeners live only on Сьогодні; the activity config is Capacitor's default). **Next:** debug on the Pixel over USB (Chrome remote DevTools + logcat) while reproducing; first check whether the web version in Chrome on the same phone behaves the same (if not → WebView/Capacitor-specific). Target: the next Android release, together with the stale-screens fix.
+- **Food search lists only one match** (2026-09-29, Android app): the USDA proxy returns all matches (verified: 9 for "buckwheat", same encoding as the app) and the UI lists every result — so most likely the Ukrainian→English translation produces a very specific phrase. **Needs:** the exact query typed / a screenshot, then compare the translated query.
 
 New items land here with a one-line note, then get placed above.
 
