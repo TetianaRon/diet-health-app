@@ -68,6 +68,8 @@ Spec: "Planned: food families with cooking states". Raw weight + state in the fi
 ## Intake (new feedback, not yet placed)
 - **Android: stale screens after an update** (2026-09-29) — after installing 1.5 the app may keep showing the previous version until restarted/cache cleared; likely the PWA service worker caching inside the Capacitor build. Candidate fix: don't register the service worker in the native build. Place into the next Android release.
 
+- **Can't switch the keyboard language inside the app** (2026-09-29, developer's Pixel) — likely important for mom (Ukrainian food names). Details requested: which fields, text vs number fields, switch method, app vs web, since 1.5 or before, keyboard app. Place once reproduced.
+
 New items land here with a one-line note, then get placed above.
 
 ---
