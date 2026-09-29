@@ -18,7 +18,8 @@ Built 2026-09-28 (versionCode 8), uploaded to Play **Internal testing**.
 - Meal reminder fires with the phone idle (`allowWhileIdle`) + notice when notification / exact-alarm access is missing
 - Blood sugar: grouped by day, editable measurement time, today's readings editable
 - Food search through the USDA proxy (key off the device); new privacy link; desktop layout (tablets)
-- **To finish:** 1.5 installed on the developer's Pixel → test reminder with the screen off, food search, blood sugar edit, privacy link → promote to mom's track → merge `release/1.5` into `main`.
+- ⏸ Reminder arrived with the app closed (developer's Pixel, 2026-09-29) — but the blood sugar time field was missing, so the phone may still have run 1.4. Re-test once 1.5 is confirmed installed.
+- **To finish:** on the Pixel — food search, blood sugar edit, privacy link → promote to mom's track → merge `release/1.5` into `main`.
 
 ### 1.6 — Foundations for verified data · 📝 planned
 Everything the data import (1.7) and most later features stand on.
