@@ -18,8 +18,8 @@ Built 2026-09-28 (versionCode 8), uploaded to Play **Internal testing**.
 - Meal reminder fires with the phone idle (`allowWhileIdle`) + notice when notification / exact-alarm access is missing
 - Blood sugar: grouped by day, editable measurement time, today's readings editable
 - Food search through the USDA proxy (key off the device); new privacy link; desktop layout (tablets)
-- ⏸ Reminder arrived with the app closed (developer's Pixel, 2026-09-29) — but the blood sugar time field was missing, so the phone may still have run 1.4. Re-test once 1.5 is confirmed installed.
-- **To finish:** on the Pixel — food search, blood sugar edit, privacy link → promote to mom's track → merge `release/1.5` into `main`.
+- ✅ 1.5 installed on the developer's Pixel (2026-09-29; new screens visible).
+- **To finish (next session):** on the Pixel — reminder with the app closed (re-test on 1.5), food search, blood sugar time + edit, privacy link → promote to mom's track → merge `release/1.5` into `main`.
 
 ### 1.6 — Foundations for verified data · 📝 planned
 Everything the data import (1.7) and most later features stand on.
@@ -66,7 +66,9 @@ Spec: "Planned: food families with cooking states". Raw weight + state in the fi
 - 📝 Review page: clear the stale кисляк objection (Г68).
 
 ## Intake (new feedback, not yet placed)
-_Empty._ New items land here with a one-line note, then get placed above.
+- **Android: stale screens after an update** (2026-09-29) — after installing 1.5 the app may keep showing the previous version until restarted/cache cleared; likely the PWA service worker caching inside the Capacitor build. Candidate fix: don't register the service worker in the native build. Place into the next Android release.
+
+New items land here with a one-line note, then get placed above.
 
 ---
 
