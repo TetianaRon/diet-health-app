@@ -11,6 +11,12 @@ The planner for Track My Meals / Трекер Харчування and the roncr
 
 ---
 
+## Next session — start here (set 2026-09-29)
+1. **Set up the emulator test devices** (Chores → Test devices): virtual phones with Google Play + Gboard; confirm mom's phone model first.
+2. **Reproduce the two 🔴 Android bugs** (Intake) on the emulator and/or the Pixel over USB, with DevTools on the app's WebView: keyboard language switch, food search «не знайдено».
+3. **Finish the 1.5 checks** on the Pixel (reminder with the app closed, food search, blood sugar time + edit, privacy link) → promote to mom → merge `release/1.5`.
+4. **Place the fixes:** proposed **1.5.1** (keyboard, search lowercase + error message, stale screens after update) before 1.6.
+
 ## Current and upcoming releases
 
 ### 1.5 — Reminders, blood sugar, web version · 👀 in review
