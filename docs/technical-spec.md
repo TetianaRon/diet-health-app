@@ -363,3 +363,26 @@ Deferred by the developer; the decisions are already made:
 - **Language choice:** first start follows the device language (Ukrainian if it's Ukrainian, otherwise English); a switch in Settings overrides it and is remembered per device. Mom's devices stay Ukrainian.
 - **Spreadsheet readable-names row (row 2):** a new sheet gets names in the app's language at creation; existing sheets keep theirs.
 - **Implementation notes:** all UI text is in `src/i18n/uk.ts` (~500 lines, 16 importing files) → an `en.ts` with the same shape plus a small language module. Meal types are stored in the sheet as Ukrainian words (`MEAL_TYPES` in `dailyLog.ts`) — keep them as stored keys and map to English only for display. Built-in foods already carry `nameEn`. Dates use `uk-UA` in `src/lib/dateFormat.ts` → follow the app language. Names people type themselves are never translated.
+
+## Planned: spreadsheet detection + Google Picker (decided 2026-09-29, not built)
+
+**Problem:** the app asks for the broad `spreadsheets` scope (any sheet the user can open, by link/ID) plus `drive.file`. `spreadsheets` is a Google *sensitive* scope — a heavier review for a public launch. On a new browser/device the web version also falls back to the testers' shared sheet (`VITE_SPREADSHEET_ID`), so a new web user would start inside someone else's test sheet.
+
+**Decisions (developer, 2026-09-29):**
+- **Auto-detect after sign-in** with the existing `drive.file` scope: list the spreadsheets this app created (its «Track My Meals» Drive folder; new sheets also get an invisible `appProperties` marker so the app can tell its own sheets apart). One found → connect automatically («Знайдено вашу таблицю "…" — підключено»); several → let the user choose; none → «Створити нову» / «Вибрати наявну». «Створити» first warns if one already exists. Google Drive itself is the memory of which sheet is the user's — **no new place to store the sheet ID**, and it works on any device.
+- **Connecting an existing sheet the app didn't create** (e.g. mom's, or one shared by someone else) goes through the **Google Picker** — a Google dialog where the user picks the file, which grants `drive.file` access to that one file. Replaces pasting a link (easier for older users). A wider Drive scope (e.g. `drive.readonly`) is **rejected**: it's *restricted* and would need a paid security assessment.
+- **Remove the shared test-sheet fallback** from the web build once detection exists.
+- **Later, before a public launch:** drop the `spreadsheets` scope entirely (`drive.file` + Picker cover everything) → only non-sensitive scopes. Mom picks her sheet once through the Picker first. Changing scopes means updating the OAuth consent screen's Data Access list and a re-consent for existing users.
+- **Web sign-in stays per-session** (token in memory, re-sign-in each session). Persisting it needs a server-side token exchange — only worth it with real user volume. The Android app already stays signed in (refresh token on the device).
+
+**To research before building:** the Picker runs inside a Google page; inside the Android app's WebView there may be no Google session, so on Android it may have to open in the system browser (a small picker page on the web app's domain, returning the file ID to the app via a deep link) — verify that the per-file grant made there applies to the Android OAuth client too (same Cloud project). **Setup the developer does in Google Cloud:** enable the Google Picker API, create a browser API key restricted to the app's origins, note the project number (Picker "App ID").
+
+## Planned: medication log (decided 2026-09-29, not built)
+
+Mom needs to log the medicine she takes alongside blood sugar (e.g. Forxiga, taken situationally when sugar is high). **Start simple, refine with her while she uses it live** (developer's decision).
+
+- **Two new tabs:** `Medications` — her medicines, entered once: Name, usual Dose, Unit, Notes, Active (still taking), DateAdded. `MedicationLog` — each intake: Timestamp (time *taken*, editable, default now), Medication (name), Dose (pre-filled with the usual dose), Unit, Notes. New column labels for the readable-names row: Name, Dose, Unit, Active, Medication.
+- **UI:** on the Цукор screen, «Додати ліки» next to «Додати вимірювання»; the day list shows readings and intakes together in time order (e.g. «08:10 · 8,4 ммоль/л», «08:30 · Форксига 10 мг»); a new medicine can be added from the intake form; today's intakes editable like readings.
+- **New tabs appear silently:** adding tabs to `REQUIRED_TABS` would make the structure check report them as missing and open the repair dialog on mom's phone after the update. Purely *new* tabs should be created quietly by the app; the dialog stays for real structural problems.
+- **Not a medical app:** a plain diary — no dose suggestions, no "you should take…", no interaction warnings. Possible later (ask mom): plain reminders for fixed-schedule medicines.
+- **Questions for mom, gathered while she tests it:** which medicines; fixed schedule or as needed for each; does the dose change; would reminders help.
