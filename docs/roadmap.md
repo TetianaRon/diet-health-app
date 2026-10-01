@@ -14,7 +14,7 @@ The planner for Track My Meals / Трекер Харчування and the roncr
 ## Next session — start here (set 2026-10-01)
 1. **Check mom's phone after the update to 1.5.2:** the new version shows on first open, without restarting (a capitalised search gives many results with Ukrainian names). The real test of the stale-screens fix; if her phone already installed 1.5.1 overnight, it mainly confirms updates show at once. If she sees an old version, investigate *before* she restarts or clears anything.
 2. **File the WebView keyboard issue with Chromium** — report drafted in the 2026-09-30 session (developer files it).
-3. **Pick the next release** — 1.6 (foundations for verified data) per the plan, or the reminder items from Intake first.
+3. **Build 1.6** (item IDs + sheet upgrade) — design in the spec; decided 2026-10-01 that the database work (1.7) follows it.
 
 ## Current and upcoming releases
 
@@ -63,28 +63,37 @@ Replaces the free MyMemory service, whose small daily limit (5,000 characters, a
 - **Record in `build-log.md`:** why MyMemory was picked originally (live-test quick fix, no server back then, avoiding costs) and that its limit wasn't checked, especially after per-result back-translation multiplied usage ~20×.
 - **Result (2026-10-01):** live on the web and released to Play. Verified: live endpoint (site + Android origins work, other sites refused), the Android build on the emulator against it (2 translation requests per search instead of 21), developer tested the web search. Budget alert at $1 set; the API key kept (it was shown once in a session transcript — restricted to Translation and capped, developer chose to keep it). Privacy policy updated on roncreator.com (also corrects the Android sign-in token wording).
 
-### 1.6 — Foundations for verified data · 📝 planned
-Everything the data import (1.7) and most later features stand on.
-- **Verified food database format** (`src/data/`): per entry — family + state (raw / boiled / baked / canned…), Ukrainian + English names, values per 100 g, **source** (dataset + ID + description), reliability + **reasoning**, verified date; **GI with its own source** (study/table + entry), reliability, reasoning, date. Replaces the unsourced 60-item starter list (to be re-checked, not copied).
-- **Item IDs** on Ingredients/Dishes + `ItemId` on meal entries; **duplicate-name check** (spec: "Label photos, drafts…" → Item IDs).
-- **"Неперевірено" label + ⓘ source** everywhere a value is shown; a way to mark a user's own item as unverified.
-- **New tabs added silently** (mechanism needed by 1.7's new columns and 1.8's tabs).
+### 1.6 — Item IDs and the sheet upgrade · 📝 planned (next) — design ready
+**Why first (decided 2026-10-01):** the sheet links everything **by name** today — dish recipes list ingredient names, meal rows only carry the item name, edits find rows by name. The verified database (1.7) renames items to proper names, which would cut every dish off from its ingredients unless links go by ID first; mom's data import (1.8) writes rows that need IDs and labels too. The database *file* can be prepared alongside, but its renamed content ships only after this.
+Full design: spec → "Item IDs and the sheet upgrade (release 1.6)".
+- **IDs that never change and are never reused:** built-in items `B0001…` (fixed in the app's data files; retired ones point to their replacement), the user's items `I1, I2…` (Ingredients) and `D1, D2…` (Dishes), numbered within her sheet. Names stay labels only.
+- **Sheet:** `Id` + `BasedOn` on Ingredients and Dishes, `ItemId` in DailyLog, ingredient IDs inside dish recipes; edits, favourites and flags find rows by ID.
+- **Lossless, silent upgrade** of existing sheets: new columns/tabs added and IDs filled in without asking (only blank cells are written); recipe ingredients resolved from names to IDs, with unresolved ones reported, never dropped.
+- **Duplicate-name check** when naming an item: «Це він — використати наявний» / «Це інший — назвати «… 2»».
+- Test on a copy of mom's sheet (the dev sheet) before release.
 
-### 1.7 — Mom's data, verified · 📝 planned (after 1.6)
+### 1.7 — Verified food database · 📝 planned (after 1.6)
+- **Format** (`src/data/verified-foods.json`, also the source of the public pages on roncreator.com later): per entry the permanent `B` ID, family + state (raw / boiled / baked / canned…), Ukrainian + English names, values per 100 g, **nutrient source** (dataset + entry ID + description + version), **GI with its own source** (table + entry), reliability (high / medium / low) + **reasoning in Ukrainian and English**, verified dates. An automatic test refuses any entry missing a source, reliability, reason or date.
+- **The 60 built-in foods re-checked**, not copied: USDA lookups (raw + cooked where the source has both), GI from the tables with reliability; the developer reviews the result on a review page; renamed to proper names (safe after 1.6).
+- **Verification is per part, not per item** (developer, 2026-10-01): an entry can have checked nutrients but no known GI, or GI from a weaker source — each part (nutrients, GI, later others) carries its own source, reliability and status, and an entry may be incomplete (e.g. GI «немає даних»). The app and the public pages show exactly what is verified; nothing is called "verified" as a whole. That's also why IDs carry the prefix `B` (built-in), not a status.
+- **ⓘ** next to every built-in value (source, reliability, reason, date) and **«неперевірено»** on everything not from the database (the user's own items, edited copies).
+- Low-carb vegetables' GI: decide between GL counted as 0 and a conventional GI 15 labelled «умовне» (open since 2026-09-26; recommended: the latter).
+
+### 1.8 — Mom's data, verified · 📝 planned (after 1.7)
 Spec rules: memory of the import decisions (2026-09-29) + the review page.
 - **Database content:** every item of hers with a genuine match (~90, incl. olives black + green, trout + salmon, beef/pork heart raw + boiled, cocoa), under proper names — **plus the raw/cooked partner** of each wherever the source has both.
 - **Ingredients her dishes likely need** — estimated from each dish, added to the database so she can compose them later. **Her dishes themselves are not recalculated:** her value is kept and the dish is flagged «потрібно скласти рецепт».
 - **Her own sheet:** branded packaging items (her values) and values we couldn't verify (kept as she has them, marked «неперевірено»); her dishes with the flag. **Not added:** items without a genuine match and the dropped ones (кукурудза варена, гірчиця американська, тунець, fructose sweets, calculation leftovers).
 - Import mechanism (how the rows get into her sheet) to be decided at the start of this release.
 
-### 1.8 — Medicine log · 📝 planned
-Spec: "Planned: medication log". Two tabs (`Medications`, `MedicationLog`), «Додати ліки» on Цукор, readings and intakes in one day list. Simple first; refine with mom while she uses it. Could move before 1.7 if she needs it sooner.
+### 1.9 — Medicine log · 📝 planned
+Spec: "Planned: medication log". Two tabs (`Medications`, `MedicationLog`), «Додати ліки» on Цукор, readings and intakes in one day list. Simple first; refine with mom while she uses it. Could move earlier if she needs it sooner (it doesn't depend on 1.6–1.8).
 
-### 1.9 — Sheet detection + Google Picker · 📝 planned
+### 2.0 — Sheet detection + Google Picker · 📝 planned
 Spec: "Planned: spreadsheet detection + Google Picker". Auto-detect the user's sheet, Picker for existing ones, remove the shared test-sheet fallback. Research first: Picker inside the Android WebView. Needs Google Cloud setup by the developer.
 
-### 2.0 — Food families in the dish composer · 📝 planned
-Spec: "Planned: food families with cooking states". Raw weight + state in the finished dish; carbs by mass balance, GI from the cooked state; published whole-dish GI shown only as a check. The data already exists from 1.7.
+### 2.1 — Food families in the dish composer · 📝 planned
+Spec: "Planned: food families with cooking states". Raw weight + state in the finished dish; carbs by mass balance, GI from the cooked state; published whole-dish GI shown only as a check. The data already exists from 1.7/1.8.
 
 ### Later (unordered)
 - **Label photos + zoom → drafts (photo/name-only, loggable) → 3-day update window → Google Lens** (spec: "Label photos, drafts and the 3-day update window")
@@ -95,7 +104,7 @@ Spec: "Planned: food families with cooking states". Raw weight + state in the fi
 ---
 
 ## roncreator.com site
-- 📝 **Public food database pages** — publish the verified database (sources, reliability, reasoning) for other users. Depends on 1.6 format + 1.7 content.
+- 📝 **Public food database pages** — publish the verified database (sources, reliability, reasoning) for other users, generated from `verified-foods.json`; addresses like `…/foods/B0042-apple-raw` (only the ID is looked up, the readable part can change). Depends on 1.7 format + 1.8 content.
 - 📝 **Contact form email** — Resend account + DNS records in Cloudflare + Vercel env vars.
 - 📝 **Mom's story** on the Track My Meals landing — draft privately, publish only after her approval.
 - 📝 Friendly bilingual 404 page.

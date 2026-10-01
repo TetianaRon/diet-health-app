@@ -285,6 +285,62 @@ Track time since the last logged meal; warn when approaching `Settings.MaxGapHou
 
 App suggests (bundle match or USDA lookup) → mom reviews the estimate → mom approves → row saved to Ingredients with `Source = starter`/`usda`/`manual` as appropriate. Never auto-saves without approval.
 
+## Item IDs and the sheet upgrade (release 1.6, designed 2026-10-01)
+
+> **Status:** 📝 Designed with the developer, not built. Comes **before** the verified food database (1.7) and mom's data import (1.8) — see `docs/roadmap.md`.
+
+**Why:** everything in the sheet is linked **by name** today — `Dishes.IngredientsJson` stores `{name, grams}`, `DailyLog` has only `ItemName`, `findIngredientRow`/`findDishRow` find rows by name, and `mergeWithStarterFoods` lets a sheet row override a built-in item of the same name. Names collide (two «хліб»), need whole sentences to tell apart, and change — 1.7 renames built-in items to proper names, which would silently cut every dish off from its ingredients. IDs make names plain labels.
+
+### ID scheme
+| Where | Format | Assigned |
+|---|---|---|
+| Built-in items (today's `starter-foods.ts` / `starter-dishes.ts`, later `verified-foods.json`) | `B0001`, `B0002`… | Once, in the data file. **Never changed, never reused.** An item that is removed or split later stays defined as *retired* with `replacedBy`, so old references still resolve. |
+| The user's ingredients (Ingredients tab) | `I1`, `I2`… | By the app when the row is created. |
+| The user's dishes (Dishes tab) | `D1`, `D2`… | Same. |
+
+- Numbers, not readable names: readable IDs collide and need sentences to distinguish; the prefix is the item *kind*, never a status (verified/unverified changes over time; an ID doesn't). `B` also fits the database's future: entries may be only partly complete — e.g. checked nutrients but no known GI — so verification is recorded per part of an entry (1.7), never as a property of the ID (developer, 2026-10-01). The public pages can still have readable addresses (`…/foods/B0042-apple-raw`) — only the ID part is looked up.
+- **Next number** = 1 + the highest of (the largest number in the tab, the Settings counter `NextIngredientNumber` / `NextDishNumber`), and the counter is updated with the write — so an ID freed by deleting the last row by hand in Sheets is still never reused. Two devices adding an item in the same second could both take the same number; the structure check detects duplicate IDs and gives the later row a new one (accepted risk — one user, rarely two devices at once).
+- The same name may exist as a built-in item and as the user's item (`B0042 «Яблуко»` and `I12 «Яблуко»`) — the IDs keep them apart; the duplicate-name check (below) keeps *her* from mixing them up.
+
+### Sheet changes (all additive — appended columns, nothing renamed or removed)
+| Tab | New column | Meaning |
+|---|---|---|
+| Ingredients | `Id` | `I…` |
+| Ingredients | `BasedOn` | The built-in ID this row is a saved copy of (a favourite or edited built-in item), else blank. Such a row replaces the built-in item in lists. |
+| Dishes | `Id` | `D…` |
+| Dishes | `BasedOn` | Same as on Ingredients, for built-in dishes. |
+| DailyLog | `ItemId` | The item a row was logged from (`B…`, `I…` or `D…`); blank for custom entries and for rows logged before 1.6. `ItemName` stays as the readable snapshot. |
+| Settings | `NextIngredientNumber`, `NextDishNumber` | The never-reuse counters (keys, like the other settings). |
+
+`Dishes.IngredientsJson` elements gain `id`: `{"id":"I12","name":"Гречка суха","grams":100}` — `name` stays as a readable snapshot and a fallback. (The readable recipe column `I12:20, …, total:60` from the September redesign notes is a later step, not 1.6.)
+
+### Upgrading an existing sheet (silent, lossless)
+Run by the structure check after sign-in / sheet switch. **Only blank cells are written and only columns/tabs/keys are added** — no existing value is changed, so it needs no confirmation:
+1. Add the missing columns / Settings keys (existing `missingColumns` / `missingSettingsKeys` repairs).
+2. Give every Ingredients / Dishes row without an `Id` the next `I` / `D` number, in row order; set the counters.
+3. Fill `BasedOn` where the row's name matches a built-in item's name exactly (normalised as in the duplicate check) — today that is how a favourite or edited built-in item is stored.
+4. Resolve each dish's recipe names to IDs, the same way the app resolves them today: the user's ingredient of that name first, else the built-in item. A name that matches nothing (renamed or deleted by hand) keeps its name-only entry and the dish is marked in the editor «Інгредієнт не знайдено: …» — never dropped.
+5. `DailyLog.ItemId` is **not** back-filled: past rows stay name-only (a name may have meant different items over time; guessing could mislink them). They're never updated by the later 3-day window either.
+
+**Silent vs. asking (changes the structure-check dialog):** additive, lossless repairs — missing tab, missing columns, missing Settings keys, missing IDs / `BasedOn` / recipe IDs — are applied **without the dialog**. The dialog stays only for what needs a person: someone else's layout (`notAppLayout`), duplicate columns with conflicting values, and the presentation rewrites that move or rewrite existing cells (inserting the readable-names row, rewriting header text). This is also the mechanism 1.8 and 1.9 rely on for their new columns and tabs.
+
+### The app working by ID
+- **Lists / pickers:** built-in items merged with the user's rows **by ID**: a row with `BasedOn = B0042` replaces `B0042`; everything else is listed as it is (two «Яблуко» can coexist — each shows its kind/source).
+- **Edits, favourite, glycemic flag, rename:** find the row by `Id`. Renaming is safe — nothing refers to the name any more.
+- **Favouriting / editing a built-in item** saves a copy: new `I…`, `BasedOn = B…`.
+- **Logging a meal** writes `ItemId`. **Composing a dish** stores ingredient IDs.
+- **Built-in dishes** (`starter-dishes.ts`) reference their raw built-in ingredient by ID instead of `rawNameUk`.
+- Dish nutrition, unknown fields, glycemic flags keep working as today — only the lookup key changes.
+
+### Duplicate-name check
+As designed 2026-09-27 (see *Label photos… → 1. Item IDs* below), now part of 1.6: whenever an item is named (add ingredient, save a USDA pick, edit/rename, compose a dish), the name is checked as she types against her items **and the built-in items**, normalised (case-insensitive, trimmed, repeated spaces collapsed, Latin look-alike letters mapped to Cyrillic `i→і`, `o→о`, `a→а`, `e→е`, `c→с`, `p→р`, `x→х`, …). On a match: «Продукт «хліб» уже є» + a card of the existing item (calories, source) + **«Це він — використати наявний»** (nothing new is created; in a meal or dish the existing item is used) and **«Це інший — назвати «хліб 2»»** (next free number), with the hint «Краще додати марку чи вид — так легше розрізнити». An exact (normalised) duplicate can't be saved without one of the two choices. (Today's `duplicateNameWarning` — "will replace the existing entry" — goes away: with IDs nothing is overwritten by name.)
+
+### Pure, unit-tested pieces
+`nextItemId`, `planIdBackfill` (rows + counters → cell writes), `resolveRecipeIds` (recipe names → IDs + unresolved list), `mergeBuiltInsById`, `normalizeItemName`, `suggestFreeName` ("хліб" → "хліб 2"/"хліб 3"), duplicate-ID detection in the structure check. IO stays in the existing `ingredients.ts` / `dishes.ts` / `dailyLog.ts` / `spreadsheetInit.ts`.
+
+### Rollout
+Build and test against the dev sheet holding a copy of mom's real sheet: every dish's ingredients must resolve (list any that don't before release); check a meal, a favourite, a rename and a dish edit afterwards. Then release; her sheet upgrades itself silently on first open.
+
 ## Label photos, drafts and the 3-day update window (planned 2026-09-27)
 
 > **Status:** 📝 Designed with the developer, not built yet. Changes the "meals are static records" rule — see *3-day update window* below.
@@ -299,6 +355,7 @@ App suggests (bundle match or USDA lookup) → mom reviews the estimate → mom 
 5. **«Прочитати через Google Lens»** — optional text reading of the same photos (Android only).
 
 ### 1. Item IDs
+Moved into its own release — see **"Item IDs and the sheet upgrade (release 1.6)"** above for the full design. The original notes:
 Ingredients, Dishes and DailyLog rows are matched **by name** today (`findIngredientRow`/`findDishRow`; DailyLog stores only `ItemName`). A draft has no name, and a name changes when a draft is completed or renamed — so:
 - **Ingredients / Dishes gain an `Id` column** (generated once on creation, never changes; additive column via the structure check). Existing rows get an ID on first read-and-repair. Bundle-only items (never saved to the sheet) use a stable derived ID, e.g. `starter:<nameUk>`.
 - **DailyLog gains `ItemId`** — which item a row was logged from (blank for custom entries and for rows logged before this existed; those stay name-only and are never updated by the 3-day window).
