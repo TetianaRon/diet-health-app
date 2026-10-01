@@ -12,15 +12,13 @@ The planner for Track My Meals / Трекер Харчування and the roncr
 ---
 
 ## Next session — start here (set 2026-09-30)
-1. **Build 1.5.1** (below) on `release/1.5.1`, test on the developer's Pixel (debug build over USB is already installed) and the emulator.
-2. **Check 1.5's features on the same build** (reminder with the app closed, blood sugar time + edit, privacy link) — 1.5 was never promoted to mom, so 1.5.1 goes to her instead.
-3. Upload 1.5.1 → promote to mom → merge into `main`.
-4. File the WebView keyboard issue with Chromium (fix 1b).
-5. Then **1.5.2** (Google Cloud Translation): developer enables billing + the Translation API with Claude's step-by-step guide.
+1. **Check mom's phone after the 1.5.1 update:** the new version shows on first open (e.g. a capitalised search gives many results) — the real test of the stale-screens fix (fix 3). If she still sees the old version, investigate *before* she restarts or clears anything.
+2. **File the WebView keyboard issue with Chromium** (fix 1b) — Claude drafts, developer files.
+3. **1.5.2** (Google Cloud Translation): developer enables billing + the Translation API with Claude's step-by-step guide; Claude builds the proxy and limits.
 
 ## Current and upcoming releases
 
-### 1.5 — Reminders, blood sugar, web version · 👀 in review
+### 1.5 — Reminders, blood sugar, web version · ✅ superseded by 1.5.1
 Built 2026-09-28 (versionCode 8), uploaded to Play **Internal testing**.
 - Meal reminder fires with the phone idle (`allowWhileIdle`) + notice when notification / exact-alarm access is missing
 - Blood sugar: grouped by day, editable measurement time, today's readings editable
@@ -28,7 +26,7 @@ Built 2026-09-28 (versionCode 8), uploaded to Play **Internal testing**.
 - ✅ 1.5 installed on the developer's Pixel (2026-09-29; new screens visible).
 - **Not promoted to mom** — superseded by 1.5.1, which includes everything here. Its remaining checks move to 1.5.1's test list.
 
-### 1.5.1 — Android fixes: keyboard, food search, stale screens · 🔨 in progress
+### 1.5.1 — Android fixes: keyboard, food search, stale screens · ✅ released 2026-09-30
 Branch `release/1.5.1` from `release/1.5` (1.5 isn't in `main` yet); versionCode 9, versionName "1.5.1". Causes were found on 2026-09-30 (see Intake history below).
 
 **1. Keyboard language switch closes the keyboard** 🔴
@@ -47,7 +45,7 @@ Branch `release/1.5.1` from `release/1.5` (1.5 isn't in `main` yet); versionCode
 **3. Old screens after an update**
 - Don't use the PWA service worker inside the Android app: register it only on the web (`Capacitor.isNativePlatform()` check, `injectRegister: null` in `vite.config.ts` + manual registration in `main.tsx`), and in the native app **unregister any existing worker** and clear its caches once, since installed phones already have one. The web version keeps its offline/installable behaviour.
 
-**Device results (2026-09-30, developer's Pixel 10, debug build 1.5.1):** ✅ keyboard language switch works; ✅ «Кукурудза» gives many results, top 5 translated, English search, offline → "unavailable"; ✅ blood sugar time + edit; ✅ privacy link; ✅ reminder with the app closed, and after a restart without opening the app (two new reminder issues → Intake). Still to do: the update test through Play (fix 3) and the release build.
+**Device results (2026-09-30, developer's Pixel 10, debug build 1.5.1):** ✅ keyboard language switch works; ✅ «Кукурудза» gives many results, top 5 translated, English search, offline → "unavailable"; ✅ blood sugar time + edit; ✅ privacy link; ✅ reminder with the app closed, and after a restart without opening the app (two new reminder issues → Intake). Released to Play (internal testing; mom's phone updates automatically) and merged into `main` on 2026-09-30. Web build checked locally (app loads, service worker registered by the app, no console errors). Still to confirm: fix 3 on mom's phone after the update.
 
 **Tests (Pixel over USB + emulator):**
 - Keyboard: long-press space → switch language in Settings, Продукти search, meal editor and blood sugar fields; then check nothing else broke: keyboard hides on leaving a field, app switching with the keyboard open, Google sign-in window, the notification-permission dialog.
@@ -55,7 +53,7 @@ Branch `release/1.5.1` from `release/1.5` (1.5 isn't in `main` yet); versionCode
 - Update: install 1.5 → open → install 1.5.1 over it → new screens show at once (no restart/cache clear).
 - 1.5 checks: reminder with the app closed, blood sugar time + edit, privacy link.
 
-### 1.5.2 — Translation via Google Cloud · 📝 planned (after 1.5.1)
+### 1.5.2 — Translation via Google Cloud · 📝 planned (next)
 Replaces the free MyMemory service, whose small daily limit (5,000 characters, anonymous) caused the «Не знайдено» day. Decided 2026-09-30; simple version first, no per-user accounts.
 - **Google Cloud Translation through our server:** new `api/translate.js` on Vercel, next to `api/usda.js`; the API key lives only in Vercel env vars, never in the app. Same origin allow-list as the USDA proxy; a maximum text length and at most ~6 texts per request (the query + the top 5 names), so one call can't use much.
 - **Google-side safety (developer sets up, Claude walks through it):** enable billing + the Cloud Translation API on the Google Cloud project; a **daily quota cap of 15,000 characters** (500,000 free per month ÷ 31), which actually stops requests, so we never pay; plus a **budget alert** as an early warning (budgets alone don't stop anything). Check Google's current pricing page first.
@@ -129,6 +127,7 @@ New items land here with a one-line note, then get placed above.
 ---
 
 ## Released
+- ✅ **1.5.1** (2026-09-30): keyboard language switch, food search (capitals, failures, translation limit, top-5 layout), no service worker in the Android app. Includes 1.5 (reminders while idle, blood sugar time + editing, USDA proxy, privacy link, desktop layout).
 - ✅ **Web version live** at `track-my-meals.roncreator.com` (2026-09-28): unlisted, USDA proxy, desktop layout.
 - ✅ **roncreator.com live** (2026-09-28): home + landings (EN/UA), brand from Figma, privacy policy, sticky header with project links.
 - ✅ **1.4** (2026-09-26): spreadsheet structure check/repair; keys row + readable-names row.
