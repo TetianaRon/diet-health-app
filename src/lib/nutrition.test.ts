@@ -5,8 +5,10 @@ import {
   lookupExternalCandidates,
   normalizeSearchQuery,
   searchUsda,
-  translateEnToUk,
+  DAILY_TRANSLATION_LIMIT,
+  translateEnToUkMany,
   translateUkToEn,
+  translationCharsUsedToday,
 } from "./nutrition";
 
 // Translations and the daily-limit flag live in localStorage — a fresh
@@ -20,65 +22,75 @@ beforeEach(() => {
   });
 });
 
+// The translation proxy (api/translate.js): POST { q, source, target } ->
+// { translations }. Translates each text with `dictionary`, else echoes it.
+function translateResponse(dictionary: Record<string, string>) {
+  return async (_url: string, init?: RequestInit) => {
+    const { q } = JSON.parse(String(init?.body)) as { q: string[] };
+    return { ok: true, status: 200, json: async () => ({ translations: q.map((t) => dictionary[t] ?? t) }) };
+  };
+}
+
 describe("translateUkToEn", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
   });
 
-  it("returns the translated text on success", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({ responseData: { translatedText: "Buckwheat", match: 1 } }),
-      }),
-    );
+  it("posts to the proxy and returns the translation", async () => {
+    const fetchMock = vi.fn(translateResponse({ гречка: "buckwheat" }));
+    vi.stubGlobal("fetch", fetchMock);
 
-    expect(await translateUkToEn("гречка")).toBe("Buckwheat");
+    expect(await translateUkToEn("гречка")).toBe("buckwheat");
+    expect(fetchMock.mock.calls[0][0]).toMatch(/\/api\/translate$/);
+    expect(JSON.parse(String(fetchMock.mock.calls[0][1]?.body))).toEqual({ q: ["гречка"], source: "uk", target: "en" });
   });
 
-  it("returns null when the API is unreachable", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false }));
+  it("returns null when the proxy fails", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 502 }));
+    expect(await translateUkToEn("гречка")).toBeNull();
+    expect(isTranslationLimitedToday()).toBe(false);
+  });
+
+  it("returns null when the network fails", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Failed to fetch")));
     expect(await translateUkToEn("гречка")).toBeNull();
   });
 
-  it("returns null on a quota-exceeded warning instead of passing it through as a translation", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          responseData: { translatedText: "MYMEMORY WARNING: YOU USED ALL AVAILABLE FREE TRANSLATIONS" },
-        }),
-      }),
-    );
-
-    expect(await translateUkToEn("гречка")).toBeNull();
-    expect(isTranslationLimitedToday()).toBe(true);
-  });
-
-  it("treats quotaFinished as the daily limit and stops calling the translator for the rest of the day", async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({ quotaFinished: true, responseData: { translatedText: "corn" } }),
-    });
+  it("treats 429 (Google's daily quota) as the limit and stops calling for the rest of the day", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: false, status: 429 });
     vi.stubGlobal("fetch", fetchMock);
 
     expect(await translateUkToEn("кукурудза")).toBeNull();
+    expect(isTranslationLimitedToday()).toBe(true);
     expect(await translateUkToEn("морква")).toBeNull();
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
-  it("remembers translations, so the same word doesn't call the translator twice", async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({ responseData: { translatedText: "corn" } }),
-    });
+  it("remembers translations, so the same word doesn't call the proxy twice or count again", async () => {
+    const fetchMock = vi.fn(translateResponse({ кукурудза: "corn" }));
     vi.stubGlobal("fetch", fetchMock);
 
     expect(await translateUkToEn("кукурудза")).toBe("corn");
     expect(await translateUkToEn("кукурудза")).toBe("corn");
     expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(translationCharsUsedToday()).toBe("кукурудза".length);
+  });
+
+  it("stops at this device's daily limit without calling the proxy", async () => {
+    const fetchMock = vi.fn(translateResponse({}));
+    vi.stubGlobal("fetch", fetchMock);
+    const long = "а".repeat(150);
+
+    // Distinct texts until the next one would cross the limit.
+    let sent = 0;
+    for (let i = 0; sent + 150 <= DAILY_TRANSLATION_LIMIT; i++, sent += 150) {
+      expect(await translateUkToEn(long.slice(0, 149) + String.fromCharCode(1072 + i))).not.toBeNull();
+    }
+    const calls = fetchMock.mock.calls.length;
+
+    expect(await translateUkToEn("б".repeat(150))).toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(calls);
+    expect(isTranslationLimitedToday()).toBe(true);
   });
 
   it("still translates when storage is unavailable", async () => {
@@ -90,12 +102,38 @@ describe("translateUkToEn", () => {
         throw new Error("blocked");
       },
     });
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue({ ok: true, json: async () => ({ responseData: { translatedText: "corn" } }) }),
-    );
+    vi.stubGlobal("fetch", vi.fn(translateResponse({ кукурудза: "corn" })));
 
     expect(await translateUkToEn("кукурудза")).toBe("corn");
+  });
+});
+
+describe("translateEnToUkMany", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("translates several names in one request, sending only the ones not remembered", async () => {
+    const fetchMock = vi.fn(translateResponse({ "Corn, sweet": "Кукурудза цукрова", "Corn grain": "Зерно кукурудзи" }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    expect(await translateEnToUkMany(["Corn, sweet"])).toEqual(["Кукурудза цукрова"]);
+    expect(await translateEnToUkMany(["Corn, sweet", "Corn grain"])).toEqual(["Кукурудза цукрова", "Зерно кукурудзи"]);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(JSON.parse(String(fetchMock.mock.calls[1][1]?.body)).q).toEqual(["Corn grain"]);
+  });
+
+  it("leaves names over 200 characters untranslated instead of failing the whole request", async () => {
+    const fetchMock = vi.fn(translateResponse({ Corn: "Кукурудза" }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    expect(await translateEnToUkMany(["Corn", "x".repeat(201)])).toEqual(["Кукурудза", null]);
+    expect(JSON.parse(String(fetchMock.mock.calls[0][1]?.body)).q).toEqual(["Corn"]);
+  });
+
+  it("returns nulls when unavailable", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 502 }));
+    expect(await translateEnToUkMany(["Buckwheat, raw"])).toEqual([null]);
   });
 });
 
@@ -116,29 +154,6 @@ describe("isLatinQuery", () => {
   });
 });
 
-describe("translateEnToUk", () => {
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
-  it("returns the translated text on success", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({ responseData: { translatedText: "Гречка" } }),
-      }),
-    );
-
-    expect(await translateEnToUk("Buckwheat, raw")).toBe("Гречка");
-  });
-
-  it("returns null when the API is unreachable", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false }));
-    expect(await translateEnToUk("Buckwheat, raw")).toBeNull();
-  });
-});
-
 describe("lookupExternalCandidates", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
@@ -148,8 +163,8 @@ describe("lookupExternalCandidates", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async (url: string) => {
-        if (url.includes("mymemory")) {
-          return { ok: true, json: async () => ({ responseData: { translatedText: "kefir, low-fat" } }) };
+        if (url.includes("/api/translate")) {
+          return { ok: true, status: 200, json: async () => ({ translations: ["kefir, low-fat"] }) };
         }
         return {
           ok: true,
@@ -180,16 +195,16 @@ describe("lookupExternalCandidates", () => {
   });
 
   it("translates the lowercased, trimmed query", async () => {
-    const fetchMock = vi.fn(async (url: string) =>
-      url.includes("mymemory")
-        ? { ok: true, json: async () => ({ responseData: { translatedText: "corn" } }) }
+    const fetchMock = vi.fn(async (url: string, _init?: RequestInit) =>
+      url.includes("/api/translate")
+        ? { ok: true, status: 200, json: async () => ({ translations: ["corn"] }) }
         : { ok: true, json: async () => ({ foods: [] }) },
     );
     vi.stubGlobal("fetch", fetchMock);
 
     await lookupExternalCandidates("Кукурудза ");
 
-    expect(fetchMock.mock.calls[0][0]).toContain(`q=${encodeURIComponent("кукурудза")}&`);
+    expect(JSON.parse(String(fetchMock.mock.calls[0][1]?.body)).q).toEqual(["кукурудза"]);
   });
 
   it("sends an English query straight to USDA without translating it", async () => {
@@ -205,8 +220,8 @@ describe("lookupExternalCandidates", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async (url: string) =>
-        url.includes("mymemory")
-          ? { ok: true, json: async () => ({ responseData: { translatedText: "unknown thing" } }) }
+        url.includes("/api/translate")
+          ? { ok: true, status: 200, json: async () => ({ translations: ["unknown thing"] }) }
           : { ok: true, json: async () => ({ foods: [] }) },
       ),
     );
@@ -227,8 +242,8 @@ describe("lookupExternalCandidates", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async (url: string) =>
-        url.includes("mymemory")
-          ? { ok: true, json: async () => ({ responseData: { translatedText: "corn" } }) }
+        url.includes("/api/translate")
+          ? { ok: true, status: 200, json: async () => ({ translations: ["corn"] }) }
           : { ok: false, status: 500 },
       ),
     );
@@ -236,13 +251,7 @@ describe("lookupExternalCandidates", () => {
   });
 
   it("says 'translation-limited' once the translator's daily limit is used up", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({ quotaFinished: true, responseData: { translatedText: "MYMEMORY WARNING: ..." } }),
-      }),
-    );
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 429 }));
     expect(await lookupExternalCandidates("кукурудза")).toEqual({ kind: "translation-limited" });
   });
 });

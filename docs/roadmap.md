@@ -53,7 +53,7 @@ Branch `release/1.5.1` from `release/1.5` (1.5 isn't in `main` yet); versionCode
 - Update: install 1.5 → open → install 1.5.1 over it → new screens show at once (no restart/cache clear).
 - 1.5 checks: reminder with the app closed, blood sugar time + edit, privacy link.
 
-### 1.5.2 — Translation via Google Cloud · 📝 planned (next)
+### 1.5.2 — Translation via Google Cloud · 🔨 in progress
 Replaces the free MyMemory service, whose small daily limit (5,000 characters, anonymous) caused the «Не знайдено» day. Decided 2026-09-30; simple version first, no per-user accounts.
 - **Google Cloud Translation through our server:** new `api/translate.js` on Vercel, next to `api/usda.js`; the API key lives only in Vercel env vars, never in the app. Same origin allow-list as the USDA proxy; a maximum text length and at most ~6 texts per request (the query + the top 5 names), so one call can't use much.
 - **Google-side safety (developer sets up, Claude walks through it):** enable billing + the Cloud Translation API on the Google Cloud project; a **daily quota cap of 15,000 characters** (500,000 free per month ÷ 31), which actually stops requests, so we never pay; plus a **budget alert** as an early warning (budgets alone don't stop anything). Check Google's current pricing page first.

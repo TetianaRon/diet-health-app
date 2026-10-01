@@ -5,21 +5,28 @@
 // stays off the device (2026-09-28).
 //
 // Mom only ever types Ukrainian. English (needed for the USDA query) is
-// resolved automatically via a free translation API — she is never asked to
+// resolved automatically via translation (our api/translate proxy) — she is never asked to
 // supply or understand an English name (see docs/build-log.md, 2026-08-13 fix).
 import { lookupGI } from "../data/gi-table";
 
-const TRANSLATE_URL = "https://api.mymemory.translated.net/get";
+// Translation goes through our own proxy (api/translate.js → Google Cloud
+// Translation) since 1.5.2; the free MyMemory service it replaced had a tiny
+// anonymous daily limit that made the search fail (docs/roadmap.md 1.5.1).
+// Same-origin on the web; the Android build sets VITE_TRANSLATE_PROXY_URL.
+const TRANSLATE_URL = import.meta.env.VITE_TRANSLATE_PROXY_URL || "/api/translate";
 
-// MyMemory's free, anonymous tier allows only ~5,000 characters a day. When
-// it's used up it still answers 200, with a "MYMEMORY WARNING" text and
-// quotaFinished: true — treating that like any other failure made the add-food
-// search say «Не знайдено» for a day (found 2026-09-30, docs/roadmap.md 1.5.1).
-// So: every translation is remembered on the device, and once the limit is
-// hit the app stops calling the translator until the next day and says so.
+// Every translation is remembered on the device, and each device may send at
+// most DAILY_TRANSLATION_LIMIT characters a day (remembered ones are free).
+// The real cost guarantee is the Google Cloud quota (15,000 characters a day
+// for everyone, under the free 500,000 a month); this keeps one device from
+// using it all. Not tamper-proof by design.
 const TRANSLATION_CACHE_KEY = "trackmymeals.translations";
 const TRANSLATION_LIMIT_KEY = "trackmymeals.translationLimitDate";
+const TRANSLATION_USAGE_KEY = "trackmymeals.translationUsage";
 const TRANSLATION_CACHE_MAX = 500;
+export const DAILY_TRANSLATION_LIMIT = 2000;
+
+type Language = "uk" | "en";
 
 function todayLocal(): string {
   const d = new Date();
@@ -27,7 +34,7 @@ function todayLocal(): string {
 }
 
 // Storage can be missing or throw (private mode, blocked site data) —
-// translation still works without it, just without memory.
+// translation still works without it, just without memory or the limit.
 function readStorage(key: string): string | null {
   try {
     return localStorage.getItem(key);
@@ -52,16 +59,32 @@ function readCache(): Record<string, string> {
   }
 }
 
-function rememberTranslation(cacheKey: string, translated: string): void {
+function rememberTranslations(entries: [string, string][]): void {
   const cache = readCache();
-  delete cache[cacheKey]; // re-insert so the newest entries survive trimming
-  cache[cacheKey] = translated;
+  for (const [key, translated] of entries) {
+    delete cache[key]; // re-insert so the newest entries survive trimming
+    cache[key] = translated;
+  }
   const keys = Object.keys(cache);
   for (const old of keys.slice(0, Math.max(0, keys.length - TRANSLATION_CACHE_MAX))) delete cache[old];
   writeStorage(TRANSLATION_CACHE_KEY, JSON.stringify(cache));
 }
 
-/** True once the free translator reported its daily limit as used up today. */
+/** Characters this device has sent for translation today. */
+export function translationCharsUsedToday(): number {
+  try {
+    const usage = JSON.parse(readStorage(TRANSLATION_USAGE_KEY) ?? "{}") as { date?: string; chars?: number };
+    return usage.date === todayLocal() ? (usage.chars ?? 0) : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function addTranslationUsage(chars: number): void {
+  writeStorage(TRANSLATION_USAGE_KEY, JSON.stringify({ date: todayLocal(), chars: translationCharsUsedToday() + chars }));
+}
+
+/** True once translation is used up for today — this device's limit or the shared Google quota. */
 export function isTranslationLimitedToday(): boolean {
   return readStorage(TRANSLATION_LIMIT_KEY) === todayLocal();
 }
@@ -70,30 +93,49 @@ function markTranslationLimited(): void {
   writeStorage(TRANSLATION_LIMIT_KEY, todayLocal());
 }
 
-async function translate(text: string, langpair: "uk|en" | "en|uk"): Promise<string | null> {
-  const cacheKey = `${langpair}:${text}`;
-  const cached = readCache()[cacheKey];
-  if (cached) return cached;
-  if (isTranslationLimitedToday()) return null;
+/**
+ * Translates several texts in one request; remembered ones aren't sent.
+ * Returns null for each text that couldn't be translated (limit reached,
+ * network or server failure) — callers fall back to the untranslated text.
+ */
+async function translateMany(texts: string[], source: Language, target: Language): Promise<(string | null)[]> {
+  const cache = readCache();
+  const keyOf = (text: string) => `${source}|${target}:${text}`;
+  const results: (string | null)[] = texts.map((text) => cache[keyOf(text)] ?? null);
+  // The proxy refuses texts over 200 characters (api/translate.js); those
+  // rare long USDA names just stay in English.
+  const missing = [...new Set(texts.filter((text, i) => results[i] === null && text.length <= 200))];
+  if (missing.length === 0 || isTranslationLimitedToday()) return results;
 
-  const params = new URLSearchParams({ q: text, langpair });
-  const response = await fetch(`${TRANSLATE_URL}?${params}`);
-  if (response.status === 429) {
+  const chars = missing.reduce((sum, text) => sum + text.length, 0);
+  if (translationCharsUsedToday() + chars > DAILY_TRANSLATION_LIMIT) {
     markTranslationLimited();
-    return null;
+    return results;
   }
-  if (!response.ok) return null;
 
-  const data = await response.json();
-  const translated: string | undefined = data?.responseData?.translatedText;
-  if (data?.quotaFinished === true || translated?.toUpperCase().includes("MYMEMORY WARNING")) {
-    markTranslationLimited();
-    return null;
+  let translations: string[];
+  try {
+    const response = await fetch(TRANSLATE_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ q: missing, source, target }),
+    });
+    if (response.status === 429) {
+      markTranslationLimited();
+      return results;
+    }
+    if (!response.ok) return results;
+    const data = (await response.json()) as { translations?: unknown };
+    if (!Array.isArray(data.translations) || data.translations.length !== missing.length) return results;
+    translations = data.translations.map(String);
+  } catch {
+    return results;
   }
-  if (!translated) return null;
 
-  rememberTranslation(cacheKey, translated);
-  return translated;
+  addTranslationUsage(chars);
+  rememberTranslations(missing.map((text, i) => [keyOf(text), translations[i]]));
+  const byText = new Map(missing.map((text, i) => [text, translations[i]]));
+  return texts.map((text, i) => results[i] ?? byText.get(text) ?? null);
 }
 
 /**
@@ -111,19 +153,19 @@ export function isLatinQuery(query: string): boolean {
   return /\p{Script=Latin}/u.test(query) && !/\p{Script=Cyrillic}/u.test(query);
 }
 
-/** Translates a Ukrainian food name to English via a free, no-key API. Returns null if unavailable. */
+/** Translates a Ukrainian food name to English. Returns null if unavailable. */
 export async function translateUkToEn(textUk: string): Promise<string | null> {
-  return translate(textUk, "uk|en");
+  return (await translateMany([textUk], "uk", "en"))[0];
 }
 
 // USDA candidates are English-only (its own database descriptions, not
 // something we translated ourselves) — mom never reads English, so the top
 // TRANSLATED_CANDIDATE_COUNT candidates also get a best-effort Ukrainian
 // back-translation purely for display (never saved as the authoritative
-// nameUk; she still picks/edits the actual save name herself). Returns null
-// on failure — callers fall back to showing English only.
-export async function translateEnToUk(textEn: string): Promise<string | null> {
-  return translate(textEn, "en|uk");
+// nameUk; she still picks/edits the actual save name herself), all in one
+// request. null entries mean unavailable — callers show English only.
+export async function translateEnToUkMany(textsEn: string[]): Promise<(string | null)[]> {
+  return translateMany(textsEn, "en", "uk");
 }
 
 // Only the best matches are back-translated: each one costs part of the

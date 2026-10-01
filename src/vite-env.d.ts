@@ -7,6 +7,8 @@ interface ImportMetaEnv {
   readonly VITE_DEFAULT_SPREADSHEET_ID: string;
   /** Absolute URL of the api/usda proxy — only needed in builds not served from it (the Android app). */
   readonly VITE_USDA_PROXY_URL?: string;
+  /** Absolute URL of the api/translate proxy — likewise only for the Android app. */
+  readonly VITE_TRANSLATE_PROXY_URL?: string;
 }
 
 interface ImportMeta {

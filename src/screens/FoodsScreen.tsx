@@ -29,7 +29,7 @@ import { cycleGlycemicFlag, GLYCEMIC_FLAG_SYMBOL, type GlycemicFlag } from "../l
 import {
   isTranslationLimitedToday,
   lookupExternalCandidates,
-  translateEnToUk,
+  translateEnToUkMany,
   translateUkToEn,
   TRANSLATED_CANDIDATE_COUNT,
   type NutritionEstimate,
@@ -191,21 +191,13 @@ function AddFoodForm({
       setCandidateNamesUk(results.map(() => null));
       if (result.kind === "found") {
         setLookupAttempted(true);
-        // Fire off independently, in the background — never block showing
-        // the (already-usable, English) candidate list on translation, which
-        // can be slow or fail per-candidate. Each one fills in as it resolves.
-        // Only the top ones: the rest stay in English (see the list below).
-        results.slice(0, TRANSLATED_CANDIDATE_COUNT).forEach((candidate, i) => {
-          void translateEnToUk(candidate.nameEn)
-            .catch(() => null)
-            .then((nameUk) => {
-              setCandidateNamesUk((prev) => {
-                const next = [...prev];
-                next[i] = nameUk;
-                return next;
-              });
-              setTranslationLimited(isTranslationLimitedToday());
-            });
+        // In the background — never block showing the (already-usable,
+        // English) candidate list on translation, which can be slow or fail.
+        // Only the top ones, in one request: the rest stay in English (see
+        // the list below).
+        void translateEnToUkMany(results.slice(0, TRANSLATED_CANDIDATE_COUNT).map((c) => c.nameEn)).then((namesUk) => {
+          setCandidateNamesUk((prev) => prev.map((name, i) => namesUk[i] ?? name));
+          setTranslationLimited(isTranslationLimitedToday());
         });
       } else if (result.kind === "none") {
         applyEstimate(null, search);
