@@ -11,11 +11,12 @@ The planner for Track My Meals / Трекер Харчування and the roncr
 
 ---
 
-## Next session — start here (set 2026-09-29)
-1. **Set up the emulator test devices** (Chores → Test devices): virtual phones with Google Play + Gboard; confirm mom's phone model first.
-2. **Reproduce the two 🔴 Android bugs** (Intake) on the emulator and/or the Pixel over USB, with DevTools on the app's WebView: keyboard language switch, food search «не знайдено».
-3. **Finish the 1.5 checks** on the Pixel (reminder with the app closed, food search, blood sugar time + edit, privacy link) → promote to mom → merge `release/1.5`.
-4. **Place the fixes:** proposed **1.5.1** (keyboard, search lowercase + error message, stale screens after update) before 1.6.
+## Next session — start here (set 2026-09-30)
+1. **Build 1.5.1** (below) on `release/1.5.1`, test on the developer's Pixel (debug build over USB is already installed) and the emulator.
+2. **Check 1.5's features on the same build** (reminder with the app closed, blood sugar time + edit, privacy link) — 1.5 was never promoted to mom, so 1.5.1 goes to her instead.
+3. Upload 1.5.1 → promote to mom → merge into `main`.
+4. File the WebView keyboard issue with Chromium (fix 1b).
+5. Then **1.5.2** (Google Cloud Translation): developer enables billing + the Translation API with Claude's step-by-step guide.
 
 ## Current and upcoming releases
 
@@ -25,7 +26,42 @@ Built 2026-09-28 (versionCode 8), uploaded to Play **Internal testing**.
 - Blood sugar: grouped by day, editable measurement time, today's readings editable
 - Food search through the USDA proxy (key off the device); new privacy link; desktop layout (tablets)
 - ✅ 1.5 installed on the developer's Pixel (2026-09-29; new screens visible).
-- **To finish (next session):** on the Pixel — reminder with the app closed (re-test on 1.5), food search, blood sugar time + edit, privacy link → promote to mom's track → merge `release/1.5` into `main`.
+- **Not promoted to mom** — superseded by 1.5.1, which includes everything here. Its remaining checks move to 1.5.1's test list.
+
+### 1.5.1 — Android fixes: keyboard, food search, stale screens · 📝 planned (next)
+Branch `release/1.5.1` from `release/1.5` (1.5 isn't in `main` yet); versionCode 9, versionName "1.5.1". Causes were found on 2026-09-30 (see Intake history below).
+
+**1. Keyboard language switch closes the keyboard** 🔴
+- (a) Our own WebView subclass (`KeyboardFriendlyWebView extends CapacitorWebView`) swapped in by overriding Capacitor's `capacitor_bridge_layout_main.xml` in `android/app/src/main/res/layout/`. It doesn't pass "window lost focus" to Chromium while the keyboard is open (the IME's own popup took focus), so the WebView doesn't hide the keyboard. Every other focus change is passed through unchanged.
+- (b) Report it to Chromium (WebView 154 on Android 16; stack trace in Intake). Keep (a) until a fixed WebView is widespread.
+
+**2. Food search says «Не знайдено» when the search actually failed** 🔴
+- Lowercase and trim the query before translating (`trim().toLocaleLowerCase("uk")`): «Кукурудза» → "Maize" → 1 result is the auto-capital problem; Gboard also leaves a trailing space («Кукурудза »). *Confirmed on the developer's Pixel 2026-09-30: lowercase → "corn" → many results; capitalised → "Maize".*
+- Tell failure apart from "nothing found": `lookupExternalCandidates` returns a distinct "unavailable" result when translation or the USDA proxy fails; the screen shows a new message (in `uk.ts`), e.g. «Пошук зараз недоступний — спробуйте пізніше або введіть дані вручну.», instead of «Не знайдено».
+- Spend less of the free MyMemory quota: remember translations on the device (query → English, English candidate → Ukrainian), so repeated searches and repeated candidates cost nothing. Unit tests for the lowercase + result kinds.
+- **Results layout (developer, 2026-09-30):** only the **top 5** USDA matches are translated and shown as now; the remaining matches follow in a **muted, English-only list** (still selectable), under a note that they aren't translated and that a more specific search word (e.g. «кукурудза варена» rather than «кукурудза») brings closer matches to the top. Cuts translation use from ~21 to ~6 requests per search.
+- **English queries skip translation:** a query in Latin letters goes straight to USDA (today it's still sent through the uk→en translator, wasting quota). Only the back-translation of the top 5 names uses the translator, and that is skipped when the limit is reached.
+- **Limit notice above the search box** — it's the *translation* that is limited, not the search (developer, 2026-09-30). The free service doesn't tell us how much is left, so we can't warn in advance. As soon as a response says the daily limit is used up (`quotaFinished` / "MYMEMORY WARNING"), the app remembers it for the rest of the day and shows a notice **before the search box**, e.g. «Переклад назв продуктів сьогодні недоступний. Ви можете шукати англійською (наприклад, "corn") або ввести дані вручну.» While it's shown, a Ukrainian query isn't sent to the translator at all (the app says it needs an English word), and results appear in English only. The notice disappears the next day.
+- *Decision for the developer:* MyMemory raises its free daily quota when requests carry a contact email (`de=`). Option: send the forwarding-only project address (info@roncreator.com), never the user's own email. Not included unless approved.
+
+**3. Old screens after an update**
+- Don't use the PWA service worker inside the Android app: register it only on the web (`Capacitor.isNativePlatform()` check, `injectRegister: null` in `vite.config.ts` + manual registration in `main.tsx`), and in the native app **unregister any existing worker** and clear its caches once, since installed phones already have one. The web version keeps its offline/installable behaviour.
+
+**Tests (Pixel over USB + emulator):**
+- Keyboard: long-press space → switch language in Settings, Продукти search, meal editor and blood sugar fields; then check nothing else broke: keyboard hides on leaving a field, app switching with the keyboard open, Google sign-in window, the notification-permission dialog.
+- Search: «кукурудза», «Кукурудза», «морква»; offline → "unavailable" message; `npm test`.
+- Update: install 1.5 → open → install 1.5.1 over it → new screens show at once (no restart/cache clear).
+- 1.5 checks: reminder with the app closed, blood sugar time + edit, privacy link.
+
+### 1.5.2 — Translation via Google Cloud · 📝 planned (after 1.5.1)
+Replaces the free MyMemory service, whose small daily limit (5,000 characters, anonymous) caused the «Не знайдено» day. Decided 2026-09-30; simple version first, no per-user accounts.
+- **Google Cloud Translation through our server:** new `api/translate.js` on Vercel, next to `api/usda.js`; the API key lives only in Vercel env vars, never in the app. Same origin allow-list as the USDA proxy; a maximum text length and at most ~6 texts per request (the query + the top 5 names), so one call can't use much.
+- **Google-side safety (developer sets up, Claude walks through it):** enable billing + the Cloud Translation API on the Google Cloud project; a **daily quota cap of 15,000 characters** (500,000 free per month ÷ 31), which actually stops requests, so we never pay; plus a **budget alert** as an early warning (budgets alone don't stop anything). Check Google's current pricing page first.
+- **Per-device daily limit in the app:** a counter in local storage (characters translated today + date), works the same in the Android app and in the browser; at **2,000 characters/day** translation stops and the 1.5.1 notice appears («Переклад назв продуктів сьогодні недоступний…»). Translations remembered on the device (from 1.5.1) don't count. Not tamper-proof by design: the Google cap is the real guarantee; a sign-in-based per-user limit can come later if abuse ever appears.
+- **When either limit is hit:** the same notice + English-only search as in 1.5.1.
+- **Privacy policy** (roncreator.com, EN + UA): Google Cloud Translation replaces MyMemory; still only food names are sent.
+- **Record in `build-log.md`:** why MyMemory was picked originally (live-test quick fix, no server back then, avoiding costs) and that its limit wasn't checked, especially after per-result back-translation multiplied usage ~20×.
+- Makes the 1.5.1 "info@roncreator.com for MyMemory" question unnecessary unless 1.5.2 is delayed.
 
 ### 1.6 — Foundations for verified data · 📝 planned
 Everything the data import (1.7) and most later features stand on.
@@ -70,13 +106,16 @@ Spec: "Planned: food families with cooking states". Raw weight + state in the fi
 - 📝 **After 1.5 is on mom's phone:** retire the old GitHub Pages privacy page, rename the repo to `track-my-meals`, make it private, rename the local folder (+ move Claude's notes).
 - 📝 **Staging address** for signed-in branch testing (`staging` branch + fixed domain + OAuth origin) and tick **Preview** for `USDA_API_KEY` / `VITE_SPREADSHEET_ID` in Vercel.
 - 📝 Review page: clear the stale кисляк objection (Г68).
-- 📝 **Test devices:** Android Emulator (already installed, but no system images/AVDs yet) — create 2–3 virtual phones via Android Studio → Device Manager, *Google Play* images (include Gboard): a small phone (mom's size — model to confirm), a large phone, a tablet; enable Windows Hypervisor Platform if asked. Lets Claude reproduce app bugs without the developer's phone. Samsung-specific issues still need a real device or Firebase Test Lab (free daily quota, automated only).
+- 🔨 **Test devices** — *2026-09-30:* Pixel 10 AVD (Google Play image, Gboard EN+UK) works; Windows hypervisor re-enabled. Still to add: small phone, medium phone, tablet (needs "Android SDK Command-line Tools" installed in Android Studio), and mom's model. Original note: Android Emulator (already installed, but no system images/AVDs yet) — create 2–3 virtual phones via Android Studio → Device Manager, *Google Play* images (include Gboard): a small phone (mom's size — model to confirm), a large phone, a tablet; enable Windows Hypervisor Platform if asked. Lets Claude reproduce app bugs without the developer's phone. Samsung-specific issues still need a real device or Firebase Test Lab (free daily quota, automated only).
 
 ## Intake (new feedback, not yet placed)
-- **Android: stale screens after an update** (2026-09-29) — after installing 1.5 the app may keep showing the previous version until restarted/cache cleared; likely the PWA service worker caching inside the Capacitor build. Candidate fix: don't register the service worker in the native build. Place into the next Android release.
+- ➡️ *Placed in 1.5.1.* **Android: stale screens after an update** (2026-09-29) — after installing 1.5 the app may keep showing the previous version until restarted/cache cleared; likely the PWA service worker caching inside the Capacitor build. Candidate fix: don't register the service worker in the native build. Place into the next Android release.
 
-- 🔴 **High priority — can't switch the keyboard language inside the Android app** (2026-09-29, developer's Pixel, Gboard): in **all text fields**, long-press on the space bar opens the language list, which flickers, and the keyboard closes. Existed before 1.5. **Works in Chrome on the same phone** → specific to the Android app's WebView/Capacitor. Not reproduced yet: no app lifecycle/focus handler explains it (the "resume" listeners live only on Сьогодні; the activity config is Capacitor's default). **Next:** debug on the Pixel over USB (Chrome remote DevTools + logcat) while reproducing. Target: the next Android release, together with the stale-screens fix.
-- 🔴 **Food search on the Android app** (2026-09-29, screenshots): «Кукурудза» (keyboard auto-capital) → MyMemory "Maize" → 1 USDA result (explained; fix: lowercase before translating). But lowercase «кукурудза» shows **«Не знайдено» on the phone**, while the same path from the dev laptop works ("corn" → proxy → 20 results, Android origin accepted). The app shows the same message for "no results" and for a failed request, so a hidden error on the device is likely. **Next:** reproduce during the USB debugging session (Chrome remote DevTools → Network/Console); also make the app distinguish "nothing found" from "search failed".
+- ➡️ *Placed in 1.5.1.* 🔴 **High priority — can't switch the keyboard language inside the Android app** (2026-09-29, developer's Pixel, Gboard): in **all text fields**, long-press on the space bar opens the language list, which flickers, and the keyboard closes. Existed before 1.5. **Works in Chrome on the same phone** → specific to the Android app's WebView/Capacitor. Not reproduced yet: no app lifecycle/focus handler explains it (the "resume" listeners live only on Сьогодні; the activity config is Capacitor's default). **Next:** debug on the Pixel over USB (Chrome remote DevTools + logcat) while reproducing. Target: the next Android release, together with the stale-screens fix.
+  - *Emulator, 2026-09-30 (Pixel 10 AVD, Android 17, Gboard EN + UK, debug build):* **not reproduced** — long-press on space in the app (Settings field signed out; Продукти search signed in) opens «Змінити клавіатуру», it stays open, and switching works; no focus/blur/visibility events fire. So it depends on something on the real phone: its Android/WebView/Gboard version, the release (Play) build, or a specific screen. Next: Pixel over USB with the same event logger; note the phone's Android + Gboard versions.
+  - ✅ **Cause found (2026-09-30, developer's Pixel 10 over USB, debug build, Java debugger):** reproduced. Gboard's «Змінити клавіатуру» list is its own dialog window, so opening it takes window focus from the app. **Android System WebView** reacts to losing window focus by hiding the keyboard (`WebView.onWindowFocusChanged(false)` → Chromium `ImeAdapterImpl.onWindowFocusChanged` → `InputMethodManager.hideSoftInputFromWindow`), and hiding the keyboard closes the list with it: the "flicker". Not our JS (no blur fires) and not Capacitor. Phone: Android 16, WebView 154.0.8037.57, Gboard 18.3; the emulator (WebView 149, Gboard 18.0, Android 17) doesn't do it, so it's likely a recent WebView change; Chrome itself isn't affected. **Fix options (1.5.1):** (a) our own WebView subclass (override Capacitor's `capacitor_bridge_layout_main` layout) that doesn't pass the focus loss to Chromium while the keyboard is open, needs careful testing (app switching, dialogs); (b) report to Chromium and wait for a WebView update, unreliable for mom's phone. Recommended: (a) + (b).
+- ➡️ *Placed in 1.5.1.* 🔴 **Food search on the Android app** (2026-09-29, screenshots): «Кукурудза» (keyboard auto-capital) → MyMemory "Maize" → 1 USDA result (explained; fix: lowercase before translating). But lowercase «кукурудза» shows **«Не знайдено» on the phone**, while the same path from the dev laptop works ("corn" → proxy → 20 results, Android origin accepted). The app shows the same message for "no results" and for a failed request, so a hidden error on the device is likely. **Next:** reproduce during the USB debugging session (Chrome remote DevTools → Network/Console); also make the app distinguish "nothing found" from "search failed".
+  - *Emulator, 2026-09-30:* lowercase «кукурудза» works in the app (→ "corn" → 20 results, shown correctly). **Likely cause on the phone: MyMemory's free daily quota.** Every search makes ~21 MyMemory calls (1 to translate the query + 1 back-translation per result), and the anonymous quota is small, so a few test searches can use up the day. When the quota runs out MyMemory still answers 200 with a "MYMEMORY WARNING" text; `translate()` returns null → `lookupExternalCandidates` returns `[]` → «Не знайдено». Fix ideas for 1.5.1: lowercase the query; tell "translation unavailable" apart from "nothing found"; back-translate lazily or cache back-translations; consider adding an email to MyMemory requests (raises the free quota) or a server-side translation cache in the proxy.
 
 New items land here with a one-line note, then get placed above.
 
