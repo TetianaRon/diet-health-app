@@ -134,6 +134,8 @@ Spec: "Planned: food families with cooking states". Raw weight + state in the fi
 - **«Підключити мамину таблицю» points to her old sheet** (2026-10-01): mom created a new sheet via the app; the button (`VITE_DEFAULT_SPREADSHEET_ID` / build-time ID) still opens the old one. Decide which sheet is hers going forward; ties into 2.0 (sheet detection + Picker), which removes these build-time IDs anyway.
 - **Test sheet in the Ukrainian locale** (2026-10-01, chore): the 1.5.3 bug only appeared in Ukrainian-locale sheets; keep a test sheet with that locale for every release check.
 
+- **Web: after the sign-in expires, the app just fails to reach the sheet** (2026-10-01, developer): a web page left open past the ~1-hour Google access token keeps acting signed in, but every sheet request fails, with no prompt to sign in again. Likely cause: on a 401 `authorizedFetch` tries `refreshAccessToken()`, which is a no-op on the web (no refresh token there by design), then throws a generic error while the UI still shows the user as signed in. Fix idea: on a web 401, first try a silent new token from Google Identity Services (no popup if the Google session is still active); if that fails, switch the app to signed-out and show «Увійти через Google» with a short note instead of failing quietly.
+
 New items land here with a one-line note, then get placed above.
 
 ---
