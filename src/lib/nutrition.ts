@@ -1,9 +1,8 @@
 // External nutrition lookup: translation + USDA FoodData Central, for foods
 // not covered by the bundle (src/data/starter-foods.ts — checked directly by
 // the UI's browsable suggestion list, not by this module; see lookupExternal
-// below for why). No serverless proxy needed — USDA's key is free/public-data
-// with no billing risk, unlike the Anthropic key this replaced (see
-// docs/build-log.md, 2026-08-13).
+// below for why). USDA goes through our own proxy (api/usda.js) so its key
+// stays off the device (2026-09-28).
 //
 // Mom only ever types Ukrainian. English (needed for the USDA query) is
 // resolved automatically via a free translation API — she is never asked to
@@ -12,16 +11,104 @@ import { lookupGI } from "../data/gi-table";
 
 const TRANSLATE_URL = "https://api.mymemory.translated.net/get";
 
+// MyMemory's free, anonymous tier allows only ~5,000 characters a day. When
+// it's used up it still answers 200, with a "MYMEMORY WARNING" text and
+// quotaFinished: true — treating that like any other failure made the add-food
+// search say «Не знайдено» for a day (found 2026-09-30, docs/roadmap.md 1.5.1).
+// So: every translation is remembered on the device, and once the limit is
+// hit the app stops calling the translator until the next day and says so.
+const TRANSLATION_CACHE_KEY = "trackmymeals.translations";
+const TRANSLATION_LIMIT_KEY = "trackmymeals.translationLimitDate";
+const TRANSLATION_CACHE_MAX = 500;
+
+function todayLocal(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+// Storage can be missing or throw (private mode, blocked site data) —
+// translation still works without it, just without memory.
+function readStorage(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function writeStorage(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // ignore — see readStorage
+  }
+}
+
+function readCache(): Record<string, string> {
+  try {
+    return JSON.parse(readStorage(TRANSLATION_CACHE_KEY) ?? "{}") as Record<string, string>;
+  } catch {
+    return {};
+  }
+}
+
+function rememberTranslation(cacheKey: string, translated: string): void {
+  const cache = readCache();
+  delete cache[cacheKey]; // re-insert so the newest entries survive trimming
+  cache[cacheKey] = translated;
+  const keys = Object.keys(cache);
+  for (const old of keys.slice(0, Math.max(0, keys.length - TRANSLATION_CACHE_MAX))) delete cache[old];
+  writeStorage(TRANSLATION_CACHE_KEY, JSON.stringify(cache));
+}
+
+/** True once the free translator reported its daily limit as used up today. */
+export function isTranslationLimitedToday(): boolean {
+  return readStorage(TRANSLATION_LIMIT_KEY) === todayLocal();
+}
+
+function markTranslationLimited(): void {
+  writeStorage(TRANSLATION_LIMIT_KEY, todayLocal());
+}
+
 async function translate(text: string, langpair: "uk|en" | "en|uk"): Promise<string | null> {
+  const cacheKey = `${langpair}:${text}`;
+  const cached = readCache()[cacheKey];
+  if (cached) return cached;
+  if (isTranslationLimitedToday()) return null;
+
   const params = new URLSearchParams({ q: text, langpair });
   const response = await fetch(`${TRANSLATE_URL}?${params}`);
+  if (response.status === 429) {
+    markTranslationLimited();
+    return null;
+  }
   if (!response.ok) return null;
 
   const data = await response.json();
   const translated: string | undefined = data?.responseData?.translatedText;
-  if (!translated || translated.toUpperCase().includes("MYMEMORY WARNING")) return null;
+  if (data?.quotaFinished === true || translated?.toUpperCase().includes("MYMEMORY WARNING")) {
+    markTranslationLimited();
+    return null;
+  }
+  if (!translated) return null;
 
+  rememberTranslation(cacheKey, translated);
   return translated;
+}
+
+/**
+ * Normalises a typed search before translating: trims, collapses spaces and
+ * lowercases. The keyboard's automatic capital changed the translation itself
+ * («Кукурудза» → "Maize", 1 USDA result; «кукурудза» → "corn", 20), and
+ * Gboard often leaves a trailing space.
+ */
+export function normalizeSearchQuery(query: string): string {
+  return query.trim().replace(/\s+/g, " ").toLocaleLowerCase("uk");
+}
+
+/** A query typed in Latin letters is already English — it goes to USDA as is. */
+export function isLatinQuery(query: string): boolean {
+  return /\p{Script=Latin}/u.test(query) && !/\p{Script=Cyrillic}/u.test(query);
 }
 
 /** Translates a Ukrainian food name to English via a free, no-key API. Returns null if unavailable. */
@@ -30,14 +117,19 @@ export async function translateUkToEn(textUk: string): Promise<string | null> {
 }
 
 // USDA candidates are English-only (its own database descriptions, not
-// something we translated ourselves) — mom never reads English, so each
-// candidate also gets a best-effort Ukrainian back-translation purely for
-// display (never saved as the authoritative nameUk; she still picks/edits
-// the actual save name herself). Returns null on failure — callers fall back
-// to showing English only, same as before this existed.
+// something we translated ourselves) — mom never reads English, so the top
+// TRANSLATED_CANDIDATE_COUNT candidates also get a best-effort Ukrainian
+// back-translation purely for display (never saved as the authoritative
+// nameUk; she still picks/edits the actual save name herself). Returns null
+// on failure — callers fall back to showing English only.
 export async function translateEnToUk(textEn: string): Promise<string | null> {
   return translate(textEn, "en|uk");
 }
+
+// Only the best matches are back-translated: each one costs part of the
+// translator's small daily limit, and the rest are rarely the right pick.
+// The others are still listed, untranslated (see FoodsScreen).
+export const TRANSLATED_CANDIDATE_COUNT = 5;
 
 export interface NutritionEstimate {
   nameEn: string;
@@ -140,17 +232,40 @@ export async function searchUsda(nameEn: string): Promise<NutritionEstimate[]> {
   return data.foods.map(usdaFoodToEstimate);
 }
 
+export type ExternalLookupResult =
+  | { kind: "found"; candidates: NutritionEstimate[] }
+  | { kind: "none" }
+  | { kind: "translation-limited" }
+  | { kind: "failed" };
+
 /**
- * Resolves a Ukrainian name to a list of USDA candidates via translation —
+ * Resolves a typed name to a list of USDA candidates via translation —
  * deliberately skips the bundle. The bundle is already covered by the
  * browsable suggestion list shown while typing; re-checking it here, behind
  * the "Знайти" button, would just be a second, redundant way to reach the
- * same items. Returns [] if translation is unavailable or USDA has no
- * matches — caller should fall back to manual entry.
+ * same items. Tells "nothing found" apart from "couldn't search": the screen
+ * used to say «Не знайдено» for both.
  */
-export async function lookupExternalCandidates(nameUk: string): Promise<NutritionEstimate[]> {
-  const nameEn = await translateUkToEn(nameUk);
-  if (!nameEn) return [];
+export async function lookupExternalCandidates(query: string): Promise<ExternalLookupResult> {
+  const normalized = normalizeSearchQuery(query);
+  if (!normalized) return { kind: "none" };
 
-  return searchUsda(nameEn);
+  let nameEn: string | null;
+  if (isLatinQuery(normalized)) {
+    nameEn = normalized;
+  } else {
+    try {
+      nameEn = await translateUkToEn(normalized);
+    } catch {
+      nameEn = null;
+    }
+    if (!nameEn) return { kind: isTranslationLimitedToday() ? "translation-limited" : "failed" };
+  }
+
+  try {
+    const candidates = await searchUsda(nameEn);
+    return candidates.length > 0 ? { kind: "found", candidates } : { kind: "none" };
+  } catch {
+    return { kind: "failed" };
+  }
 }

@@ -23,6 +23,13 @@ export default defineConfig(({ mode }) => {
     react(),
     VitePWA({
       registerType: "autoUpdate",
+      // Registered from src/lib/serviceWorker.ts, on the web only: inside the
+      // Android app the worker kept serving the previous version's screens
+      // after an update (2026-09-29). The Android build (`npm run
+      // build:android`) ships a self-removing worker instead, which clears
+      // the one already installed on existing phones.
+      injectRegister: false,
+      selfDestroying: mode === "android",
       includeAssets: ["icon.svg"],
       manifest: {
         name: "Трекер харчування",

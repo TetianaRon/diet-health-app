@@ -1,5 +1,24 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { lookupExternalCandidates, searchUsda, translateEnToUk, translateUkToEn } from "./nutrition";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  isLatinQuery,
+  isTranslationLimitedToday,
+  lookupExternalCandidates,
+  normalizeSearchQuery,
+  searchUsda,
+  translateEnToUk,
+  translateUkToEn,
+} from "./nutrition";
+
+// Translations and the daily-limit flag live in localStorage — a fresh
+// in-memory one per test, so nothing carries over between tests.
+beforeEach(() => {
+  const store = new Map<string, string>();
+  vi.stubGlobal("localStorage", {
+    getItem: (key: string) => store.get(key) ?? null,
+    setItem: (key: string, value: string) => void store.set(key, value),
+    removeItem: (key: string) => void store.delete(key),
+  });
+});
 
 describe("translateUkToEn", () => {
   afterEach(() => {
@@ -35,6 +54,65 @@ describe("translateUkToEn", () => {
     );
 
     expect(await translateUkToEn("гречка")).toBeNull();
+    expect(isTranslationLimitedToday()).toBe(true);
+  });
+
+  it("treats quotaFinished as the daily limit and stops calling the translator for the rest of the day", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ quotaFinished: true, responseData: { translatedText: "corn" } }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    expect(await translateUkToEn("кукурудза")).toBeNull();
+    expect(await translateUkToEn("морква")).toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("remembers translations, so the same word doesn't call the translator twice", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ responseData: { translatedText: "corn" } }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    expect(await translateUkToEn("кукурудза")).toBe("corn");
+    expect(await translateUkToEn("кукурудза")).toBe("corn");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("still translates when storage is unavailable", async () => {
+    vi.stubGlobal("localStorage", {
+      getItem: () => {
+        throw new Error("blocked");
+      },
+      setItem: () => {
+        throw new Error("blocked");
+      },
+    });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({ ok: true, json: async () => ({ responseData: { translatedText: "corn" } }) }),
+    );
+
+    expect(await translateUkToEn("кукурудза")).toBe("corn");
+  });
+});
+
+describe("normalizeSearchQuery", () => {
+  it("lowercases, trims and collapses spaces — the keyboard's capital changed the translation", () => {
+    expect(normalizeSearchQuery("Кукурудза ")).toBe("кукурудза");
+    expect(normalizeSearchQuery("  Гречка   варена ")).toBe("гречка варена");
+  });
+});
+
+describe("isLatinQuery", () => {
+  it("is true only for queries in Latin letters", () => {
+    expect(isLatinQuery("corn")).toBe(true);
+    expect(isLatinQuery("sweet corn 2%")).toBe(true);
+    expect(isLatinQuery("кукурудза")).toBe(false);
+    expect(isLatinQuery("кукурудза corn")).toBe(false);
+    expect(isLatinQuery("123")).toBe(false);
   });
 });
 
@@ -92,16 +170,80 @@ describe("lookupExternalCandidates", () => {
 
     const result = await lookupExternalCandidates("Кефір знежирений");
 
-    expect(result).toHaveLength(1);
-    expect(result[0].source).toBe("usda");
-    expect(result[0].nameEn).toBe("Kefir, low fat");
-    expect(result[0].carbsG).toBe(10);
-    expect(result[0].proteinG).toBe(2);
+    expect(result.kind).toBe("found");
+    if (result.kind !== "found") return;
+    expect(result.candidates).toHaveLength(1);
+    expect(result.candidates[0].source).toBe("usda");
+    expect(result.candidates[0].nameEn).toBe("Kefir, low fat");
+    expect(result.candidates[0].carbsG).toBe(10);
+    expect(result.candidates[0].proteinG).toBe(2);
   });
 
-  it("returns [] when translation is unavailable, so the caller falls back to manual entry", async () => {
+  it("translates the lowercased, trimmed query", async () => {
+    const fetchMock = vi.fn(async (url: string) =>
+      url.includes("mymemory")
+        ? { ok: true, json: async () => ({ responseData: { translatedText: "corn" } }) }
+        : { ok: true, json: async () => ({ foods: [] }) },
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await lookupExternalCandidates("Кукурудза ");
+
+    expect(fetchMock.mock.calls[0][0]).toContain(`q=${encodeURIComponent("кукурудза")}&`);
+  });
+
+  it("sends an English query straight to USDA without translating it", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ foods: [] }) });
+    vi.stubGlobal("fetch", fetchMock);
+
+    expect(await lookupExternalCandidates("Corn")).toEqual({ kind: "none" });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][0]).toContain("query=corn");
+  });
+
+  it("says 'none' only when USDA genuinely has no matches", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string) =>
+        url.includes("mymemory")
+          ? { ok: true, json: async () => ({ responseData: { translatedText: "unknown thing" } }) }
+          : { ok: true, json: async () => ({ foods: [] }) },
+      ),
+    );
+    expect(await lookupExternalCandidates("Незнайомий продукт")).toEqual({ kind: "none" });
+  });
+
+  it("says 'failed' when translation is unavailable for another reason", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false }));
-    expect(await lookupExternalCandidates("Незнайомий продукт")).toEqual([]);
+    expect(await lookupExternalCandidates("Незнайомий продукт")).toEqual({ kind: "failed" });
+  });
+
+  it("says 'failed' when the network itself fails", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Failed to fetch")));
+    expect(await lookupExternalCandidates("гречка")).toEqual({ kind: "failed" });
+  });
+
+  it("says 'failed' when the USDA proxy fails", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string) =>
+        url.includes("mymemory")
+          ? { ok: true, json: async () => ({ responseData: { translatedText: "corn" } }) }
+          : { ok: false, status: 500 },
+      ),
+    );
+    expect(await lookupExternalCandidates("кукурудза")).toEqual({ kind: "failed" });
+  });
+
+  it("says 'translation-limited' once the translator's daily limit is used up", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ quotaFinished: true, responseData: { translatedText: "MYMEMORY WARNING: ..." } }),
+      }),
+    );
+    expect(await lookupExternalCandidates("кукурудза")).toEqual({ kind: "translation-limited" });
   });
 });
 

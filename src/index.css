@@ -211,6 +211,30 @@ select {
   color: #4a4a4a;
 }
 
+/* Search limits / failures — informative, not an error, so amber rather
+   than .today-warning's red. */
+.food-form-notice {
+  background: #fdf3e1;
+  color: #6b4a0e;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.food-list-note {
+  font-size: 0.85rem;
+  color: #6b6b6b;
+  padding: 10px 0 4px;
+}
+
+/* Untranslated USDA matches below the top ones: still selectable, visibly
+   secondary. #6b6b6b keeps 4.5:1 contrast (see .food-name-en). */
+.food-list-item-muted {
+  color: #6b6b6b;
+  font-size: 0.9em;
+}
+
 .food-form-hint {
   font-size: 0.85rem;
   color: #6b6b6b;

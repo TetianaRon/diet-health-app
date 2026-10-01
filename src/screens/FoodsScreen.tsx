@@ -26,7 +26,14 @@ import {
   type NutritionKey,
 } from "../lib/dishes";
 import { cycleGlycemicFlag, GLYCEMIC_FLAG_SYMBOL, type GlycemicFlag } from "../lib/glycemicFlag";
-import { lookupExternalCandidates, translateEnToUk, translateUkToEn, type NutritionEstimate } from "../lib/nutrition";
+import {
+  isTranslationLimitedToday,
+  lookupExternalCandidates,
+  translateEnToUk,
+  translateUkToEn,
+  TRANSLATED_CANDIDATE_COUNT,
+  type NutritionEstimate,
+} from "../lib/nutrition";
 import { mergeWithStarterDishes } from "../data/starter-dishes";
 import Breadcrumb, { type Crumb } from "./Breadcrumb";
 
@@ -119,6 +126,12 @@ function AddFoodForm({
   // descriptions are English-only). null entries mean translation failed or
   // hasn't resolved yet; the UI falls back to showing English alone for those.
   const [candidateNamesUk, setCandidateNamesUk] = useState<(string | null)[]>([]);
+  // Why the last "Знайти" found nothing to list, when it wasn't a genuine
+  // miss — shown instead of «Не знайдено», which used to cover both.
+  const [lookupProblem, setLookupProblem] = useState<"translation-limited" | "failed" | null>(null);
+  // The free translator's daily limit — it's the translation that's limited,
+  // not the search: English words still go straight to USDA.
+  const [translationLimited, setTranslationLimited] = useState(isTranslationLimitedToday);
   const [error, setError] = useState<string | null>(null);
   const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -170,30 +183,37 @@ function AddFoodForm({
   const handleLookup = async () => {
     setLookupLoading(true);
     setError(null);
+    setLookupProblem(null);
     try {
-      const results = await lookupExternalCandidates(search);
+      const result = await lookupExternalCandidates(search);
+      const results = result.kind === "found" ? result.candidates : [];
       setCandidates(results);
       setCandidateNamesUk(results.map(() => null));
-      if (results.length > 0) {
+      if (result.kind === "found") {
         setLookupAttempted(true);
         // Fire off independently, in the background — never block showing
         // the (already-usable, English) candidate list on translation, which
         // can be slow or fail per-candidate. Each one fills in as it resolves.
-        results.forEach((candidate, i) => {
-          void translateEnToUk(candidate.nameEn).then((nameUk) => {
-            setCandidateNamesUk((prev) => {
-              const next = [...prev];
-              next[i] = nameUk;
-              return next;
+        // Only the top ones: the rest stay in English (see the list below).
+        results.slice(0, TRANSLATED_CANDIDATE_COUNT).forEach((candidate, i) => {
+          void translateEnToUk(candidate.nameEn)
+            .catch(() => null)
+            .then((nameUk) => {
+              setCandidateNamesUk((prev) => {
+                const next = [...prev];
+                next[i] = nameUk;
+                return next;
+              });
+              setTranslationLimited(isTranslationLimitedToday());
             });
-          });
         });
-      } else {
+      } else if (result.kind === "none") {
         applyEstimate(null, search);
+      } else {
+        setLookupProblem(result.kind);
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
     } finally {
+      setTranslationLimited(isTranslationLimitedToday());
       setLookupLoading(false);
     }
   };
@@ -279,6 +299,7 @@ function AddFoodForm({
 
   return (
     <div className="food-form">
+      {translationLimited && <p className="food-form-notice">{uk.foods.form.translationLimitedNotice}</p>}
       <label>
         {uk.foods.form.nameUkLabel}
         <input
@@ -287,6 +308,7 @@ function AddFoodForm({
             setSearch(e.target.value);
             setCandidates([]);
             setCandidateNamesUk([]);
+            setLookupProblem(null);
           }}
           placeholder={uk.foods.form.nameUkPlaceholder}
         />
@@ -315,9 +337,17 @@ function AddFoodForm({
         </>
       )}
 
+      {lookupProblem && (
+        <p className="food-form-notice">
+          {lookupProblem === "translation-limited"
+            ? uk.foods.form.translationLimitedSearch
+            : uk.foods.form.searchFailed}
+        </p>
+      )}
+
       {lookupAttempted && candidates.length > 0 && (
         <ul className="food-list food-list-scroll">
-          {candidates.map((candidate, i) => {
+          {candidates.slice(0, TRANSLATED_CANDIDATE_COUNT).map((candidate, i) => {
             const nameUk = candidateNamesUk[i];
             return (
               <li key={i} className="food-list-item-with-action">
@@ -338,6 +368,20 @@ function AddFoodForm({
               </li>
             );
           })}
+          {candidates.length > TRANSLATED_CANDIDATE_COUNT && (
+            <li className="food-list-note">{uk.foods.form.untranslatedNote}</li>
+          )}
+          {candidates.slice(TRANSLATED_CANDIDATE_COUNT).map((candidate, i) => (
+            <li key={`en-${i}`} className="food-list-item-with-action food-list-item-muted">
+              <span>
+                {candidate.nameEn} — {candidate.carbsG} г вуглеводів
+                {candidate.gi !== null && `, ГІ ${candidate.gi} (${uk.health.gi[classifyGi(candidate.gi)]})`}
+              </span>
+              <button type="button" onClick={() => applyEstimate(candidate, search)}>
+                {uk.foods.form.pickButton}
+              </button>
+            </li>
+          ))}
         </ul>
       )}
 
@@ -348,7 +392,7 @@ function AddFoodForm({
         </p>
       )}
 
-      {lookupAttempted && candidates.length === 0 && (
+      {lookupAttempted && candidates.length === 0 && !lookupProblem && (
         <p className="food-form-source">
           {uk.foods.form.sourceLabel}: {uk.foods.form.source[source]} — {uk.foods.form.notFound}
         </p>
