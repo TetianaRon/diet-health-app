@@ -26,6 +26,13 @@ describe("rowToBloodSugarEntry / bloodSugarEntryToRow", () => {
     expect(rowToBloodSugarEntry(row).context).toBe("other");
   });
 
+  // Sheets now returns stored values (UNFORMATTED_VALUE, see sheets.ts) —
+  // a real number, not the locale's display text ("6,2" read as 0 before).
+  it("reads a decimal stored as a real number", () => {
+    const row = ["2026-10-01T07:00:00.000Z", 6.2, "fasting", ""];
+    expect(rowToBloodSugarEntry(row).valueMmolL).toBe(6.2);
+  });
+
   it("defaults an unparseable value to 0", () => {
     const row = ["2026-08-13T07:00:00.000Z", "n/a", "other", ""];
     expect(rowToBloodSugarEntry(row).valueMmolL).toBe(0);

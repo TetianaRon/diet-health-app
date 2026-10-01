@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeSettingsUpdates, DEFAULT_SETTINGS, parseSettingsRows, settingsToRows, type Settings } from "./settings";
+import { computeSettingsUpdates, DEFAULT_SETTINGS, parseSettingsRows, SETTINGS_KEYS, settingsToRows, type Settings } from "./settings";
 
 describe("parseSettingsRows", () => {
   it("maps known keys and falls back to defaults for missing ones", () => {
@@ -51,6 +51,21 @@ describe("parseSettingsRows", () => {
     expect(result.showSugarsTotal).toBe(true);
     expect(result.showProteinTotal).toBe(DEFAULT_SETTINGS.showProteinTotal);
     expect(result.showSodiumTotal).toBe(DEFAULT_SETTINGS.showSodiumTotal);
+  });
+});
+
+describe("parseSettingsRows with stored values (not display text)", () => {
+  it("reads real decimals and booleans as Sheets returns them", () => {
+    const settings = parseSettingsRows([
+      [SETTINGS_KEYS.maxGapHours, 2.5],
+      [SETTINGS_KEYS.bloodSugarMin, 4.4],
+      [SETTINGS_KEYS.showFatTotal, true],
+      [SETTINGS_KEYS.showCaloriesProgress, false],
+    ]);
+    expect(settings.maxGapHours).toBe(2.5);
+    expect(settings.bloodSugarMin).toBe(4.4);
+    expect(settings.showFatTotal).toBe(true);
+    expect(settings.showCaloriesProgress).toBe(false);
   });
 });
 

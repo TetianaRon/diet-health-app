@@ -58,6 +58,17 @@ describe("rowToIngredient", () => {
   });
 });
 
+describe("rowToIngredient with stored values (not display text)", () => {
+  it("reads real numbers and booleans as Sheets returns them", () => {
+    const row = ["Гречка суха", "buckwheat, raw", 71.5, 50, 10, 0, 13.2, 3.4, 343, 1, "starter", "2026-10-01", true, "none", false, ""];
+    const ingredient = rowToIngredient(row);
+    expect(ingredient.carbsG).toBe(71.5);
+    expect(ingredient.proteinG).toBe(13.2);
+    expect(ingredient.favorite).toBe(true);
+    expect(ingredient.giVerified).toBe(false);
+  });
+});
+
 describe("ingredientToRow", () => {
   const ingredient: Ingredient = {
     nameUk: "Кефір",

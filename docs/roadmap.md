@@ -131,11 +131,15 @@ Spec: "Planned: food families with cooking states". Raw weight + state in the fi
 - **Reminder missed if due during a phone restart** (2026-09-30, developer's Pixel, 1.5.1 debug build): a reminder due while the phone is off/booting is silently dropped. Cause: in `@capacitor/local-notifications` 8.3.1, `LocalNotificationRestoreReceiver` skips one-shots whose time has passed as "triggered" (`isTriggered()` = `at <= now`) before its own "show what was missed while off" branch, which is never reached for one-shots. A reminder due *after* the restart is restored fine (verified: exact `RTC_WAKEUP` alarm back after unlock, fired on time without opening the app). Fix idea: patch the plugin (patch-package) so a one-shot due after the last boot started (`currentTimeMillis − elapsedRealtime`) counts as missed and is shown 15 s after boot; report upstream.
 - **Reminder is easy to miss: quiet sound, no vibration** (2026-09-30): Android played the channel's default sound (`notification_alert` beep=1) at the phone's notification volume (3/7 on the Pixel), but the `meal-reminders` channel was created with vibration off. Fix idea: a new channel with vibration on (channel sound/vibration can't be changed after creation; users' manual channel tweaks would reset), maybe a more noticeable sound; check mom's notification volume at setup.
 
+- **«Підключити мамину таблицю» points to her old sheet** (2026-10-01): mom created a new sheet via the app; the button (`VITE_DEFAULT_SPREADSHEET_ID` / build-time ID) still opens the old one. Decide which sheet is hers going forward; ties into 2.0 (sheet detection + Picker), which removes these build-time IDs anyway.
+- **Test sheet in the Ukrainian locale** (2026-10-01, chore): the 1.5.3 bug only appeared in Ukrainian-locale sheets; keep a test sheet with that locale for every release check.
+
 New items land here with a one-line note, then get placed above.
 
 ---
 
 ## Released
+- ✅ **1.5.3** (2026-10-01): urgent fix — decimals (blood sugar 6.2, carbs, GL, settings) read as 0 from Ukrainian-locale sheets; the app now reads stored values instead of display text.
 - ✅ **1.5.2** (2026-10-01): Google Cloud Translation through our own `api/translate`, 15,000 characters/day project cap (inside the free tier), 2,000/day per device, translations remembered on the device.
 - ✅ **1.5.1** (2026-09-30): keyboard language switch, food search (capitals, failures, translation limit, top-5 layout), no service worker in the Android app. Includes 1.5 (reminders while idle, blood sugar time + editing, USDA proxy, privacy link, desktop layout).
 - ✅ **Web version live** at `track-my-meals.roncreator.com` (2026-09-28): unlisted, USDA proxy, desktop layout.

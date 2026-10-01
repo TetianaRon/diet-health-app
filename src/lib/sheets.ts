@@ -420,6 +420,16 @@ function readCacheKey(tab: string, range: string): string {
   return `${READ_CACHE_PREFIX}${getSpreadsheetId()}:${tab}:${range}`;
 }
 
+// Read the stored values, not their display text (2026-10-01). The default
+// (FORMATTED_VALUE) returns what the cell *shows*, which depends on the
+// spreadsheet's locale: in mom's Ukrainian-locale sheet a stored 6.2 comes
+// back as "6,2", Number("6,2") is NaN, and every decimal — blood sugar,
+// carbs, GL — read as 0 (TRUE/FALSE likewise show as ІСТИНА/ХИБНІСТЬ).
+// UNFORMATTED_VALUE returns real numbers and booleans in any locale.
+// Dates/times keep coming back as their displayed text (FORMATTED_STRING),
+// exactly as before, so DateAdded and time settings parse unchanged.
+const READ_OPTIONS = "valueRenderOption=UNFORMATTED_VALUE&dateTimeRenderOption=FORMATTED_STRING";
+
 /** True if the most recent readRange() call fell back to cached data instead of a live fetch — check after fetching to decide whether to show an "offline" hint. */
 export function wasLastReadFromCache(): boolean {
   return lastReadWasFromCache;
@@ -430,7 +440,7 @@ export async function readRange(tab: string, range: string): Promise<unknown[][]
   const spreadsheetId = getSpreadsheetId();
   const key = readCacheKey(tab, range);
   try {
-    const response = await authorizedFetch(`${spreadsheetId}/values/${tab}!${range}`);
+    const response = await authorizedFetch(`${spreadsheetId}/values/${tab}!${range}?${READ_OPTIONS}`);
     const data = await response.json();
     const values = data.values ?? [];
     localStorage.setItem(key, JSON.stringify(values));
