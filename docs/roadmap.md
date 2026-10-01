@@ -11,10 +11,10 @@ The planner for Track My Meals / Трекер Харчування and the roncr
 
 ---
 
-## Next session — start here (set 2026-09-30)
-1. **Check mom's phone after the 1.5.1 update:** the new version shows on first open (e.g. a capitalised search gives many results) — the real test of the stale-screens fix (fix 3). If she still sees the old version, investigate *before* she restarts or clears anything.
-2. **File the WebView keyboard issue with Chromium** (fix 1b) — Claude drafts, developer files.
-3. **1.5.2** (Google Cloud Translation): developer enables billing + the Translation API with Claude's step-by-step guide; Claude builds the proxy and limits.
+## Next session — start here (set 2026-10-01)
+1. **Check mom's phone after the update to 1.5.2:** the new version shows on first open, without restarting (a capitalised search gives many results with Ukrainian names). The real test of the stale-screens fix; if her phone already installed 1.5.1 overnight, it mainly confirms updates show at once. If she sees an old version, investigate *before* she restarts or clears anything.
+2. **File the WebView keyboard issue with Chromium** — report drafted in the 2026-09-30 session (developer files it).
+3. **Pick the next release** — 1.6 (foundations for verified data) per the plan, or the reminder items from Intake first.
 
 ## Current and upcoming releases
 
@@ -45,7 +45,7 @@ Branch `release/1.5.1` from `release/1.5` (1.5 isn't in `main` yet); versionCode
 **3. Old screens after an update**
 - Don't use the PWA service worker inside the Android app: register it only on the web (`Capacitor.isNativePlatform()` check, `injectRegister: null` in `vite.config.ts` + manual registration in `main.tsx`), and in the native app **unregister any existing worker** and clear its caches once, since installed phones already have one. The web version keeps its offline/installable behaviour.
 
-**Device results (2026-09-30, developer's Pixel 10, debug build 1.5.1):** ✅ keyboard language switch works; ✅ «Кукурудза» gives many results, top 5 translated, English search, offline → "unavailable"; ✅ blood sugar time + edit; ✅ privacy link; ✅ reminder with the app closed, and after a restart without opening the app (two new reminder issues → Intake). Released to Play (internal testing; mom's phone updates automatically) and merged into `main` on 2026-09-30. Web build checked locally (app loads, service worker registered by the app, no console errors). Still to confirm: fix 3 on mom's phone after the update.
+**Device results (2026-09-30, developer's Pixel 10, debug build 1.5.1):** ✅ keyboard language switch works; ✅ «Кукурудза» gives many results, top 5 translated, English search, offline → "unavailable"; ✅ blood sugar time + edit; ✅ privacy link; ✅ reminder with the app closed, and after a restart without opening the app (two new reminder issues → Intake). Released to Play (internal testing; mom's phone updates automatically) and merged into `main` on 2026-09-30. Web build checked locally (app loads, service worker registered by the app, no console errors). ✅ Play install on the developer's Pixel (2026-10-01): keyboard switch works, search shows the top 5 translated + the rest in English. Still to confirm: fix 3 on mom's phone after the update.
 
 **Tests (Pixel over USB + emulator):**
 - Keyboard: long-press space → switch language in Settings, Продукти search, meal editor and blood sugar fields; then check nothing else broke: keyboard hides on leaving a field, app switching with the keyboard open, Google sign-in window, the notification-permission dialog.
@@ -53,7 +53,7 @@ Branch `release/1.5.1` from `release/1.5` (1.5 isn't in `main` yet); versionCode
 - Update: install 1.5 → open → install 1.5.1 over it → new screens show at once (no restart/cache clear).
 - 1.5 checks: reminder with the app closed, blood sugar time + edit, privacy link.
 
-### 1.5.2 — Translation via Google Cloud · 🔨 in progress
+### 1.5.2 — Translation via Google Cloud · ✅ released 2026-10-01
 Replaces the free MyMemory service, whose small daily limit (5,000 characters, anonymous) caused the «Не знайдено» day. Decided 2026-09-30; simple version first, no per-user accounts.
 - **Google Cloud Translation through our server:** new `api/translate.js` on Vercel, next to `api/usda.js`; the API key lives only in Vercel env vars, never in the app. Same origin allow-list as the USDA proxy; a maximum text length and at most ~6 texts per request (the query + the top 5 names), so one call can't use much.
 - **Google-side safety (developer sets up, Claude walks through it):** enable billing + the Cloud Translation API on the Google Cloud project; a **daily quota cap of 15,000 characters** (500,000 free per month ÷ 31), which actually stops requests, so we never pay; plus a **budget alert** as an early warning (budgets alone don't stop anything). Check Google's current pricing page first.
@@ -61,7 +61,7 @@ Replaces the free MyMemory service, whose small daily limit (5,000 characters, a
 - **When either limit is hit:** the same notice + English-only search as in 1.5.1.
 - **Privacy policy** (roncreator.com, EN + UA): Google Cloud Translation replaces MyMemory; still only food names are sent.
 - **Record in `build-log.md`:** why MyMemory was picked originally (live-test quick fix, no server back then, avoiding costs) and that its limit wasn't checked, especially after per-result back-translation multiplied usage ~20×.
-- Makes the 1.5.1 "info@roncreator.com for MyMemory" question unnecessary unless 1.5.2 is delayed.
+- **Result (2026-10-01):** live on the web and released to Play. Verified: live endpoint (site + Android origins work, other sites refused), the Android build on the emulator against it (2 translation requests per search instead of 21), developer tested the web search. Budget alert at $1 set; the API key kept (it was shown once in a session transcript — restricted to Translation and capped, developer chose to keep it). Privacy policy updated on roncreator.com (also corrects the Android sign-in token wording).
 
 ### 1.6 — Foundations for verified data · 📝 planned
 Everything the data import (1.7) and most later features stand on.
@@ -127,6 +127,7 @@ New items land here with a one-line note, then get placed above.
 ---
 
 ## Released
+- ✅ **1.5.2** (2026-10-01): Google Cloud Translation through our own `api/translate`, 15,000 characters/day project cap (inside the free tier), 2,000/day per device, translations remembered on the device.
 - ✅ **1.5.1** (2026-09-30): keyboard language switch, food search (capitals, failures, translation limit, top-5 layout), no service worker in the Android app. Includes 1.5 (reminders while idle, blood sugar time + editing, USDA proxy, privacy link, desktop layout).
 - ✅ **Web version live** at `track-my-meals.roncreator.com` (2026-09-28): unlisted, USDA proxy, desktop layout.
 - ✅ **roncreator.com live** (2026-09-28): home + landings (EN/UA), brand from Figma, privacy policy, sticky header with project links.
