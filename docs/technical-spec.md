@@ -393,6 +393,20 @@ Replaces "a logged meal is a static record forever" with: **DailyLog rows older 
 - **Tuning data:** for each Lens use, a small text file next to the photo in Drive holds the Lens text, the parsed values and the values she finally saved; manual fills keep the photo + final values. These become parser unit tests.
 - **To check on her phone first:** that Lens opens from the app with the photo, and whether Lens offers «Поділитися» for selected text (if so the app can register as a share target and skip copy/paste).
 
+### Alternative to step 5: AI label reading (explored 2026-10-02, not decided)
+Revisit when the label-photo work starts. Instead of the Google Lens copy/paste round trip, the app could send the label photo to an AI model that reads the nutrition table directly and fills the form; she checks each highlighted field against the photo, as above. Options found (Google changes tiers often — re-check limits and prices in Google AI Studio / Cloud pricing when implementing):
+
+| Option | Cost | Privacy | Catches |
+|---|---|---|---|
+| **Gemini API (Flash), paid tier** on our existing Google Cloud project, through our own `api/` function like translation | Charged from the first request (likely a fraction of a cent per photo — check current price); cap it with a quota / spend cap | Google doesn't use the data | Needs the cap set up like the translation quota |
+| **Gemini API, free tier** on a **separate project without billing** (billing is per project: once a project has billing, Gemini there is paid-only, with no free allowance underneath — unlike Translation/Vision, whose monthly free allowance stays with billing) | $0, a few hundred requests a day on Flash models | Google may use inputs to improve products; human reviewers may read them | Label photos are product labels, not personal data, but the privacy policy must say so |
+| **Gemini Nano on the phone** (Android ML Kit GenAI Prompt API) | $0, no limit, offline | Nothing leaves the phone | Newer phones only (Pixel 10 yes; mom's model unknown); the custom-prompt API was alpha; no web version; needs native code |
+| **Cloud Vision OCR** | 1,000 photos/month free (allowance stays with billing) | Paid-tier terms | Returns raw text only — we'd still parse which number is which (the Lens parser's job) |
+
+**Other places AI could help later:** suggesting the best USDA entry among the candidates for a Ukrainian query (with a one-line reason; values still from USDA); proposing a typical composition for a dish without a recipe, labelled «оцінка», for her to adjust.
+
+**Boundaries (not-a-medical-app rule):** AI reads, matches and suggests — it is **never a source of values** (values stay from the label, USDA or the GI tables, with their sources); no GI from AI, no advice; never send health data (blood sugar, meals) to an AI service — only label photos and food names.
+
 ## Daily summary and progress indicators
 
 Today screen shows: running totals vs. Settings targets (carbs, calories), time-until-next-meal-warning, most recent blood sugar reading vs. target range.

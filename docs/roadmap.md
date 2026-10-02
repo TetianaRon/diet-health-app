@@ -97,6 +97,7 @@ Spec: "Planned: food families with cooking states". Raw weight + state in the fi
 
 ### Later (unordered)
 - **Label photos + zoom → drafts (photo/name-only, loggable) → 3-day update window → Google Lens** (spec: "Label photos, drafts and the 3-day update window")
+  - *Reading the label:* Google Lens copy/paste, or **AI label reading** (Gemini paid / free on a separate project / on-device Nano, or Vision OCR) — options, costs, privacy and boundaries recorded in the spec (2026-10-02); decide when this work starts.
 - **English version** (spec: "Planned: English version")
 - **Public launch prep:** drop the broad `spreadsheets` scope (after Picker), Google OAuth verification, store listing (app-designer wording, no medical claims)
 - **Persistent web sign-in** — only with real user volume
