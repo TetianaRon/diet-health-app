@@ -3,6 +3,7 @@
 The planner for Track My Meals / Трекер Харчування and the roncreator.com site. **This file decides what gets built and when.** The *design* of each feature lives in [technical-spec.md](technical-spec.md); the history of what was done lives in [build-log.md](build-log.md).
 
 ## How we work (since 2026-09-29)
+- **Testing never waits on mom's phone** (developer, 2026-10-02): she lives separately and only reports bugs she happens to notice. Releases are checked on the developer's Pixel (USB / Play installs), the emulator, and test sheets and settings that mimic her setup (Ukrainian-locale sheet, Ukrainian Gboard). Her reports go to Intake, or are fixed at once if something live is broken.
 
 - **Small, numbered releases.** Each release has a clear scope, its own branch (`release/x.y` or `feature/...`), and ships only when finished and checked. `main` is what's live (Vercel deploys the web app from it; Android releases are built from it).
 - **New feedback goes to the Intake list first**, gets a short note, and is placed into a release or the backlog — it is **not** built on the spot. Exceptions: something live is broken, or the developer explicitly asks to do it now.
@@ -11,10 +12,10 @@ The planner for Track My Meals / Трекер Харчування and the roncr
 
 ---
 
-## Next session — start here (set 2026-10-01)
-1. **Check mom's phone after the update to 1.5.2:** the new version shows on first open, without restarting (a capitalised search gives many results with Ukrainian names). The real test of the stale-screens fix; if her phone already installed 1.5.1 overnight, it mainly confirms updates show at once. If she sees an old version, investigate *before* she restarts or clears anything.
-2. **File the WebView keyboard issue with Chromium** — report drafted in the 2026-09-30 session (developer files it).
-3. **Build 1.6** (item IDs + sheet upgrade) — design in the spec; decided 2026-10-01 that the database work (1.7) follows it.
+## Next session — start here (set 2026-10-02)
+1. **File the WebView keyboard issue with Chromium** — report drafted in the 2026-09-30 session (developer files it).
+2. **1.5.4: web sign-in expiry** (Intake) — small fix before 1.6; mom may use the web version on the computer.
+3. **Build 1.6** (item IDs + sheet upgrade) — design in the spec; branch `release/1.6` holds the committed design.
 
 ## Current and upcoming releases
 
@@ -45,7 +46,7 @@ Branch `release/1.5.1` from `release/1.5` (1.5 isn't in `main` yet); versionCode
 **3. Old screens after an update**
 - Don't use the PWA service worker inside the Android app: register it only on the web (`Capacitor.isNativePlatform()` check, `injectRegister: null` in `vite.config.ts` + manual registration in `main.tsx`), and in the native app **unregister any existing worker** and clear its caches once, since installed phones already have one. The web version keeps its offline/installable behaviour.
 
-**Device results (2026-09-30, developer's Pixel 10, debug build 1.5.1):** ✅ keyboard language switch works; ✅ «Кукурудза» gives many results, top 5 translated, English search, offline → "unavailable"; ✅ blood sugar time + edit; ✅ privacy link; ✅ reminder with the app closed, and after a restart without opening the app (two new reminder issues → Intake). Released to Play (internal testing; mom's phone updates automatically) and merged into `main` on 2026-09-30. Web build checked locally (app loads, service worker registered by the app, no console errors). ✅ Play install on the developer's Pixel (2026-10-01): keyboard switch works, search shows the top 5 translated + the rest in English. Still to confirm: fix 3 on mom's phone after the update.
+**Device results (2026-09-30, developer's Pixel 10, debug build 1.5.1):** ✅ keyboard language switch works; ✅ «Кукурудза» gives many results, top 5 translated, English search, offline → "unavailable"; ✅ blood sugar time + edit; ✅ privacy link; ✅ reminder with the app closed, and after a restart without opening the app (two new reminder issues → Intake). Released to Play (internal testing; mom's phone updates automatically) and merged into `main` on 2026-09-30. Web build checked locally (app loads, service worker registered by the app, no console errors). ✅ Play install on the developer's Pixel (2026-10-01): keyboard switch works, search shows the top 5 translated + the rest in English. Fix 3 (no stale screens): checked on the developer's own Play updates (does the new version show on first open?), not on mom's phone.
 
 **Tests (Pixel over USB + emulator):**
 - Keyboard: long-press space → switch language in Settings, Продукти search, meal editor and blood sugar fields; then check nothing else broke: keyboard hides on leaving a field, app switching with the keyboard open, Google sign-in window, the notification-permission dialog.
@@ -113,7 +114,7 @@ Spec: "Planned: food families with cooking states". Raw weight + state in the fi
 - ⏸ Pomodoro Guardian: second Figma page (inner page design) not reviewed yet.
 
 ## Chores
-- 📝 **After 1.5 is on mom's phone:** retire the old GitHub Pages privacy page, rename the repo to `track-my-meals`, make it private, rename the local folder (+ move Claude's notes).
+- 📝 **Now that 1.5.x is released:** retire the old GitHub Pages privacy page, rename the repo to `track-my-meals`, make it private, rename the local folder (+ move Claude's notes).
 - 📝 **Staging address** for signed-in branch testing (`staging` branch + fixed domain + OAuth origin) and tick **Preview** for `USDA_API_KEY` / `VITE_SPREADSHEET_ID` in Vercel.
 - 📝 Review page: clear the stale кисляк objection (Г68).
 - 🔨 **Test devices** — *2026-09-30:* Pixel 10 AVD (Google Play image, Gboard EN+UK) works; Windows hypervisor re-enabled. Still to add: small phone, medium phone, tablet (needs "Android SDK Command-line Tools" installed in Android Studio), and mom's model. Original note: Android Emulator (already installed, but no system images/AVDs yet) — create 2–3 virtual phones via Android Studio → Device Manager, *Google Play* images (include Gboard): a small phone (mom's size — model to confirm), a large phone, a tablet; enable Windows Hypervisor Platform if asked. Lets Claude reproduce app bugs without the developer's phone. Samsung-specific issues still need a real device or Firebase Test Lab (free daily quota, automated only).
