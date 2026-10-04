@@ -16,6 +16,7 @@ import { columnLetter, SCAN_LAST_COLUMN } from "./sheetRow";
 import { labelFor } from "./sheetLabels";
 import { analyzeDataTab, isBlocking, isTabRepairable, planLabelRepair, planTabRepair, type TabIssue, type TabReport } from "./sheetSchema";
 import { planItemIdUpgrade } from "./sheetUpgrade";
+import { planColumnMigrations } from "./columnMigrations";
 import { ID_COUNTER_KEYS, type SheetItemKind } from "./itemIds";
 import { writeItemCounter } from "./itemIdStore";
 import { STARTER_FOODS } from "../data/starter-foods";
@@ -337,10 +338,12 @@ export interface UpgradeSummary {
   labelsFilled: number;
   idsFilled: number;
   idsRenumbered: number;
+  /** Column migrations that filled a new column from an old one (readable names). */
+  migrated: { to: string; from: string; cells: number }[];
 }
 
 function emptySummary(): UpgradeSummary {
-  return { addedTabs: [], addedColumns: [], labelsFilled: 0, idsFilled: 0, idsRenumbered: 0 };
+  return { addedTabs: [], addedColumns: [], labelsFilled: 0, idsFilled: 0, idsRenumbered: 0, migrated: [] };
 }
 
 async function applySilentRepairs({ reports, rowsByTab }: HealthScan, summary: UpgradeSummary): Promise<boolean> {
@@ -430,6 +433,15 @@ async function applyItemIdUpgrade({ rowsByTab }: HealthScan, summary: UpgradeSum
   return plan.valueUpdates.length > 0;
 }
 
+/** Fills new columns from old ones where a release changed a column's meaning (columnMigrations.ts). */
+async function applyColumnMigrations({ rowsByTab }: HealthScan, summary: UpgradeSummary): Promise<boolean> {
+  const plan = planColumnMigrations(rowsByTab);
+  if (plan.valueUpdates.length === 0) return false;
+  await batchUpdateRanges(plan.valueUpdates);
+  summary.migrated.push(...plan.applied.map((a) => ({ to: labelFor(a.to), from: labelFor(a.from), cells: a.cells })));
+  return true;
+}
+
 /**
  * The check the app runs after sign-in / a sheet switch: applies every
  * silent upgrade first, then reports only what's left for the structure
@@ -440,6 +452,10 @@ export async function checkAndUpgradeSpreadsheet(): Promise<{ reports: TabReport
   const summary = emptySummary();
   let changed = false;
   if (await applySilentRepairs(scan, summary)) {
+    changed = true;
+    scan = await scanSpreadsheet();
+  }
+  if (await applyColumnMigrations(scan, summary)) {
     changed = true;
     scan = await scanSpreadsheet();
   }

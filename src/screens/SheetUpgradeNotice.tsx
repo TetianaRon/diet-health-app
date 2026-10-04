@@ -14,6 +14,7 @@ export function upgradeNoticeLines(summary: UpgradeSummary): string[] {
   const columns = [...new Set(summary.addedColumns)];
   if (columns.length > 0) lines.push(t.addedColumns(columns.map((c) => `«${c}»`).join(", ")));
   else if (summary.labelsFilled > 0) lines.push(t.labelsFilled);
+  for (const m of summary.migrated) lines.push(t.migrated(m.to, m.from));
   if (summary.idsFilled > 0) lines.push(t.idsFilled);
   if (summary.idsRenumbered > 0) lines.push(t.idsRenumbered(summary.idsRenumbered));
   else lines.push(t.onlyEmptyCells);

@@ -324,6 +324,11 @@ Run by the structure check after sign-in / sheet switch. **Only blank cells are 
 
 **Silent vs. asking (changes the structure-check dialog):** additive, lossless repairs — missing tab, missing columns, missing Settings keys, missing IDs / `BasedOn` / recipe IDs — are applied **without the dialog**. The dialog stays only for what needs a person: someone else's layout (`notAppLayout`), duplicate columns with conflicting values, and the presentation rewrites that move or rewrite existing cells (inserting the readable-names row, rewriting header text). This is also the mechanism 1.8 and 1.9 rely on for their new columns and tabs.
 
+### Column migrations — when a released column changes meaning (added in 1.7, developer, 2026-10-05)
+Additive upgrades can't carry data over when a column's meaning changes (first case: Weight `Timestamp` → `Date`, one record per day). A manual fix isn't acceptable for a public app, so `src/lib/columnMigrations.ts` declares migrations — `{ tab, from, to, convert }` — and the silent upgrade, right after adding the new column, **fills the new column's empty cells by converting the old column's values**. The old column stays exactly as it was (the app just stops reading it); filled cells are never overwritten; the one-time note says «Стовпець «Дата» заповнено зі стовпця «Час»». Pure, unit-tested.
+
+**Rule for every release from now on:** a change to the sheet is either **additive** (new tab/column/settings key) or ships **with a column migration**. Columns are never removed or rewritten automatically; anything needing that goes to the structure dialog for a person.
+
 ### The app working by ID
 - **Lists / pickers:** built-in items merged with the user's rows **by ID**: a row with `BasedOn = B0042` replaces `B0042`; everything else is listed as it is (two «Яблуко» can coexist — each shows its kind/source).
 - **Edits, favourite, glycemic flag, rename:** find the row by `Id`. Renaming is safe — nothing refers to the name any more.
