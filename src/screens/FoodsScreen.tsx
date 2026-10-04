@@ -887,7 +887,7 @@ type FoodsSubTab = "ingredients" | "dishes";
 type DishAddMode = "starter" | "custom";
 
 export default function FoodsScreen() {
-  const { signedIn, initializing, signIn } = useAuth();
+  const { signedIn, initializing, signIn, sessionExpired } = useAuth();
   const [subTab, setSubTab] = useState<FoodsSubTab>("ingredients");
   const [ingredients, setIngredients] = useState<Ingredient[] | null>(null);
   const [dishes, setDishes] = useState<Dish[] | null>(null);
@@ -899,14 +899,17 @@ export default function FoodsScreen() {
   const [editingDish, setEditingDish] = useState<Dish | null>(null);
 
   useEffect(() => {
-    if (!signedIn) return;
+    // Also after a renewed sign-in (sessionExpired true -> false): reload,
+    // and clear the "sign in again" error the failed load left behind.
+    if (!signedIn || sessionExpired) return;
+    setLoadError(null);
     listIngredients()
       .then(setIngredients)
       .catch((err: unknown) => setLoadError(err instanceof Error ? err.message : String(err)));
     listDishes()
       .then(setDishes)
       .catch((err: unknown) => setLoadError(err instanceof Error ? err.message : String(err)));
-  }, [signedIn]);
+  }, [signedIn, sessionExpired]);
 
   const switchSubTab = (tab: FoodsSubTab) => {
     setSubTab(tab);

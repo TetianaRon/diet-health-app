@@ -3,6 +3,7 @@ import { Capacitor } from "@capacitor/core";
 import { LocalNotifications } from "@capacitor/local-notifications";
 import { StatusBar, Style } from "@capacitor/status-bar";
 import { uk } from "./i18n/uk";
+import SessionExpiredBanner from "./screens/SessionExpiredBanner";
 import { AuthProvider } from "./context/AuthContext";
 import { SheetHealthProvider, useSheetHealth } from "./context/SheetHealthContext";
 import SheetHealthDialog from "./screens/SheetHealthDialog";
@@ -75,6 +76,8 @@ export default function App() {
           </button>
         </div>
         )}
+
+        <SessionExpiredBanner />
 
         {/* Keyed on the repair count: a repaired spreadsheet remounts the screens so they re-read it. */}
         <ScreensAfterRepair>

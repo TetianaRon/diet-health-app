@@ -105,7 +105,7 @@ export default function TodayScreen({
   // so it behaves as its own screen and a stray tab tap can't discard a draft.
   onEditorOpenChange?: (open: boolean) => void;
 } = {}) {
-  const { signedIn, initializing, signIn } = useAuth();
+  const { signedIn, initializing, signIn, sessionExpired } = useAuth();
   const [ingredients, setIngredients] = useState<Ingredient[] | null>(null);
   const [dishes, setDishes] = useState<Dish[] | null>(null);
   const [settings, setSettings] = useState<Settings | null>(null);
@@ -141,7 +141,10 @@ export default function TodayScreen({
   }, [editor, onEditorOpenChange]);
 
   useEffect(() => {
-    if (!signedIn) return;
+    // Also after a renewed sign-in (sessionExpired true -> false): reload,
+    // and clear the "sign in again" error the failed load left behind.
+    if (!signedIn || sessionExpired) return;
+    setLoadError(null);
 
     const refresh = () => {
       setShowingCachedData(false);
@@ -191,7 +194,7 @@ export default function TodayScreen({
     return () => {
       void listenerPromise.then((listener) => listener.remove());
     };
-  }, [signedIn]);
+  }, [signedIn, sessionExpired]);
 
   // (Re)schedules the meal reminder whenever the most recent log entry or the
   // relevant settings change — covers both "just logged a meal" (entries

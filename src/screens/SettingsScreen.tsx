@@ -294,7 +294,7 @@ function SnackShareHint({ values }: { values: Record<string, string> }) {
 }
 
 export default function SettingsScreen() {
-  const { signedIn, initializing, signIn, signOut } = useAuth();
+  const { signedIn, initializing, signIn, signOut, sessionExpired } = useAuth();
   const [values, setValues] = useState<Record<string, string>>({});
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
@@ -303,7 +303,10 @@ export default function SettingsScreen() {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    if (!signedIn) return;
+    // Also after a renewed sign-in (sessionExpired true -> false): reload,
+    // and clear the "sign in again" error the failed load left behind.
+    if (!signedIn || sessionExpired) return;
+    setLoadError(null);
     getSettings()
       .then((s) => {
         setValues({
@@ -315,7 +318,7 @@ export default function SettingsScreen() {
         setLoaded(true);
       })
       .catch((err: unknown) => setLoadError(err instanceof Error ? err.message : String(err)));
-  }, [signedIn]);
+  }, [signedIn, sessionExpired]);
 
   const handleSave = async () => {
     const numericParsed = Object.fromEntries(NUMERIC_FIELDS.map((field) => [field, Number(values[field])])) as Record<

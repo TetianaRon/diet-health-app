@@ -14,8 +14,7 @@ The planner for Track My Meals / Трекер Харчування and the roncr
 
 ## Next session — start here (set 2026-10-02)
 1. **File the WebView keyboard issue with Chromium** — report drafted in the 2026-09-30 session (developer files it).
-2. **1.5.4: web sign-in expiry** (Intake) — small fix before 1.6; mom may use the web version on the computer.
-3. **Build 1.6** (item IDs + sheet upgrade) — design in the spec; branch `release/1.6` holds the committed design.
+2. **Build 1.6** (item IDs + sheet upgrade) — design in the spec; branch `release/1.6` holds the committed design.
 
 ## Current and upcoming releases
 
@@ -136,13 +135,14 @@ Spec: "Planned: food families with cooking states". Raw weight + state in the fi
 - **«Підключити мамину таблицю» points to her old sheet** (2026-10-01): mom created a new sheet via the app; the button (`VITE_DEFAULT_SPREADSHEET_ID` / build-time ID) still opens the old one. Decide which sheet is hers going forward; ties into 2.0 (sheet detection + Picker), which removes these build-time IDs anyway.
 - **Test sheet in the Ukrainian locale** (2026-10-01, chore): the 1.5.3 bug only appeared in Ukrainian-locale sheets; keep a test sheet with that locale for every release check.
 
-- **Web: after the sign-in expires, the app just fails to reach the sheet** (2026-10-01, developer): a web page left open past the ~1-hour Google access token keeps acting signed in, but every sheet request fails, with no prompt to sign in again. Likely cause: on a 401 `authorizedFetch` tries `refreshAccessToken()`, which is a no-op on the web (no refresh token there by design), then throws a generic error while the UI still shows the user as signed in. Fix idea: on a web 401, first try a silent new token from Google Identity Services (no popup if the Google session is still active); if that fails, switch the app to signed-out and show «Увійти через Google» with a short note instead of failing quietly.
+- ✅ *Fixed in 1.5.4.* **Web: after the sign-in expires, the app just fails to reach the sheet** (2026-10-01, developer): a web page left open past the ~1-hour Google access token keeps acting signed in, but every sheet request fails, with no prompt to sign in again. Likely cause: on a 401 `authorizedFetch` tries `refreshAccessToken()`, which is a no-op on the web (no refresh token there by design), then throws a generic error while the UI still shows the user as signed in. Fix idea: on a web 401, first try a silent new token from Google Identity Services (no popup if the Google session is still active); if that fails, switch the app to signed-out and show «Увійти через Google» with a short note instead of failing quietly.
 
 New items land here with a one-line note, then get placed above.
 
 ---
 
 ## Released
+- ✅ **1.5.4** (2026-10-04): when the Google sign-in expires (~1 h on the web; a dead refresh token on Android) a banner asks to sign in again instead of requests failing silently; screens keep what's on them and reload after signing in.
 - ✅ **1.5.3** (2026-10-01): urgent fix — decimals (blood sugar 6.2, carbs, GL, settings) read as 0 from Ukrainian-locale sheets; the app now reads stored values instead of display text.
 - ✅ **1.5.2** (2026-10-01): Google Cloud Translation through our own `api/translate`, 15,000 characters/day project cap (inside the free tier), 2,000/day per device, translations remembered on the device.
 - ✅ **1.5.1** (2026-09-30): keyboard language switch, food search (capitals, failures, translation limit, top-5 layout), no service worker in the Android app. Includes 1.5 (reminders while idle, blood sugar time + editing, USDA proxy, privacy link, desktop layout).

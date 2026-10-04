@@ -482,6 +482,12 @@ export const uk = {
     } as Record<string, string>,
   },
   breadcrumb: { label: "Навігація" },
+  auth: {
+    sessionExpiredBanner:
+      "Вхід у Google завершився (так буває приблизно через годину). Увійдіть знову, щоб продовжити — введене на екрані не зникне.",
+    signInAgainButton: "Увійти знову",
+    sessionExpiredError: "Вхід у Google завершився. Увійдіть знову й повторіть дію.",
+  },
   timeInput: {
     hour: "Година",
     minute: "Хвилини",

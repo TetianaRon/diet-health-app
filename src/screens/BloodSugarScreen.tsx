@@ -134,7 +134,7 @@ function BloodSugarForm({
 }
 
 export default function BloodSugarScreen() {
-  const { signedIn, initializing, signIn } = useAuth();
+  const { signedIn, initializing, signIn, sessionExpired } = useAuth();
   const [entries, setEntries] = useState<BloodSugarEntry[] | null>(null);
   const [settings, setSettings] = useState<Settings | null>(null);
   const [logEntries, setLogEntries] = useState<DailyLogEntry[] | null>(null);
@@ -145,7 +145,10 @@ export default function BloodSugarScreen() {
   const [expandedEntryKey, setExpandedEntryKey] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!signedIn) return;
+    // Also after a renewed sign-in (sessionExpired true -> false): reload,
+    // and clear the "sign in again" error the failed load left behind.
+    if (!signedIn || sessionExpired) return;
+    setLoadError(null);
     listBloodSugarEntries()
       .then(setEntries)
       .catch((err: unknown) => setLoadError(err instanceof Error ? err.message : String(err)));
@@ -155,7 +158,7 @@ export default function BloodSugarScreen() {
     listLogEntries()
       .then(setLogEntries)
       .catch((err: unknown) => setLoadError(err instanceof Error ? err.message : String(err)));
-  }, [signedIn]);
+  }, [signedIn, sessionExpired]);
 
   if (initializing) {
     return (

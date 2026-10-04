@@ -20,6 +20,7 @@
 import { Capacitor } from "@capacitor/core";
 import { App } from "@capacitor/app";
 import { Browser } from "@capacitor/browser";
+import { uk } from "../i18n/uk";
 
 const SHEETS_API_BASE = "https://sheets.googleapis.com/v4/spreadsheets";
 const DRIVE_API_BASE = "https://www.googleapis.com/drive/v3/files";
@@ -46,6 +47,7 @@ const NATIVE_REDIRECT_URI = "ca.roncreator.trackmymeals:/oauth2redirect";
 
 interface TokenResponse {
   access_token?: string;
+  expires_in?: number | string;
   error?: string;
 }
 
@@ -72,6 +74,61 @@ declare global {
 
 let tokenClient: TokenClient | null = null;
 let accessToken: string | null = null;
+
+// --- Session expiry (1.5.4, 2026-10-02) ---
+//
+// Google access tokens last about an hour. On the web there's no refresh
+// token (by design, see below), so after that every request failed with a
+// generic error while the app still looked signed in. Now the app tracks
+// when the web token runs out, and on expiry — or a 401 that a refresh
+// can't fix, on either platform — it drops the token and tells listeners
+// (AuthContext), which show a "sign in again" banner. Screens are NOT
+// switched to their signed-out view: that would unmount e.g. a meal being
+// typed. Renewal can't be silent on the web: Google's token popup is
+// blocked by browsers unless it follows a click, so the banner's button
+// does it (with prompt "" — no consent screen again).
+let accessTokenExpiresAt: number | null = null;
+let sessionExpired = false;
+const sessionExpiredListeners = new Set<() => void>();
+
+/** Thrown by requests made after the sign-in expired — the message asks to sign in again and retry. */
+export class SessionExpiredError extends Error {
+  constructor() {
+    super(uk.auth.sessionExpiredError);
+    this.name = "SessionExpiredError";
+  }
+}
+
+/** Subscribes to "the sign-in expired"; returns the unsubscribe function. */
+export function onSessionExpired(listener: () => void): () => void {
+  sessionExpiredListeners.add(listener);
+  return () => sessionExpiredListeners.delete(listener);
+}
+
+function expireSession(): void {
+  accessToken = null;
+  accessTokenExpiresAt = null;
+  if (sessionExpired) return;
+  sessionExpired = true;
+  for (const listener of sessionExpiredListeners) listener();
+}
+
+/** Milliseconds until the web token expires (a minute early, to be safe), or null when unknown / native. */
+export function msUntilTokenExpiry(): number | null {
+  return accessTokenExpiresAt === null ? null : accessTokenExpiresAt - Date.now();
+}
+
+/** Expires the session now if the web token's time is up — call when the page becomes visible again. */
+export function checkTokenExpiry(): void {
+  if (accessToken !== null && accessTokenExpiresAt !== null && Date.now() >= accessTokenExpiresAt) expireSession();
+}
+
+function startSession(token: string, expiresInSeconds?: number | string): void {
+  accessToken = token;
+  const seconds = Number(expiresInSeconds);
+  accessTokenExpiresAt = Number.isFinite(seconds) && seconds > 0 ? Date.now() + (seconds - 60) * 1000 : null;
+  sessionExpired = false;
+}
 
 // --- Native (Android/Capacitor) sign-in: system browser + PKCE ---
 
@@ -166,7 +223,7 @@ async function refreshAccessToken(): Promise<boolean> {
     localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
     return false;
   }
-  accessToken = data.access_token as string;
+  startSession(data.access_token as string);
   return true;
 }
 
@@ -185,7 +242,7 @@ async function handleNativeRedirect(url: string): Promise<void> {
     const code = params.get("code");
     if (error) throw new Error(`Google sign-in error: ${error}`);
     if (!code) throw new Error("Google sign-in: no authorization code returned");
-    accessToken = await exchangeCodeForToken(code, pending.verifier);
+    startSession(await exchangeCodeForToken(code, pending.verifier));
     pending.resolve();
   } catch (err) {
     pending.reject(err instanceof Error ? err : new Error(String(err)));
@@ -266,6 +323,8 @@ export async function initGoogleAuth(): Promise<void> {
 
 export function signIn(): Promise<void> {
   if (Capacitor.isNativePlatform()) return signInNative();
+  // After an expiry, skip the consent screen she already went through.
+  const options = sessionExpired ? { prompt: "" } : undefined;
 
   return new Promise((resolve, reject) => {
     if (!tokenClient) {
@@ -278,15 +337,17 @@ export function signIn(): Promise<void> {
         reject(new Error(response.error ?? "signIn: no access token returned"));
         return;
       }
-      accessToken = response.access_token;
+      startSession(response.access_token, response.expires_in);
       resolve();
     };
-    tokenClient.requestAccessToken();
+    tokenClient.requestAccessToken(options);
   });
 }
 
 export function signOut(): void {
   accessToken = null;
+  accessTokenExpiresAt = null;
+  sessionExpired = false;
   // No-op if never set (e.g. on web) — removeItem on a missing key is safe.
   localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
 }
@@ -359,7 +420,9 @@ export function getSpreadsheetUrl(id: string): string {
 
 /** Authorized fetch against an arbitrary absolute URL — the shared retry/error-handling logic behind both authorizedFetch (Sheets API) and the Drive API calls below. */
 async function authorizedFetchUrl(url: string, init?: RequestInit): Promise<Response> {
+  checkTokenExpiry();
   if (!accessToken) {
+    if (sessionExpired) throw new SessionExpiredError();
     throw new Error("Not signed in — call signIn() first");
   }
   const doFetch = () =>
@@ -377,6 +440,13 @@ async function authorizedFetchUrl(url: string, init?: RequestInit): Promise<Resp
   // re-sign-in just to make its next request.
   if (response.status === 401 && (await refreshAccessToken())) {
     response = await doFetch();
+  }
+
+  // Still 401: the sign-in is gone (always the case on the web after the
+  // hour; on Android only when the refresh token itself died).
+  if (response.status === 401) {
+    expireSession();
+    throw new SessionExpiredError();
   }
 
   if (!response.ok) {
