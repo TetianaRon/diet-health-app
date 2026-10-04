@@ -19,6 +19,7 @@ import {
   computeDishUnknownFields,
   dishContainsFlaggedIngredient,
   listDishes,
+  resolveItemRef,
   setDishGlycemicFlag,
   updateDish,
   type Dish,
@@ -36,6 +37,8 @@ import {
 } from "../lib/nutrition";
 import { mergeWithStarterDishes } from "../data/starter-dishes";
 import Breadcrumb, { type Crumb } from "./Breadcrumb";
+import DuplicateNameNotice, { type NamedItem } from "./DuplicateNameNotice";
+import { findNameMatch, isBuiltInId, suggestFreeName } from "../lib/itemIds";
 
 const NUMERIC_FIELDS = ["carbsG", "gi", "fiberG", "sugarsG", "proteinG", "fatG", "caloriesKcal", "sodiumMg"] as const;
 type NumericField = (typeof NUMERIC_FIELDS)[number];
@@ -91,16 +94,33 @@ function foodMetaText(item: { carbsG: number; gi: number; giVerified: boolean; u
   return `${carbs}, ${gi}`;
 }
 
+// Saving a built-in item (favouriting, flagging or editing it) stores her own
+// copy: a new `I…` / `D…` row whose BasedOn is the built-in ID, which then
+// takes the built-in item's place in lists (see mergeBuiltInsById).
+async function saveIngredientCopy(item: Ingredient): Promise<Ingredient> {
+  const { id, basedOn: _basedOn, dateAdded: _dateAdded, favorite, glycemicFlag, ...fields } = item;
+  return addIngredient({ ...fields, basedOn: id }, favorite, glycemicFlag);
+}
+
+async function saveDishCopy(dish: Dish, glycemicFlag: GlycemicFlag): Promise<Dish> {
+  const { id, basedOn: _basedOn, dateAdded: _dateAdded, glycemicFlag: _flag, ...fields } = dish;
+  return addDish({ ...fields, basedOn: id }, glycemicFlag);
+}
+
 function AddFoodForm({
   availableFoods,
-  existingNames,
+  existingItems,
   onSaved,
   onCancel,
+  onUseExisting,
 }: {
   availableFoods: Ingredient[];
-  existingNames: Set<string>;
+  // Every item a new name could be confused with (built-in + saved,
+  // ingredients and dishes) — see DuplicateNameNotice.
+  existingItems: NamedItem[];
   onSaved: (ingredient: Ingredient) => void;
   onCancel: () => void;
+  onUseExisting: (item: NamedItem) => void;
 }) {
   // search is purely what's typed to find a match — never what gets saved.
   // saveNameUk is separate and always editable: previously it silently
@@ -133,7 +153,6 @@ function AddFoodForm({
   // not the search: English words still go straight to USDA.
   const [translationLimited, setTranslationLimited] = useState(isTranslationLimitedToday);
   const [error, setError] = useState<string | null>(null);
-  const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   // Bundle matches are picked directly from the browsable suggestion list
@@ -149,7 +168,6 @@ function AddFoodForm({
     defaultSaveName: string,
   ) => {
     setLookupAttempted(true);
-    setDuplicateWarning(null);
     setGiVerified(false); // a new pick hasn't been confirmed, even if a previous one was
     if (estimate) {
       const unknown = estimate.unknownFields ?? [];
@@ -247,6 +265,8 @@ function AddFoodForm({
       ? []
       : availableFoods.filter((food) => food.nameUk.toLowerCase().includes(search.toLowerCase()));
 
+  const nameMatch = findNameMatch(saveNameUk, existingItems);
+
   const handleSave = async () => {
     // Blank is a deliberate "unknown", not an error (see parseFormValues) —
     // Number("") is 0, so blanks are detected via .trim() there and recorded
@@ -259,29 +279,22 @@ function AddFoodForm({
     }
 
     // Ambiguous searches (e.g. "квасоля") can surface several distinct
-    // matches that would otherwise all default to the same save name — warn
-    // instead of silently overwriting an existing entry. Editing the name
-    // clears this (see the input's onChange below), so the warning can't go
-    // stale against a name she's since changed.
-    if (!duplicateWarning && existingNames.has(saveNameUk.trim().toLowerCase())) {
-      setError(null);
-      setDuplicateWarning(uk.foods.form.duplicateNameWarning(saveNameUk.trim()));
-      return;
-    }
+    // matches that would all default to the same save name — the
+    // duplicate-name check below the field has to be resolved first.
+    if (nameMatch) return;
 
     setSaving(true);
     setError(null);
     try {
-      const ingredient: Omit<Ingredient, "dateAdded" | "favorite" | "glycemicFlag"> = {
+      const saved = await addIngredient({
         nameUk: saveNameUk.trim(),
         nameEn: resolvedNameEn,
         source,
         giVerified: giVerified && !unknownFields.includes("gi"),
         unknownFields,
         ...parsed,
-      };
-      await addIngredient(ingredient);
-      onSaved({ ...ingredient, dateAdded: new Date().toISOString().slice(0, 10), favorite: false, glycemicFlag: "none" });
+      });
+      onSaved(saved);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -314,7 +327,7 @@ function AddFoodForm({
         <>
           <ul className="food-list">
             {suggestions.map((food) => (
-              <li key={food.nameUk} className="food-list-item-with-action">
+              <li key={food.id} className="food-list-item-with-action">
                 <span>
                   <strong>{food.nameUk}</strong> <span className="food-name-en">({food.nameEn})</span> —{" "}
                   {foodMetaText({ ...food, giVerified: true })}
@@ -394,12 +407,17 @@ function AddFoodForm({
         {uk.foods.form.saveNameLabel}
         <input
           value={saveNameUk}
-          onChange={(e) => {
-            setSaveNameUk(e.target.value);
-            setDuplicateWarning(null);
-          }}
+          onChange={(e) => setSaveNameUk(e.target.value)}
         />
       </label>
+      {nameMatch && (
+        <DuplicateNameNotice
+          match={nameMatch}
+          suggestedName={suggestFreeName(saveNameUk, existingItems.map((i) => i.nameUk))}
+          onRename={setSaveNameUk}
+          onUseExisting={onUseExisting}
+        />
+      )}
       <p className="food-form-hint">{uk.foods.form.saveNameHint}</p>
 
       <p className="food-form-hint">{uk.foods.form.unknownHint}</p>
@@ -428,11 +446,9 @@ function AddFoodForm({
       </label>
 
       {error && <p className="food-form-error">{error}</p>}
-      {duplicateWarning && <p className="food-form-error">{duplicateWarning}</p>}
-
       <div className="food-form-actions">
-        <button type="button" onClick={() => void handleSave()} disabled={saving}>
-          {duplicateWarning ? uk.foods.form.confirmOverwriteButton : uk.foods.form.saveButton}
+        <button type="button" onClick={() => void handleSave()} disabled={saving || nameMatch !== null}>
+          {uk.foods.form.saveButton}
         </button>
         <button type="button" onClick={onCancel} disabled={saving}>
           {uk.foods.cancelButton}
@@ -449,10 +465,12 @@ function AddFoodForm({
 // principle as favoriting one (see handleToggleFavorite in FoodsScreen).
 function EditIngredientForm({
   ingredient,
+  existingItems,
   onSaved,
   onCancel,
 }: {
   ingredient: Ingredient;
+  existingItems: NamedItem[];
   onSaved: (updated: Ingredient) => void;
   onCancel: () => void;
 }) {
@@ -463,6 +481,8 @@ function EditIngredientForm({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const nameMatch = findNameMatch(nameUk, existingItems, ingredient.id);
+
   const handleSave = async () => {
     const { parsed, unknownFields, valid } = parseFormValues(values);
 
@@ -470,6 +490,7 @@ function EditIngredientForm({
       setError(uk.foods.editForm.validationError);
       return;
     }
+    if (nameMatch) return;
 
     setSaving(true);
     setError(null);
@@ -482,30 +503,13 @@ function EditIngredientForm({
         unknownFields,
         ...parsed,
       };
-      if (ingredient.dateAdded) {
-        await updateIngredient(ingredient.nameUk, updated);
+      if (isBuiltInId(ingredient.id)) {
+        // Editing a built-in item saves her own copy, which takes its place.
+        onSaved(await saveIngredientCopy(updated));
       } else {
-        await addIngredient(
-          {
-            nameUk: updated.nameUk,
-            nameEn: updated.nameEn,
-            carbsG: updated.carbsG,
-            gi: updated.gi,
-            fiberG: updated.fiberG,
-            sugarsG: updated.sugarsG,
-            proteinG: updated.proteinG,
-            fatG: updated.fatG,
-            caloriesKcal: updated.caloriesKcal,
-            sodiumMg: updated.sodiumMg,
-            source: updated.source,
-            giVerified: updated.giVerified,
-            unknownFields: updated.unknownFields,
-          },
-          updated.favorite,
-          updated.glycemicFlag,
-        );
+        await updateIngredient(updated);
+        onSaved(updated);
       }
-      onSaved(updated);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -520,6 +524,13 @@ function EditIngredientForm({
         {uk.foods.editForm.nameUkLabel}
         <input value={nameUk} onChange={(e) => setNameUk(e.target.value)} />
       </label>
+      {nameMatch && (
+        <DuplicateNameNotice
+          match={nameMatch}
+          suggestedName={suggestFreeName(nameUk, existingItems.map((i) => i.nameUk))}
+          onRename={setNameUk}
+        />
+      )}
       <label>
         {uk.foods.editForm.nameEnLabel}
         <input value={nameEn} onChange={(e) => setNameEn(e.target.value)} />
@@ -556,7 +567,7 @@ function EditIngredientForm({
       {error && <p className="food-form-error">{error}</p>}
 
       <div className="food-form-actions">
-        <button type="button" onClick={() => void handleSave()} disabled={saving}>
+        <button type="button" onClick={() => void handleSave()} disabled={saving || nameMatch !== null}>
           {uk.foods.editForm.saveButton}
         </button>
         <button type="button" onClick={onCancel} disabled={saving}>
@@ -591,12 +602,15 @@ function AddDishForm({
     ? availableDishes.filter((d) => d.nameUk.toLowerCase().includes(search.toLowerCase()))
     : [];
 
-  const handleAdd = async (dish: Omit<Dish, "dateAdded">) => {
+  const handleAdd = async (dish: Dish) => {
+    if (!isBuiltInId(dish.id)) {
+      onSaved(dish); // already one of her saved dishes — nothing to add
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
-      await addDish(dish);
-      onSaved({ ...dish, dateAdded: new Date().toISOString().slice(0, 10) });
+      onSaved(await saveDishCopy(dish, dish.glycemicFlag));
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -620,7 +634,7 @@ function AddDishForm({
 
       <ul className="food-list">
         {matches.map((dish) => (
-          <li key={dish.nameUk} className="food-list-item-with-action">
+          <li key={dish.id} className="food-list-item-with-action">
             <span>
               <strong>{dish.nameUk}</strong> <span className="food-name-en">({dish.nameEn})</span> —{" "}
               {foodMetaText({ ...dish, giVerified: false })}
@@ -643,6 +657,9 @@ function AddDishForm({
 }
 
 interface ComposeRow {
+  // The picked ingredient's ID; cleared when the name is typed over, so a
+  // typed name is then matched by name (see findIngredient below).
+  id?: string;
   nameUk: string;
   grams: string;
 }
@@ -655,11 +672,14 @@ const EMPTY_ROW: ComposeRow = { nameUk: "", grams: "" };
 // dishes.test.ts), never hand-typed, matching how starter dishes are built.
 function ComposeDishForm({
   ingredients,
+  existingItems,
   existingDish,
   onSaved,
   onCancel,
+  onUseExisting,
 }: {
   ingredients: Ingredient[];
+  existingItems: NamedItem[];
   // Present only when editing an already-composed Dish — pre-fills the form
   // from it and updates that row in place on save (or, if it was a
   // bundle-only dish never actually saved, this becomes its first save —
@@ -667,11 +687,13 @@ function ComposeDishForm({
   existingDish?: Dish;
   onSaved: (dish: Dish) => void;
   onCancel: () => void;
+  /** Only for a new dish: «Це він — використати наявний» closes the form and shows that item. */
+  onUseExisting?: (item: NamedItem) => void;
 }) {
   const [nameUk, setNameUk] = useState(existingDish?.nameUk ?? "");
   const [rows, setRows] = useState<ComposeRow[]>(
     existingDish && existingDish.ingredients.length > 0
-      ? existingDish.ingredients.map((ref) => ({ nameUk: ref.nameUk, grams: String(ref.grams) }))
+      ? existingDish.ingredients.map((ref) => ({ id: ref.id, nameUk: resolveItemRef(ref, ingredients)?.nameUk ?? ref.nameUk, grams: String(ref.grams) }))
       : [EMPTY_ROW],
   );
   const [yieldGrams, setYieldGrams] = useState(existingDish ? String(existingDish.yieldGrams) : "");
@@ -681,8 +703,9 @@ function ComposeDishForm({
 
   const sortedIngredients = sortFavoritesFirst(ingredients);
 
-  const findIngredient = (name: string): Ingredient | null =>
-    ingredients.find((i) => i.nameUk.trim().toLowerCase() === name.trim().toLowerCase()) ?? null;
+  const findIngredient = (row: { id?: string; nameUk: string }): Ingredient | null => resolveItemRef(row, ingredients);
+
+  const nameMatch = findNameMatch(nameUk, existingItems, existingDish?.id);
 
   const updateRow = (index: number, patch: Partial<ComposeRow>) => {
     setRows((prev) => prev.map((row, i) => (i === index ? { ...row, ...patch } : row)));
@@ -692,9 +715,11 @@ function ComposeDishForm({
     setRows((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const resolvedRefs: DishIngredientRef[] = rows
-    .filter((row) => findIngredient(row.nameUk) && Number(row.grams) > 0)
-    .map((row) => ({ nameUk: findIngredient(row.nameUk)!.nameUk, grams: Number(row.grams) }));
+  const toRef = (row: ComposeRow): DishIngredientRef | null => {
+    const ingredient = findIngredient(row);
+    return ingredient && Number(row.grams) > 0 ? { id: ingredient.id, nameUk: ingredient.nameUk, grams: Number(row.grams) } : null;
+  };
+  const resolvedRefs: DishIngredientRef[] = rows.map(toRef).filter((ref): ref is DishIngredientRef => ref !== null);
 
   const parsedYield = Number(yieldGrams);
   const preview =
@@ -702,13 +727,13 @@ function ComposeDishForm({
     resolvedRefs.length > 0 &&
     Number.isFinite(parsedYield) &&
     parsedYield > 0
-      ? computeDishNutrition(resolvedRefs, parsedYield, (name) => findIngredient(name))
+      ? computeDishNutrition(resolvedRefs, parsedYield, findIngredient)
       : null;
 
-  const previewUnknown = preview ? computeDishUnknownFields(resolvedRefs, (name) => findIngredient(name)) : [];
+  const previewUnknown = preview ? computeDishUnknownFields(resolvedRefs, findIngredient) : [];
 
   const handleSave = async () => {
-    const allResolved = rows.every((row) => row.nameUk.trim() === "" || findIngredient(row.nameUk));
+    const allResolved = rows.every((row) => row.nameUk.trim() === "" || findIngredient(row));
     const filledRows = rows.filter((row) => row.nameUk.trim() !== "");
     const allValid =
       nameUk.trim() !== "" &&
@@ -722,18 +747,16 @@ function ComposeDishForm({
       setError(uk.dishes.composeForm.validationError);
       return;
     }
+    if (nameMatch) return;
 
     setSaving(true);
     setError(null);
     try {
-      const refs: DishIngredientRef[] = filledRows.map((row) => ({
-        nameUk: findIngredient(row.nameUk)!.nameUk,
-        grams: Number(row.grams),
-      }));
-      const nutrition = computeDishNutrition(refs, parsedYield, (name) => findIngredient(name));
-      const unknownFields = computeDishUnknownFields(refs, (name) => findIngredient(name));
+      const refs = filledRows.map(toRef).filter((ref): ref is DishIngredientRef => ref !== null);
+      const nutrition = computeDishNutrition(refs, parsedYield, findIngredient);
+      const unknownFields = computeDishUnknownFields(refs, findIngredient);
       const nameEn = (await translateUkToEn(nameUk.trim())) ?? "";
-      const dish: Omit<Dish, "dateAdded" | "glycemicFlag"> = {
+      const dish: Omit<Dish, "dateAdded" | "glycemicFlag" | "id" | "basedOn"> = {
         nameUk: nameUk.trim(),
         nameEn,
         ingredients: refs,
@@ -744,13 +767,13 @@ function ComposeDishForm({
         unknownFields,
       };
       const glycemicFlag = existingDish?.glycemicFlag ?? "none";
-      if (existingDish?.dateAdded) {
-        const updated: Dish = { ...dish, dateAdded: existingDish.dateAdded, glycemicFlag };
-        await updateDish(existingDish.nameUk, updated);
+      if (existingDish && !isBuiltInId(existingDish.id)) {
+        const updated: Dish = { ...dish, id: existingDish.id, basedOn: existingDish.basedOn, dateAdded: existingDish.dateAdded, glycemicFlag };
+        await updateDish(updated);
         onSaved(updated);
       } else {
-        await addDish(dish, glycemicFlag);
-        onSaved({ ...dish, dateAdded: new Date().toISOString().slice(0, 10), glycemicFlag });
+        // A new dish, or a built-in one being edited (saved as her copy).
+        onSaved(await addDish({ ...dish, basedOn: existingDish?.id ?? "" }, glycemicFlag));
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -765,9 +788,17 @@ function ComposeDishForm({
         {uk.dishes.composeForm.nameLabel}
         <input value={nameUk} onChange={(e) => setNameUk(e.target.value)} placeholder={uk.dishes.composeForm.namePlaceholder} />
       </label>
+      {nameMatch && (
+        <DuplicateNameNotice
+          match={nameMatch}
+          suggestedName={suggestFreeName(nameUk, existingItems.map((i) => i.nameUk))}
+          onRename={setNameUk}
+          onUseExisting={existingDish ? undefined : onUseExisting}
+        />
+      )}
 
       {rows.map((row, index) => {
-        const resolvedIngredient = findIngredient(row.nameUk);
+        const resolvedIngredient = findIngredient(row);
         // Full list by default (empty search matches everything), narrowing
         // as you type — hidden once the row already matches a picked item,
         // so the list doesn't linger under a finished selection.
@@ -782,7 +813,7 @@ function ComposeDishForm({
               {uk.dishes.composeForm.ingredientLabel}
               <input
                 value={row.nameUk}
-                onChange={(e) => updateRow(index, { nameUk: e.target.value })}
+                onChange={(e) => updateRow(index, { nameUk: e.target.value, id: undefined })}
                 placeholder={uk.dishes.composeForm.ingredientPlaceholder}
               />
             </label>
@@ -790,7 +821,7 @@ function ComposeDishForm({
             {suggestions.length > 0 && (
               <ul className="food-list food-list-scroll">
                 {suggestions.map((ingredient) => (
-                  <li key={ingredient.nameUk} className="food-list-item-with-action">
+                  <li key={ingredient.id} className="food-list-item-with-action">
                     <span>
                       {ingredient.favorite && <span aria-hidden="true">★ </span>}
                       {ingredient.glycemicFlag !== "none" && (
@@ -801,7 +832,7 @@ function ComposeDishForm({
                       <strong>{ingredient.nameUk}</strong>{" "}
                       <span className="food-name-en">({ingredient.nameEn})</span>
                     </span>
-                    <button type="button" onClick={() => updateRow(index, { nameUk: ingredient.nameUk })}>
+                    <button type="button" onClick={() => updateRow(index, { id: ingredient.id, nameUk: ingredient.nameUk })}>
                       {uk.foods.form.pickButton}
                     </button>
                   </li>
@@ -872,7 +903,7 @@ function ComposeDishForm({
       {error && <p className="food-form-error">{error}</p>}
 
       <div className="food-form-actions">
-        <button type="button" onClick={() => void handleSave()} disabled={saving}>
+        <button type="button" onClick={() => void handleSave()} disabled={saving || nameMatch !== null}>
           {uk.dishes.composeForm.saveButton}
         </button>
         <button type="button" onClick={onCancel} disabled={saving}>
@@ -918,148 +949,72 @@ export default function FoodsScreen() {
     setSearch("");
   };
 
-  // A bundle-only ingredient (never saved to the personal sheet) has no row
-  // for setIngredientFavorite to update — favoriting it is the one implicit
-  // "add" the app performs, and only as a side effect of marking a favorite.
+  // A built-in ingredient (never saved to the personal sheet) has no row for
+  // setIngredientFavorite to update — favouriting it saves her copy, the one
+  // implicit "add" the app performs (same for flags below).
+  const replaceIngredient = (updated: Ingredient, replacesId: string) =>
+    setIngredients((prev) => [...(prev ?? []).filter((i) => i.id !== replacesId && i.id !== updated.id), updated]);
+
   const handleToggleFavorite = async (ingredient: Ingredient) => {
     const nextFavorite = !ingredient.favorite;
-    const isSaved = (ingredients ?? []).some(
-      (i) => i.nameUk.trim().toLowerCase() === ingredient.nameUk.trim().toLowerCase(),
-    );
-
-    if (!isSaved) {
+    if (isBuiltInId(ingredient.id)) {
       try {
-        const toSave: Omit<Ingredient, "dateAdded" | "favorite" | "glycemicFlag"> = {
-          nameUk: ingredient.nameUk,
-          nameEn: ingredient.nameEn,
-          carbsG: ingredient.carbsG,
-          gi: ingredient.gi,
-          fiberG: ingredient.fiberG,
-          sugarsG: ingredient.sugarsG,
-          proteinG: ingredient.proteinG,
-          fatG: ingredient.fatG,
-          caloriesKcal: ingredient.caloriesKcal,
-          sodiumMg: ingredient.sodiumMg,
-          source: ingredient.source,
-          giVerified: ingredient.giVerified,
-          unknownFields: ingredient.unknownFields,
-        };
-        await addIngredient(toSave, nextFavorite, ingredient.glycemicFlag);
-        setIngredients((prev) => [
-          ...(prev ?? []),
-          { ...ingredient, dateAdded: new Date().toISOString().slice(0, 10), favorite: nextFavorite },
-        ]);
+        replaceIngredient(await saveIngredientCopy({ ...ingredient, favorite: nextFavorite }), ingredient.id);
       } catch (err) {
         setLoadError(err instanceof Error ? err.message : String(err));
       }
       return;
     }
 
-    setIngredients((prev) =>
-      (prev ?? []).map((i) => (i.nameUk === ingredient.nameUk ? { ...i, favorite: nextFavorite } : i)),
-    );
+    setIngredients((prev) => (prev ?? []).map((i) => (i.id === ingredient.id ? { ...i, favorite: nextFavorite } : i)));
     try {
-      await setIngredientFavorite(ingredient.nameUk, nextFavorite);
+      await setIngredientFavorite(ingredient.id, nextFavorite);
     } catch (err) {
-      setIngredients((prev) =>
-        (prev ?? []).map((i) => (i.nameUk === ingredient.nameUk ? { ...i, favorite: ingredient.favorite } : i)),
-      );
+      setIngredients((prev) => (prev ?? []).map((i) => (i.id === ingredient.id ? { ...i, favorite: ingredient.favorite } : i)));
       setLoadError(err instanceof Error ? err.message : String(err));
     }
   };
 
-  // Same implicit-save pattern as handleToggleFavorite, but cycling the
-  // three-state glycemicFlag instead of toggling a boolean.
   const handleCycleIngredientFlag = async (ingredient: Ingredient) => {
     const nextFlag = cycleGlycemicFlag(ingredient.glycemicFlag);
-    const isSaved = (ingredients ?? []).some(
-      (i) => i.nameUk.trim().toLowerCase() === ingredient.nameUk.trim().toLowerCase(),
-    );
-
-    if (!isSaved) {
+    if (isBuiltInId(ingredient.id)) {
       try {
-        const toSave: Omit<Ingredient, "dateAdded" | "favorite" | "glycemicFlag"> = {
-          nameUk: ingredient.nameUk,
-          nameEn: ingredient.nameEn,
-          carbsG: ingredient.carbsG,
-          gi: ingredient.gi,
-          fiberG: ingredient.fiberG,
-          sugarsG: ingredient.sugarsG,
-          proteinG: ingredient.proteinG,
-          fatG: ingredient.fatG,
-          caloriesKcal: ingredient.caloriesKcal,
-          sodiumMg: ingredient.sodiumMg,
-          source: ingredient.source,
-          giVerified: ingredient.giVerified,
-          unknownFields: ingredient.unknownFields,
-        };
-        await addIngredient(toSave, ingredient.favorite, nextFlag);
-        setIngredients((prev) => [
-          ...(prev ?? []),
-          { ...ingredient, dateAdded: new Date().toISOString().slice(0, 10), glycemicFlag: nextFlag },
-        ]);
+        replaceIngredient(await saveIngredientCopy({ ...ingredient, glycemicFlag: nextFlag }), ingredient.id);
       } catch (err) {
         setLoadError(err instanceof Error ? err.message : String(err));
       }
       return;
     }
 
-    setIngredients((prev) =>
-      (prev ?? []).map((i) => (i.nameUk === ingredient.nameUk ? { ...i, glycemicFlag: nextFlag } : i)),
-    );
+    setIngredients((prev) => (prev ?? []).map((i) => (i.id === ingredient.id ? { ...i, glycemicFlag: nextFlag } : i)));
     try {
-      await setIngredientGlycemicFlag(ingredient.nameUk, nextFlag);
+      await setIngredientGlycemicFlag(ingredient.id, nextFlag);
     } catch (err) {
       setIngredients((prev) =>
-        (prev ?? []).map((i) => (i.nameUk === ingredient.nameUk ? { ...i, glycemicFlag: ingredient.glycemicFlag } : i)),
+        (prev ?? []).map((i) => (i.id === ingredient.id ? { ...i, glycemicFlag: ingredient.glycemicFlag } : i)),
       );
       setLoadError(err instanceof Error ? err.message : String(err));
     }
   };
 
-  // Mirrors handleCycleIngredientFlag for Dishes: a bundle-only dish (never
-  // saved) is implicitly saved on first flag, same principle as Favorites.
+  // Mirrors handleCycleIngredientFlag for Dishes.
   const handleCycleDishFlag = async (dish: Dish) => {
     const nextFlag = cycleGlycemicFlag(dish.glycemicFlag);
-    const isSaved = (dishes ?? []).some((d) => d.nameUk.trim().toLowerCase() === dish.nameUk.trim().toLowerCase());
-
-    if (!isSaved) {
+    if (isBuiltInId(dish.id)) {
       try {
-        const toSave: Omit<Dish, "dateAdded" | "glycemicFlag"> = {
-          nameUk: dish.nameUk,
-          nameEn: dish.nameEn,
-          ingredients: dish.ingredients,
-          yieldGrams: dish.yieldGrams,
-          carbsG: dish.carbsG,
-          gi: dish.gi,
-          fiberG: dish.fiberG,
-          sugarsG: dish.sugarsG,
-          proteinG: dish.proteinG,
-          fatG: dish.fatG,
-          caloriesKcal: dish.caloriesKcal,
-          sodiumMg: dish.sodiumMg,
-          source: dish.source,
-          giVerified: dish.giVerified,
-          unknownFields: dish.unknownFields,
-        };
-        await addDish(toSave, nextFlag);
-        setDishes((prev) => [
-          ...(prev ?? []),
-          { ...dish, dateAdded: new Date().toISOString().slice(0, 10), glycemicFlag: nextFlag },
-        ]);
+        const saved = await saveDishCopy(dish, nextFlag);
+        setDishes((prev) => [...(prev ?? []), saved]);
       } catch (err) {
         setLoadError(err instanceof Error ? err.message : String(err));
       }
       return;
     }
 
-    setDishes((prev) => (prev ?? []).map((d) => (d.nameUk === dish.nameUk ? { ...d, glycemicFlag: nextFlag } : d)));
+    setDishes((prev) => (prev ?? []).map((d) => (d.id === dish.id ? { ...d, glycemicFlag: nextFlag } : d)));
     try {
-      await setDishGlycemicFlag(dish.nameUk, nextFlag);
+      await setDishGlycemicFlag(dish.id, nextFlag);
     } catch (err) {
-      setDishes((prev) =>
-        (prev ?? []).map((d) => (d.nameUk === dish.nameUk ? { ...d, glycemicFlag: dish.glycemicFlag } : d)),
-      );
+      setDishes((prev) => (prev ?? []).map((d) => (d.id === dish.id ? { ...d, glycemicFlag: dish.glycemicFlag } : d)));
       setLoadError(err instanceof Error ? err.message : String(err));
     }
   };
@@ -1099,16 +1054,22 @@ export default function FoodsScreen() {
 
   // Live cross-reference for the derived "contains a flagged ingredient"
   // hint — see dishContainsFlaggedIngredient in lib/dishes.ts.
-  const ingredientFlagByName = new Map(
-    availableIngredients.map((i) => [i.nameUk.trim().toLowerCase(), i.glycemicFlag]),
-  );
-  const lookupIngredientFlag = (nameUk: string): GlycemicFlag | null =>
-    ingredientFlagByName.get(nameUk.trim().toLowerCase()) ?? null;
+  const lookupIngredientFlag = (ref: DishIngredientRef): GlycemicFlag | null =>
+    resolveItemRef(ref, availableIngredients)?.glycemicFlag ?? null;
 
-  // For AddFoodForm's duplicate-name warning — every name currently
-  // resolvable (bundle + saved), not just what's saved, since a collision
-  // with either one would mean the same silent-override problem.
-  const existingIngredientNames = new Set(availableIngredients.map((i) => i.nameUk.trim().toLowerCase()));
+  // For the duplicate-name check — every item a new name could be confused
+  // with: built-in and saved, ingredients and dishes (they share the meal picker).
+  const existingItems: NamedItem[] = [
+    ...availableIngredients.map((i) => ({ ...i, kind: "ingredient" as const })),
+    ...availableDishes.map((d) => ({ ...d, kind: "dish" as const })),
+  ];
+  // «Це він — використати наявний»: close the form and show that item in its list.
+  const showExistingItem = (item: NamedItem) => {
+    setShowAddForm(false);
+    setDishAddMode("starter");
+    setSubTab(item.kind === "dish" ? "dishes" : "ingredients");
+    setSearch(item.nameUk);
+  };
 
   // While an add/edit form is open it replaces the title and sub-tabs with a
   // breadcrumb at the top — the way back must never depend on scrolling down
@@ -1174,13 +1135,9 @@ export default function FoodsScreen() {
       {editingIngredient && (
         <EditIngredientForm
           ingredient={editingIngredient}
+          existingItems={existingItems}
           onSaved={(updated) => {
-            setIngredients((prev) => {
-              const withoutOld = (prev ?? []).filter(
-                (i) => i.nameUk.trim().toLowerCase() !== editingIngredient.nameUk.trim().toLowerCase(),
-              );
-              return [...withoutOld, updated];
-            });
+            replaceIngredient(updated, editingIngredient.id);
             setEditingIngredient(null);
           }}
           onCancel={() => setEditingIngredient(null)}
@@ -1190,14 +1147,10 @@ export default function FoodsScreen() {
       {editingDish && (
         <ComposeDishForm
           ingredients={availableIngredients}
+          existingItems={existingItems}
           existingDish={editingDish}
           onSaved={(updated) => {
-            setDishes((prev) => {
-              const withoutOld = (prev ?? []).filter(
-                (d) => d.nameUk.trim().toLowerCase() !== editingDish.nameUk.trim().toLowerCase(),
-              );
-              return [...withoutOld, updated];
-            });
+            setDishes((prev) => [...(prev ?? []).filter((d) => d.id !== editingDish.id && d.id !== updated.id), updated]);
             setEditingDish(null);
           }}
           onCancel={() => setEditingDish(null)}
@@ -1207,7 +1160,8 @@ export default function FoodsScreen() {
       {!editingIngredient && !editingDish && showAddForm && subTab === "ingredients" && (
         <AddFoodForm
           availableFoods={availableIngredients}
-          existingNames={existingIngredientNames}
+          existingItems={existingItems}
+          onUseExisting={showExistingItem}
           onSaved={(ingredient) => {
             setIngredients((prev) => [...(prev ?? []), ingredient]);
             setShowAddForm(false);
@@ -1225,7 +1179,7 @@ export default function FoodsScreen() {
           <AddDishForm
             availableDishes={availableDishes}
             onSaved={(dish) => {
-              setDishes((prev) => [...(prev ?? []), dish]);
+              setDishes((prev) => [...(prev ?? []).filter((d) => d.id !== dish.id), dish]);
               setShowAddForm(false);
               setSearch("");
             }}
@@ -1238,6 +1192,8 @@ export default function FoodsScreen() {
         <>
           <ComposeDishForm
             ingredients={availableIngredients}
+            existingItems={existingItems}
+            onUseExisting={showExistingItem}
             onSaved={(dish) => {
               setDishes((prev) => [...(prev ?? []), dish]);
               setShowAddForm(false);
@@ -1267,7 +1223,7 @@ export default function FoodsScreen() {
 
           <ul className="food-list">
             {filteredIngredients.map((ingredient) => (
-              <li key={ingredient.nameUk} className="food-list-item-with-action">
+              <li key={ingredient.id} className="food-list-item-with-action">
                 <span>
                   <strong>{ingredient.nameUk}</strong> <span className="food-name-en">({ingredient.nameEn})</span> —{" "}
                   {foodMetaText(ingredient)}
@@ -1328,7 +1284,7 @@ export default function FoodsScreen() {
             {filteredDishes.map((dish) => {
               const containsFlagged = dishContainsFlaggedIngredient(dish, lookupIngredientFlag);
               return (
-                <li key={dish.nameUk}>
+                <li key={dish.id}>
                   <div className="food-list-item-with-action">
                     <span>
                       <strong>{dish.nameUk}</strong> <span className="food-name-en">({dish.nameEn})</span> —{" "}
@@ -1362,13 +1318,11 @@ export default function FoodsScreen() {
                     <div className="dish-ingredient-flags">
                       <p className="food-form-hint">{uk.dishes.flagIngredientsPrompt.title}</p>
                       <ul className="food-list">
-                        {dish.ingredients.map((ref) => {
-                          const ingredient = availableIngredients.find(
-                            (i) => i.nameUk.trim().toLowerCase() === ref.nameUk.trim().toLowerCase(),
-                          );
+                        {dish.ingredients.map((ref, refIndex) => {
+                          const ingredient = resolveItemRef(ref, availableIngredients);
                           if (!ingredient) return null;
                           return (
-                            <li key={ref.nameUk} className="food-list-item-with-action">
+                            <li key={`${ingredient.id}-${refIndex}`} className="food-list-item-with-action">
                               <span>{ingredient.nameUk}</span>
                               <button
                                 type="button"

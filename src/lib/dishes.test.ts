@@ -62,7 +62,7 @@ describe("computeDishNutrition", () => {
       sodiumMg: 0,
     };
 
-    const lookup = (name: string) => (name === "A" ? highCarbHighGi : lowCarbLowGi);
+    const lookup = ({ nameUk: name }: { nameUk: string }) => (name === "A" ? highCarbHighGi : lowCarbLowGi);
     // 100g of A (80g carbs) + 100g of B (5g carbs) -> GI should be heavily weighted toward A's 90.
     const result = computeDishNutrition(
       [
@@ -84,7 +84,7 @@ describe("computeDishNutrition", () => {
         { nameUk: "Невідомий інгредієнт", grams: 50 },
       ],
       360,
-      (name) => (name === "Гречка суха" ? BUCKWHEAT_RAW : null),
+      ({ nameUk: name }) => (name === "Гречка суха" ? BUCKWHEAT_RAW : null),
     );
     expect(result.carbsG).toBeCloseTo(71.5 / 3.6, 1);
   });
@@ -107,6 +107,8 @@ describe("computeDishNutrition", () => {
 describe("rowToDish / dishToRow", () => {
   it("round-trips through JSON-encoded ingredients", () => {
     const dish: Dish = {
+      id: "D1",
+      basedOn: "",
       nameUk: "Гречка варена",
       nameEn: "buckwheat, cooked",
       ingredients: [{ nameUk: "Гречка суха", grams: 100 }],
@@ -131,6 +133,8 @@ describe("rowToDish / dishToRow", () => {
 
   it("still round-trips correctly when the sheet's own columns are reordered", () => {
     const dish: Dish = {
+      id: "D1",
+      basedOn: "",
       nameUk: "Гречка варена",
       nameEn: "buckwheat, cooked",
       ingredients: [{ nameUk: "Гречка суха", grams: 100 }],
@@ -167,12 +171,16 @@ describe("rowToDish / dishToRow", () => {
       "DateAdded",
       "GlycemicFlag",
       "GiVerified",
+      "BasedOn",
+      "Id",
     ]);
     expect(rowToDish(dishToRow(dish, reordered), reordered)).toEqual(dish);
   });
 
   it("defaults an unrecognized Source to manual", () => {
     const dish: Dish = {
+      id: "D1",
+      basedOn: "",
       nameUk: "Борщ",
       nameEn: "borscht",
       ingredients: [],
@@ -217,6 +225,8 @@ describe("rowToDish / dishToRow", () => {
 
 describe("dishContainsFlaggedIngredient", () => {
   const baseDish: Dish = {
+    id: "D1",
+    basedOn: "",
     nameUk: "Борщ",
     nameEn: "borscht",
     ingredients: [
@@ -240,7 +250,7 @@ describe("dishContainsFlaggedIngredient", () => {
   };
 
   it("is true when any referenced ingredient currently resolves to watch or avoid", () => {
-    const lookup = (name: string) => (name === "Картопля" ? "avoid" : "none");
+    const lookup = ({ nameUk: name }: { nameUk: string }) => (name === "Картопля" ? "avoid" : "none");
     expect(dishContainsFlaggedIngredient(baseDish, lookup)).toBe(true);
   });
 
@@ -279,7 +289,7 @@ describe("unknownFields round-trip through a Dishes row", () => {
 describe("computeDishUnknownFields", () => {
   type Ing = IngredientNutrition & { unknownFields: NutritionKey[] };
   const known: Ing = { ...BUCKWHEAT_RAW, unknownFields: [] };
-  const lookup = (table: Record<string, Ing>) => (name: string) => table[name] ?? null;
+  const lookup = (table: Record<string, Ing>) => ({ nameUk: name }: { nameUk: string }) => table[name] ?? null;
 
   it("is empty when every ingredient is fully known", () => {
     expect(computeDishUnknownFields([{ nameUk: "A", grams: 100 }], lookup({ A: known }))).toEqual([]);

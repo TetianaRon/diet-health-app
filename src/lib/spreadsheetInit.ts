@@ -15,6 +15,11 @@ import { addSheetTabs, batchUpdateRanges, getTabGrids, listSheetTitles, readRang
 import { columnLetter, SCAN_LAST_COLUMN } from "./sheetRow";
 import { labelFor } from "./sheetLabels";
 import { analyzeDataTab, isBlocking, isTabRepairable, planLabelRepair, planTabRepair, type TabIssue, type TabReport } from "./sheetSchema";
+import { planItemIdUpgrade } from "./sheetUpgrade";
+import { ID_COUNTER_KEYS, type SheetItemKind } from "./itemIds";
+import { raiseItemCounter } from "./itemIdStore";
+import { STARTER_FOODS } from "../data/starter-foods";
+import { STARTER_DISHES } from "../data/starter-dishes";
 import { DEFAULT_SETTINGS, SETTINGS_KEYS, settingsToRows, type Settings } from "./settings";
 import { INGREDIENTS_HEADERS } from "./ingredients";
 import { DISHES_HEADERS } from "./dishes";
@@ -226,7 +231,12 @@ async function repairStructure({ reports, rowsByTab }: HealthScan): Promise<void
     for (const { tab, plan } of plans) {
       const grid = grids.get(tab);
       if (!grid) throw new Error(`repairSpreadsheet: tab ${tab} disappeared`);
-      prepare.push({ duplicateSheet: { sourceSheetId: grid.sheetId, newSheetName: backupTabName(tab, now) } });
+      // A backup copy only when columns get merged/deleted — adding columns
+      // after the last used one can't lose anything (1.6: no backup-tab
+      // clutter from the silent upgrade).
+      if (plan.deleteColumns.length > 0) {
+        prepare.push({ duplicateSheet: { sourceSheetId: grid.sheetId, newSheetName: backupTabName(tab, now) } });
+      }
       if (plan.requiredColumnCount > grid.columnCount) {
         prepare.push({
           appendDimension: { sheetId: grid.sheetId, dimension: "COLUMNS", length: plan.requiredColumnCount - grid.columnCount },
@@ -236,9 +246,9 @@ async function repairStructure({ reports, rowsByTab }: HealthScan): Promise<void
         deletions.push({ deleteDimension: { range: { sheetId: grid.sheetId, dimension: "COLUMNS", startIndex: col, endIndex: col + 1 } } });
       }
     }
-    await structuralBatchUpdate(prepare);
+    if (prepare.length > 0) await structuralBatchUpdate(prepare);
     if (valueUpdates.length > 0) await batchUpdateRanges(valueUpdates);
-    await structuralBatchUpdate(deletions);
+    if (deletions.length > 0) await structuralBatchUpdate(deletions);
   } else if (valueUpdates.length > 0) {
     await batchUpdateRanges(valueUpdates);
   }
@@ -284,4 +294,134 @@ async function repairLabels({ reports, rowsByTab }: HealthScan): Promise<void> {
 export async function repairSpreadsheet(): Promise<void> {
   await repairStructure(await scanSpreadsheet());
   await repairLabels(await scanSpreadsheet());
+}
+
+// --- Silent upgrades (release 1.6) ---
+//
+// Additive, lossless changes are applied without asking: a missing tab,
+// missing columns (added after the last used one), missing Settings keys,
+// readable names for columns whose name cell is still blank, and the item-ID
+// upgrade (IDs, BasedOn links, recipe ingredient IDs — sheetUpgrade.ts, only
+// ever writing blank cells). The structure dialog is left for what needs a
+// person: someone else's layout, duplicate columns, and rewrites of cells
+// that already hold something (header text, a names row to insert).
+
+const SILENT_BLOCKING_KINDS: ReadonlySet<TabIssue["kind"]> = new Set(["missingTab", "missingColumns", "missingSettingsKeys"]);
+
+/** Readable-name cells (row 2) that are stale only because they're blank — filling them changes nothing that's there. */
+function blankLabelColumns(rows: unknown[][], columns: number[]): number[] {
+  return columns.filter((col) => String(rows[1]?.[col] ?? "").trim() === "");
+}
+
+/** Whether every structural issue on this tab can be fixed silently (so a silent pass can repair it whole). */
+export function isSilentlyRepairable(report: TabReport): boolean {
+  return report.issues.filter(isBlocking).every((issue) => SILENT_BLOCKING_KINDS.has(issue.kind));
+}
+
+async function applySilentRepairs({ reports, rowsByTab }: HealthScan): Promise<boolean> {
+  let changed = false;
+  const missingTabs = reports.filter((r) => r.issues.some((i) => i.kind === "missingTab")).map((r) => r.tab);
+  if (missingTabs.length > 0) {
+    await addSheetTabs(missingTabs);
+    await batchUpdateRanges(buildInitUpdates(missingTabs));
+    changed = true;
+  }
+
+  const valueUpdates: RangeUpdate[] = [];
+  const widen: { tab: string; columns: number }[] = [];
+  for (const report of reports) {
+    const rows = rowsByTab.get(report.tab) ?? [];
+    if (report.tab in DATA_TAB_HEADERS && isSilentlyRepairable(report) && report.issues.some((i) => i.kind === "missingColumns")) {
+      const plan = planTabRepair({ tab: report.tab, issues: report.issues.filter((i) => i.kind === "missingColumns") }, rows);
+      valueUpdates.push(...plan.valueUpdates);
+      widen.push({ tab: report.tab, columns: plan.requiredColumnCount });
+      // and their readable names, if the tab has a names row
+      for (const issue of report.issues) {
+        if (issue.kind !== "missingColumns" || !report.issues.every((i) => i.kind !== "missingLabelRow")) continue;
+        issue.headers.forEach((header, k) => {
+          valueUpdates.push({ range: `${report.tab}!${columnLetter(issue.startColumn + k)}2`, values: [[labelFor(header)]] });
+        });
+      }
+    }
+    for (const issue of report.issues) {
+      if (issue.kind === "missingSettingsKeys") valueUpdates.push(buildSettingsKeyTopUpUpdate(rows.length, issue.keys));
+      if (issue.kind === "staleLabels" && report.tab in DATA_TAB_HEADERS) {
+        const header = rows[0] ?? [];
+        for (const col of blankLabelColumns(rows, issue.columns)) {
+          valueUpdates.push({ range: `${report.tab}!${columnLetter(col)}2`, values: [[labelFor(String(header[col] ?? "").trim())]] });
+        }
+      }
+    }
+  }
+
+  if (widen.length > 0) {
+    const grids = await getTabGrids();
+    const append = widen
+      .map(({ tab, columns }) => ({ grid: grids.get(tab), columns }))
+      .filter((w) => w.grid && w.columns > w.grid.columnCount)
+      .map((w) => ({ appendDimension: { sheetId: w.grid!.sheetId, dimension: "COLUMNS", length: w.columns - w.grid!.columnCount } }));
+    if (append.length > 0) await structuralBatchUpdate(append);
+  }
+  if (valueUpdates.length > 0) {
+    await batchUpdateRanges(valueUpdates);
+    changed = true;
+  }
+  return changed;
+}
+
+function counterValue(settingsRows: unknown[][], kind: SheetItemKind): number {
+  const row = settingsRows.find((r) => String(r[0] ?? "").trim() === ID_COUNTER_KEYS[kind]);
+  return Number(row?.[1]) || 0;
+}
+
+/** Fills in item IDs, BasedOn links and recipe ingredient IDs (only blank cells). Returns whether anything was written. */
+async function applyItemIdUpgrade({ rowsByTab }: HealthScan): Promise<boolean> {
+  const ingredientsRows = rowsByTab.get("Ingredients");
+  const dishesRows = rowsByTab.get("Dishes");
+  if (!ingredientsRows || !dishesRows) return false;
+  const settingsRows = rowsByTab.get("Settings") ?? [];
+  const plan = planItemIdUpgrade({
+    ingredientsRows,
+    dishesRows,
+    builtInFoods: STARTER_FOODS,
+    builtInDishes: STARTER_DISHES,
+    counters: { ingredient: counterValue(settingsRows, "ingredient"), dish: counterValue(settingsRows, "dish") },
+  });
+  if (plan.unresolved.length > 0) {
+    console.warn("Sheet upgrade: recipe ingredients not found (kept by name):", plan.unresolved);
+  }
+  if (plan.valueUpdates.length > 0) await batchUpdateRanges(plan.valueUpdates);
+  for (const kind of ["ingredient", "dish"] as const) {
+    const highest = plan.highestNumber[kind];
+    if (highest !== undefined && highest > counterValue(settingsRows, kind)) await raiseItemCounter(kind, highest);
+  }
+  return plan.valueUpdates.length > 0;
+}
+
+/**
+ * The check the app runs after sign-in / a sheet switch: applies every
+ * silent upgrade first, then reports only what's left for the structure
+ * dialog (which still offers the full repair).
+ */
+export async function checkAndUpgradeSpreadsheet(): Promise<{ reports: TabReport[]; changed: boolean }> {
+  let scan = await scanSpreadsheet();
+  let changed = false;
+  if (await applySilentRepairs(scan)) {
+    changed = true;
+    scan = await scanSpreadsheet();
+  }
+  if (await applyItemIdUpgrade(scan)) {
+    changed = true;
+    scan = await scanSpreadsheet();
+  }
+  const rowsOf = (tab: string) => scan.rowsByTab.get(tab) ?? [];
+  const reports = scan.reports.filter((report) => !report.issues.every((issue) => isSilentIssue(issue, rowsOf(report.tab))));
+  return { reports, changed };
+}
+
+/** An issue the silent pass handles (so it doesn't, on its own, need the dialog). */
+function isSilentIssue(issue: TabIssue, rows: unknown[][]): boolean {
+  if (SILENT_BLOCKING_KINDS.has(issue.kind)) return true;
+  if (issue.kind === "staleLabels") return blankLabelColumns(rows, issue.columns).length === issue.columns.length;
+  return false;
 }

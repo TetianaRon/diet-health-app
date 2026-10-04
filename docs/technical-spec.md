@@ -287,7 +287,7 @@ App suggests (bundle match or USDA lookup) → mom reviews the estimate → mom 
 
 ## Item IDs and the sheet upgrade (release 1.6, designed 2026-10-01)
 
-> **Status:** 📝 Designed with the developer, not built. Comes **before** the verified food database (1.7) and mom's data import (1.8) — see `docs/roadmap.md`.
+> **Status:** ✅ Built in release 1.6 (2026-10-04) as described below — see `docs/build-log.md` for the implementation notes. Comes **before** the verified food database (1.7) and mom's data import (1.8).
 
 **Why:** everything in the sheet is linked **by name** today — `Dishes.IngredientsJson` stores `{name, grams}`, `DailyLog` has only `ItemName`, `findIngredientRow`/`findDishRow` find rows by name, and `mergeWithStarterFoods` lets a sheet row override a built-in item of the same name. Names collide (two «хліб»), need whole sentences to tell apart, and change — 1.7 renames built-in items to proper names, which would silently cut every dish off from its ingredients. IDs make names plain labels.
 

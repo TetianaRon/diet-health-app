@@ -52,6 +52,8 @@ describe("mergeWithStarterDishes", () => {
   it("lets a sheet row override the bundle default for the same name", () => {
     const customized: Dish = {
       ...find("Гречка варена"),
+      id: "D1",
+      basedOn: "",
       caloriesKcal: 999,
       source: "manual",
       dateAdded: "2026-08-13",
@@ -64,6 +66,8 @@ describe("mergeWithStarterDishes", () => {
 
   it("includes sheet-only dishes not in the bundle", () => {
     const custom: Dish = {
+      id: "D1",
+      basedOn: "",
       nameUk: "Борщ",
       nameEn: "borscht",
       ingredients: [],

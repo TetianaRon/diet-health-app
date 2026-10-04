@@ -8,14 +8,42 @@
 // first, Source/DateAdded last, same nutrient column names in between —
 // only IngredientsJson/YieldGrams are Dish-specific, inserted in the middle.
 import { batchUpdateRanges, readRange, writeRange } from "./sheets";
-import { buildColumnIndex, buildRow, cell, columnLetter, parseTab, readColumnIndex, SCAN_LAST_COLUMN, type ColumnIndex, type ParsedTab } from "./sheetRow";
+import { buildColumnIndex, buildRow, cell, columnLetter, parseTab, SCAN_LAST_COLUMN, type ColumnIndex, type ParsedTab } from "./sheetRow";
 import { toGlycemicFlag, type GlycemicFlag } from "./glycemicFlag";
+import { reserveItemId } from "./itemIdStore";
 
 export type DishSource = "starter" | "manual";
 
 export interface DishIngredientRef {
+  // The ingredient's ID (`I12`, or a built-in `B0001`) — the link, since
+  // 1.6. Missing only on recipes saved before 1.6 that the sheet upgrade
+  // couldn't resolve (the name matched nothing); those fall back to the name.
+  id?: string;
+  // Readable snapshot of the ingredient's name when the recipe was saved
+  // (and the pre-1.6 link).
   nameUk: string;
   grams: number;
+}
+
+/** What a recipe ingredient points at: anything with an ID, the built-in ID it copies (if any), and a name. */
+export interface ItemRefTarget {
+  id: string;
+  basedOn: string;
+  nameUk: string;
+}
+
+/**
+ * Finds the item a recipe ingredient (or other reference) points at: by ID —
+ * a saved copy answers for the built-in ID it copies (`basedOn`), since it
+ * replaces that built-in item in lists — else, for a reference without an
+ * ID, by exact name (the pre-1.6 behaviour).
+ */
+export function resolveItemRef<T extends ItemRefTarget>(ref: { id?: string; nameUk: string }, items: readonly T[]): T | null {
+  if (ref.id) {
+    return items.find((item) => item.id === ref.id) ?? items.find((item) => item.basedOn !== "" && item.basedOn === ref.id) ?? null;
+  }
+  const name = ref.nameUk.trim().toLowerCase();
+  return items.find((item) => item.nameUk.trim().toLowerCase() === name) ?? null;
 }
 
 export interface IngredientNutrition {
@@ -56,6 +84,10 @@ export function parseUnknownNutritionFields(value: unknown): NutritionKey[] {
 }
 
 export interface Dish extends IngredientNutrition {
+  // `D12` for the user's dishes, `B0058…` for built-in ones (see itemIds.ts).
+  id: string;
+  // The built-in ID this sheet row is a saved copy of, else "".
+  basedOn: string;
   nameUk: string;
   nameEn: string;
   ingredients: DishIngredientRef[];
@@ -92,14 +124,14 @@ function round2(value: number): number {
  * without lab-testing the specific dish). For a single-ingredient dish this
  * reduces to that ingredient's own GI.
  *
- * `lookupIngredient` returning null for a referenced name (not found) skips
+ * `lookupIngredient` returning null for a reference it can't resolve skips
  * that ingredient's contribution — callers should validate all references
  * resolve before treating the result as final.
  */
 export function computeDishNutrition(
   ingredients: DishIngredientRef[],
   yieldGrams: number,
-  lookupIngredient: (nameUk: string) => IngredientNutrition | null,
+  lookupIngredient: (ref: DishIngredientRef) => IngredientNutrition | null,
 ): IngredientNutrition {
   let totalCarbs = 0;
   let totalFiber = 0;
@@ -112,7 +144,7 @@ export function computeDishNutrition(
   let giWeightBase = 0;
 
   for (const ref of ingredients) {
-    const nutrition = lookupIngredient(ref.nameUk);
+    const nutrition = lookupIngredient(ref);
     if (!nutrition) continue;
 
     const factor = ref.grams / 100;
@@ -154,11 +186,11 @@ export function computeDishNutrition(
  */
 export function computeDishUnknownFields(
   ingredients: DishIngredientRef[],
-  lookupIngredient: (nameUk: string) => (IngredientNutrition & { unknownFields: NutritionKey[] }) | null,
+  lookupIngredient: (ref: DishIngredientRef) => (IngredientNutrition & { unknownFields: NutritionKey[] }) | null,
 ): NutritionKey[] {
   const unknown = new Set<NutritionKey>();
   for (const ref of ingredients) {
-    const ingredient = lookupIngredient(ref.nameUk);
+    const ingredient = lookupIngredient(ref);
     if (!ingredient) continue;
     for (const key of ingredient.unknownFields) if (key !== "gi") unknown.add(key);
     const carbsUnknown = ingredient.unknownFields.includes("carbsG");
@@ -179,10 +211,10 @@ export function computeDishUnknownFields(
  */
 export function dishContainsFlaggedIngredient(
   dish: Dish,
-  lookupIngredientFlag: (nameUk: string) => GlycemicFlag | null,
+  lookupIngredientFlag: (ref: DishIngredientRef) => GlycemicFlag | null,
 ): boolean {
   return dish.ingredients.some((ref) => {
-    const flag = lookupIngredientFlag(ref.nameUk);
+    const flag = lookupIngredientFlag(ref);
     return flag === "watch" || flag === "avoid";
   });
 }
@@ -200,16 +232,25 @@ function toDishSource(value: unknown): DishSource {
   return value === "starter" ? "starter" : "manual";
 }
 
-function parseIngredientsJson(value: unknown): DishIngredientRef[] {
+// Stored as [{"id":"I12","name":"Гречка суха","grams":100}] — `id` since
+// 1.6 (absent on older rows until the sheet upgrade fills it in).
+export function parseIngredientsJson(value: unknown): DishIngredientRef[] {
   try {
     const parsed = JSON.parse(String(value ?? "[]"));
     if (!Array.isArray(parsed)) return [];
     return parsed
-      .filter((item): item is { name: string; grams: number } => typeof item?.name === "string")
-      .map((item) => ({ nameUk: item.name, grams: toNumber(item.grams) }));
+      .filter((item): item is { id?: unknown; name: string; grams: number } => typeof item?.name === "string")
+      .map((item) => {
+        const id = typeof item.id === "string" && item.id.trim() !== "" ? item.id.trim() : undefined;
+        return { ...(id ? { id } : {}), nameUk: item.name, grams: toNumber(item.grams) };
+      });
   } catch {
     return [];
   }
+}
+
+export function serializeIngredientsJson(ingredients: readonly DishIngredientRef[]): string {
+  return JSON.stringify(ingredients.map((i) => ({ ...(i.id ? { id: i.id } : {}), name: i.nameUk, grams: i.grams })));
 }
 
 // Canonical column order — what a brand-new sheet gets initialized with (see
@@ -237,6 +278,8 @@ export const DISHES_HEADERS = [
   "GlycemicFlag",
   "GiVerified",
   "UnknownFields",
+  "Id",
+  "BasedOn",
 ] as const;
 const DEFAULT_COLUMN_INDEX = buildColumnIndex(DISHES_HEADERS);
 
@@ -245,6 +288,8 @@ const DISHES_APPEND_RANGE = `A:${SCAN_LAST_COLUMN}`;
 
 export function rowToDish(row: unknown[], columnIndex: ColumnIndex = DEFAULT_COLUMN_INDEX): Dish {
   return {
+    id: String(cell(row, columnIndex, "Id") ?? "").trim(),
+    basedOn: String(cell(row, columnIndex, "BasedOn") ?? "").trim(),
     nameUk: String(cell(row, columnIndex, "NameUk") ?? ""),
     nameEn: String(cell(row, columnIndex, "NameEn") ?? ""),
     ingredients: parseIngredientsJson(cell(row, columnIndex, "IngredientsJson")),
@@ -270,7 +315,7 @@ export function dishToRow(dish: Dish, columnIndex: ColumnIndex = DEFAULT_COLUMN_
     {
       NameUk: dish.nameUk,
       NameEn: dish.nameEn,
-      IngredientsJson: JSON.stringify(dish.ingredients.map((i) => ({ name: i.nameUk, grams: i.grams }))),
+      IngredientsJson: serializeIngredientsJson(dish.ingredients),
       YieldGrams: dish.yieldGrams,
       Carbs_g: dish.carbsG,
       GI: dish.gi,
@@ -285,6 +330,8 @@ export function dishToRow(dish: Dish, columnIndex: ColumnIndex = DEFAULT_COLUMN_
       GlycemicFlag: dish.glycemicFlag,
       GiVerified: dish.giVerified,
       UnknownFields: dish.unknownFields.join(","),
+      Id: dish.id,
+      BasedOn: dish.basedOn,
     },
     columnIndex,
   );
@@ -299,41 +346,42 @@ export async function listDishes(): Promise<Dish[]> {
   return dataRows.filter((row) => row.length > 0).map((row) => rowToDish(row, columnIndex));
 }
 
+/** Appends a new dish with the next free `D…` ID and returns it as saved. */
 export async function addDish(
-  dish: Omit<Dish, "dateAdded" | "glycemicFlag">,
+  dish: Omit<Dish, "dateAdded" | "glycemicFlag" | "id" | "basedOn"> & { basedOn?: string },
   glycemicFlag: GlycemicFlag = "none",
-): Promise<void> {
-  const withDate: Dish = { ...dish, dateAdded: new Date().toISOString().slice(0, 10), glycemicFlag };
-  const columnIndex = await readColumnIndex("Dishes", DISHES_HEADERS);
-  await writeRange("Dishes", DISHES_APPEND_RANGE, [dishToRow(withDate, columnIndex)]);
+): Promise<Dish> {
+  const { columnIndex, dataRows } = await readDishesSheet();
+  const id = await reserveItemId("dish", dataRows.map((row) => cell(row, columnIndex, "Id")));
+  const saved: Dish = { ...dish, id, basedOn: dish.basedOn ?? "", dateAdded: new Date().toISOString().slice(0, 10), glycemicFlag };
+  await writeRange("Dishes", DISHES_APPEND_RANGE, [dishToRow(saved, columnIndex)]);
+  return saved;
 }
 
-async function findDishRow(nameUk: string): Promise<{ rowNumber: number; columnIndex: ColumnIndex }> {
+async function findDishRow(id: string): Promise<{ rowNumber: number; columnIndex: ColumnIndex }> {
   const { columnIndex, dataRows, firstDataRow } = await readDishesSheet();
-  const rowIndex = dataRows.findIndex(
-    (row) => String(cell(row, columnIndex, "NameUk") ?? "").trim().toLowerCase() === nameUk.trim().toLowerCase(),
-  );
+  const rowIndex = dataRows.findIndex((row) => String(cell(row, columnIndex, "Id") ?? "").trim() === id);
   if (rowIndex === -1) {
-    throw new Error(`"${nameUk}" not found in Dishes`);
+    throw new Error(`Dish ${id} not found in Dishes`);
   }
   return { rowNumber: rowIndex + firstDataRow, columnIndex };
 }
 
-/** Sets the GlycemicFlag column for an existing Dishes row, found by exact nameUk match. */
-export async function setDishGlycemicFlag(nameUk: string, glycemicFlag: GlycemicFlag): Promise<void> {
-  const { rowNumber, columnIndex } = await findDishRow(nameUk);
+/** Sets the GlycemicFlag column for an existing Dishes row, found by its ID. */
+export async function setDishGlycemicFlag(id: string, glycemicFlag: GlycemicFlag): Promise<void> {
+  const { rowNumber, columnIndex } = await findDishRow(id);
   const col = columnIndex.get("GlycemicFlag");
   if (col === undefined) throw new Error('Dishes sheet has no "GlycemicFlag" column');
   await batchUpdateRanges([{ range: `Dishes!${columnLetter(col)}${rowNumber}`, values: [[glycemicFlag]] }]);
 }
 
 /**
- * Overwrites an existing Dishes row in place, found by its *current* nameUk
- * (i.e. before any rename in `dish`) — the edit flow's counterpart to
- * addDish's always-append behavior. Same principle as updateIngredient.
+ * Overwrites an existing Dishes row in place, found by its ID — the edit
+ * flow's counterpart to addDish's always-append behavior. A rename is just
+ * part of the same write: nothing refers to a dish by name any more (1.6).
  */
-export async function updateDish(currentNameUk: string, dish: Dish): Promise<void> {
-  const { rowNumber, columnIndex } = await findDishRow(currentNameUk);
+export async function updateDish(dish: Dish): Promise<void> {
+  const { rowNumber, columnIndex } = await findDishRow(dish.id);
   const lastCol = columnLetter(Math.max(...columnIndex.values()));
   await batchUpdateRanges([{ range: `Dishes!A${rowNumber}:${lastCol}${rowNumber}`, values: [dishToRow(dish, columnIndex)] }]);
 }

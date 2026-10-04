@@ -21,6 +21,11 @@ export type NutritionField = keyof IngredientNutrition | "gl";
 export interface DailyLogEntry extends IngredientNutrition {
   timestamp: string; // ISO
   mealType: MealType;
+  // Which item this row was logged from (`B…`, `I…` or `D…`, since 1.6);
+  // "" for custom entries and rows logged before 1.6 (those are never
+  // back-filled — a name may have meant different items over time).
+  itemId: string;
+  // Readable snapshot of the item's name when it was logged.
   itemName: string;
   portionGrams: number;
   gl: number;
@@ -65,6 +70,7 @@ export const DAILY_LOG_HEADERS = [
   "Notes",
   "MealId",
   "UnknownFields",
+  "ItemId",
 ] as const;
 const DEFAULT_COLUMN_INDEX = buildColumnIndex(DAILY_LOG_HEADERS);
 
@@ -149,6 +155,7 @@ export function buildLogEntry(
   mealId: string,
   timestamp: string = new Date().toISOString(),
   itemUnknownFields: NutritionKey[] = [],
+  itemId = "",
 ): DailyLogEntry {
   const portion = computePortionNutrition(per100g, portionGrams);
   const unknownFields: NutritionField[] = [...itemUnknownFields];
@@ -157,6 +164,7 @@ export function buildLogEntry(
   return {
     timestamp,
     mealType,
+    itemId,
     itemName,
     portionGrams,
     ...portion,
@@ -216,6 +224,7 @@ export function buildCustomLogEntry(
   return {
     timestamp,
     mealType,
+    itemId: "",
     itemName,
     portionGrams,
     ...portion,
@@ -384,6 +393,7 @@ export function rowToLogEntry(row: unknown[], columnIndex: ColumnIndex = DEFAULT
   return {
     timestamp,
     mealType: toMealType(cell(row, columnIndex, "MealType")),
+    itemId: String(cell(row, columnIndex, "ItemId") ?? "").trim(),
     itemName: String(cell(row, columnIndex, "ItemName") ?? ""),
     portionGrams: toNumber(cell(row, columnIndex, "PortionGrams")),
     carbsG: toNumber(cell(row, columnIndex, "Carbs_g")),
@@ -420,6 +430,7 @@ export function logEntryToRow(entry: DailyLogEntry, columnIndex: ColumnIndex = D
       Notes: entry.notes,
       MealId: entry.mealId,
       UnknownFields: entry.unknownFields.join(","),
+      ItemId: entry.itemId,
     },
     columnIndex,
   );

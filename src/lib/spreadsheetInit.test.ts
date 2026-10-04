@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildInitUpdates,
+  isSilentlyRepairable,
   analyzeSettingsTab,
   buildSettingsKeyTopUpUpdate,
   planSettingsLabelRepair,
@@ -119,5 +120,30 @@ describe("Settings tab names", () => {
   it("reports nothing extra for an up-to-date Settings tab", () => {
     const rows = buildInitUpdates(["Settings"]).flatMap((u) => u.values);
     expect(analyzeSettingsTab(rows)).toEqual([]);
+  });
+});
+
+describe("isSilentlyRepairable", () => {
+  it("is true when every structural issue is additive (new columns, tab, settings keys)", () => {
+    expect(
+      isSilentlyRepairable({
+        tab: "Ingredients",
+        issues: [{ kind: "missingColumns", headers: ["Id", "BasedOn"], startColumn: 16 }, { kind: "staleLabels", columns: [16, 17] }],
+      }),
+    ).toBe(true);
+    expect(isSilentlyRepairable({ tab: "Settings", issues: [{ kind: "missingSettingsKeys", keys: ["X"] }] })).toBe(true);
+  });
+
+  it("is false when columns would be merged/deleted or the layout is someone else's", () => {
+    expect(
+      isSilentlyRepairable({
+        tab: "Ingredients",
+        issues: [
+          { kind: "missingColumns", headers: ["Id"], startColumn: 16 },
+          { kind: "duplicateColumns", header: "GI", columns: [3, 9], keep: 3, conflictRows: [] },
+        ],
+      }),
+    ).toBe(false);
+    expect(isSilentlyRepairable({ tab: "Dishes", issues: [{ kind: "notAppLayout" }] })).toBe(false);
   });
 });

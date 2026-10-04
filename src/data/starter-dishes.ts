@@ -61,49 +61,46 @@
 //   Chickpeas:      GI 28. Matches the commonly-cited figure closely. Kept.
 
 import { STARTER_FOODS } from "./starter-foods";
-import { computeDishNutrition, type Dish } from "../lib/dishes";
+import { computeDishNutrition, type Dish, type DishIngredientRef } from "../lib/dishes";
+import { mergeBuiltInsById } from "../lib/itemIds";
 
-function lookupStarterFood(nameUk: string) {
-  const food = STARTER_FOODS.find((f) => f.nameUk === nameUk);
-  return food ?? null;
+function lookupStarterFood(ref: DishIngredientRef) {
+  return STARTER_FOODS.find((f) => f.id === ref.id) ?? null;
 }
 
 interface StarterDishSpec {
+  // Permanent built-in ID — same rules as StarterFood.id (numbering
+  // continues across both built-in files).
+  id: string;
   nameUk: string;
   nameEn: string;
-  rawNameUk: string;
+  rawId: string;
   yieldGrams: number;
 }
 
 const STARTER_DISH_SPECS: StarterDishSpec[] = [
-  { nameUk: "Гречка варена", nameEn: "buckwheat, cooked", rawNameUk: "Гречка суха", yieldGrams: 360 },
-  { nameUk: "Рис білий варений", nameEn: "white rice, cooked", rawNameUk: "Рис білий сирий", yieldGrams: 280 },
-  { nameUk: "Рис бурий варений", nameEn: "brown rice, cooked", rawNameUk: "Рис бурий сирий", yieldGrams: 335 },
-  {
-    nameUk: "Вівсяна каша на воді",
-    nameEn: "oatmeal, cooked with water",
-    rawNameUk: "Вівсяні пластівці сирі",
-    yieldGrams: 550,
-  },
-  { nameUk: "Пшоно варене", nameEn: "millet, cooked", rawNameUk: "Пшоно сире", yieldGrams: 320 },
-  { nameUk: "Перлова крупа варена", nameEn: "pearl barley, cooked", rawNameUk: "Перлова крупа суха", yieldGrams: 280 },
-  { nameUk: "Манна каша варена", nameEn: "semolina, cooked", rawNameUk: "Манна крупа суха", yieldGrams: 500 },
-  {
-    nameUk: "Кукурудзяна каша варена",
-    nameEn: "cornmeal, cooked",
-    rawNameUk: "Кукурудзяна крупа суха",
-    yieldGrams: 375,
-  },
-  { nameUk: "Макарони варені", nameEn: "pasta, cooked", rawNameUk: "Макарони сухі", yieldGrams: 290 },
-  { nameUk: "Квасоля варена", nameEn: "kidney beans, cooked", rawNameUk: "Квасоля суха", yieldGrams: 260 },
-  { nameUk: "Сочевиця варена", nameEn: "lentils, cooked", rawNameUk: "Сочевиця суха", yieldGrams: 300 },
-  { nameUk: "Нут варений", nameEn: "chickpeas, cooked", rawNameUk: "Нут сухий", yieldGrams: 225 },
+  { id: "B0058", nameUk: "Гречка варена", nameEn: "buckwheat, cooked", rawId: "B0001", yieldGrams: 360 },
+  { id: "B0059", nameUk: "Рис білий варений", nameEn: "white rice, cooked", rawId: "B0002", yieldGrams: 280 },
+  { id: "B0060", nameUk: "Рис бурий варений", nameEn: "brown rice, cooked", rawId: "B0003", yieldGrams: 335 },
+  { id: "B0061", nameUk: "Вівсяна каша на воді", nameEn: "oatmeal, cooked with water", rawId: "B0004", yieldGrams: 550 },
+  { id: "B0062", nameUk: "Пшоно варене", nameEn: "millet, cooked", rawId: "B0005", yieldGrams: 320 },
+  { id: "B0063", nameUk: "Перлова крупа варена", nameEn: "pearl barley, cooked", rawId: "B0006", yieldGrams: 280 },
+  { id: "B0064", nameUk: "Манна каша варена", nameEn: "semolina, cooked", rawId: "B0007", yieldGrams: 500 },
+  { id: "B0065", nameUk: "Кукурудзяна каша варена", nameEn: "cornmeal, cooked", rawId: "B0008", yieldGrams: 375 },
+  { id: "B0066", nameUk: "Макарони варені", nameEn: "pasta, cooked", rawId: "B0009", yieldGrams: 290 },
+  { id: "B0067", nameUk: "Квасоля варена", nameEn: "kidney beans, cooked", rawId: "B0025", yieldGrams: 260 },
+  { id: "B0068", nameUk: "Сочевиця варена", nameEn: "lentils, cooked", rawId: "B0026", yieldGrams: 300 },
+  { id: "B0069", nameUk: "Нут варений", nameEn: "chickpeas, cooked", rawId: "B0027", yieldGrams: 225 },
 ];
 
 export const STARTER_DISHES: Omit<Dish, "dateAdded">[] = STARTER_DISH_SPECS.map((spec) => {
-  const ingredients = [{ nameUk: spec.rawNameUk, grams: 100 }];
+  const raw = STARTER_FOODS.find((f) => f.id === spec.rawId);
+  if (!raw) throw new Error(`starter dish ${spec.id}: raw ingredient ${spec.rawId} not found`);
+  const ingredients: DishIngredientRef[] = [{ id: raw.id, nameUk: raw.nameUk, grams: 100 }];
   const nutrition = computeDishNutrition(ingredients, spec.yieldGrams, lookupStarterFood);
   return {
+    id: spec.id,
+    basedOn: "",
     nameUk: spec.nameUk,
     nameEn: spec.nameEn,
     ingredients,
@@ -120,17 +117,13 @@ export const STARTER_DISHES: Omit<Dish, "dateAdded">[] = STARTER_DISH_SPECS.map(
  * Merges the bundled starter dishes with the personal Dishes sheet, so the
  * whole bundle is browsable/pickable (Dishes list, meal logging) without
  * first requiring each one to be individually saved — same principle as
- * mergeWithStarterFoods in lib/ingredients.ts. Sheet rows take precedence
- * for the same name. Lives here rather than in lib/dishes.ts to avoid a
- * circular import (this file already depends on lib/dishes.ts).
+ * mergeWithStarterFoods in lib/ingredients.ts (a saved copy, `basedOn`,
+ * takes the built-in dish's place). Lives here rather than in lib/dishes.ts
+ * to avoid a circular import (this file already depends on lib/dishes.ts).
  */
 export function mergeWithStarterDishes(sheetDishes: Dish[]): Dish[] {
-  const byKey = new Map<string, Dish>();
-  for (const dish of STARTER_DISHES) {
-    byKey.set(dish.nameUk.trim().toLowerCase(), { ...dish, dateAdded: "" });
-  }
-  for (const dish of sheetDishes) {
-    byKey.set(dish.nameUk.trim().toLowerCase(), dish);
-  }
-  return [...byKey.values()];
+  return mergeBuiltInsById(
+    STARTER_DISHES.map((dish) => ({ ...dish, dateAdded: "" })),
+    sheetDishes,
+  );
 }

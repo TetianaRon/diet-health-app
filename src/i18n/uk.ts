@@ -226,9 +226,6 @@ export const uk = {
       unknownHint:
         "Невідомі значення (наприклад, ГІ) можна залишити порожніми — вони збережуться як «невідомо» і не враховуватимуться в підсумках.",
       unknownPlaceholder: "невідомо",
-      duplicateNameWarning: (name: string) =>
-        `Продукт «${name}» вже є у вашому списку. Зберегти однаково? Існуючий запис буде замінено новими даними.`,
-      confirmOverwriteButton: "Так, замінити",
       giVerifiedLabel: "Я перевірив(ла) глікемічний індекс за надійним джерелом",
       sourceLabel: "Джерело",
       source: {
@@ -474,6 +471,9 @@ export const uk = {
       GL: "Глікемічне навантаження",
       Notes: "Примітки",
       MealId: "Ідентифікатор прийому їжі",
+      Id: "Ідентифікатор",
+      BasedOn: "Копія вбудованого",
+      ItemId: "Ідентифікатор продукту/страви",
       ValueMmolL: "Цукор, ммоль/л",
       Context: "Контекст",
       Key: "Ключ",
@@ -482,6 +482,13 @@ export const uk = {
     } as Record<string, string>,
   },
   breadcrumb: { label: "Навігація" },
+  duplicateName: {
+    exists: (kind: "ingredient" | "dish", name: string) => `${kind === "dish" ? "Страва" : "Продукт"} «${name}» уже є`,
+    card: (calories: number, source: string) => `${calories} ккал на 100 г · ${source}`,
+    useExisting: "Це він — використати наявний",
+    rename: (name: string) => `Це інший — назвати «${name}»`,
+    hint: "Краще додати марку чи вид — так легше розрізнити.",
+  },
   auth: {
     sessionExpiredBanner:
       "Вхід у Google завершився (так буває приблизно через годину). Увійдіть знову, щоб продовжити — введене на екрані не зникне.",

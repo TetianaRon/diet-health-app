@@ -31,6 +31,8 @@ import { formatStats } from "./MealStatsLine";
 import { entryStatItems } from "../lib/mealStats";
 
 export interface PickableFood {
+  // `B…` / `I…` / `D…` — stored on the meal row (DailyLog.ItemId, 1.6).
+  id: string;
   nameUk: string;
   nameEn: string;
   glycemicFlag: GlycemicFlag;
@@ -41,11 +43,12 @@ export interface PickableFood {
 }
 
 export function toPickable(
-  item: { nameUk: string; nameEn: string; glycemicFlag: GlycemicFlag; unknownFields: NutritionKey[] } & IngredientNutrition,
+  item: { id: string; nameUk: string; nameEn: string; glycemicFlag: GlycemicFlag; unknownFields: NutritionKey[] } & IngredientNutrition,
 ): PickableFood {
-  const { nameUk, nameEn, glycemicFlag, unknownFields, carbsG, gi, fiberG, sugarsG, proteinG, fatG, caloriesKcal, sodiumMg } =
+  const { id, nameUk, nameEn, glycemicFlag, unknownFields, carbsG, gi, fiberG, sugarsG, proteinG, fatG, caloriesKcal, sodiumMg } =
     item;
   return {
+    id,
     nameUk,
     nameEn,
     glycemicFlag,
@@ -170,6 +173,7 @@ function AddDishToMealForm({
           mealId,
           timestamp,
           selected.unknownFields,
+          selected.id,
         ),
       );
       return;
@@ -209,7 +213,7 @@ function AddDishToMealForm({
           {matches.length > 0 && (
             <ul className="food-list">
               {matches.slice(0, 20).map((food) => (
-                <li key={food.nameUk} className="food-list-item-with-action">
+                <li key={food.id} className="food-list-item-with-action">
                   <span>
                     {food.glycemicFlag !== "none" && (
                       <span aria-hidden="true" className={`glycemic-inline ${food.glycemicFlag}`}>

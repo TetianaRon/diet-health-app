@@ -244,6 +244,27 @@ select {
   font-size: 0.95rem;
 }
 
+/* Duplicate-name check (DuplicateNameNotice): same amber family as the
+   search notices — a question to answer, not an error. */
+.duplicate-notice {
+  background: #fdf3e1;
+  color: #6b4a0e;
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.duplicate-notice p {
+  margin: 0;
+}
+
+.duplicate-notice .food-form-hint {
+  color: #6b4a0e;
+  margin: 0;
+}
+
 .food-list-note {
   font-size: 0.85rem;
   color: #6b6b6b;

@@ -24,6 +24,8 @@ describe("rowToIngredient", () => {
     ];
 
     expect(rowToIngredient(row)).toEqual({
+      id: "",
+      basedOn: "",
       nameUk: "Гречка",
       nameEn: "buckwheat, cooked",
       carbsG: 19.9,
@@ -71,6 +73,8 @@ describe("rowToIngredient with stored values (not display text)", () => {
 
 describe("ingredientToRow", () => {
   const ingredient: Ingredient = {
+    id: "I1",
+    basedOn: "",
     nameUk: "Кефір",
     nameEn: "kefir, low-fat",
     carbsG: 4.0,
@@ -112,6 +116,8 @@ describe("ingredientToRow", () => {
       "Favorite",
       "GlycemicFlag",
       "GiVerified",
+      "BasedOn",
+      "Id",
     ]);
     const row = ingredientToRow(ingredient, reordered);
     expect(row[2]).toBe(32); // GI now in column C
@@ -122,6 +128,8 @@ describe("ingredientToRow", () => {
 
 describe("sortFavoritesFirst", () => {
   const base = {
+    id: "I1",
+    basedOn: "",
     nameEn: "",
     carbsG: 0,
     gi: 0,
@@ -169,6 +177,8 @@ describe("mergeWithStarterFoods", () => {
   it("lets a sheet row override the bundle default for the same name (e.g. a favorited or edited entry)", () => {
     const bundleEntry = STARTER_FOODS[0];
     const savedVersion: Ingredient = {
+      id: "I1",
+      basedOn: "",
       nameUk: bundleEntry.nameUk,
       nameEn: bundleEntry.nameEn,
       carbsG: bundleEntry.carbsG,
@@ -196,6 +206,8 @@ describe("mergeWithStarterFoods", () => {
 
   it("includes sheet-only ingredients not in the bundle", () => {
     const custom: Ingredient = {
+      id: "I1",
+      basedOn: "",
       nameUk: "Дуже рідкісний продукт",
       nameEn: "rare food",
       carbsG: 1,

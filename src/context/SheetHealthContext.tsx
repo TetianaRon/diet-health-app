@@ -5,7 +5,7 @@
 // dialog (SheetHealthDialog), instead of only on the Settings screen.
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { useAuth } from "./AuthContext";
-import { checkSpreadsheetHealth, repairSpreadsheet } from "../lib/spreadsheetInit";
+import { checkAndUpgradeSpreadsheet, repairSpreadsheet } from "../lib/spreadsheetInit";
 import { getSpreadsheetName } from "../lib/sheets";
 import { onSheetStructureError } from "../lib/sheetRow";
 import type { TabReport } from "../lib/sheetSchema";
@@ -51,10 +51,14 @@ export function SheetHealthProvider({ children }: { children: ReactNode }) {
     setCheckError(null);
     setDismissed(false);
     try {
-      const [result, name] = await Promise.all([checkSpreadsheetHealth(), getSpreadsheetName().catch(() => null)]);
+      // Silent, lossless upgrades (new columns, item IDs…) are applied here;
+      // only what's left needs the dialog. If anything was written, screens
+      // remount and re-read, so they don't keep rows loaded before the IDs.
+      const [result, name] = await Promise.all([checkAndUpgradeSpreadsheet(), getSpreadsheetName().catch(() => null)]);
       if (id === latestCheck.current) {
-        setReports(result);
+        setReports(result.reports);
         setSpreadsheetName(name);
+        if (result.changed) setVersion((v) => v + 1);
       }
     } catch (err) {
       if (id === latestCheck.current) {
