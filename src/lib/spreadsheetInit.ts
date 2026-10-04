@@ -9,7 +9,7 @@
 //
 // "Initialize a blank spreadsheet": a genuinely blank Google Sheet only has
 // its own single default tab, so every read this app makes fails. The init
-// flow only ever adds the 5 tabs this app expects — never touches or removes
+// flow only ever adds the tabs this app expects — never touches or removes
 // anything a sheet already has.
 import { addSheetTabs, batchUpdateRanges, getTabGrids, listSheetTitles, readRanges, structuralBatchUpdate } from "./sheets";
 import { columnLetter, SCAN_LAST_COLUMN } from "./sheetRow";
@@ -25,22 +25,29 @@ import { INGREDIENTS_HEADERS } from "./ingredients";
 import { DISHES_HEADERS } from "./dishes";
 import { DAILY_LOG_HEADERS } from "./dailyLog";
 import { BLOOD_SUGAR_HEADERS } from "./bloodSugar";
+import { MEDICATIONS_HEADERS, MEDICATION_LOG_HEADERS } from "./medications";
+import { WEIGHT_HEADERS } from "./weight";
 import { uk } from "../i18n/uk";
 
-export const REQUIRED_TABS = ["Ingredients", "Dishes", "DailyLog", "BloodSugar", "Settings"] as const;
+// Medications, MedicationLog and Weight since 1.7 — on an existing sheet
+// they're created silently by the upgrade (a missing tab is additive).
+export const REQUIRED_TABS = ["Ingredients", "Dishes", "DailyLog", "BloodSugar", "Medications", "MedicationLog", "Weight", "Settings"] as const;
 
 const DATA_TAB_HEADERS: Record<string, readonly string[]> = {
   Ingredients: INGREDIENTS_HEADERS,
   Dishes: DISHES_HEADERS,
   DailyLog: DAILY_LOG_HEADERS,
   BloodSugar: BLOOD_SUGAR_HEADERS,
+  Medications: MEDICATIONS_HEADERS,
+  MedicationLog: MEDICATION_LOG_HEADERS,
+  Weight: WEIGHT_HEADERS,
 };
 
 const SETTINGS_HEADERS = ["Key", "Value", "Label"] as const;
 
 type RangeUpdate = { range: string; values: unknown[][] };
 
-/** Which of the 5 required tabs aren't in a spreadsheet's actual tab list — pure, so it's testable without a live sheet. */
+/** Which of the required tabs aren't in a spreadsheet's actual tab list — pure, so it's testable without a live sheet. */
 export function missingTabs(existingTitles: string[]): string[] {
   const present = new Set(existingTitles);
   return REQUIRED_TABS.filter((tab) => !present.has(tab));
@@ -85,7 +92,7 @@ export async function checkSpreadsheetTabs(): Promise<string[]> {
   return missingTabs(titles);
 }
 
-/** Creates whichever of the 5 required tabs are missing and fills each with its header/default rows. No-op if all 5 already exist. */
+/** Creates whichever of the required tabs are missing and fills each with its header/default rows. No-op if all already exist. */
 export async function initializeSpreadsheet(): Promise<void> {
   const missing = await checkSpreadsheetTabs();
   if (missing.length === 0) return;
