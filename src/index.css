@@ -222,26 +222,78 @@ select {
   margin: 0;
 }
 
-/* Sign-in expired (SessionExpiredBanner): stays at the top while scrolling,
-   above the screen, which keeps whatever is being edited. */
-.session-banner {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  background: #fdf3e1;
-  color: #6b4a0e;
-  border-bottom: 1px solid #ecd7ad;
-  padding: 10px 16px;
+/* Notification toasts (Toaster / NotificationsContext): one queue, never
+   overlapping. Phone: full width just above the tab bar. Computer (see the
+   desktop section): bottom-right corner. */
+.toaster {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  width: min(480px, 100%);
+  padding: 0 12px;
+  box-sizing: border-box;
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 12px;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 30;
+  pointer-events: none;
 }
 
-.session-banner p {
+.toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px 12px 12px 14px;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid #e2e6e2;
+  border-left: 4px solid #2f7a4f;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+}
+
+/* Needs action: amber accent, like the other "please do something" notes. */
+.toast-action {
+  border-left-color: #d79a2b;
+  background: #fffaf0;
+}
+
+.toast-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.toast-title,
+.toast-detail {
   margin: 0;
-  flex: 1 1 260px;
   font-size: 0.95rem;
+}
+
+.toast-title {
+  font-weight: 600;
+}
+
+.toast-detail {
+  color: #4a4a4a;
+}
+
+.toast-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.toast-close {
+  background: transparent;
+  color: #6b6b6b;
+  border: none;
+  padding: 2px 6px;
+  font-size: 1rem;
+  line-height: 1;
 }
 
 /* Duplicate-name check (DuplicateNameNotice): same amber family as the
@@ -888,6 +940,16 @@ select {
    with large items plus Settings as a labelled item, and the content gets a
    wide, centred area. Phones are unchanged. */
 @media (min-width: 1000px) {
+  /* Toasts sit in the bottom-right corner on a computer. */
+  .toaster {
+    left: auto;
+    right: 24px;
+    bottom: 24px;
+    transform: none;
+    width: 380px;
+    padding: 0;
+  }
+
   html {
     font-size: 125%;
   }

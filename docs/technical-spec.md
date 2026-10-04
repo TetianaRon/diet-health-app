@@ -341,6 +341,16 @@ As designed 2026-09-27 (see *Label photos… → 1. Item IDs* below), now part o
 ### Rollout
 Build and test against the dev sheet holding a copy of mom's real sheet: every dish's ingredients must resolve (list any that don't before release); check a meal, a favourite, a rename and a dish edit afterwards. Then release; her sheet upgrades itself silently on first open.
 
+## App notifications (release 1.6, 2026-10-04)
+
+One standard for app-level messages (`src/context/NotificationsContext.tsx`, `src/screens/Toaster.tsx`, `src/screens/AppNotifications.tsx`):
+- **One queue, never overlapping:** a column of toasts, bottom-right on a computer (≥1000 px), full width just above the tab bar on a phone; at most 3 visible, the rest wait in order. One notice per key (showing a key again replaces it).
+- **Info** (e.g. «Таблицю оновлено…»): closes by itself after 8 s, paused while «Детальніше» is open; ✕ closes earlier.
+- **Action** (e.g. «Вхід у Google завершився — Увійти знову», «Таблицю потрібно виправити — Переглянути»): stays until acted on or closed; closing = "later" and it returns at the next check (sign-in, sheet switch, app start). A notice whose problem blocks the app with no other way out (expired sign-in) has **no ✕**.
+- `AppNotifications` is the only place that decides which app-level notices exist; new ones are added there.
+- **Not in the queue:** messages tied to one spot — form errors, the search's translation notice, Today's reminder-access notice — stay where they are.
+- A notification centre (bell + history) was considered and left out for now (one user; info notices are of passing interest and action ones stay visible) — can be added on top of the same queue.
+
 ## Label photos, drafts and the 3-day update window (planned 2026-09-27)
 
 > **Status:** 📝 Designed with the developer, not built yet. Changes the "meals are static records" rule — see *3-day update window* below.

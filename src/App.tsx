@@ -3,7 +3,9 @@ import { Capacitor } from "@capacitor/core";
 import { LocalNotifications } from "@capacitor/local-notifications";
 import { StatusBar, Style } from "@capacitor/status-bar";
 import { uk } from "./i18n/uk";
-import SessionExpiredBanner from "./screens/SessionExpiredBanner";
+import AppNotifications from "./screens/AppNotifications";
+import Toaster from "./screens/Toaster";
+import { NotificationsProvider } from "./context/NotificationsContext";
 import { AuthProvider } from "./context/AuthContext";
 import { SheetHealthProvider, useSheetHealth } from "./context/SheetHealthContext";
 import SheetHealthDialog from "./screens/SheetHealthDialog";
@@ -58,6 +60,8 @@ export default function App() {
   return (
     <AuthProvider>
       <SheetHealthProvider>
+      <NotificationsProvider>
+      <AppNotifications />
       <div className="app">
         {!editorOpen && (
         <div className="app-header">
@@ -77,7 +81,6 @@ export default function App() {
         </div>
         )}
 
-        <SessionExpiredBanner />
 
         {/* Keyed on the repair count: a repaired spreadsheet remounts the screens so they re-read it. */}
         <ScreensAfterRepair>
@@ -96,6 +99,7 @@ export default function App() {
         </ScreensAfterRepair>
 
         <SheetHealthDialog onOpenSettings={() => setActiveTab("settings")} />
+        <Toaster />
 
         {!editorOpen && (
           <nav className="tab-bar">
@@ -112,6 +116,7 @@ export default function App() {
           </nav>
         )}
       </div>
+      </NotificationsProvider>
       </SheetHealthProvider>
     </AuthProvider>
   );

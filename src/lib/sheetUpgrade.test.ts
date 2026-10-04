@@ -33,6 +33,8 @@ describe("planItemIdUpgrade — IDs and links", () => {
       { range: "Ingredients!D4", values: [["I2"]] },
     ]);
     expect(result.highestNumber.ingredient).toBe(2);
+    expect(result.idsFilled).toBe(2);
+    expect(result.idsRenumbered).toBe(0);
   });
 
   it("links a row named like a built-in item to it (how copies were stored before 1.6)", () => {
@@ -59,6 +61,7 @@ describe("planItemIdUpgrade — IDs and links", () => {
       ["Кефір", "kefir", 4, "I1", ""],
     ]);
     expect(result.valueUpdates).toEqual([{ range: "Ingredients!D4", values: [["I2"]] }]);
+    expect(result.idsRenumbered).toBe(1);
   });
 
   it("never touches a filled BasedOn cell or blank rows", () => {

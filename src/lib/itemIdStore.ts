@@ -35,8 +35,11 @@ export async function reserveItemId(kind: SheetItemKind, existingIds: readonly u
   return formatItemId(kind, number);
 }
 
-/** Raises the counter to at least `number` (after the sheet upgrade numbered existing rows). */
-export async function raiseItemCounter(kind: SheetItemKind, number: number): Promise<void> {
-  const counter = await readCounterRow(kind);
-  if (number > counter.value) await writeCounter(kind, counter.rowNumber, number);
+/**
+ * Sets the counter (after the sheet upgrade numbered existing rows), using
+ * Settings rows already read from A1 — no extra read request.
+ */
+export async function writeItemCounter(kind: SheetItemKind, value: number, settingsRows: readonly unknown[][]): Promise<void> {
+  const index = settingsRows.findIndex((row) => String(row[0] ?? "").trim() === ID_COUNTER_KEYS[kind]);
+  await writeCounter(kind, index === -1 ? null : index + 1, value);
 }

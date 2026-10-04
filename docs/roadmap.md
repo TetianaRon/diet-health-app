@@ -62,7 +62,7 @@ Replaces the free MyMemory service, whose small daily limit (5,000 characters, a
 - **Record in `build-log.md`:** why MyMemory was picked originally (live-test quick fix, no server back then, avoiding costs) and that its limit wasn't checked, especially after per-result back-translation multiplied usage ~20×.
 - **Result (2026-10-01):** live on the web and released to Play. Verified: live endpoint (site + Android origins work, other sites refused), the Android build on the emulator against it (2 translation requests per search instead of 21), developer tested the web search. Budget alert at $1 set; the API key kept (it was shown once in a session transcript — restricted to Translation and capped, developer chose to keep it). Privacy policy updated on roncreator.com (also corrects the Android sign-in token wording).
 
-### 1.6 — Item IDs and the sheet upgrade · 👀 built, tested on a copy of mom's sheet — ready to release
+### 1.6 — Item IDs, sheet upgrade, notifications · 👀 built and tested — ready to release
 **Why first (decided 2026-10-01):** the sheet links everything **by name** today — dish recipes list ingredient names, meal rows only carry the item name, edits find rows by name. The verified database (1.7) renames items to proper names, which would cut every dish off from its ingredients unless links go by ID first; mom's data import (1.8) writes rows that need IDs and labels too. The database *file* can be prepared alongside, but its renamed content ships only after this.
 Full design: spec → "Item IDs and the sheet upgrade (release 1.6)".
 - **IDs that never change and are never reused:** built-in items `B0001…` (fixed in the app's data files; retired ones point to their replacement), the user's items `I1, I2…` (Ingredients) and `D1, D2…` (Dishes), numbered within her sheet. Names stay labels only.
@@ -70,6 +70,7 @@ Full design: spec → "Item IDs and the sheet upgrade (release 1.6)".
 - **Lossless, silent upgrade** of existing sheets: new columns/tabs added and IDs filled in without asking (only blank cells are written); recipe ingredients resolved from names to IDs, with unresolved ones reported, never dropped.
 - **Duplicate-name check** when naming an item: «Це він — використати наявний» / «Це інший — назвати «… 2»».
 - Test on a copy of mom's sheet (the dev sheet) before release.
+- **Added during testing (2026-10-04):** read-limit fix (one batch read per check, automatic retry on 429, Ukrainian message); a one-time note after a silent upgrade (what changed + Файл → Історія версій); **one notification standard** — toasts in a single non-overlapping queue, info closes itself, action stays (spec → "App notifications").
 
 ### 1.7 — Verified food database · 📝 planned (after 1.6)
 - **Format** (`src/data/verified-foods.json`, also the source of the public pages on roncreator.com later): per entry the permanent `B` ID, family + state (raw / boiled / baked / canned…), Ukrainian + English names, values per 100 g, **nutrient source** (dataset + entry ID + description + version), **GI with its own source** (table + entry), reliability (high / medium / low) + **reasoning in Ukrainian and English**, verified dates. An automatic test refuses any entry missing a source, reliability, reason or date.
@@ -94,6 +95,14 @@ Spec: "Planned: spreadsheet detection + Google Picker". Auto-detect the user's s
 
 ### 2.1 — Food families in the dish composer · 📝 planned
 Spec: "Planned: food families with cooking states". Raw weight + state in the finished dish; carbs by mass balance, GI from the cooked state; published whole-dish GI shown only as a check. The data already exists from 1.7/1.8.
+
+### 2.x — Local-first app, free and paid versions · 💡 idea, design needed (developer, 2026-10-04)
+Prompted by the read-limit errors (429) in the 1.6 test. Not scheduled — needs its own design before any building.
+- **Local-first storage:** the app keeps its data on the device (IndexedDB in the WebView, or a native SQLite plugin for robustness), reads instantly and offline; Google Sheets becomes an optional **sync target** (send changes, fetch others' changes) instead of being read on every screen. Removes the read-limit problem at the root.
+- **Sync engine** — the hard part: phone + computer on one sheet, offline edits on both, deletions. 1.6's permanent IDs are the foundation; also needs per-row "last changed" times and deletion markers; "latest edit of a row wins" suits mostly-append data (meals, readings). A series of releases, not one.
+- **Fully local version without Google sign-in:** data only on the phone → needs **export/backup** (file, Android backup) against loss; the web version can't share data without sync.
+- **Free vs paid** (only what costs the developer goes paid): free = local app, bundled verified database (1.7/1.8, Ukrainian search, offline), manual entry, meals, blood sugar, reminders; paid = USDA search with translation (Translation API), AI label reading, and sync across devices (Sheets itself costs nothing — a product choice). Payments: **Google Play billing** first (Android only, 15%); a paid web version would need its own accounts and payments.
+- **Open questions:** storage technology; sync rules and conflicts; backup format; exact free/paid split; subscription vs one-time; public launch prep (OAuth verification, store listing, privacy policy).
 
 ### Later (unordered)
 - **Label photos + zoom → drafts (photo/name-only, loggable) → 3-day update window → Google Lens** (spec: "Label photos, drafts and the 3-day update window")

@@ -5,7 +5,7 @@
 // dialog (SheetHealthDialog), instead of only on the Settings screen.
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { useAuth } from "./AuthContext";
-import { checkAndUpgradeSpreadsheet, repairSpreadsheet } from "../lib/spreadsheetInit";
+import { checkAndUpgradeSpreadsheet, repairSpreadsheet, type UpgradeSummary } from "../lib/spreadsheetInit";
 import { getSpreadsheetName } from "../lib/sheets";
 import { onSheetStructureError } from "../lib/sheetRow";
 import type { TabReport } from "../lib/sheetSchema";
@@ -21,11 +21,22 @@ interface SheetHealthContextValue {
   repairError: string | null;
   /** Bumped after every repair attempt, so screens can remount and re-read. */
   version: number;
+  /**
+   * Something needs a person (a repair, or a failed one) and it wasn't
+   * dismissed since the last check — shown as an action toast
+   * (AppNotifications), which can open the details dialog.
+   */
+  needsAttention: boolean;
+  /** The details/repair dialog is open (only ever via openDetails). */
   dialogOpen: boolean;
+  openDetails: () => void;
   /** Re-checks and re-opens the dialog if anything is found. */
   check: () => Promise<void>;
   repair: () => Promise<void>;
   dismissDialog: () => void;
+  /** What the last silent upgrade changed (null when nothing did, or once dismissed). */
+  upgradeSummary: UpgradeSummary | null;
+  dismissUpgradeSummary: () => void;
 }
 
 const SheetHealthContext = createContext<SheetHealthContextValue | null>(null);
@@ -39,7 +50,10 @@ export function SheetHealthProvider({ children }: { children: ReactNode }) {
   const [repairError, setRepairError] = useState<string | null>(null);
   const [version, setVersion] = useState(0);
   const [dismissed, setDismissed] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const [spreadsheetName, setSpreadsheetName] = useState<string | null>(null);
+  // What the last silent upgrade changed — shown once (SheetUpgradeNotice) until dismissed.
+  const [upgradeSummary, setUpgradeSummary] = useState<UpgradeSummary | null>(null);
   // Only the latest check's result counts — several screens can trip over
   // the same broken tab at once, and a slow earlier check must not
   // overwrite a newer one (e.g. after switching spreadsheets).
@@ -50,6 +64,7 @@ export function SheetHealthProvider({ children }: { children: ReactNode }) {
     setChecking(true);
     setCheckError(null);
     setDismissed(false);
+    setDetailsOpen(false);
     try {
       // Silent, lossless upgrades (new columns, item IDs…) are applied here;
       // only what's left needs the dialog. If anything was written, screens
@@ -58,7 +73,10 @@ export function SheetHealthProvider({ children }: { children: ReactNode }) {
       if (id === latestCheck.current) {
         setReports(result.reports);
         setSpreadsheetName(name);
-        if (result.changed) setVersion((v) => v + 1);
+        if (result.upgrade) {
+          setUpgradeSummary(result.upgrade);
+          setVersion((v) => v + 1);
+        }
       }
     } catch (err) {
       if (id === latestCheck.current) {
@@ -102,7 +120,17 @@ export function SheetHealthProvider({ children }: { children: ReactNode }) {
     }
   }, [check]);
 
-  const dialogOpen = signedIn && !dismissed && (repairError !== null || (reports !== null && reports.length > 0));
+  // Stable functions: AppNotifications puts them into toasts.
+  const openDetails = useCallback(() => setDetailsOpen(true), []);
+  const dismissDialog = useCallback(() => {
+    setDismissed(true);
+    setDetailsOpen(false);
+    setRepairError(null);
+  }, []);
+  const dismissUpgradeSummary = useCallback(() => setUpgradeSummary(null), []);
+
+  const needsAttention = signedIn && !dismissed && (repairError !== null || (reports !== null && reports.length > 0));
+  const dialogOpen = needsAttention && detailsOpen;
 
   return (
     <SheetHealthContext.Provider
@@ -114,13 +142,14 @@ export function SheetHealthProvider({ children }: { children: ReactNode }) {
         repairing,
         repairError,
         version,
+        needsAttention,
         dialogOpen,
+        openDetails,
         check,
         repair,
-        dismissDialog: () => {
-          setDismissed(true);
-          setRepairError(null);
-        },
+        dismissDialog,
+        upgradeSummary,
+        dismissUpgradeSummary,
       }}
     >
       {children}

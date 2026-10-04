@@ -11,13 +11,13 @@
 // its own single default tab, so every read this app makes fails. The init
 // flow only ever adds the 5 tabs this app expects — never touches or removes
 // anything a sheet already has.
-import { addSheetTabs, batchUpdateRanges, getTabGrids, listSheetTitles, readRange, structuralBatchUpdate } from "./sheets";
+import { addSheetTabs, batchUpdateRanges, getTabGrids, listSheetTitles, readRanges, structuralBatchUpdate } from "./sheets";
 import { columnLetter, SCAN_LAST_COLUMN } from "./sheetRow";
 import { labelFor } from "./sheetLabels";
 import { analyzeDataTab, isBlocking, isTabRepairable, planLabelRepair, planTabRepair, type TabIssue, type TabReport } from "./sheetSchema";
 import { planItemIdUpgrade } from "./sheetUpgrade";
 import { ID_COUNTER_KEYS, type SheetItemKind } from "./itemIds";
-import { raiseItemCounter } from "./itemIdStore";
+import { writeItemCounter } from "./itemIdStore";
 import { STARTER_FOODS } from "../data/starter-foods";
 import { STARTER_DISHES } from "../data/starter-dishes";
 import { DEFAULT_SETTINGS, SETTINGS_KEYS, settingsToRows, type Settings } from "./settings";
@@ -175,15 +175,18 @@ async function scanSpreadsheet(): Promise<HealthScan> {
   const reports: TabReport[] = [];
   const rowsByTab = new Map<string, unknown[][]>();
 
+  // Every existing tab in ONE read request (Google counts reads per minute).
+  const present = REQUIRED_TABS.filter((tab) => existingTabs.has(tab));
+  const allRows = await readRanges(present.map((tab) => ({ tab, range: tab === "Settings" ? SETTINGS_TAB_RANGE : DATA_TAB_RANGE })));
+  present.forEach((tab, i) => rowsByTab.set(tab, allRows[i]));
+
   for (const tab of REQUIRED_TABS) {
     if (!existingTabs.has(tab)) {
       reports.push({ tab, issues: [{ kind: "missingTab" }] });
       continue;
     }
-    const isSettings = tab === "Settings";
-    const rows = await readRange(tab, isSettings ? SETTINGS_TAB_RANGE : DATA_TAB_RANGE);
-    rowsByTab.set(tab, rows);
-    const issues = isSettings ? analyzeSettingsTab(rows) : analyzeDataTab(tab, rows, DATA_TAB_HEADERS[tab]).issues;
+    const rows = rowsByTab.get(tab) ?? [];
+    const issues = tab === "Settings" ? analyzeSettingsTab(rows) : analyzeDataTab(tab, rows, DATA_TAB_HEADERS[tab]).issues;
     if (issues.length > 0) reports.push({ tab, issues });
   }
   return { reports, rowsByTab };
@@ -318,12 +321,28 @@ export function isSilentlyRepairable(report: TabReport): boolean {
   return report.issues.filter(isBlocking).every((issue) => SILENT_BLOCKING_KINDS.has(issue.kind));
 }
 
-async function applySilentRepairs({ reports, rowsByTab }: HealthScan): Promise<boolean> {
+/** What a silent upgrade changed — shown to the user once (SheetUpgradeNotice), with the way back. */
+export interface UpgradeSummary {
+  addedTabs: string[];
+  /** Readable names of the columns added. */
+  addedColumns: string[];
+  /** Readable-name cells filled in for columns that had none. */
+  labelsFilled: number;
+  idsFilled: number;
+  idsRenumbered: number;
+}
+
+function emptySummary(): UpgradeSummary {
+  return { addedTabs: [], addedColumns: [], labelsFilled: 0, idsFilled: 0, idsRenumbered: 0 };
+}
+
+async function applySilentRepairs({ reports, rowsByTab }: HealthScan, summary: UpgradeSummary): Promise<boolean> {
   let changed = false;
   const missingTabs = reports.filter((r) => r.issues.some((i) => i.kind === "missingTab")).map((r) => r.tab);
   if (missingTabs.length > 0) {
     await addSheetTabs(missingTabs);
     await batchUpdateRanges(buildInitUpdates(missingTabs));
+    summary.addedTabs.push(...missingTabs);
     changed = true;
   }
 
@@ -334,6 +353,9 @@ async function applySilentRepairs({ reports, rowsByTab }: HealthScan): Promise<b
     if (report.tab in DATA_TAB_HEADERS && isSilentlyRepairable(report) && report.issues.some((i) => i.kind === "missingColumns")) {
       const plan = planTabRepair({ tab: report.tab, issues: report.issues.filter((i) => i.kind === "missingColumns") }, rows);
       valueUpdates.push(...plan.valueUpdates);
+      for (const issue of report.issues) {
+        if (issue.kind === "missingColumns") summary.addedColumns.push(...issue.headers.map((h) => labelFor(h)));
+      }
       widen.push({ tab: report.tab, columns: plan.requiredColumnCount });
       // and their readable names, if the tab has a names row
       for (const issue of report.issues) {
@@ -349,6 +371,7 @@ async function applySilentRepairs({ reports, rowsByTab }: HealthScan): Promise<b
         const header = rows[0] ?? [];
         for (const col of blankLabelColumns(rows, issue.columns)) {
           valueUpdates.push({ range: `${report.tab}!${columnLetter(col)}2`, values: [[labelFor(String(header[col] ?? "").trim())]] });
+          summary.labelsFilled++;
         }
       }
     }
@@ -375,7 +398,7 @@ function counterValue(settingsRows: unknown[][], kind: SheetItemKind): number {
 }
 
 /** Fills in item IDs, BasedOn links and recipe ingredient IDs (only blank cells). Returns whether anything was written. */
-async function applyItemIdUpgrade({ rowsByTab }: HealthScan): Promise<boolean> {
+async function applyItemIdUpgrade({ rowsByTab }: HealthScan, summary: UpgradeSummary): Promise<boolean> {
   const ingredientsRows = rowsByTab.get("Ingredients");
   const dishesRows = rowsByTab.get("Dishes");
   if (!ingredientsRows || !dishesRows) return false;
@@ -391,9 +414,11 @@ async function applyItemIdUpgrade({ rowsByTab }: HealthScan): Promise<boolean> {
     console.warn("Sheet upgrade: recipe ingredients not found (kept by name):", plan.unresolved);
   }
   if (plan.valueUpdates.length > 0) await batchUpdateRanges(plan.valueUpdates);
+  summary.idsFilled += plan.idsFilled;
+  summary.idsRenumbered += plan.idsRenumbered;
   for (const kind of ["ingredient", "dish"] as const) {
     const highest = plan.highestNumber[kind];
-    if (highest !== undefined && highest > counterValue(settingsRows, kind)) await raiseItemCounter(kind, highest);
+    if (highest !== undefined && highest > counterValue(settingsRows, kind)) await writeItemCounter(kind, highest, settingsRows);
   }
   return plan.valueUpdates.length > 0;
 }
@@ -403,20 +428,21 @@ async function applyItemIdUpgrade({ rowsByTab }: HealthScan): Promise<boolean> {
  * silent upgrade first, then reports only what's left for the structure
  * dialog (which still offers the full repair).
  */
-export async function checkAndUpgradeSpreadsheet(): Promise<{ reports: TabReport[]; changed: boolean }> {
+export async function checkAndUpgradeSpreadsheet(): Promise<{ reports: TabReport[]; upgrade: UpgradeSummary | null }> {
   let scan = await scanSpreadsheet();
+  const summary = emptySummary();
   let changed = false;
-  if (await applySilentRepairs(scan)) {
+  if (await applySilentRepairs(scan, summary)) {
     changed = true;
     scan = await scanSpreadsheet();
   }
-  if (await applyItemIdUpgrade(scan)) {
+  if (await applyItemIdUpgrade(scan, summary)) {
     changed = true;
     scan = await scanSpreadsheet();
   }
   const rowsOf = (tab: string) => scan.rowsByTab.get(tab) ?? [];
   const reports = scan.reports.filter((report) => !report.issues.every((issue) => isSilentIssue(issue, rowsOf(report.tab))));
-  return { reports, changed };
+  return { reports, upgrade: changed ? summary : null };
 }
 
 /** An issue the silent pass handles (so it doesn't, on its own, need the dialog). */

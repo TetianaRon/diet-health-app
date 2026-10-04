@@ -9,7 +9,7 @@ interface AuthContextValue {
   /**
    * The Google sign-in ran out (about an hour on the web) while the app was
    * open. `signedIn` deliberately stays true so screens keep what's on them
-   * (a meal being typed); SessionExpiredBanner asks to sign in again, and
+   * (a meal being typed); an action toast (AppNotifications) asks to sign in again, and
    * requests fail with SessionExpiredError until then.
    */
   sessionExpired: boolean;

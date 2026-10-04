@@ -1,0 +1,30 @@
+import { describe, expect, it } from "vitest";
+import { upgradeNoticeLines } from "./SheetUpgradeNotice";
+
+const base = { addedTabs: [], addedColumns: [], labelsFilled: 0, idsFilled: 0, idsRenumbered: 0 };
+
+describe("upgradeNoticeLines", () => {
+  it("lists added columns once each, says only empty cells were filled, and gives the way back", () => {
+    const lines = upgradeNoticeLines({
+      ...base,
+      addedColumns: ["Ідентифікатор", "Копія вбудованого", "Ідентифікатор"],
+      idsFilled: 3,
+    });
+    expect(lines).toEqual([
+      "Додано стовпці: «Ідентифікатор», «Копія вбудованого».",
+      "Продуктам і стравам присвоєно ідентифікатори.",
+      "Заповнено лише порожні клітинки — ваші дані не змінено.",
+      "Попередню версію таблиці можна відновити в Google Таблицях: Файл → Історія версій.",
+    ]);
+  });
+
+  it("is honest when a repeated ID had to be replaced", () => {
+    const lines = upgradeNoticeLines({ ...base, idsRenumbered: 1 });
+    expect(lines).toContain("Повторювані ідентифікатори замінено новими (1).");
+    expect(lines).not.toContain("Заповнено лише порожні клітинки — ваші дані не змінено.");
+  });
+
+  it("mentions new tabs", () => {
+    expect(upgradeNoticeLines({ ...base, addedTabs: ["Medications"] })[0]).toBe("Додано вкладки: Medications.");
+  });
+});

@@ -23,6 +23,10 @@ export interface UpgradePlan {
   highestNumber: Partial<Record<SheetItemKind, number>>;
   /** Recipe ingredients whose name matched nothing — kept as they are (name only), never dropped. */
   unresolved: { dishRow: number; dishName: string; ingredientName: string }[];
+  /** Rows that got an ID in a blank cell. */
+  idsFilled: number;
+  /** Rows whose repeated ID was replaced — the one change to a filled cell; reported to the user. */
+  idsRenumbered: number;
 }
 
 interface TabView {
@@ -80,6 +84,8 @@ function planIdsAndLinks(
     // A blank cell or a repeated ID gets a fresh number. Anything else typed
     // there by hand is left as it is.
     if (id === "" || seen.has(id)) {
+      if (id === "") plan.idsFilled++;
+      else plan.idsRenumbered++;
       id = formatItemId(kind, next++);
       plan.valueUpdates.push({ range: `${tab}!${columnLetter(idCol)}${sheetRow}`, values: [[id]] });
     }
@@ -104,7 +110,7 @@ export function planItemIdUpgrade(input: {
   builtInDishes: readonly BuiltInRef[];
   counters: Partial<Record<SheetItemKind, number>>;
 }): UpgradePlan {
-  const plan: UpgradePlan = { valueUpdates: [], highestNumber: {}, unresolved: [] };
+  const plan: UpgradePlan = { valueUpdates: [], highestNumber: {}, unresolved: [], idsFilled: 0, idsRenumbered: 0 };
 
   const ingredients = viewOf(input.ingredientsRows);
   const ingredientIds = planIdsAndLinks("Ingredients", ingredients, "ingredient", input.builtInFoods, input.counters.ingredient ?? 0, plan);

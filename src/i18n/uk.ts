@@ -482,12 +482,32 @@ export const uk = {
     } as Record<string, string>,
   },
   breadcrumb: { label: "Навігація" },
+  sheetUpgrade: {
+    title: "Таблицю оновлено для нової версії застосунку.",
+    addedTabs: (names: string) => `Додано вкладки: ${names}.`,
+    addedColumns: (names: string) => `Додано стовпці: ${names}.`,
+    labelsFilled: "Додано назви стовпців.",
+    idsFilled: "Продуктам і стравам присвоєно ідентифікатори.",
+    idsRenumbered: (count: number) => `Повторювані ідентифікатори замінено новими (${count}).`,
+    onlyEmptyCells: "Заповнено лише порожні клітинки — ваші дані не змінено.",
+    history: "Попередню версію таблиці можна відновити в Google Таблицях: Файл → Історія версій.",
+    dismiss: "Зрозуміло",
+  },
   duplicateName: {
     exists: (kind: "ingredient" | "dish", name: string) => `${kind === "dish" ? "Страва" : "Продукт"} «${name}» уже є`,
     card: (calories: number, source: string) => `${calories} ккал на 100 г · ${source}`,
     useExisting: "Це він — використати наявний",
     rename: (name: string) => `Це інший — назвати «${name}»`,
     hint: "Краще додати марку чи вид — так легше розрізнити.",
+  },
+  notifications: {
+    review: "Переглянути",
+    more: "Детальніше",
+    less: "Згорнути",
+    close: "Закрити",
+  },
+  errors: {
+    rateLimited: "Google тимчасово обмежив кількість запитів до таблиці. Зачекайте хвилину й спробуйте знову.",
   },
   auth: {
     sessionExpiredBanner:

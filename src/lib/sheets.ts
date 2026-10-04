@@ -91,6 +91,24 @@ let accessTokenExpiresAt: number | null = null;
 let sessionExpired = false;
 const sessionExpiredListeners = new Set<() => void>();
 
+/** Thrown when Google keeps refusing requests as too many per minute, even after waiting and retrying. */
+export class RateLimitError extends Error {
+  constructor() {
+    super(uk.errors.rateLimited);
+    this.name = "RateLimitError";
+  }
+}
+
+// Google allows about 60 reads per minute per user. When it answers 429
+// ("too many requests"), wait and try again — 1 s, 2 s, 4 s, Google's own
+// recommended exponential backoff — before giving up with a readable message
+// (seen 2026-10-04: the raw English error ended up on the Today screen).
+const RATE_LIMIT_RETRY_DELAYS_MS = [1000, 2000, 4000];
+
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 /** Thrown by requests made after the sign-in expired — the message asks to sign in again and retry. */
 export class SessionExpiredError extends Error {
   constructor() {
@@ -432,6 +450,12 @@ async function authorizedFetchUrl(url: string, init?: RequestInit): Promise<Resp
     });
 
   let response = await doFetch();
+  for (const delay of RATE_LIMIT_RETRY_DELAYS_MS) {
+    if (response.status !== 429) break;
+    await wait(delay);
+    response = await doFetch();
+  }
+  if (response.status === 429) throw new RateLimitError();
 
   // A 401 usually just means the ~1hr access token expired mid-session —
   // e.g. the app sat backgrounded for a while. Try one silent refresh (a
@@ -503,6 +527,33 @@ const READ_OPTIONS = "valueRenderOption=UNFORMATTED_VALUE&dateTimeRenderOption=F
 /** True if the most recent readRange() call fell back to cached data instead of a live fetch — check after fetching to decide whether to show an "offline" hint. */
 export function wasLastReadFromCache(): boolean {
   return lastReadWasFromCache;
+}
+
+/**
+ * Reads several ranges in ONE request (values:batchGet) — each counts once
+ * against Google's per-minute read limit instead of once per tab. Same value
+ * rendering and offline fallback as readRange, per range.
+ */
+export async function readRanges(requests: { tab: string; range: string }[]): Promise<unknown[][][]> {
+  if (requests.length === 0) return [];
+  const spreadsheetId = getSpreadsheetId();
+  const params = new URLSearchParams(READ_OPTIONS);
+  for (const { tab, range } of requests) params.append("ranges", `${tab}!${range}`);
+  try {
+    const response = await authorizedFetch(`${spreadsheetId}/values:batchGet?${params}`);
+    const data = await response.json();
+    const valueRanges = (data.valueRanges ?? []) as { values?: unknown[][] }[];
+    const results = requests.map((_, i) => valueRanges[i]?.values ?? []);
+    requests.forEach(({ tab, range }, i) => localStorage.setItem(readCacheKey(tab, range), JSON.stringify(results[i])));
+    lastReadWasFromCache = false;
+    return results;
+  } catch (err) {
+    if (!(err instanceof TypeError)) throw err;
+    const cached = requests.map(({ tab, range }) => localStorage.getItem(readCacheKey(tab, range)));
+    if (cached.some((c) => c === null)) throw err;
+    lastReadWasFromCache = true;
+    return cached.map((c) => JSON.parse(c as string) as unknown[][]);
+  }
 }
 
 /** Reads a range, e.g. readRange("Ingredients", "A1:L200"). Falls back to the last successful read for this exact tab/range if the network is unreachable — see the comment above. */
