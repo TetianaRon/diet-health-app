@@ -30,6 +30,12 @@ describe("buildColumnIndex / cell", () => {
 });
 
 describe("buildRow", () => {
+  it("leaves columns the app doesn't write as null, so a row rewrite keeps their cells", () => {
+    // e.g. the old Timestamp column after the Weight migration, or a column the user added
+    const columnIndex = buildColumnIndex(["Timestamp", "WeightKg", "Notes", "Date"]);
+    expect(buildRow({ Date: "'2026-10-04", WeightKg: 89.6, Notes: "" }, columnIndex)).toEqual([null, 89.6, "", "'2026-10-04"]);
+  });
+
   it("places each field at its header's actual column position", () => {
     const columnIndex = buildColumnIndex(["NameUk", "GI", "Carbs_g"]);
     const row = buildRow({ NameUk: "Гречка", Carbs_g: 19.9, GI: 54 }, columnIndex);

@@ -154,7 +154,11 @@ export function cell(row: readonly unknown[], columnIndex: ColumnIndex, headerNa
  */
 export function buildRow(fields: Record<string, unknown>, columnIndex: ColumnIndex): unknown[] {
   const maxIndex = Math.max(-1, ...columnIndex.values());
-  const row: unknown[] = new Array(maxIndex + 1).fill("");
+  // Columns the app doesn't write (an old column a migration replaced, or one
+  // the user added) get null: the Sheets API skips null values, so a row
+  // rewrite leaves those cells exactly as they are. "" would blank them —
+  // seen 2026-10-05 when editing a weight wiped the old Timestamp cell.
+  const row: unknown[] = new Array(maxIndex + 1).fill(null);
   for (const [headerName, value] of Object.entries(fields)) {
     const i = columnIndex.get(headerName);
     if (i !== undefined) row[i] = value;

@@ -9,13 +9,14 @@
 //
 // "Initialize a blank spreadsheet": a genuinely blank Google Sheet only has
 // its own single default tab, so every read this app makes fails. The init
-// flow only ever adds the 5 tabs this app expects — never touches or removes
+// flow only ever adds the tabs this app expects — never touches or removes
 // anything a sheet already has.
 import { addSheetTabs, batchUpdateRanges, getTabGrids, listSheetTitles, readRanges, structuralBatchUpdate } from "./sheets";
 import { columnLetter, SCAN_LAST_COLUMN } from "./sheetRow";
 import { labelFor } from "./sheetLabels";
 import { analyzeDataTab, isBlocking, isTabRepairable, planLabelRepair, planTabRepair, type TabIssue, type TabReport } from "./sheetSchema";
 import { planItemIdUpgrade } from "./sheetUpgrade";
+import { planColumnMigrations } from "./columnMigrations";
 import { ID_COUNTER_KEYS, type SheetItemKind } from "./itemIds";
 import { writeItemCounter } from "./itemIdStore";
 import { STARTER_FOODS } from "../data/starter-foods";
@@ -25,22 +26,29 @@ import { INGREDIENTS_HEADERS } from "./ingredients";
 import { DISHES_HEADERS } from "./dishes";
 import { DAILY_LOG_HEADERS } from "./dailyLog";
 import { BLOOD_SUGAR_HEADERS } from "./bloodSugar";
+import { MEDICATIONS_HEADERS, MEDICATION_LOG_HEADERS } from "./medications";
+import { WEIGHT_HEADERS } from "./weight";
 import { uk } from "../i18n/uk";
 
-export const REQUIRED_TABS = ["Ingredients", "Dishes", "DailyLog", "BloodSugar", "Settings"] as const;
+// Medications, MedicationLog and Weight since 1.7 — on an existing sheet
+// they're created silently by the upgrade (a missing tab is additive).
+export const REQUIRED_TABS = ["Ingredients", "Dishes", "DailyLog", "BloodSugar", "Medications", "MedicationLog", "Weight", "Settings"] as const;
 
 const DATA_TAB_HEADERS: Record<string, readonly string[]> = {
   Ingredients: INGREDIENTS_HEADERS,
   Dishes: DISHES_HEADERS,
   DailyLog: DAILY_LOG_HEADERS,
   BloodSugar: BLOOD_SUGAR_HEADERS,
+  Medications: MEDICATIONS_HEADERS,
+  MedicationLog: MEDICATION_LOG_HEADERS,
+  Weight: WEIGHT_HEADERS,
 };
 
 const SETTINGS_HEADERS = ["Key", "Value", "Label"] as const;
 
 type RangeUpdate = { range: string; values: unknown[][] };
 
-/** Which of the 5 required tabs aren't in a spreadsheet's actual tab list — pure, so it's testable without a live sheet. */
+/** Which of the required tabs aren't in a spreadsheet's actual tab list — pure, so it's testable without a live sheet. */
 export function missingTabs(existingTitles: string[]): string[] {
   const present = new Set(existingTitles);
   return REQUIRED_TABS.filter((tab) => !present.has(tab));
@@ -85,7 +93,7 @@ export async function checkSpreadsheetTabs(): Promise<string[]> {
   return missingTabs(titles);
 }
 
-/** Creates whichever of the 5 required tabs are missing and fills each with its header/default rows. No-op if all 5 already exist. */
+/** Creates whichever of the required tabs are missing and fills each with its header/default rows. No-op if all already exist. */
 export async function initializeSpreadsheet(): Promise<void> {
   const missing = await checkSpreadsheetTabs();
   if (missing.length === 0) return;
@@ -330,10 +338,12 @@ export interface UpgradeSummary {
   labelsFilled: number;
   idsFilled: number;
   idsRenumbered: number;
+  /** Column migrations that filled a new column from an old one (readable names). */
+  migrated: { to: string; from: string; cells: number }[];
 }
 
 function emptySummary(): UpgradeSummary {
-  return { addedTabs: [], addedColumns: [], labelsFilled: 0, idsFilled: 0, idsRenumbered: 0 };
+  return { addedTabs: [], addedColumns: [], labelsFilled: 0, idsFilled: 0, idsRenumbered: 0, migrated: [] };
 }
 
 async function applySilentRepairs({ reports, rowsByTab }: HealthScan, summary: UpgradeSummary): Promise<boolean> {
@@ -423,6 +433,15 @@ async function applyItemIdUpgrade({ rowsByTab }: HealthScan, summary: UpgradeSum
   return plan.valueUpdates.length > 0;
 }
 
+/** Fills new columns from old ones where a release changed a column's meaning (columnMigrations.ts). */
+async function applyColumnMigrations({ rowsByTab }: HealthScan, summary: UpgradeSummary): Promise<boolean> {
+  const plan = planColumnMigrations(rowsByTab);
+  if (plan.valueUpdates.length === 0) return false;
+  await batchUpdateRanges(plan.valueUpdates);
+  summary.migrated.push(...plan.applied.map((a) => ({ to: labelFor(a.to), from: labelFor(a.from), cells: a.cells })));
+  return true;
+}
+
 /**
  * The check the app runs after sign-in / a sheet switch: applies every
  * silent upgrade first, then reports only what's left for the structure
@@ -433,6 +452,10 @@ export async function checkAndUpgradeSpreadsheet(): Promise<{ reports: TabReport
   const summary = emptySummary();
   let changed = false;
   if (await applySilentRepairs(scan, summary)) {
+    changed = true;
+    scan = await scanSpreadsheet();
+  }
+  if (await applyColumnMigrations(scan, summary)) {
     changed = true;
     scan = await scanSpreadsheet();
   }

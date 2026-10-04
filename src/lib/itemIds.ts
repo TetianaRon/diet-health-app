@@ -6,17 +6,19 @@
 //   B0001…  built-in items, fixed in src/data (never changed, never reused)
 //   I1, I2… the user's ingredients (Ingredients tab)
 //   D1, D2… the user's dishes (Dishes tab)
+//   M1, M2… the user's medicines (Medications tab, 1.7)
 // The prefix is the item's kind, never a status: whether a built-in item is
 // verified is recorded per part of the entry (1.7), not in its ID.
 
-export type SheetItemKind = "ingredient" | "dish";
+export type SheetItemKind = "ingredient" | "dish" | "medication";
 
-const PREFIX: Record<SheetItemKind, string> = { ingredient: "I", dish: "D" };
+const PREFIX: Record<SheetItemKind, string> = { ingredient: "I", dish: "D", medication: "M" };
 
 /** Settings-tab keys holding the never-reuse counters (the highest number ever handed out). */
 export const ID_COUNTER_KEYS: Record<SheetItemKind, string> = {
   ingredient: "NextIngredientNumber",
   dish: "NextDishNumber",
+  medication: "NextMedicationNumber",
 };
 
 export function formatItemId(kind: SheetItemKind, number: number): string {

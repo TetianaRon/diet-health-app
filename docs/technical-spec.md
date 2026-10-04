@@ -324,6 +324,13 @@ Run by the structure check after sign-in / sheet switch. **Only blank cells are 
 
 **Silent vs. asking (changes the structure-check dialog):** additive, lossless repairs — missing tab, missing columns, missing Settings keys, missing IDs / `BasedOn` / recipe IDs — are applied **without the dialog**. The dialog stays only for what needs a person: someone else's layout (`notAppLayout`), duplicate columns with conflicting values, and the presentation rewrites that move or rewrite existing cells (inserting the readable-names row, rewriting header text). This is also the mechanism 1.8 and 1.9 rely on for their new columns and tabs.
 
+### Column migrations — when a released column changes meaning (added in 1.7, developer, 2026-10-05)
+Additive upgrades can't carry data over when a column's meaning changes (first case: Weight `Timestamp` → `Date`, one record per day). A manual fix isn't acceptable for a public app, so `src/lib/columnMigrations.ts` declares migrations — `{ tab, from, to, convert }` — and the silent upgrade, right after adding the new column, **fills the new column's empty cells by converting the old column's values**. The old column stays exactly as it was (the app just stops reading it); filled cells are never overwritten; the one-time note says «Стовпець «Дата» заповнено зі стовпця «Час»». Pure, unit-tested.
+
+**Row rewrites keep other columns:** when the app rewrites a row (edits), columns it doesn't manage — an old migrated column, or a column the user added — are sent as `null`, which the Sheets API skips, so those cells stay as they are (`buildRow`, fixed 2026-10-05 after an edit wiped the old Weight `Timestamp` cell).
+
+**Rule for every release from now on:** a change to the sheet is either **additive** (new tab/column/settings key) or ships **with a column migration**. Columns are never removed or rewritten automatically; anything needing that goes to the structure dialog for a person.
+
 ### The app working by ID
 - **Lists / pickers:** built-in items merged with the user's rows **by ID**: a row with `BasedOn = B0042` replaces `B0042`; everything else is listed as it is (two «Яблуко» can coexist — each shows its kind/source).
 - **Edits, favourite, glycemic flag, rename:** find the row by `Id`. Renaming is safe — nothing refers to the name any more.
@@ -470,7 +477,7 @@ Three tabs: **Сьогодні | Історія | Страви**; Settings stays
 ### Сьогодні — one surface for entering and reading the day
 Blocks, top to bottom:
 1. **Daily status** — calories bar, GL bar and the other limits switched on in Settings (as today).
-2. **Weight bar** — latest weight with its trend: «Вага: 72,4 кг · на 0,6 кг менше за середнє за 30 днів (73,0 кг)» + «+ Вага» (and edit for today's entry). The 30-day average smooths day-to-day water swings, so the comparison shows the direction. With **fewer than 3 measurements** in the last 30 days it compares with the previous measurement instead («на 0,2 кг менше, ніж 3 дні тому»). **Neutral styling** — no green/red: the app doesn't judge whether up or down is good.
+2. **Weight bar** — latest weight with its trend: «Вага: 72,4 кг · на 0,6 кг менше за середнє за 30 днів (73,0 кг)» + «+ Вага», or «Редагувати» once today has a weight (one per day). The 30-day average smooths day-to-day water swings, so the comparison shows the direction. With **fewer than 3 measurements** in the last 30 days it compares with the previous measurement instead («на 0,2 кг менше, ніж 3 дні тому»). **Neutral styling** — no green/red: the app doesn't judge whether up or down is good.
 3. **Records** — blood sugar and medicine in **one timeline** («07:10 · Цукор 6,2 ммоль/л (натщесерце)», «07:30 · Форксига 10 мг»), buttons «+ Цукор» «+ Ліки», «Редагувати» on today's entries. **Yesterday's last medicine** shown small and read-only («Учора 21:30 · Форксига 10 мг») — it affects today's sugar.
 4. **Meals** — today's meals as now (editable). **Yesterday's meals** as a compact, read-only list of **all** of yesterday's meals, each with its time and totals (e.g. «20:30 · Вечеря · 520 ккал · ГН 18»), smaller than today's (developer, 2026-10-04) — they show how meals relate to the next morning's sugar.
 
@@ -488,7 +495,7 @@ Today's Продукти screen with the tabs swapped: **dishes** first, **produ
 - **Not a medical app:** a plain diary — no dose suggestions, no "you should take…", no interaction warnings. Possible later (ask mom while she uses it): plain reminders for fixed-schedule medicines.
 
 ### Weight
-- **Tab** `Weight`: Timestamp, WeightKg, Notes. Decimal input with either separator (6,2 / 6.2 handled as for blood sugar).
+- **Tab** `Weight`: **Date**, WeightKg, Notes — **one record per day, no time** (developer, 2026-10-05); saving for a day that already has one updates it. The date is written as text (`'2026-10-05`) so Sheets doesn't turn it into a locale-formatted date; a date typed in the sheet by hand («05.10.2026») is read too. Decimal input with either separator.
 
 ### Sheet
 `Medications`, `MedicationLog`, `Weight` join the required tabs and are created **silently** by the 1.6 upgrade (missing tab = additive), mentioned in the one-time upgrade note. New readable labels for their columns.
