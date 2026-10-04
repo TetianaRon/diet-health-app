@@ -574,6 +574,8 @@ select {
   justify-content: space-between;
   gap: 8px 12px;
   margin-bottom: 8px;
+  /* Room for the settings gear pinned to the top-right corner on phones. */
+  padding-right: 48px;
 }
 
 .screen-title-row h1 {
@@ -1071,6 +1073,11 @@ select {
    with large items plus Settings as a labelled item, and the content gets a
    wide, centred area. Phones are unchanged. */
 @media (min-width: 1000px) {
+  /* The gear lives in the sidebar on a computer — no room needed. */
+  .screen-title-row {
+    padding-right: 0;
+  }
+
   /* Toasts sit in the bottom-right corner on a computer. */
   .toaster {
     left: auto;
