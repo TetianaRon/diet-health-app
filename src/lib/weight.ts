@@ -1,15 +1,16 @@
 // Weight diary (release 1.7, spec → "Daily records and the new Today").
-// Weight tab: Timestamp, WeightKg, Notes. The trend (weightTrend) is pure.
+// Weight tab: Date, WeightKg, Notes — ONE record per day, no time of day
+// (developer, 2026-10-05). The trend (weightTrend) is pure.
 import { batchUpdateRanges, readRange, writeRange } from "./sheets";
 import { buildColumnIndex, buildRow, cell, columnLetter, parseTab, SCAN_LAST_COLUMN, type ColumnIndex } from "./sheetRow";
 
 export interface WeightEntry {
-  timestamp: string; // ISO — when she weighed herself (editable)
+  date: string; // local "YYYY-MM-DD"
   weightKg: number;
   notes: string;
 }
 
-export const WEIGHT_HEADERS = ["Timestamp", "WeightKg", "Notes"] as const;
+export const WEIGHT_HEADERS = ["Date", "WeightKg", "Notes"] as const;
 const DEFAULT_INDEX = buildColumnIndex(WEIGHT_HEADERS);
 export const WEIGHT_RANGE = `A1:${SCAN_LAST_COLUMN}5000`;
 const APPEND_RANGE = `A:${SCAN_LAST_COLUMN}`;
@@ -19,56 +20,82 @@ function toNumber(value: unknown): number {
   return Number.isFinite(n) ? n : 0;
 }
 
+/**
+ * A Date cell as "YYYY-MM-DD", or "" if it isn't a date. The app writes the
+ * date as plain text (see weightEntryToRow), but a date typed in the sheet by
+ * hand comes back in the sheet's own format — "05.10.2026" in a Ukrainian
+ * sheet — so that form is understood too.
+ */
+export function normalizeDateCell(value: unknown): string {
+  const text = String(value ?? "").trim();
+  const iso = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (iso) return `${iso[1]}-${iso[2].padStart(2, "0")}-${iso[3].padStart(2, "0")}`;
+  const dotted = text.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+  if (dotted) return `${dotted[3]}-${dotted[2].padStart(2, "0")}-${dotted[1].padStart(2, "0")}`;
+  return "";
+}
+
 export function rowToWeightEntry(row: unknown[], columnIndex: ColumnIndex = DEFAULT_INDEX): WeightEntry {
   return {
-    timestamp: String(cell(row, columnIndex, "Timestamp") ?? ""),
+    date: normalizeDateCell(cell(row, columnIndex, "Date")),
     weightKg: toNumber(cell(row, columnIndex, "WeightKg")),
     notes: String(cell(row, columnIndex, "Notes") ?? ""),
   };
 }
 
 export function weightEntryToRow(e: WeightEntry, columnIndex: ColumnIndex = DEFAULT_INDEX): unknown[] {
-  return buildRow({ Timestamp: e.timestamp, WeightKg: e.weightKg, Notes: e.notes }, columnIndex);
+  // The leading apostrophe keeps "2026-10-05" as text: otherwise Sheets turns
+  // it into a date shown in the sheet's own locale format.
+  return buildRow({ Date: `'${e.date}`, WeightKg: e.weightKg, Notes: e.notes }, columnIndex);
 }
 
-/** Weight entries from the tab as read (header row first). */
+/** Weight entries from the tab as read (header row first); one per day — a later row for the same day wins. */
 export function parseWeightEntries(rows: unknown[][]): WeightEntry[] {
   const { columnIndex, dataRows } = parseTab("Weight", rows, WEIGHT_HEADERS);
-  return dataRows
-    .filter((r) => r.length > 0)
-    .map((r) => rowToWeightEntry(r, columnIndex))
-    .filter((e) => e.timestamp !== "" && e.weightKg > 0);
+  const byDate = new Map<string, WeightEntry>();
+  for (const row of dataRows) {
+    if (row.length === 0) continue;
+    const entry = rowToWeightEntry(row, columnIndex);
+    if (entry.date !== "" && entry.weightKg > 0) byDate.set(entry.date, entry);
+  }
+  return [...byDate.values()];
 }
 
-export async function addWeightEntry(entry: WeightEntry): Promise<WeightEntry> {
-  const { columnIndex } = parseTab("Weight", await readRange("Weight", WEIGHT_RANGE), WEIGHT_HEADERS);
-  await writeRange("Weight", APPEND_RANGE, [weightEntryToRow(entry, columnIndex)]);
-  return entry;
-}
-
-/** The write replacing `original` (found by time + weight — no row ID) with `updated`, or null if it's gone. */
-export function planWeightUpdate(
-  original: WeightEntry,
-  updated: WeightEntry,
+/**
+ * The write that saves `entry` for its day: overwrites that day's row if
+ * there is one (one record per day), else appends. Returns the range to
+ * update, or null to append.
+ */
+export function planWeightSave(
+  entry: WeightEntry,
   dataRows: unknown[][],
   columnIndex: ColumnIndex,
   firstDataRow = 2,
 ): { range: string; values: unknown[][] } | null {
-  const rowIndex = dataRows.findIndex((row) => {
-    const e = rowToWeightEntry(row, columnIndex);
-    return e.timestamp === original.timestamp && e.weightKg === original.weightKg;
-  });
+  const rowIndex = dataRows.findIndex((row) => rowToWeightEntry(row, columnIndex).date === entry.date);
   if (rowIndex < 0) return null;
   const rowNumber = rowIndex + firstDataRow;
   const lastCol = columnLetter(Math.max(...columnIndex.values()));
-  return { range: `Weight!A${rowNumber}:${lastCol}${rowNumber}`, values: [weightEntryToRow(updated, columnIndex)] };
+  return { range: `Weight!A${rowNumber}:${lastCol}${rowNumber}`, values: [weightEntryToRow(entry, columnIndex)] };
 }
 
-export async function updateWeightEntry(original: WeightEntry, updated: WeightEntry): Promise<void> {
+/**
+ * Saves the day's weight. When editing moves it to another day (`previousDate`),
+ * the old day's row is overwritten with the new day — so it never duplicates.
+ */
+export async function saveWeightEntry(entry: WeightEntry, previousDate?: string): Promise<WeightEntry> {
   const { columnIndex, dataRows, firstDataRow } = parseTab("Weight", await readRange("Weight", WEIGHT_RANGE), WEIGHT_HEADERS);
-  const update = planWeightUpdate(original, updated, dataRows, columnIndex, firstDataRow);
-  if (!update) throw new Error("Weight entry not found");
-  await batchUpdateRanges([update]);
+  const sameDay = planWeightSave(entry, dataRows, columnIndex, firstDataRow);
+  const movedFrom =
+    previousDate && previousDate !== entry.date ? planWeightSave({ ...entry, date: previousDate }, dataRows, columnIndex, firstDataRow) : null;
+  if (sameDay) {
+    await batchUpdateRanges([sameDay]);
+  } else if (movedFrom) {
+    await batchUpdateRanges([{ range: movedFrom.range, values: [weightEntryToRow(entry, columnIndex)] }]);
+  } else {
+    await writeRange("Weight", APPEND_RANGE, [weightEntryToRow(entry, columnIndex)]);
+  }
+  return entry;
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -89,6 +116,12 @@ function round1(n: number): number {
   return Math.round(n * 10) / 10;
 }
 
+/** Days since the epoch for a "YYYY-MM-DD" (local calendar), for whole-day differences. */
+function dayNumber(date: string): number {
+  const [y, m, d] = date.split("-").map(Number);
+  return Math.round(Date.UTC(y, m - 1, d) / DAY_MS);
+}
+
 /**
  * The latest weight and how it compares: with the average of the OTHER
  * measurements from the 30 days before it (day-to-day water swings of
@@ -97,23 +130,25 @@ function round1(n: number): number {
  * `diff` = latest − reference, rounded to 0.1 kg. Null when there's no entry.
  */
 export function weightTrend(entries: readonly WeightEntry[]): WeightTrend | null {
-  const sorted = entries
-    .filter((e) => !Number.isNaN(new Date(e.timestamp).getTime()))
-    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  const sorted = entries.filter((e) => /^\d{4}-\d{2}-\d{2}$/.test(e.date)).sort((a, b) => (a.date < b.date ? 1 : -1));
   const [latest, ...older] = sorted;
   if (!latest) return null;
 
-  const latestTime = new Date(latest.timestamp).getTime();
-  const inWindow = older.filter((e) => latestTime - new Date(e.timestamp).getTime() <= TREND_WINDOW_DAYS * DAY_MS);
+  const latestDay = dayNumber(latest.date);
+  const inWindow = older.filter((e) => latestDay - dayNumber(e.date) <= TREND_WINDOW_DAYS);
   if (inWindow.length >= MIN_ENTRIES_FOR_AVERAGE) {
     const average = round1(inWindow.reduce((sum, e) => sum + e.weightKg, 0) / inWindow.length);
     return { latest, comparison: { kind: "average", average, count: inWindow.length, diff: round1(latest.weightKg - average) } };
   }
   const previous = older[0];
   if (!previous) return { latest, comparison: null };
-  const daysAgo = Math.max(0, Math.round((latestTime - new Date(previous.timestamp).getTime()) / DAY_MS));
   return {
     latest,
-    comparison: { kind: "previous", previous: previous.weightKg, daysAgo, diff: round1(latest.weightKg - previous.weightKg) },
+    comparison: {
+      kind: "previous",
+      previous: previous.weightKg,
+      daysAgo: latestDay - dayNumber(previous.date),
+      diff: round1(latest.weightKg - previous.weightKg),
+    },
   };
 }

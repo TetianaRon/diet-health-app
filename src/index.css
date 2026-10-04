@@ -564,6 +564,137 @@ select {
   color: #b3261e;
 }
 
+/* --- Release 1.7: the day's records on Сьогодні and in Історія --- */
+
+/* Title with the on-screen order toggle beside it (wraps under on narrow phones). */
+.screen-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  margin-bottom: 8px;
+}
+
+.screen-title-row h1 {
+  margin: 0;
+}
+
+.order-toggle {
+  display: inline-flex;
+  border: 1px solid #d0d5d0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.order-option {
+  background: #ffffff;
+  color: #4a4a4a;
+  border: none;
+  border-radius: 0;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+}
+
+.order-option.active {
+  background: #2f7a4f;
+  color: #ffffff;
+}
+
+/* Weight: neutral on purpose — no green/red judging up or down. */
+.weight-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+  padding: 10px 12px;
+  margin: 12px 0;
+  border: 1px solid #e2e6e2;
+  border-radius: 10px;
+  background: #f7f9f7;
+}
+
+.weight-text {
+  margin: 0;
+  flex: 1 1 220px;
+}
+
+.weight-trend {
+  color: #4a4a4a;
+}
+
+.weight-actions,
+.block-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.records-block {
+  margin-top: 16px;
+}
+
+.block-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.block-header h2 {
+  font-size: 1.05rem;
+  margin: 0;
+  color: #2f7a4f;
+}
+
+/* Yesterday's records: smaller and read-only, for context only. */
+.record-yesterday,
+.meals-compact {
+  font-size: 0.88rem;
+  color: #6b6b6b;
+}
+
+.record-yesterday {
+  border-top: 1px dashed #d0d5d0;
+  padding-top: 6px;
+}
+
+.meals-compact {
+  margin-top: 14px;
+  padding-top: 8px;
+  border-top: 1px dashed #d0d5d0;
+}
+
+.meals-compact-title {
+  margin: 0 0 4px;
+  font-weight: 600;
+}
+
+.meals-compact .today-meal-total,
+.meal-compact-row p {
+  font-size: inherit;
+  color: inherit;
+  margin: 2px 0 0;
+}
+
+.history-day {
+  margin-top: 18px;
+  padding-top: 10px;
+  border-top: 1px solid #e2e6e2;
+}
+
+.history-day h2 {
+  margin: 0 0 4px;
+}
+
+.history-totals,
+.history-weight {
+  margin: 0 0 4px;
+  color: #4a4a4a;
+}
+
 .blood-sugar-flag {
   color: #b3261e;
   font-weight: 600;

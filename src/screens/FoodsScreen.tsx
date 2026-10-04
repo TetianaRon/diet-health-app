@@ -919,7 +919,8 @@ type DishAddMode = "starter" | "custom";
 
 export default function FoodsScreen() {
   const { signedIn, initializing, signIn, sessionExpired } = useAuth();
-  const [subTab, setSubTab] = useState<FoodsSubTab>("ingredients");
+  // Dishes first since 1.7 (Страви screen) — what most meals are.
+  const [subTab, setSubTab] = useState<FoodsSubTab>("dishes");
   const [ingredients, setIngredients] = useState<Ingredient[] | null>(null);
   const [dishes, setDishes] = useState<Dish[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -1116,17 +1117,17 @@ export default function FoodsScreen() {
           <div className="food-subtabs">
             <button
               type="button"
-              className={subTab === "ingredients" ? "food-subtab active" : "food-subtab"}
-              onClick={() => switchSubTab("ingredients")}
-            >
-              {uk.foods.subTabs.ingredients}
-            </button>
-            <button
-              type="button"
               className={subTab === "dishes" ? "food-subtab active" : "food-subtab"}
               onClick={() => switchSubTab("dishes")}
             >
               {uk.foods.subTabs.dishes}
+            </button>
+            <button
+              type="button"
+              className={subTab === "ingredients" ? "food-subtab active" : "food-subtab"}
+              onClick={() => switchSubTab("ingredients")}
+            >
+              {uk.foods.subTabs.ingredients}
             </button>
           </div>
         </>

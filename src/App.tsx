@@ -12,10 +12,10 @@ import SheetHealthDialog from "./screens/SheetHealthDialog";
 import { initMealReminders } from "./lib/reminderScheduler";
 import TodayScreen from "./screens/TodayScreen";
 import FoodsScreen from "./screens/FoodsScreen";
-import BloodSugarScreen from "./screens/BloodSugarScreen";
+import HistoryScreen from "./screens/HistoryScreen";
 import SettingsScreen from "./screens/SettingsScreen";
 
-type TabId = "today" | "foods" | "bloodSugar" | "settings";
+type TabId = "today" | "history" | "foods" | "settings";
 
 // Settings lives behind the gear icon in the top-right corner, not in this
 // bottom bar — it's a device/account-config screen, not a peer of the three
@@ -23,8 +23,8 @@ type TabId = "today" | "foods" | "bloodSugar" | "settings";
 // at larger OS text sizes (see docs/build-log.md's UX-pass entry).
 const TABS: { id: TabId; label: string }[] = [
   { id: "today", label: uk.tabs.today },
+  { id: "history", label: uk.tabs.history },
   { id: "foods", label: uk.tabs.foods },
-  { id: "bloodSugar", label: uk.tabs.bloodSugar },
 ];
 
 export default function App() {
@@ -93,7 +93,7 @@ export default function App() {
             />
           )}
           {activeTab === "foods" && <FoodsScreen />}
-          {activeTab === "bloodSugar" && <BloodSugarScreen />}
+          {activeTab === "history" && <HistoryScreen />}
           {activeTab === "settings" && <SettingsScreen />}
         </main>
         </ScreensAfterRepair>

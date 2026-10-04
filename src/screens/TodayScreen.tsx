@@ -1,28 +1,37 @@
-import { useEffect, useMemo, useState } from "react";
+// Сьогодні — one surface for entering and reading the day (release 1.7,
+// spec → "Daily records and the new Today"). Top to bottom: daily status,
+// weight bar, blood sugar + medicine in one timeline (yesterday's last
+// medicine small and read-only), today's meals (yesterday's as a compact
+// read-only list). An on-screen order toggle decides newest/oldest first;
+// yesterday's records sit at the end of their block (or the start, oldest
+// first). Everything is read in one batch request (loadDayData).
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { App as CapacitorApp } from "@capacitor/app";
 import { uk } from "../i18n/uk";
 import { useAuth } from "../context/AuthContext";
-import { checkBloodSugarRange, checkFatLimit, mealGapWarning, mealsLeftToday } from "../lib/health";
-import { listIngredients, mergeWithStarterFoods, sortFavoritesFirst, type Ingredient } from "../lib/ingredients";
-import { listDishes, type Dish } from "../lib/dishes";
+import { checkFatLimit, mealGapWarning, mealsLeftToday } from "../lib/health";
+import { mergeWithStarterFoods, sortFavoritesFirst } from "../lib/ingredients";
 import { mergeWithStarterDishes } from "../data/starter-dishes";
-import { getSettings, type Settings } from "../lib/settings";
 import { wasLastReadFromCache } from "../lib/sheets";
 import { formatTime } from "../lib/dateFormat";
 import { scheduleMealReminder } from "../lib/reminderScheduler";
+import { loadDayData, type DayData } from "../lib/dayData";
+import { dayRecords, inOrder, lastIntakeOfDay, previousDateKey } from "../lib/records";
+import { groupIntoMeals, isSameLocalDate, localDateKey, sumKnownField, type DailyLogEntry, type MealGroup } from "../lib/dailyLog";
+import type { BloodSugarEntry } from "../lib/bloodSugar";
+import type { MedicationIntake } from "../lib/medications";
+import type { WeightEntry } from "../lib/weight";
 import ReminderAccessNotice from "./ReminderAccessNotice";
-import { latestBloodSugarEntry, listBloodSugarEntries, type BloodSugarEntry } from "../lib/bloodSugar";
-import {
-  groupIntoMeals,
-  isSameLocalDate,
-  listLogEntries,
-  localDateKey,
-  sumKnownField,
-  type DailyLogEntry,
-  type MealGroup,
-} from "../lib/dailyLog";
 import MealEditorScreen, { toPickable, type PickableFood } from "./MealEditorScreen";
 import MealStatsLine from "./MealStatsLine";
+import Breadcrumb from "./Breadcrumb";
+import BloodSugarForm from "./BloodSugarForm";
+import MedicationIntakeForm from "./MedicationIntakeForm";
+import WeightForm from "./WeightForm";
+import WeightBar from "./WeightBar";
+import DayRecordsList from "./DayRecordsList";
+import OrderToggle, { useDisplayOrder } from "./OrderToggle";
+import { CompactMealsList } from "./MealsReadOnly";
 
 function ProgressBar({ label, value, target, unit }: { label: string; value: number; target: number; unit: string }) {
   const pct = target > 0 ? Math.min(100, Math.round((value / target) * 100)) : 0;
@@ -41,16 +50,9 @@ function ProgressBar({ label, value, target, unit }: { label: string; value: num
   );
 }
 
-// One meal's dishes plus its combined total, so a multi-item meal reads as
-// one thing rather than N unrelated rows. Each dish shows only its weight —
-// the stats belong to the meal line below (a cleaner read); per-dish detail
-// lives in the meal editor. Read-only on purpose: changing a meal goes
-// through one Редагувати button per meal (see MealHeader).
-//
-// A custom/estimated dish may have some fields unknown — meal.totals already
-// excludes them from the sum (see sumKnownField in dailyLog.ts), and
-// hasUnknownValues (shown by MealStatsLine) is the visible caveat.
-function MealItemsList({ meal, settings }: { meal: MealGroup; settings: Settings | null }) {
+// One meal's dishes plus its combined total. Read-only on purpose: changing
+// a meal goes through one Редагувати button per meal (see MealHeader).
+function MealItemsList({ meal, settings }: { meal: MealGroup; settings: DayData["settings"] | null }) {
   return (
     <>
       <ul className="food-list">
@@ -65,34 +67,23 @@ function MealItemsList({ meal, settings }: { meal: MealGroup; settings: Settings
   );
 }
 
-// A meal's title row with its single Редагувати button.
-function MealHeader({
-  title,
-  time,
-  mealType,
-  onEdit,
-}: {
-  title: string;
-  time: string;
-  mealType: string;
-  onEdit: () => void;
-}) {
+function MealHeader({ title, time, mealType, onEdit }: { title: string; time: string; mealType: string; onEdit: () => void }) {
   return (
     <div className="meal-header">
       <h2>
         {title} <span className="entry-time">· {time}</span>
       </h2>
-      <button
-        type="button"
-        className="button-secondary meal-edit-button"
-        aria-label={uk.today.editMealLabel(mealType)}
-        onClick={onEdit}
-      >
+      <button type="button" className="button-secondary meal-edit-button" aria-label={uk.today.editMealLabel(mealType)} onClick={onEdit}>
         {uk.today.editMealButton}
       </button>
     </div>
   );
 }
+
+type RecordForm =
+  | { kind: "sugar"; original?: BloodSugarEntry }
+  | { kind: "medication"; original?: MedicationIntake }
+  | { kind: "weight"; original?: WeightEntry };
 
 export default function TodayScreen({
   autoOpenAddForm = false,
@@ -106,27 +97,24 @@ export default function TodayScreen({
   onEditorOpenChange?: (open: boolean) => void;
 } = {}) {
   const { signedIn, initializing, signIn, sessionExpired } = useAuth();
-  const [ingredients, setIngredients] = useState<Ingredient[] | null>(null);
-  const [dishes, setDishes] = useState<Dish[] | null>(null);
-  const [settings, setSettings] = useState<Settings | null>(null);
-  const [entries, setEntries] = useState<DailyLogEntry[] | null>(null);
-  const [bloodSugarEntries, setBloodSugarEntries] = useState<BloodSugarEntry[] | null>(null);
+  const [data, setData] = useState<DayData | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   // null = closed; { meal: null } = composing a new meal; { meal } = editing that one.
   const [editor, setEditor] = useState<{ meal: MealGroup | null } | null>(null);
-  // True if any of the reads below fell back to cached data (see
-  // wasLastReadFromCache() in sheets.ts) — reset at the start of each
-  // refresh, then set by whichever read(s) actually used the cache.
+  const [form, setForm] = useState<RecordForm | null>(null);
   const [showingCachedData, setShowingCachedData] = useState(false);
+  const [order, setOrder] = useDisplayOrder("today");
 
-  // Re-fetches just the log entries — used after the meal editor saves or
-  // deletes, since either can change entries' identity (timestamp, type) in
-  // ways that make patching local state in place fragile.
-  const refreshEntries = () => {
-    listLogEntries()
-      .then(setEntries)
+  const refresh = useCallback(() => {
+    setShowingCachedData(false);
+    loadDayData()
+      .then((loaded) => {
+        setData(loaded);
+        setLoadError(null);
+        if (wasLastReadFromCache()) setShowingCachedData(true);
+      })
       .catch((err: unknown) => setLoadError(err instanceof Error ? err.message : String(err)));
-  };
+  }, []);
 
   useEffect(() => {
     if (autoOpenAddForm) {
@@ -141,144 +129,37 @@ export default function TodayScreen({
   }, [editor, onEditorOpenChange]);
 
   useEffect(() => {
-    // Also after a renewed sign-in (sessionExpired true -> false): reload,
-    // and clear the "sign in again" error the failed load left behind.
+    // Also after a renewed sign-in (sessionExpired true -> false).
     if (!signedIn || sessionExpired) return;
     setLoadError(null);
-
-    const refresh = () => {
-      setShowingCachedData(false);
-      const flagIfCached = () => {
-        if (wasLastReadFromCache()) setShowingCachedData(true);
-      };
-      listIngredients()
-        .then((data) => {
-          setIngredients(data);
-          flagIfCached();
-        })
-        .catch((err: unknown) => setLoadError(err instanceof Error ? err.message : String(err)));
-      listDishes()
-        .then((data) => {
-          setDishes(data);
-          flagIfCached();
-        })
-        .catch((err: unknown) => setLoadError(err instanceof Error ? err.message : String(err)));
-      getSettings()
-        .then((data) => {
-          setSettings(data);
-          flagIfCached();
-        })
-        .catch((err: unknown) => setLoadError(err instanceof Error ? err.message : String(err)));
-      listLogEntries()
-        .then((data) => {
-          setEntries(data);
-          flagIfCached();
-        })
-        .catch((err: unknown) => setLoadError(err instanceof Error ? err.message : String(err)));
-      listBloodSugarEntries()
-        .then((data) => {
-          setBloodSugarEntries(data);
-          flagIfCached();
-        })
-        .catch((err: unknown) => setLoadError(err instanceof Error ? err.message : String(err)));
-    };
-
     refresh();
-
-    // Re-reads on foreground so a meal logged on another device (e.g. the
-    // computer) still reschedules the reminder correctly here — see the
-    // "cross-device staleness" note in docs/build-log.md's 2026-09-09 entry.
-    // @capacitor/app has a web implementation too (visibilitychange-based),
-    // so this is safe to register outside the Android build as well.
+    // Re-reads on foreground so records from another device (e.g. the
+    // computer) show here and the reminder reschedules correctly.
     const listenerPromise = CapacitorApp.addListener("resume", refresh);
     return () => {
       void listenerPromise.then((listener) => listener.remove());
     };
-  }, [signedIn, sessionExpired]);
+  }, [signedIn, sessionExpired, refresh]);
 
-  // (Re)schedules the meal reminder whenever the most recent log entry or the
-  // relevant settings change — covers both "just logged a meal" (entries
-  // changes) and "reopened the app" (the resume-triggered refresh above also
-  // changes entries). No-op on non-native builds (see reminderScheduler.ts).
+  const entries = data?.logEntries ?? null;
+  const settings = data?.settings ?? null;
+
+  // (Re)schedules the meal reminder whenever the latest meal or the settings change.
   useEffect(() => {
     if (!entries || !settings) return;
-    const lastEntry = entries.reduce<DailyLogEntry | null>(
-      (latest, e) => (!latest || e.timestamp > latest.timestamp ? e : latest),
-      null,
-    );
+    const lastEntry = entries.reduce<DailyLogEntry | null>((latest, e) => (!latest || e.timestamp > latest.timestamp ? e : latest), null);
     if (lastEntry) void scheduleMealReminder(new Date(lastEntry.timestamp), settings);
   }, [entries, settings]);
 
-  // Meal logging picks from the whole bundle, not just what's been saved to
-  // the personal sheet — same principle as the Foods screen: nothing needs
-  // to be individually "added" first just to be loggable for a meal.
-  // Dishes first, then favorited ingredients, then the rest — the picker's
-  // default (empty-search) view only shows the first 20 via .slice below, and
-  // dishes are what most quick-adds actually are (a cooked meal), while
-  // ingredients alone were drowning them out purely by outnumbering them.
-  // Favorited ingredients still surface early for the genuinely as-eaten ones
-  // (fruit, cottage cheese, a boiled egg) — Dishes has no favorite mechanism
-  // yet to sort by, so it stays in bundle/sheet order for now.
+  // Meal logging picks from the whole bundle (dishes first, then favourite
+  // ingredients) — nothing needs to be "added" first just to be loggable.
   const foods = useMemo<PickableFood[]>(
     () => [
-      ...mergeWithStarterDishes(dishes ?? []).map(toPickable),
-      ...sortFavoritesFirst(mergeWithStarterFoods(ingredients ?? [])).map(toPickable),
+      ...mergeWithStarterDishes(data?.dishes ?? []).map(toPickable),
+      ...sortFavoritesFirst(mergeWithStarterFoods(data?.ingredients ?? [])).map(toPickable),
     ],
-    [ingredients, dishes],
+    [data],
   );
-
-  const todayKey = localDateKey(new Date());
-  const todayEntries = (entries ?? []).filter((e) => isSameLocalDate(e.timestamp, todayKey));
-  // Chronological (oldest first) — matches how mom actually numbers her day
-  // ("1 - Breakfast, 2 - Snack, 3 - Lunch, ..."), and groups items logged in
-  // one sitting into one meal occasion instead of one row per item (see
-  // groupIntoMeals) — a mealType like "Перекус" can legitimately repeat
-  // several times a day, so grouping by mealId (not mealType) is what
-  // actually keeps those separate.
-  const todayMeals = groupIntoMeals(todayEntries).sort((a, b) => (a.timestamp < b.timestamp ? -1 : 1));
-  // Only today is shown here — the old "last 3 days" list was dropped to keep
-  // this screen a clean read; past days will get their own History screen.
-  const mealsLeft = settings ? mealsLeftToday(settings.mealsPerDay, todayMeals.length) : null;
-
-  // sumKnownField excludes an entry from a specific total when that exact
-  // field is unknown (a custom/estimated item — see AddLogEntryForm), rather
-  // than letting its stored-as-0 value silently understate the total.
-  const totalCarbs = sumKnownField(todayEntries, "carbsG").total;
-  const totalCalories = sumKnownField(todayEntries, "caloriesKcal").total;
-  const totalGl = sumKnownField(todayEntries, "gl").total;
-  const totalFat = sumKnownField(todayEntries, "fatG").total;
-  const totalSugars = sumKnownField(todayEntries, "sugarsG").total;
-  const totalProtein = sumKnownField(todayEntries, "proteinG").total;
-  const totalSodium = sumKnownField(todayEntries, "sodiumMg").total;
-  // One combined caveat rather than a per-stat count — see the 2026-09-11
-  // design decision: precise enough to flag "something's missing" without
-  // cluttering every individual total with its own disclaimer.
-  const todayUnknownCount = todayEntries.filter((e) => e.unknownFields.length > 0).length;
-
-  // Per meal OCCASION, not per mealType-across-the-day — the fat limit is a
-  // per-sitting rule (no gallbladder), so two separate small snacks each
-  // under the limit shouldn't get silently summed together just because
-  // they share the "Перекус" label, and a single over-limit snack shouldn't
-  // get buried inside a combined daily "Перекус" total.
-  const fatWarnings = todayMeals
-    .map((meal) => {
-      const check = settings ? checkFatLimit(meal.totals.fatG, settings.fatPerMealLimit) : null;
-      return check?.exceeded ? uk.today.fatWarning(meal.mealType, check.overByGrams) : null;
-    })
-    .filter((w): w is string => w !== null);
-
-  const lastEntry = (entries ?? []).reduce<DailyLogEntry | null>(
-    (latest, e) => (!latest || e.timestamp > latest.timestamp ? e : latest),
-    null,
-  );
-  const gapWarning =
-    lastEntry && settings ? mealGapWarning(new Date(lastEntry.timestamp), new Date(), settings.maxGapHours) : null;
-
-  const latestBloodSugar = bloodSugarEntries ? latestBloodSugarEntry(bloodSugarEntries) : null;
-  const bloodSugarStatus =
-    latestBloodSugar && settings
-      ? checkBloodSugarRange(latestBloodSugar.valueMmolL, settings.bloodSugarMin, settings.bloodSugarMax)
-      : null;
 
   if (initializing) {
     return (
@@ -310,97 +191,177 @@ export default function TodayScreen({
         allEntries={entries ?? []}
         onSaved={() => {
           setEditor(null);
-          refreshEntries();
+          refresh();
         }}
         onCancel={() => setEditor(null)}
       />
     );
   }
 
+  // The add/edit forms for records are their own screen with a breadcrumb back.
+  if (form) {
+    const close = () => setForm(null);
+    const saved = () => {
+      setForm(null);
+      refresh();
+    };
+    const title =
+      form.kind === "sugar"
+        ? form.original
+          ? uk.bloodSugar.editTitle
+          : uk.bloodSugar.addButton
+        : form.kind === "medication"
+          ? form.original
+            ? uk.medication.editTitle
+            : uk.medication.addTitle
+          : form.original
+            ? uk.weight.editTitle
+            : uk.weight.addTitle;
+    return (
+      <section className="screen">
+        <Breadcrumb trail={[{ label: uk.today.title, onClick: close }]} current={title} />
+        {form.kind === "sugar" && <BloodSugarForm original={form.original} settings={settings} onSaved={saved} onCancel={close} />}
+        {form.kind === "medication" && (
+          <MedicationIntakeForm
+            original={form.original}
+            medications={data?.medications ?? []}
+            settings={settings}
+            onSaved={saved}
+            onMedicationAdded={(m) => setData((prev) => (prev ? { ...prev, medications: [...prev.medications, m] } : prev))}
+            onCancel={close}
+          />
+        )}
+        {form.kind === "weight" && <WeightForm original={form.original} onSaved={saved} onCancel={close} />}
+      </section>
+    );
+  }
+
+  const todayKey = localDateKey(new Date());
+  const yesterdayKey = previousDateKey(todayKey);
+  const allEntries = entries ?? [];
+  const todayEntries = allEntries.filter((e) => isSameLocalDate(e.timestamp, todayKey));
+  const todayMeals = inOrder(groupIntoMeals(todayEntries), order);
+  const yesterdayMeals = inOrder(groupIntoMeals(allEntries.filter((e) => isSameLocalDate(e.timestamp, yesterdayKey))), order);
+  const records = dayRecords(data?.bloodSugar ?? [], data?.intakes ?? [], todayKey, order);
+  const yesterdayLastIntake = lastIntakeOfDay(data?.intakes ?? [], yesterdayKey);
+  const mealsLeft = settings ? mealsLeftToday(settings.mealsPerDay, todayMeals.length) : null;
+
+  // sumKnownField leaves out an entry whose field is unknown rather than counting it as 0.
+  const totalCarbs = sumKnownField(todayEntries, "carbsG").total;
+  const totalCalories = sumKnownField(todayEntries, "caloriesKcal").total;
+  const totalGl = sumKnownField(todayEntries, "gl").total;
+  const totalFat = sumKnownField(todayEntries, "fatG").total;
+  const totalSugars = sumKnownField(todayEntries, "sugarsG").total;
+  const totalProtein = sumKnownField(todayEntries, "proteinG").total;
+  const totalSodium = sumKnownField(todayEntries, "sodiumMg").total;
+  const todayUnknownCount = todayEntries.filter((e) => e.unknownFields.length > 0).length;
+
+  // Per meal occasion — the fat limit is a per-sitting rule (no gallbladder).
+  const fatWarnings = todayMeals
+    .map((meal) => {
+      const check = settings ? checkFatLimit(meal.totals.fatG, settings.fatPerMealLimit) : null;
+      return check?.exceeded ? uk.today.fatWarning(meal.mealType, check.overByGrams) : null;
+    })
+    .filter((w): w is string => w !== null);
+
+  const lastEntry = allEntries.reduce<DailyLogEntry | null>((latest, e) => (!latest || e.timestamp > latest.timestamp ? e : latest), null);
+  const gapWarning = lastEntry && settings ? mealGapWarning(new Date(lastEntry.timestamp), new Date(), settings.maxGapHours) : null;
+
+  const yesterdayMealsList = <CompactMealsList meals={yesterdayMeals} settings={settings} title={uk.yesterday.mealsTitle} />;
+
   return (
     <section className="screen">
-      <h1>{uk.today.title}</h1>
+      <div className="screen-title-row">
+        <h1>{uk.today.title}</h1>
+        <OrderToggle order={order} onChange={setOrder} />
+      </div>
 
-      {/* Two groups: on phones they simply stack (no visual change); on desktop
-          (index.css, min-width 1000px) the day's summary sits in a column
-          beside the meals. */}
+      {/* On phones the groups stack; on a computer (index.css, ≥1000px) the
+          day's status and records sit in a column beside the meals. */}
       <div className="today-layout">
-      <div className="today-summary">
-      <ReminderAccessNotice />
-      {loadError && <p className="food-form-error">{loadError}</p>}
-      {showingCachedData && <p className="today-warning">{uk.today.offlineNotice}</p>}
+        <div className="today-summary">
+          <ReminderAccessNotice />
+          {loadError && <p className="food-form-error">{loadError}</p>}
+          {showingCachedData && <p className="today-warning">{uk.today.offlineNotice}</p>}
 
-      {mealsLeft && <p className="meals-left">{uk.today.mealsLeft(mealsLeft.left, mealsLeft.planned)}</p>}
+          {mealsLeft && <p className="meals-left">{uk.today.mealsLeft(mealsLeft.left, mealsLeft.planned)}</p>}
 
-      {settings && (settings.showCarbsProgress || settings.showCaloriesProgress || settings.showGlycemicLoadProgress) && (
-        <div className="progress-block">
-          {settings.showCarbsProgress && (
-            <ProgressBar label={uk.today.progress.carbs} value={totalCarbs} target={settings.dailyCarbsTarget} unit="г" />
+          {settings && (settings.showCarbsProgress || settings.showCaloriesProgress || settings.showGlycemicLoadProgress) && (
+            <div className="progress-block">
+              {settings.showCarbsProgress && <ProgressBar label={uk.today.progress.carbs} value={totalCarbs} target={settings.dailyCarbsTarget} unit="г" />}
+              {settings.showCaloriesProgress && (
+                <ProgressBar label={uk.today.progress.calories} value={totalCalories} target={settings.dailyCaloriesTarget} unit="ккал" />
+              )}
+              {settings.showGlycemicLoadProgress && (
+                <ProgressBar label={uk.today.progress.glycemicLoad} value={totalGl} target={settings.dailyGlycemicLoadTarget} unit="" />
+              )}
+            </div>
           )}
-          {settings.showCaloriesProgress && (
-            <ProgressBar
-              label={uk.today.progress.calories}
-              value={totalCalories}
-              target={settings.dailyCaloriesTarget}
-              unit="ккал"
-            />
+
+          {settings && (settings.showFatTotal || settings.showSugarsTotal || settings.showProteinTotal || settings.showSodiumTotal) && (
+            <div className="today-totals">
+              {settings.showFatTotal && <p>{uk.today.totals.fat(Math.round(totalFat))}</p>}
+              {settings.showSugarsTotal && <p>{uk.today.totals.sugars(Math.round(totalSugars))}</p>}
+              {settings.showProteinTotal && <p>{uk.today.totals.protein(Math.round(totalProtein))}</p>}
+              {settings.showSodiumTotal && <p>{uk.today.totals.sodium(Math.round(totalSodium))}</p>}
+            </div>
           )}
-          {settings.showGlycemicLoadProgress && (
-            <ProgressBar
-              label={uk.today.progress.glycemicLoad}
-              value={totalGl}
-              target={settings.dailyGlycemicLoadTarget}
-              unit=""
-            />
+
+          {todayUnknownCount > 0 && <p className="today-warning">{uk.today.unknownValuesNotice(todayUnknownCount)}</p>}
+          {gapWarning?.shouldWarn && <p className="today-warning">{uk.today.mealGapWarning(gapWarning.hoursSinceLastMeal)}</p>}
+          {fatWarnings.map((w) => (
+            <p key={w} className="today-warning">
+              {w}
+            </p>
+          ))}
+
+          {data && (
+            <WeightBar entries={data.weights} onAdd={() => setForm({ kind: "weight" })} onEdit={(entry) => setForm({ kind: "weight", original: entry })} />
           )}
+
+          <div className="records-block">
+            <div className="block-header">
+              <h2>{uk.records.title}</h2>
+              <div className="block-actions">
+                <button type="button" className="button-secondary" onClick={() => setForm({ kind: "sugar" })}>
+                  {uk.records.addSugar}
+                </button>
+                <button type="button" className="button-secondary" onClick={() => setForm({ kind: "medication" })}>
+                  {uk.records.addMedication}
+                </button>
+              </div>
+            </div>
+            {data && records.length === 0 && <p className="food-form-hint">{uk.records.empty}</p>}
+            {data && (
+              <DayRecordsList
+                records={records}
+                settings={settings}
+                logEntries={allEntries}
+                yesterdayLastIntake={yesterdayLastIntake}
+                yesterdayFirst={order === "oldest"}
+                onEditSugar={(entry) => setForm({ kind: "sugar", original: entry })}
+                onEditIntake={(intake) => setForm({ kind: "medication", original: intake })}
+              />
+            )}
+          </div>
         </div>
-      )}
 
-      {settings && (settings.showFatTotal || settings.showSugarsTotal || settings.showProteinTotal || settings.showSodiumTotal) && (
-        <div className="today-totals">
-          {settings.showFatTotal && <p>{uk.today.totals.fat(Math.round(totalFat))}</p>}
-          {settings.showSugarsTotal && <p>{uk.today.totals.sugars(Math.round(totalSugars))}</p>}
-          {settings.showProteinTotal && <p>{uk.today.totals.protein(Math.round(totalProtein))}</p>}
-          {settings.showSodiumTotal && <p>{uk.today.totals.sodium(Math.round(totalSodium))}</p>}
+        <div className="today-meals">
+          <button type="button" className="today-add" onClick={() => setEditor({ meal: null })}>
+            {uk.today.addButton}
+          </button>
+          {data === null && !loadError && <p>{uk.today.loading}</p>}
+
+          {order === "oldest" && yesterdayMealsList}
+          {data !== null && todayEntries.length === 0 && <p>{uk.today.empty}</p>}
+          {todayMeals.map((meal) => (
+            <div key={meal.mealId} className="today-meal-group">
+              <MealHeader title={meal.mealType} time={formatTime(meal.timestamp)} mealType={meal.mealType} onEdit={() => setEditor({ meal })} />
+              <MealItemsList meal={meal} settings={settings} />
+            </div>
+          ))}
+          {order === "newest" && yesterdayMealsList}
         </div>
-      )}
-
-      {todayUnknownCount > 0 && <p className="today-warning">{uk.today.unknownValuesNotice(todayUnknownCount)}</p>}
-
-      {latestBloodSugar && (
-        <p className={bloodSugarStatus?.inRange ? "blood-sugar-latest" : "blood-sugar-latest out-of-range"}>
-          {uk.bloodSugar.latestLabel}: {uk.today.latestBloodSugar(latestBloodSugar.valueMmolL, uk.bloodSugar.context[latestBloodSugar.context])}
-        </p>
-      )}
-
-      {gapWarning?.shouldWarn && <p className="today-warning">{uk.today.mealGapWarning(gapWarning.hoursSinceLastMeal)}</p>}
-      {fatWarnings.map((w) => (
-        <p key={w} className="today-warning">
-          {w}
-        </p>
-      ))}
-
-      <button type="button" className="today-add" onClick={() => setEditor({ meal: null })}>
-        {uk.today.addButton}
-      </button>
-      </div>
-
-      <div className="today-meals">
-      {entries === null && !loadError && <p>{uk.today.loading}</p>}
-      {entries !== null && todayEntries.length === 0 && <p>{uk.today.empty}</p>}
-
-      {todayMeals.map((meal) => (
-        <div key={meal.mealId} className="today-meal-group">
-          <MealHeader
-            title={meal.mealType}
-            time={formatTime(meal.timestamp)}
-            mealType={meal.mealType}
-            onEdit={() => setEditor({ meal })}
-          />
-          <MealItemsList meal={meal} settings={settings} />
-        </div>
-      ))}
-      </div>
       </div>
     </section>
   );

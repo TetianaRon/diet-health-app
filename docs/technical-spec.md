@@ -470,7 +470,7 @@ Three tabs: **Сьогодні | Історія | Страви**; Settings stays
 ### Сьогодні — one surface for entering and reading the day
 Blocks, top to bottom:
 1. **Daily status** — calories bar, GL bar and the other limits switched on in Settings (as today).
-2. **Weight bar** — latest weight with its trend: «Вага: 72,4 кг · на 0,6 кг менше за середнє за 30 днів (73,0 кг)» + «+ Вага» (and edit for today's entry). The 30-day average smooths day-to-day water swings, so the comparison shows the direction. With **fewer than 3 measurements** in the last 30 days it compares with the previous measurement instead («на 0,2 кг менше, ніж 3 дні тому»). **Neutral styling** — no green/red: the app doesn't judge whether up or down is good.
+2. **Weight bar** — latest weight with its trend: «Вага: 72,4 кг · на 0,6 кг менше за середнє за 30 днів (73,0 кг)» + «+ Вага», or «Редагувати» once today has a weight (one per day). The 30-day average smooths day-to-day water swings, so the comparison shows the direction. With **fewer than 3 measurements** in the last 30 days it compares with the previous measurement instead («на 0,2 кг менше, ніж 3 дні тому»). **Neutral styling** — no green/red: the app doesn't judge whether up or down is good.
 3. **Records** — blood sugar and medicine in **one timeline** («07:10 · Цукор 6,2 ммоль/л (натщесерце)», «07:30 · Форксига 10 мг»), buttons «+ Цукор» «+ Ліки», «Редагувати» on today's entries. **Yesterday's last medicine** shown small and read-only («Учора 21:30 · Форксига 10 мг») — it affects today's sugar.
 4. **Meals** — today's meals as now (editable). **Yesterday's meals** as a compact, read-only list of **all** of yesterday's meals, each with its time and totals (e.g. «20:30 · Вечеря · 520 ккал · ГН 18»), smaller than today's (developer, 2026-10-04) — they show how meals relate to the next morning's sugar.
 
@@ -488,7 +488,7 @@ Today's Продукти screen with the tabs swapped: **dishes** first, **produ
 - **Not a medical app:** a plain diary — no dose suggestions, no "you should take…", no interaction warnings. Possible later (ask mom while she uses it): plain reminders for fixed-schedule medicines.
 
 ### Weight
-- **Tab** `Weight`: Timestamp, WeightKg, Notes. Decimal input with either separator (6,2 / 6.2 handled as for blood sugar).
+- **Tab** `Weight`: **Date**, WeightKg, Notes — **one record per day, no time** (developer, 2026-10-05); saving for a day that already has one updates it. The date is written as text (`'2026-10-05`) so Sheets doesn't turn it into a locale-formatted date; a date typed in the sheet by hand («05.10.2026») is read too. Decimal input with either separator.
 
 ### Sheet
 `Medications`, `MedicationLog`, `Weight` join the required tabs and are created **silently** by the 1.6 upgrade (missing tab = additive), mentioned in the one-time upgrade note. New readable labels for their columns.

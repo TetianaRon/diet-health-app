@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { parseWeightEntries, planWeightUpdate, weightEntryToRow, rowToWeightEntry, weightTrend, type WeightEntry } from "./weight";
+import { normalizeDateCell, parseWeightEntries, planWeightSave, rowToWeightEntry, weightEntryToRow, weightTrend, type WeightEntry } from "./weight";
 import { buildColumnIndex } from "./sheetRow";
 
-const day = (d: number) => new Date(2026, 9, d, 7, 0).toISOString(); // October 2026, local time
-const w = (d: number, weightKg: number): WeightEntry => ({ timestamp: day(d), weightKg, notes: "" });
+const day = (d: number) => `2026-10-${String(d).padStart(2, "0")}`;
+const w = (d: number, weightKg: number): WeightEntry => ({ date: day(d), weightKg, notes: "" });
 
 describe("weightTrend", () => {
   it("is null with no entries", () => {
@@ -16,13 +16,12 @@ describe("weightTrend", () => {
     expect(trend?.comparison).toEqual({ kind: "average", average: 73, count: 3, diff: -0.6 });
   });
 
-  it("ignores measurements older than 30 days for the average", () => {
-    // only one other measurement inside the window → falls back to the previous one
-    const trend = weightTrend([w(31, 72.4), w(28, 72.6), w(1, 80)]);
+  it("falls back to the previous measurement with fewer than 3 in the window", () => {
+    const trend = weightTrend([w(31, 72.4), w(28, 72.6), { date: "2026-08-01", weightKg: 80, notes: "" }]);
     expect(trend?.comparison).toEqual({ kind: "previous", previous: 72.6, daysAgo: 3, diff: -0.2 });
   });
 
-  it("uses the latest entry by time, whatever the order given", () => {
+  it("uses the latest day, whatever the order given", () => {
     expect(weightTrend([w(10, 70), w(12, 71)])?.latest.weightKg).toBe(71);
   });
 
@@ -31,22 +30,32 @@ describe("weightTrend", () => {
   });
 });
 
+describe("normalizeDateCell", () => {
+  it("reads the app's text date and a date typed in a Ukrainian sheet", () => {
+    expect(normalizeDateCell("2026-10-05")).toBe("2026-10-05");
+    expect(normalizeDateCell("05.10.2026")).toBe("2026-10-05");
+    expect(normalizeDateCell("5.10.2026")).toBe("2026-10-05");
+    expect(normalizeDateCell("")).toBe("");
+    expect(normalizeDateCell("вчора")).toBe("");
+  });
+});
+
 describe("weight rows", () => {
-  it("round-trips and reads either decimal separator", () => {
-    const entry = w(5, 72.4);
-    expect(rowToWeightEntry(weightEntryToRow(entry))).toEqual(entry);
-    expect(rowToWeightEntry([day(5), "72,4", ""]).weightKg).toBe(72.4);
+  it("writes the date as text (apostrophe) and reads it back", () => {
+    const row = weightEntryToRow(w(5, 72.4));
+    expect(row[0]).toBe("'2026-10-05");
+    expect(rowToWeightEntry(["2026-10-05", "72,4", ""])).toEqual(w(5, 72.4));
   });
 
-  it("parses a tab with a readable-names row and skips blank/zero rows", () => {
-    const rows = [["Timestamp", "WeightKg", "Notes"], ["Час", "Вага, кг", "Примітки"], [day(5), 72.4, ""], ["", "", ""], [day(6), 0, ""]];
-    expect(parseWeightEntries(rows)).toEqual([w(5, 72.4)]);
+  it("keeps one entry per day (the later row wins) and skips blank rows", () => {
+    const rows = [["Date", "WeightKg", "Notes"], ["Дата", "Вага, кг", "Примітки"], [day(5), 72.4, ""], ["", "", ""], [day(5), 72.1, "ввечері"], [day(6), 0, ""]];
+    expect(parseWeightEntries(rows)).toEqual([{ date: day(5), weightKg: 72.1, notes: "ввечері" }]);
   });
 
-  it("finds the row to update by time and weight", () => {
-    const index = buildColumnIndex(["Timestamp", "WeightKg", "Notes"]);
-    const update = planWeightUpdate(w(5, 72.4), w(5, 72.0), [weightEntryToRow(w(4, 73), index), weightEntryToRow(w(5, 72.4), index)], index, 3);
-    expect(update?.range).toBe("Weight!A4:C4");
-    expect(planWeightUpdate(w(9, 1), w(9, 2), [], index)).toBeNull();
+  it("overwrites the day's row when there is one, else appends", () => {
+    const index = buildColumnIndex(["Date", "WeightKg", "Notes"]);
+    const rows = [[day(4), 73, ""], [day(5), 72.4, ""]];
+    expect(planWeightSave(w(5, 72.0), rows, index, 3)?.range).toBe("Weight!A4:C4");
+    expect(planWeightSave(w(6, 72.0), rows, index, 3)).toBeNull();
   });
 });
