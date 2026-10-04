@@ -12,8 +12,9 @@ The planner for Track My Meals / Трекер Харчування and the roncr
 
 ---
 
-## Next session — start here (set 2026-10-02)
-1. **Build 1.6** (item IDs + sheet upgrade) — design in the spec; branch `release/1.6` holds the committed design.
+## Next session — start here (set 2026-10-04)
+1. **Start 1.7 — verified food database:** the format (`verified-foods.json`, verification per part of an entry), then re-check the 57 built-in foods and the 12 cooked dishes against USDA (entry numbers already found for 10 of the 12 dishes — see 1.7), with GI from the tables; developer reviews on a review page.
+2. Note from 1.6: the next Play update on the developer's phone is a chance to confirm the stale-screens fix (new version on first open).
 
 ## Current and upcoming releases
 
@@ -62,7 +63,7 @@ Replaces the free MyMemory service, whose small daily limit (5,000 characters, a
 - **Record in `build-log.md`:** why MyMemory was picked originally (live-test quick fix, no server back then, avoiding costs) and that its limit wasn't checked, especially after per-result back-translation multiplied usage ~20×.
 - **Result (2026-10-01):** live on the web and released to Play. Verified: live endpoint (site + Android origins work, other sites refused), the Android build on the emulator against it (2 translation requests per search instead of 21), developer tested the web search. Budget alert at $1 set; the API key kept (it was shown once in a session transcript — restricted to Translation and capped, developer chose to keep it). Privacy policy updated on roncreator.com (also corrects the Android sign-in token wording).
 
-### 1.6 — Item IDs, sheet upgrade, notifications · 👀 built and tested — ready to release
+### 1.6 — Item IDs, sheet upgrade, notifications · ✅ released 2026-10-04
 **Why first (decided 2026-10-01):** the sheet links everything **by name** today — dish recipes list ingredient names, meal rows only carry the item name, edits find rows by name. The verified database (1.7) renames items to proper names, which would cut every dish off from its ingredients unless links go by ID first; mom's data import (1.8) writes rows that need IDs and labels too. The database *file* can be prepared alongside, but its renamed content ships only after this.
 Full design: spec → "Item IDs and the sheet upgrade (release 1.6)".
 - **IDs that never change and are never reused:** built-in items `B0001…` (fixed in the app's data files; retired ones point to their replacement), the user's items `I1, I2…` (Ingredients) and `D1, D2…` (Dishes), numbered within her sheet. Names stay labels only.
@@ -151,6 +152,7 @@ New items land here with a one-line note, then get placed above.
 ---
 
 ## Released
+- ✅ **1.6** (2026-10-04): permanent item IDs (built-in `B…`, the user's `I…`/`D…`), linked copies of built-in items, recipe ingredient IDs, meal `ItemId`; silent lossless sheet upgrade with a one-time note; duplicate-name check; one notification standard (toast queue); read-limit fix (batch reads, retry on 429).
 - ✅ **1.5.4** (2026-10-04): when the Google sign-in expires (~1 h on the web; a dead refresh token on Android) a banner asks to sign in again instead of requests failing silently; screens keep what's on them and reload after signing in.
 - ✅ **1.5.3** (2026-10-01): urgent fix — decimals (blood sugar 6.2, carbs, GL, settings) read as 0 from Ukrainian-locale sheets; the app now reads stored values instead of display text.
 - ✅ **1.5.2** (2026-10-01): Google Cloud Translation through our own `api/translate`, 15,000 characters/day project cap (inside the free tier), 2,000/day per device, translations remembered on the device.
