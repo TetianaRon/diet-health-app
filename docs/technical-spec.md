@@ -460,12 +460,39 @@ Deferred by the developer; the decisions are already made:
 
 **To research before building:** the Picker runs inside a Google page; inside the Android app's WebView there may be no Google session, so on Android it may have to open in the system browser (a small picker page on the web app's domain, returning the file ID to the app via a deep link) — verify that the per-file grant made there applies to the Android OAuth client too (same Cloud project). **Setup the developer does in Google Cloud:** enable the Google Picker API, create a browser API key restricted to the app's origins, note the project number (Picker "App ID").
 
-## Planned: medication log (decided 2026-09-29, not built)
+## Daily records and the new Today (release 1.7, designed 2026-10-04)
 
-Mom needs to log the medicine she takes alongside blood sugar (e.g. Forxiga, taken situationally when sugar is high). **Start simple, refine with her while she uses it live** (developer's decision).
+> **Status:** 📝 Designed with the developer, not built. Mom asked for medicine and weight logging as soon as possible; the developer added the UX update (one daily surface). Supersedes "Planned: medication log" (2026-09-29), whose decisions are kept below.
 
-- **Two new tabs:** `Medications` — her medicines, entered once: Name, usual Dose, Unit, Notes, Active (still taking), DateAdded. `MedicationLog` — each intake: Timestamp (time *taken*, editable, default now), Medication (name), Dose (pre-filled with the usual dose), Unit, Notes. New column labels for the readable-names row: Name, Dose, Unit, Active, Medication.
-- **UI:** on the Цукор screen, «Додати ліки» next to «Додати вимірювання»; the day list shows readings and intakes together in time order (e.g. «08:10 · 8,4 ммоль/л», «08:30 · Форксига 10 мг»); a new medicine can be added from the intake form; today's intakes editable like readings.
-- **New tabs appear silently:** adding tabs to `REQUIRED_TABS` would make the structure check report them as missing and open the repair dialog on mom's phone after the update. Purely *new* tabs should be created quietly by the app; the dialog stays for real structural problems.
-- **Not a medical app:** a plain diary — no dose suggestions, no "you should take…", no interaction warnings. Possible later (ask mom): plain reminders for fixed-schedule medicines.
-- **Questions for mom, gathered while she tests it:** which medicines; fixed schedule or as needed for each; does the dose change; would reminders help.
+### Navigation
+Three tabs: **Сьогодні | Історія | Страви**; Settings stays on the gear. The separate Цукор screen goes (its content moves into Сьогодні and Історія).
+
+### Сьогодні — one surface for entering and reading the day
+Blocks, top to bottom:
+1. **Daily status** — calories bar, GL bar and the other limits switched on in Settings (as today).
+2. **Weight bar** — latest weight with its trend: «Вага: 72,4 кг · на 0,6 кг менше за середнє за 30 днів (73,0 кг)» + «+ Вага» (and edit for today's entry). The 30-day average smooths day-to-day water swings, so the comparison shows the direction. With **fewer than 3 measurements** in the last 30 days it compares with the previous measurement instead («на 0,2 кг менше, ніж 3 дні тому»). **Neutral styling** — no green/red: the app doesn't judge whether up or down is good.
+3. **Records** — blood sugar and medicine in **one timeline** («07:10 · Цукор 6,2 ммоль/л (натщесерце)», «07:30 · Форксига 10 мг»), buttons «+ Цукор» «+ Ліки», «Редагувати» on today's entries. **Yesterday's last medicine** shown small and read-only («Учора 21:30 · Форксига 10 мг») — it affects today's sugar.
+4. **Meals** — today's meals as now (editable). **Yesterday's meals** in one compact, read-only summary line: totals + the last meal («Учора: 5 прийомів · 1650 ккал · ГН 72 · останній о 20:30 — вечеря: гречка, курка») — the evening meal matters most for the morning sugar.
+
+**Order switch** «Спочатку нові» / «Спочатку старі»: default newest first, so yesterday's entries sit at the **bottom** of their blocks; oldest first moves them to the top (chronological). Stored in the sheet's Settings (new key) so it's the same on the phone and the computer; Історія follows it too.
+
+### Історія — read-only
+Per day, newest first (or per the order switch): daily totals, sugar readings, medicine, weight, meals. No editing. Last 14 days + «Показати ще». The current "recent days" section on Today moves here.
+
+### Страви
+Today's Продукти screen with the tabs swapped: **dishes** first, **products** second.
+
+### Medicine (decisions kept from 2026-09-29)
+- **Tabs:** `Medications` — her medicines, entered once: Id, Name, Dose (usual), Unit, Notes, Active, DateAdded. `MedicationLog` — each intake: Timestamp (time *taken*, editable, default now), MedicationId, Medication (name snapshot), Dose (pre-filled with the usual dose), Unit, Notes.
+- **Intake form:** pick from her list; a new medicine can be added right there; dose pre-filled and changeable; today's intakes editable like readings.
+- **Not a medical app:** a plain diary — no dose suggestions, no "you should take…", no interaction warnings. Possible later (ask mom while she uses it): plain reminders for fixed-schedule medicines.
+
+### Weight
+- **Tab** `Weight`: Timestamp, WeightKg, Notes. Decimal input with either separator (6,2 / 6.2 handled as for blood sugar).
+
+### Sheet
+`Medications`, `MedicationLog`, `Weight` join the required tabs and are created **silently** by the 1.6 upgrade (missing tab = additive), mentioned in the one-time upgrade note. New readable labels for their columns. New Settings key for the order switch.
+
+### Tests
+On the developer's devices, the emulator and a Ukrainian-locale test sheet — never relying on mom's phone.
+

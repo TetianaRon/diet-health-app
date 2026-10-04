@@ -13,7 +13,7 @@ The planner for Track My Meals / Трекер Харчування and the roncr
 ---
 
 ## Next session — start here (set 2026-10-04)
-1. **Start 1.7 — verified food database:** the format (`verified-foods.json`, categories for sets, verification per part of an entry), then re-check the 57 built-in foods and the 12 cooked dishes against USDA (entry numbers already found for 10 of the 12 dishes — see 1.7), with GI from the tables; developer reviews on a review page.
+1. **Build 1.7 — daily records (mom's request):** medicine + weight logging, the new Today (one surface), Історія, Страви — design in the spec. Then **1.8 — verified food database:** the format (`verified-foods.json`, categories for sets, verification per part of an entry), then re-check the 57 built-in foods and the 12 cooked dishes against USDA (entry numbers already found for 10 of the 12 dishes — see 1.7), with GI from the tables; developer reviews on a review page.
 2. Note from 1.6: the next Play update on the developer's phone is a chance to confirm the stale-screens fix (new version on first open).
 
 ## Current and upcoming releases
@@ -73,8 +73,19 @@ Full design: spec → "Item IDs and the sheet upgrade (release 1.6)".
 - Test on a copy of mom's sheet (the dev sheet) before release.
 - **Added during testing (2026-10-04):** read-limit fix (one batch read per check, automatic retry on 429, Ukrainian message); a one-time note after a silent upgrade (what changed + Файл → Історія версій); **one notification standard** — toasts in a single non-overlapping queue, info closes itself, action stays (spec → "App notifications").
 
-### 1.7 — Verified food database · 📝 planned (next)
-- **Categories in the format** (developer, 2026-10-04): every entry belongs to a category (Крупи, Овочі, Молочні продукти…), so the database can be offered as **sets** (1.8). The file stays the single source for the app and the public pages.
+### 1.7 — Daily records: medicine, weight, new Today · 📝 planned (next) — mom's request (2026-10-04)
+Mom asked to log the medicine she takes alongside blood sugar, and her weight, as soon as possible; the developer adds a UX update so the day reads as one surface. Full design: spec → "Daily records and the new Today (release 1.7)".
+- **Navigation:** Сьогодні | Історія | Страви (Settings stays on the gear); the separate Цукор screen goes.
+- **Сьогодні:** daily status bars (calories, GL, other limits switched on) → **weight bar** (latest weight vs the 30-day average; vs the previous measurement when there are fewer than 3 in 30 days; neutral styling) → **records** (blood sugar + medicine in one timeline, «+ Цукор» «+ Ліки», today's entries editable; yesterday's last medicine, small, read-only) → **meals** (today's, editable; yesterday's in one compact summary line, read-only).
+- **Order switch** «Спочатку нові» / «Спочатку старі» (default newest first, so yesterday's records sit at the bottom), stored in the sheet's Settings so it's the same on phone and computer; also applies to Історія.
+- **Історія:** read-only, per day — totals, sugar, medicine, weight, meals; 14 days + «Показати ще».
+- **Страви:** dishes as the main tab, products secondary.
+- **Medicine:** her medicine list (name, usual dose, unit; new one addable from the intake form) + intakes (time editable, dose pre-filled). A diary only — no dose suggestions or warnings.
+- **New tabs** `Medications`, `MedicationLog`, `Weight` — added silently (1.6 mechanism) with the one-time upgrade note.
+- Tests on the developer's devices / emulator / a Ukrainian-locale test sheet (not mom's phone).
+
+### 1.8 — Verified food database · 📝 planned (after 1.7)
+- **Categories in the format** (developer, 2026-10-04): every entry belongs to a category (Крупи, Овочі, Молочні продукти…), so the database can be offered as **sets** (1.9). The file stays the single source for the app and the public pages.
 - **Format** (`src/data/verified-foods.json`, also the source of the public pages on roncreator.com later): per entry the permanent `B` ID, family + state (raw / boiled / baked / canned…), Ukrainian + English names, values per 100 g, **nutrient source** (dataset + entry ID + description + version), **GI with its own source** (table + entry), reliability (high / medium / low) + **reasoning in Ukrainian and English**, verified dates. An automatic test refuses any entry missing a source, reliability, reason or date.
 - **The 12 built-in cooked dishes** (Гречка варена … Нут варений, `starter-dishes.ts`) are estimates too: raw built-in values ÷ a cooked-weight factor whose source wasn't recorded, GI from an uncited audit (known weak: pearl barley 25 vs 58, millet from the 1981 study). Replace them with USDA's **measured cooked entries** (e.g. "Buckwheat groats, roasted, cooked"), with entry IDs; keep the yield calculation only as a cross-check. Their `B` IDs then point to the replacements (developer's question, 2026-10-04). *Quick USDA check the same day:* 10 of 12 have SR Legacy measured cooked entries (buckwheat #170686, white rice #168878, brown rice #169704, oats with water #173905, millet #168871, pearl barley #170285, pasta #169751/#172014, kidney beans #173792, lentils #172421, chickpeas #173757); our computed carbs match where compared (buckwheat 19.9, white rice 28.2), so the yield factors likely came from these — the work is recording sources properly and choosing variants (salted/unsalted). No cooked entry for semolina porridge or cornmeal porridge (only dry; farina/Cream of Wheat is a different product — no stand-ins): search FNDDS, else keep calculated from the dry product with low reliability and the reason.
 - **The 60 built-in foods re-checked**, not copied: USDA lookups (raw + cooked where the source has both), GI from the tables with reliability; the developer reviews the result on a review page; renamed to proper names (safe after 1.6).
@@ -83,40 +94,37 @@ Full design: spec → "Item IDs and the sheet upgrade (release 1.6)".
 - **ⓘ** next to every built-in value (source, reliability, reason, date) and **«неперевірено»** on everything not from the database (the user's own items, edited copies).
 - Low-carb vegetables' GI: decide between GL counted as 0 and a conventional GI 15 labelled «умовне» (open since 2026-09-26; recommended: the latter).
 
-### 1.8 — Database sets and search · 📝 planned (after 1.7) — direction decided 2026-10-04
+### 1.9 — Database sets and search · 📝 planned (after 1.8) — direction decided 2026-10-04
 Built-in items stop being "invisible": today they live only inside the app and appear in her lists without being in her sheet, while users (mom included) expect to see them in the spreadsheet.
 - **Sets on our server:** the verified database as a static file on the existing Vercel site (practically free, served from Vercel's network), split by category; updates without an app release; the roncreator.com public pages built from the same file.
 - **Clean start:** a new sheet starts empty; on creating it, the app offers sets («Додати набори: Крупи, Овочі, Молочні продукти…»), also available later from Продукти.
 - **Everything she adds is written to her sheet** — a whole set or a single item — as her row with `BasedOn = B…` (the 1.6 mechanism).
 - **Search: our database first (in Ukrainian, no translation needed), then USDA.** Fewer paid translations; works for a free version.
-- **Updates to her copies become central:** when a database value is corrected, offer it («Оновлення бази: 12 продуктів мають уточнені значення — оновити?») — see the 1.7 note on saved copies.
+- **Updates to her copies become central:** when a database value is corrected, offer it («Оновлення бази: 12 продуктів мають уточнені значення — оновити?») — see the 1.8 note on saved copies.
 - **Moving mom over:** built-in items she already used (in meals or recipes) are copied into her sheet; the rest is offered as sets — so nothing she's used to disappears from her lists.
 - **Internet:** adding/searching sets needs a connection — like the whole app today (it reads her sheet online; offline it only shows what it last loaded and can't save). Real offline use comes with the local-first version (2.x), which would keep downloaded sets on the device.
 - **Download size** isn't the reason: the data is small (a 2,000-entry documented database ≈ 1–2 MB, a few hundred KB compressed).
 
-### 1.9 — Mom's data, verified · 📝 planned (after 1.8)
-Her import becomes "add the sets she needs + her own items" (see 1.8).
+### 2.0 — Mom's data, verified · 📝 planned (after 1.9)
+Her import becomes "add the sets she needs + her own items" (see 1.9).
 Spec rules: memory of the import decisions (2026-09-29) + the review page.
 - **Database content:** every item of hers with a genuine match (~90, incl. olives black + green, trout + salmon, beef/pork heart raw + boiled, cocoa), under proper names — **plus the raw/cooked partner** of each wherever the source has both.
 - **Ingredients her dishes likely need** — estimated from each dish, added to the database so she can compose them later. **Her dishes themselves are not recalculated:** her value is kept and the dish is flagged «потрібно скласти рецепт».
 - **Her own sheet:** branded packaging items (her values) and values we couldn't verify (kept as she has them, marked «неперевірено»); her dishes with the flag. **Not added:** items without a genuine match and the dropped ones (кукурудза варена, гірчиця американська, тунець, fructose sweets, calculation leftovers).
 - Import mechanism (how the rows get into her sheet) to be decided at the start of this release.
 
-### 2.0 — Medicine log · 📝 planned
-Spec: "Planned: medication log". Two tabs (`Medications`, `MedicationLog`), «Додати ліки» on Цукор, readings and intakes in one day list. Simple first; refine with mom while she uses it. Could move earlier if she needs it sooner (it doesn't depend on 1.6–1.9).
-
 ### 2.1 — Sheet detection + Google Picker · 📝 planned
 Spec: "Planned: spreadsheet detection + Google Picker". Auto-detect the user's sheet, Picker for existing ones, remove the shared test-sheet fallback. Research first: Picker inside the Android WebView. Needs Google Cloud setup by the developer.
 
 ### 2.2 — Food families in the dish composer · 📝 planned
-Spec: "Planned: food families with cooking states". Raw weight + state in the finished dish; carbs by mass balance, GI from the cooked state; published whole-dish GI shown only as a check. The data already exists from 1.7/1.9.
+Spec: "Planned: food families with cooking states". Raw weight + state in the finished dish; carbs by mass balance, GI from the cooked state; published whole-dish GI shown only as a check. The data already exists from 1.8/2.0.
 
 ### 2.x — Local-first app, free and paid versions · 💡 idea, design needed (developer, 2026-10-04)
 Prompted by the read-limit errors (429) in the 1.6 test. Not scheduled — needs its own design before any building.
 - **Local-first storage:** the app keeps its data on the device (IndexedDB in the WebView, or a native SQLite plugin for robustness), reads instantly and offline; Google Sheets becomes an optional **sync target** (send changes, fetch others' changes) instead of being read on every screen. Removes the read-limit problem at the root.
 - **Sync engine** — the hard part: phone + computer on one sheet, offline edits on both, deletions. 1.6's permanent IDs are the foundation; also needs per-row "last changed" times and deletion markers; "latest edit of a row wins" suits mostly-append data (meals, readings). A series of releases, not one.
 - **Fully local version without Google sign-in:** data only on the phone → needs **export/backup** (file, Android backup) against loss; the web version can't share data without sync.
-- **Free vs paid** (only what costs the developer goes paid): free = local app, our verified database as sets (1.7/1.8, Ukrainian search; kept on the device in the local-first version), manual entry, meals, blood sugar, reminders; paid = USDA search with translation (Translation API), AI label reading, and sync across devices (Sheets itself costs nothing — a product choice). Payments: **Google Play billing** first (Android only, 15%); a paid web version would need its own accounts and payments.
+- **Free vs paid** (only what costs the developer goes paid): free = local app, our verified database as sets (1.8/1.9, Ukrainian search; kept on the device in the local-first version), manual entry, meals, blood sugar, reminders; paid = USDA search with translation (Translation API), AI label reading, and sync across devices (Sheets itself costs nothing — a product choice). Payments: **Google Play billing** first (Android only, 15%); a paid web version would need its own accounts and payments.
 - **Open questions:** storage technology; sync rules and conflicts; backup format; exact free/paid split; subscription vs one-time; public launch prep (OAuth verification, store listing, privacy policy).
 
 ### Later (unordered)
@@ -129,7 +137,7 @@ Prompted by the read-limit errors (429) in the 1.6 test. Not scheduled — needs
 ---
 
 ## roncreator.com site
-- 📝 **Public food database pages** — publish the verified database (sources, reliability, reasoning) for other users, generated from `verified-foods.json`; addresses like `…/foods/B0042-apple-raw` (only the ID is looked up, the readable part can change). Depends on 1.7 format + content (and 1.8, which hosts the same file).
+- 📝 **Public food database pages** — publish the verified database (sources, reliability, reasoning) for other users, generated from `verified-foods.json`; addresses like `…/foods/B0042-apple-raw` (only the ID is looked up, the readable part can change). Depends on 1.8 format + content (and 1.9, which hosts the same file).
 - 📝 **Contact form email** — Resend account + DNS records in Cloudflare + Vercel env vars.
 - 📝 **Mom's story** on the Track My Meals landing — draft privately, publish only after her approval.
 - 📝 Friendly bilingual 404 page.
