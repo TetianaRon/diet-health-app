@@ -13,7 +13,7 @@ The planner for Track My Meals / Трекер Харчування and the roncr
 ---
 
 ## Next session — start here (set 2026-10-04)
-1. **Build 1.7 — daily records (mom's request):** medicine + weight logging, the new Today (one surface), Історія, Страви — design in the spec. Then **1.8 — verified food database:** the format (`verified-foods.json`, categories for sets, verification per part of an entry), then re-check the 57 built-in foods and the 12 cooked dishes against USDA (entry numbers already found for 10 of the 12 dishes — see 1.7), with GI from the tables; developer reviews on a review page.
+1. **1.7 built** (daily records — see build log); after it's live, **1.8 — verified food database:** the format (`verified-foods.json`, categories for sets, verification per part of an entry), then re-check the 57 built-in foods and the 12 cooked dishes against USDA (entry numbers already found for 10 of the 12 dishes — see 1.7), with GI from the tables; developer reviews on a review page.
 2. Note from 1.6: the next Play update on the developer's phone is a chance to confirm the stale-screens fix (new version on first open).
 
 ## Current and upcoming releases
@@ -73,7 +73,7 @@ Full design: spec → "Item IDs and the sheet upgrade (release 1.6)".
 - Test on a copy of mom's sheet (the dev sheet) before release.
 - **Added during testing (2026-10-04):** read-limit fix (one batch read per check, automatic retry on 429, Ukrainian message); a one-time note after a silent upgrade (what changed + Файл → Історія версій); **one notification standard** — toasts in a single non-overlapping queue, info closes itself, action stays (spec → "App notifications").
 
-### 1.7 — Daily records: medicine, weight, new Today · 📝 planned (next) — mom's request (2026-10-04)
+### 1.7 — Daily records: medicine, weight, new Today · 👀 ready for release (2026-10-05) — mom's request (2026-10-04)
 Mom asked to log the medicine she takes alongside blood sugar, and her weight, as soon as possible; the developer adds a UX update so the day reads as one surface. Full design: spec → "Daily records and the new Today (release 1.7)".
 - **Navigation:** Сьогодні | Історія | Страви (Settings stays on the gear); the separate Цукор screen goes.
 - **Сьогодні:** daily status bars (calories, GL, other limits switched on) → **weight bar** (one weight per day, date only; latest vs the 30-day average; vs the previous measurement when there are fewer than 3 in 30 days; neutral styling) → **records** (blood sugar + medicine in one timeline, «+ Цукор» «+ Ліки», today's entries editable; yesterday's last medicine, small, read-only) → **meals** (today's, editable; yesterday's as a compact read-only list of all meals with times and totals).
