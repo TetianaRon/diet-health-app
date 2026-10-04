@@ -13,8 +13,7 @@ The planner for Track My Meals / Трекер Харчування and the roncr
 ---
 
 ## Next session — start here (set 2026-10-02)
-1. **File the WebView keyboard issue with Chromium** — report drafted in the 2026-09-30 session (developer files it).
-2. **Build 1.6** (item IDs + sheet upgrade) — design in the spec; branch `release/1.6` holds the committed design.
+1. **Build 1.6** (item IDs + sheet upgrade) — design in the spec; branch `release/1.6` holds the committed design.
 
 ## Current and upcoming releases
 
@@ -31,7 +30,7 @@ Branch `release/1.5.1` from `release/1.5` (1.5 isn't in `main` yet); versionCode
 
 **1. Keyboard language switch closes the keyboard** 🔴
 - (a) Our own WebView subclass (`KeyboardFriendlyWebView extends CapacitorWebView`) swapped in by overriding Capacitor's `capacitor_bridge_layout_main.xml` in `android/app/src/main/res/layout/`. It doesn't pass "window lost focus" to Chromium while the keyboard is open (the IME's own popup took focus), so the WebView doesn't hide the keyboard. Every other focus change is passed through unchanged.
-- (b) Report it to Chromium (WebView 154 on Android 16; stack trace in Intake). Keep (a) until a fixed WebView is widespread.
+- (b) ✅ Reported to Chromium 2026-10-04: [issue 569300356](https://issues.chromium.org/issues/569300356) (component Mobile > WebView). Keep (a) until a fixed WebView is widespread; check the issue now and then.
 
 **2. Food search says «Не знайдено» when the search actually failed** 🔴
 - Lowercase and trim the query before translating (`trim().toLocaleLowerCase("uk")`): «Кукурудза» → "Maize" → 1 result is the auto-capital problem; Gboard also leaves a trailing space («Кукурудза »). *Confirmed on the developer's Pixel 2026-09-30: lowercase → "corn" → many results; capitalised → "Maize".*
