@@ -474,10 +474,10 @@ Blocks, top to bottom:
 3. **Records** — blood sugar and medicine in **one timeline** («07:10 · Цукор 6,2 ммоль/л (натщесерце)», «07:30 · Форксига 10 мг»), buttons «+ Цукор» «+ Ліки», «Редагувати» on today's entries. **Yesterday's last medicine** shown small and read-only («Учора 21:30 · Форксига 10 мг») — it affects today's sugar.
 4. **Meals** — today's meals as now (editable). **Yesterday's meals** as a compact, read-only list of **all** of yesterday's meals, each with its time and totals (e.g. «20:30 · Вечеря · 520 ккал · ГН 18»), smaller than today's (developer, 2026-10-04) — they show how meals relate to the next morning's sugar.
 
-**Order switch** «Спочатку нові» / «Спочатку старі»: default newest first, so yesterday's entries sit at the **bottom** of their blocks; oldest first moves them to the top (chronological). Stored in the sheet's Settings (new key) so it's the same on the phone and the computer; Історія follows it too.
+**Order switch** «Спочатку нові» / «Спочатку старі» — a **toggle on the screen itself**, affecting only that screen (Сьогодні and Історія each have their own): default newest first, so yesterday's entries sit at the **bottom** of their blocks; oldest first moves them to the top (chronological). A viewing preference, not data: **saved on the device** (app/browser storage), never written to the sheet (developer, 2026-10-04).
 
 ### Історія — read-only
-Per day, newest first (or per the order switch): daily totals, sugar readings, medicine, weight, meals. No editing. Last 14 days + «Показати ще». The current "recent days" section on Today moves here.
+Per day, newest first (or oldest first with its own order toggle): daily totals, sugar readings, medicine, weight, meals. No editing. Last 14 days + «Показати ще». The current "recent days" section on Today moves here.
 
 ### Страви
 Today's Продукти screen with the tabs swapped: **dishes** first, **products** second.
@@ -491,7 +491,7 @@ Today's Продукти screen with the tabs swapped: **dishes** first, **produ
 - **Tab** `Weight`: Timestamp, WeightKg, Notes. Decimal input with either separator (6,2 / 6.2 handled as for blood sugar).
 
 ### Sheet
-`Medications`, `MedicationLog`, `Weight` join the required tabs and are created **silently** by the 1.6 upgrade (missing tab = additive), mentioned in the one-time upgrade note. New readable labels for their columns. New Settings key for the order switch.
+`Medications`, `MedicationLog`, `Weight` join the required tabs and are created **silently** by the 1.6 upgrade (missing tab = additive), mentioned in the one-time upgrade note. New readable labels for their columns.
 
 ### Tests
 On the developer's devices, the emulator and a Ukrainian-locale test sheet — never relying on mom's phone.
