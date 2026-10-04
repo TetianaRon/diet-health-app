@@ -327,6 +327,8 @@ Run by the structure check after sign-in / sheet switch. **Only blank cells are 
 ### Column migrations — when a released column changes meaning (added in 1.7, developer, 2026-10-05)
 Additive upgrades can't carry data over when a column's meaning changes (first case: Weight `Timestamp` → `Date`, one record per day). A manual fix isn't acceptable for a public app, so `src/lib/columnMigrations.ts` declares migrations — `{ tab, from, to, convert }` — and the silent upgrade, right after adding the new column, **fills the new column's empty cells by converting the old column's values**. The old column stays exactly as it was (the app just stops reading it); filled cells are never overwritten; the one-time note says «Стовпець «Дата» заповнено зі стовпця «Час»». Pure, unit-tested.
 
+**Row rewrites keep other columns:** when the app rewrites a row (edits), columns it doesn't manage — an old migrated column, or a column the user added — are sent as `null`, which the Sheets API skips, so those cells stay as they are (`buildRow`, fixed 2026-10-05 after an edit wiped the old Weight `Timestamp` cell).
+
 **Rule for every release from now on:** a change to the sheet is either **additive** (new tab/column/settings key) or ships **with a column migration**. Columns are never removed or rewritten automatically; anything needing that goes to the structure dialog for a person.
 
 ### The app working by ID
