@@ -20,6 +20,7 @@ import {
   addDish,
   computeDishNutrition,
   computeDishUnknownFields,
+  unknownGiCarbShare,
   dishContainsFlaggedIngredient,
   listDishes,
   resolveItemRef,
@@ -681,6 +682,8 @@ function ComposeDishForm({
       : null;
 
   const previewUnknown = preview ? computeDishUnknownFields(resolvedRefs, findIngredient) : [];
+  // A small unknown-GI share that the dish GI leaves out (≤ 5%, see SMALL_UNKNOWN_GI_SHARE) — said, not hidden.
+  const omittedGiShare = preview && !previewUnknown.includes("gi") ? unknownGiCarbShare(resolvedRefs, findIngredient) : 0;
 
   const handleSave = async () => {
     const allResolved = rows.every((row) => row.nameUk.trim() === "" || findIngredient(row));
@@ -835,6 +838,7 @@ function ComposeDishForm({
             {uk.dishes.composeForm.preview(preview.carbsG, preview.caloriesKcal, preview.gi, giVerified ? "" : "≈")}
           </p>
           <p className="food-form-hint">{uk.dishes.approximateGiNote}</p>
+          {omittedGiShare > 0 && <p className="food-form-hint">{uk.dishes.composeForm.smallUnknownGi(Math.max(1, Math.round(omittedGiShare * 100)))}</p>}
           {previewUnknown.length > 0 && (
             <p className="today-warning">
               {uk.dishes.composeForm.unknownFromIngredients(

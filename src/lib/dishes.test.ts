@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   computeDishNutrition,
   computeDishUnknownFields,
+  unknownGiCarbShare,
   dishContainsFlaggedIngredient,
   dishToRow,
   parseUnknownNutritionFields,
@@ -304,6 +305,32 @@ describe("computeDishUnknownFields", () => {
       lookup({ A: known, B: { ...known, unknownFields: ["fatG"] } }),
     );
     expect(result).toEqual(["fatG"]);
+  });
+
+  it("keeps the dish GI when unknown-GI ingredients bring at most 5% of the carbs (e.g. garlic in soup)", () => {
+    const garlic: Ing = { ...known, carbsG: 33, unknownFields: ["gi"] };
+    // 100 g buckwheat (≈72 g carbs) + 5 g garlic (≈1.7 g carbs) → about 2% of the carbs
+    const refs = [
+      { nameUk: "A", grams: 100 },
+      { nameUk: "G", grams: 5 },
+    ];
+    expect(computeDishUnknownFields(refs, lookup({ A: known, G: garlic }))).toEqual([]);
+    expect(unknownGiCarbShare(refs, lookup({ A: known, G: garlic }))).toBeGreaterThan(0);
+    // …but not when they bring more
+    expect(computeDishUnknownFields([{ nameUk: "A", grams: 10 }, { nameUk: "G", grams: 50 }], lookup({ A: known, G: garlic }))).toEqual(["gi"]);
+  });
+
+  it("leaves an unknown GI out of the dish GI average instead of counting it as 0", () => {
+    const garlic = { ...BUCKWHEAT_RAW, carbsG: 33, gi: 0, unknownFields: ["gi"] as NutritionKey[] };
+    const result = computeDishNutrition(
+      [
+        { nameUk: "A", grams: 100 },
+        { nameUk: "G", grams: 5 },
+      ],
+      100,
+      ({ nameUk }) => (nameUk === "A" ? BUCKWHEAT_RAW : garlic),
+    );
+    expect(result.gi).toBe(BUCKWHEAT_RAW.gi);
   });
 
   it("makes the dish GI unknown when a carb-bearing ingredient's GI is unknown", () => {

@@ -124,6 +124,11 @@ function round2(value: number): number {
  * without lab-testing the specific dish). For a single-ingredient dish this
  * reduces to that ingredient's own GI.
  *
+ * An ingredient whose GI is unknown (unknownFields has "gi") is left out of
+ * the GI average — its stored 0 is not a real GI and would pull the average
+ * down; its carbohydrate still counts in the totals. Whether the dish GI can
+ * still be trusted is computeDishUnknownFields' call (the small-share rule).
+ *
  * `lookupIngredient` returning null for a reference it can't resolve skips
  * that ingredient's contribution — callers should validate all references
  * resolve before treating the result as final.
@@ -131,7 +136,7 @@ function round2(value: number): number {
 export function computeDishNutrition(
   ingredients: DishIngredientRef[],
   yieldGrams: number,
-  lookupIngredient: (ref: DishIngredientRef) => IngredientNutrition | null,
+  lookupIngredient: (ref: DishIngredientRef) => (IngredientNutrition & { unknownFields?: NutritionKey[] }) | null,
 ): IngredientNutrition {
   let totalCarbs = 0;
   let totalFiber = 0;
@@ -158,8 +163,10 @@ export function computeDishNutrition(
     totalCalories += nutrition.caloriesKcal * factor;
     totalSodium += nutrition.sodiumMg * factor;
 
-    giWeightedSum += carbsContribution * nutrition.gi;
-    giWeightBase += carbsContribution;
+    if (!nutrition.unknownFields?.includes("gi")) {
+      giWeightedSum += carbsContribution * nutrition.gi;
+      giWeightBase += carbsContribution;
+    }
   }
 
   const scale = yieldGrams > 0 ? 100 / yieldGrams : 0;
@@ -177,26 +184,47 @@ export function computeDishNutrition(
 }
 
 /**
+ * Ingredients whose GI is unknown may bring at most this share of a dish's
+ * carbohydrate and the dish GI still counts (developer, 2026-10-05: «agree,
+ * and that should apply to any unknown products») — e.g. 5 g of garlic in a
+ * pot of soup no longer makes the soup's GI unknown. The GI then comes from
+ * the rest of the carbohydrate (see unknownGiCarbShare for the note).
+ */
+export const SMALL_UNKNOWN_GI_SHARE = 0.05;
+
+type WithUnknown = IngredientNutrition & { unknownFields: NutritionKey[] };
+
+/** Share (0–1) of the dish's carbohydrate that comes from ingredients with an unknown GI. */
+export function unknownGiCarbShare(ingredients: DishIngredientRef[], lookupIngredient: (ref: DishIngredientRef) => WithUnknown | null): number {
+  let total = 0;
+  let unknownGi = 0;
+  for (const ref of ingredients) {
+    const ingredient = lookupIngredient(ref);
+    if (!ingredient || ingredient.unknownFields.includes("carbsG")) continue;
+    const carbs = (ingredient.carbsG * ref.grams) / 100;
+    total += carbs;
+    if (ingredient.unknownFields.includes("gi")) unknownGi += carbs;
+  }
+  return total > 0 ? unknownGi / total : 0;
+}
+
+/**
  * Which of a dish's fields can't be trusted because an ingredient it's built
  * from has that field unknown (see Ingredient.unknownFields) — the dish
  * total for such a field would silently omit that ingredient's real
  * contribution, so it's marked unknown instead. GI is weighted by carbs, so
- * it's unknown whenever a contributing ingredient's GI is unknown (unless
- * that ingredient has no carbs to weight by) or its carbs are unknown.
+ * it's unknown when an ingredient's carbs are unknown, or when ingredients
+ * with an unknown GI bring more than SMALL_UNKNOWN_GI_SHARE of the carbs.
  */
-export function computeDishUnknownFields(
-  ingredients: DishIngredientRef[],
-  lookupIngredient: (ref: DishIngredientRef) => (IngredientNutrition & { unknownFields: NutritionKey[] }) | null,
-): NutritionKey[] {
+export function computeDishUnknownFields(ingredients: DishIngredientRef[], lookupIngredient: (ref: DishIngredientRef) => WithUnknown | null): NutritionKey[] {
   const unknown = new Set<NutritionKey>();
   for (const ref of ingredients) {
     const ingredient = lookupIngredient(ref);
     if (!ingredient) continue;
     for (const key of ingredient.unknownFields) if (key !== "gi") unknown.add(key);
-    const carbsUnknown = ingredient.unknownFields.includes("carbsG");
-    const giUnknown = ingredient.unknownFields.includes("gi");
-    if (carbsUnknown || (giUnknown && ingredient.carbsG > 0)) unknown.add("gi");
+    if (ingredient.unknownFields.includes("carbsG")) unknown.add("gi");
   }
+  if (unknownGiCarbShare(ingredients, lookupIngredient) > SMALL_UNKNOWN_GI_SHARE) unknown.add("gi");
   return NUTRITION_KEYS.filter((key) => unknown.has(key));
 }
 
