@@ -13,7 +13,7 @@ The planner for Track My Meals / Трекер Харчування and the roncr
 ---
 
 ## Next session — start here (set 2026-10-04)
-1. **1.7 released** (2026-10-04). **1.7.1 in progress** (connecting a spreadsheet). Then **1.8 — verified food database:** the format (`verified-foods.json`, categories for sets, verification per part of an entry), then re-check the 57 built-in foods and the 12 cooked dishes against USDA (entry numbers already found for 10 of the 12 dishes — see 1.7), with GI from the tables; developer reviews on a review page.
+1. **1.7 released** (2026-10-04). **1.7.1 ready for release** (connecting a spreadsheet). Then **1.8 — verified food database:** the format (`verified-foods.json`, categories for sets, verification per part of an entry), then re-check the 57 built-in foods and the 12 cooked dishes against USDA (entry numbers already found for 10 of the 12 dishes — see 1.7), with GI from the tables; developer reviews on a review page.
 2. Note from 1.6: the next Play update on the developer's phone is a chance to confirm the stale-screens fix (new version on first open).
 
 ## Current and upcoming releases
@@ -84,7 +84,7 @@ Mom asked to log the medicine she takes alongside blood sugar, and her weight, a
 - **New tabs** `Medications`, `MedicationLog`, `Weight` — added silently (1.6 mechanism) with the one-time upgrade note.
 - Tests on the developer's devices / emulator / a Ukrainian-locale test sheet (not mom's phone).
 
-### 1.7.1 — Connecting a spreadsheet · 🔨 in progress (developer, 2026-10-04)
+### 1.7.1 — Connecting a spreadsheet · 👀 ready for release (developer, 2026-10-04)
 Simplify the spreadsheet part of Settings and detect the user's sheet. Design: spec → "Connecting a spreadsheet (release 1.7.1)".
 - **Settings:** the connected sheet (link + copy-link icon) and «Підключити іншу таблицю»; with none, just «Підключити таблицю».
 - **The connect window:** sheets found in her Google Drive (made by the app) → create a new one → sheets connected before on this device (stored only on the device) → built-in sheets (mom's, test, dev) shown only to accounts that can open them → paste a link.
@@ -175,6 +175,7 @@ Prompted by the read-limit errors (429) in the 1.6 test. Not scheduled — needs
 - **Test sheet in the Ukrainian locale** (2026-10-01, chore): the 1.5.3 bug only appeared in Ukrainian-locale sheets; keep a test sheet with that locale for every release check.
 
 - ✅ *Fixed in 1.5.4.* **Web: after the sign-in expires, the app just fails to reach the sheet** (2026-10-01, developer): a web page left open past the ~1-hour Google access token keeps acting signed in, but every sheet request fails, with no prompt to sign in again. Likely cause: on a 401 `authorizedFetch` tries `refreshAccessToken()`, which is a no-op on the web (no refresh token there by design), then throws a generic error while the UI still shows the user as signed in. Fix idea: on a web 401, first try a silent new token from Google Identity Services (no popup if the Google session is still active); if that fails, switch the app to signed-out and show «Увійти через Google» with a short note instead of failing quietly.
+- **Android: two permission asks in a row feel like one failed** (2026-10-04, developer, fresh install of the 1.7.1 debug build): the system "allow notifications?" prompt appears on opening (it works — `POST_NOTIFICATIONS` granted), then after sign-in Today shows the «Будильники й нагадування» notice, which sends her to the phone's settings for the separate exact-alarm permission. Looks like the first ask didn't stick. Fix idea: one short explanation screen first, then both permissions one after the other (and the notice only if exact alarms are still off).
 
 New items land here with a one-line note, then get placed above.
 

@@ -185,11 +185,19 @@ export default function ConnectSheetDialog() {
           </section>
         )}
 
-        {options.known.length > 0 && (
+        {/* Checking access takes a moment (one request per built-in sheet) — say so instead of popping in late. */}
+        {known === null && getKnownSpreadsheetIds().length > 0 ? (
           <section>
             <h3>{t.knownTitle}</h3>
-            <SheetList sheets={options.known} busy={busy} onConnect={connect} />
+            <p className="food-form-hint">{t.checkingAccess}</p>
           </section>
+        ) : (
+          options.known.length > 0 && (
+            <section>
+              <h3>{t.knownTitle}</h3>
+              <SheetList sheets={options.known} busy={busy} onConnect={connect} />
+            </section>
+          )
         )}
 
         <section>

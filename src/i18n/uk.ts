@@ -598,6 +598,7 @@ export const uk = {
     recentTitle: "Раніше підключені на цьому пристрої",
     forgetLabel: (title: string) => `Прибрати «${title}» зі списку (таблиця не видаляється)`,
     knownTitle: "Інші доступні вам таблиці",
+    checkingAccess: "Перевірка доступу...",
     linkTitle: "За посиланням",
     linkLabel: "Посилання або ID таблиці",
     linkPlaceholder: "https://docs.google.com/spreadsheets/d/...",
