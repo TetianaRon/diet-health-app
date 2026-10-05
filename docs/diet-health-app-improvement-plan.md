@@ -86,7 +86,7 @@ This plan works no issues-log entries. The roadmap's open Intake items stay wher
 
 ## Improvement Roadmap
 
-### Phase 1 — Repo hygiene and a reproducible database 🔄 in progress
+### Phase 1 — Repo hygiene and a reproducible database 🔄 in progress (work done, waiting for review)
 
 - Add `.gitattributes` with the standard minimum lines, plus `*.aab binary`, `*.apk binary`, `*.keystore binary` and `*.jks binary`. Then commit a `git add --renormalize .` on its own.
 - Move the verified-database builder into the repo, e.g. `tools/verified-db/`:
@@ -174,7 +174,9 @@ This plan works no issues-log entries. The roadmap's open Intake items stay wher
 
 | File | Status | Notes |
 |---|---|---|
-| `docs/diet-health-app-improvement-plan.md` | 🔄 Drafted | This plan |
+| `docs/diet-health-app-improvement-plan.md` | ✅ Reviewed | This plan, approved 2026-10-05 |
+| `.gitattributes` | 🔄 Drafted | Phase 1 |
+| `tools/verified-db/` (8 scripts + `README.md`) | 🔄 Drafted | Phase 1; output byte-identical to the committed JSON |
 
 ---
 
@@ -199,3 +201,8 @@ This plan works no issues-log entries. The roadmap's open Intake items stay wher
   - **Phase 3:** task files use the `dha-task-` prefix in `docs/tasks/`.
   - **Phase 4:** the build log is split by date (entries before 1.5 archived).
 - The work runs on branch `chore/governance-cleanup`, merged into `main` when all phases are done. Phase 1 started.
+- **Phase 1 work done** (branch `chore/governance-cleanup`):
+  - `.gitattributes` added. `git add --renormalize .` changed nothing, because the files in git were already LF. The two gradle files that showed as modified after `cap sync` had no content change; git just hadn't refreshed its record of them.
+  - The builder moved to `tools/verified-db/`: generated files go to `contributions/2026-10-verified-db/`, the GI sources stay in `contributions/references/`. `build_verified.py` rebuilt `verified-foods.json` byte-identical, `build_review.py` and `gi_find.py` ran, and a README documents the pipeline.
+  - `screenshots/` gitignored; the unrelated pomodoro-guardian permissions removed from `.claude/settings.local.json` (local file, not in git).
+  - **Leftover:** git still prints "CRLF will be replaced by LF" for files written on Windows. These are warnings only, and nothing goes into git with CRLF. They come from `core.autocrlf=true` in the machine's git config, which the developer may want to set to `input`; that's local configuration, outside this plan.
