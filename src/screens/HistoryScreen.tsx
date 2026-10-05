@@ -90,7 +90,7 @@ export default function HistoryScreen() {
               <h2>{dayLabel(key)}</h2>
               {entries.length > 0 && <p className="history-totals">{uk.history.totals(calories, gl)}</p>}
               {weight && <p className="history-weight">{uk.history.weight(formatDecimal(weight.weightKg))}</p>}
-              {records.length > 0 && <DayRecordsList records={records} settings={data.settings} logEntries={data.logEntries} />}
+              {records.length > 0 && <DayRecordsList records={records} settings={data.settings} />}
               <MealsWithItems meals={meals} settings={data.settings} />
             </div>
           );

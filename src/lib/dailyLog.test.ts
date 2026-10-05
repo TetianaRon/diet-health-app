@@ -11,7 +11,6 @@ import {
   isSameLocalDate,
   localDateKey,
   logEntryToRow,
-  mealsBeforeTimestamp,
   recentDayGroups,
   rowToLogEntry,
   suggestMealType,
@@ -301,65 +300,6 @@ describe("groupIntoMeals", () => {
     expect(groups[0].totals.caloriesKcal).toBe(90);
     // carbsG is known on both, so it sums normally regardless of the calories gap.
     expect(groups[0].totals.carbsG).toBe(35);
-  });
-});
-
-describe("mealsBeforeTimestamp", () => {
-  const item = (mealId: string, timestamp: string, itemName: string): DailyLogEntry => ({
-    timestamp,
-    mealType: "Перекус",
-    itemId: "",
-    itemName,
-    portionGrams: 100,
-    carbsG: 0,
-    gi: 0,
-    fiberG: 0,
-    sugarsG: 0,
-    proteinG: 0,
-    fatG: 0,
-    caloriesKcal: 0,
-    sodiumMg: 0,
-    gl: 0,
-    notes: "",
-    mealId,
-    unknownFields: [],
-  });
-
-  const entries: DailyLogEntry[] = [
-    item("breakfast", "2026-08-13T07:00:00.000Z", "Сніданок"),
-    item("snack-1", "2026-08-13T09:00:00.000Z", "Перекус 1"),
-    item("lunch", "2026-08-13T12:00:00.000Z", "Обід"),
-    item("after-reading", "2026-08-13T15:00:00.000Z", "Після вимірювання"),
-  ];
-
-  it("returns meal occasions at or before the given timestamp, most-recent-first", () => {
-    const result = mealsBeforeTimestamp(entries, "2026-08-13T12:00:00.000Z");
-    expect(result.map((m) => m.entries[0].itemName)).toEqual(["Обід", "Перекус 1", "Сніданок"]);
-  });
-
-  it("excludes meals after the given timestamp", () => {
-    const result = mealsBeforeTimestamp(entries, "2026-08-13T10:00:00.000Z");
-    expect(result.map((m) => m.entries[0].itemName)).toEqual(["Перекус 1", "Сніданок"]);
-  });
-
-  it("caps the result at the given limit, counting MEALS not individual items", () => {
-    // The real bug this fixes: a single multi-dish meal used to eat up the
-    // whole limit on its own, since each dish was counted as a separate
-    // "meal" — a 6-item lunch would fill limit=6 by itself.
-    const multiDishLunch = [
-      item("lunch", "2026-08-13T12:00:00.000Z", "Гречка"),
-      item("lunch", "2026-08-13T12:01:00.000Z", "Курка"),
-      item("lunch", "2026-08-13T12:02:00.000Z", "Салат"),
-    ];
-    const withMultiDishLunch = [entries[0], entries[1], ...multiDishLunch];
-    const result = mealsBeforeTimestamp(withMultiDishLunch, "2026-08-13T12:02:00.000Z", 2);
-    expect(result).toHaveLength(2);
-    expect(result[0].entries.map((e) => e.itemName)).toEqual(["Гречка", "Курка", "Салат"]);
-    expect(result[1].entries[0].itemName).toBe("Перекус 1");
-  });
-
-  it("returns an empty list when nothing precedes the timestamp", () => {
-    expect(mealsBeforeTimestamp(entries, "2026-08-13T00:00:00.000Z")).toEqual([]);
   });
 });
 

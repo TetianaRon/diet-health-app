@@ -332,20 +332,6 @@ export function groupIntoMeals(entries: DailyLogEntry[]): MealGroup[] {
   });
 }
 
-/**
- * Last `limit` meal occasions at or before a given ISO timestamp,
- * most-recent-first — powers the Blood Sugar screen's "meals before this
- * reading" review. Groups by meal first (see groupIntoMeals) so a 6-item
- * lunch counts as one meal, not six — otherwise a single big meal could
- * fill the whole list and hide everything eaten before it.
- */
-export function mealsBeforeTimestamp(entries: DailyLogEntry[], timestamp: string, limit = 6): MealGroup[] {
-  const priorEntries = entries.filter((e) => e.timestamp <= timestamp);
-  return groupIntoMeals(priorEntries)
-    .sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1))
-    .slice(0, limit);
-}
-
 export interface DayGroup {
   dateKey: string; // yyyy-mm-dd
   entries: DailyLogEntry[]; // most-recent-first

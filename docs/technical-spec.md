@@ -211,7 +211,7 @@ A Dish composed from a bundle-only ingredient (never saved to the Ingredients sh
 
 ## Meals-before-reading review
 
-The Blood Sugar screen lets mom expand any reading to see the last 6 `DailyLog` entries at or before that reading's timestamp, most-recent-first, with time-before-reading shown per item (`mealsBeforeTimestamp()` in `src/lib/dailyLog.ts`). Pure timestamp filter/sort — ISO strings already sort correctly lexically — with no correlation or statistics computed; mom reviews the list herself to spot patterns. Deliberately scoped down from a full food/blood-sugar analytics feature (see `docs/build-log.md`'s 2026-09-07 design entry).
+*Removed in 1.7 (developer, 2026-10-04):* the former Blood Sugar screen let mom expand a reading to see the meals eaten before it. With the day's meals, sugar and medicine on one Today screen (and yesterday's summarised at the bottom), that expander is no longer needed.
 
 ## Google auth on Android: system browser + PKCE, not GIS
 
@@ -477,8 +477,8 @@ Three tabs: **Сьогодні | Історія | Страви**; Settings stays
 ### Сьогодні — one surface for entering and reading the day
 Blocks, top to bottom:
 1. **Daily status** — calories bar, GL bar and the other limits switched on in Settings (as today).
-2. **Weight bar** — latest weight with its trend: «Вага: 72,4 кг · на 0,6 кг менше за середнє за 30 днів (73,0 кг)» + «+ Вага», or «Редагувати» once today has a weight (one per day). The 30-day average smooths day-to-day water swings, so the comparison shows the direction. With **fewer than 3 measurements** in the last 30 days it compares with the previous measurement instead («на 0,2 кг менше, ніж 3 дні тому»). **Neutral styling** — no green/red: the app doesn't judge whether up or down is good.
-3. **Records** — blood sugar and medicine in **one timeline** («07:10 · Цукор 6,2 ммоль/л (натщесерце)», «07:30 · Форксига 10 мг»), buttons «+ Цукор» «+ Ліки», «Редагувати» on today's entries. **Yesterday's last medicine** shown small and read-only («Учора 21:30 · Форксига 10 мг») — it affects today's sugar.
+2. **Weight bar** — latest weight with its trend: «Вага: 72,4 кг · на 0,6 кг менше за середнє за 30 днів (73,0 кг)» + «+ Вага», or a pencil (edit) icon once today has a weight (one per day). The 30-day average smooths day-to-day water swings, so the comparison shows the direction. With **fewer than 3 measurements** in the last 30 days it compares with the previous measurement instead («на 0,2 кг менше, ніж 3 дні тому»). **Neutral styling** — no green/red: the app doesn't judge whether up or down is good.
+3. **Records** — blood sugar and medicine in **one timeline** («07:10 · Цукор 6,2 ммоль/л (натщесерце)», «07:30 · Форксига 10 мг»), one «+ Додати» button (the form starts with a Цукор / Ліки choice), a pencil (edit) icon on today's entries — edit buttons across Today are pencil icons with the wording as tooltip/screen-reader label. **Yesterday's last medicine** shown small and read-only («Учора 21:30 · Форксига 10 мг») — it affects today's sugar.
 4. **Meals** — today's meals as now (editable). **Yesterday's meals** as a compact, read-only list of **all** of yesterday's meals, each with its time and totals (e.g. «20:30 · Вечеря · 520 ккал · ГН 18»), smaller than today's (developer, 2026-10-04) — they show how meals relate to the next morning's sugar.
 
 **Order switch** «Спочатку нові» / «Спочатку старі» — a **toggle on the screen itself**, affecting only that screen (Сьогодні and Історія each have their own): default newest first, so yesterday's entries sit at the **bottom** of their blocks; oldest first moves them to the top (chronological). A viewing preference, not data: **saved on the device** (app/browser storage), never written to the sheet (developer, 2026-10-04).
