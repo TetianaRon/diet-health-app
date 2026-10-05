@@ -584,21 +584,58 @@ select {
 
 .order-toggle {
   display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  background: #ffffff;
+  border: 1px solid #d0d5d0;
+  border-radius: 8px;
+}
+
+/* The arrow for the current order in the accent colour, the other faded. */
+.order-toggle path {
+  stroke: #b5bcb5;
+}
+
+.order-newest .order-arrow-down,
+.order-oldest .order-arrow-up {
+  stroke: #2f7a4f;
+}
+
+/* Pencil (edit) button: a 44px tap target with a small icon. */
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  background: #ffffff;
+  color: #2f7a4f;
+}
+
+/* New record: Цукор / Ліки picked at the top of the form. */
+.record-type-switch {
+  display: flex;
   border: 1px solid #d0d5d0;
   border-radius: 8px;
   overflow: hidden;
+  margin: 12px 0 16px;
 }
 
-.order-option {
+.record-type-option {
+  flex: 1;
   background: #ffffff;
   color: #4a4a4a;
   border: none;
   border-radius: 0;
-  padding: 6px 10px;
-  font-size: 0.85rem;
+  min-height: 44px;
 }
 
-.order-option.active {
+.record-type-option.active {
   background: #2f7a4f;
   color: #ffffff;
 }
@@ -812,12 +849,6 @@ select {
 .meal-header h2,
 .meal-header p {
   margin: 0;
-}
-
-.meal-edit-button {
-  flex-shrink: 0;
-  padding: 8px 14px;
-  min-height: 44px;
 }
 
 .meal-editor .meal-editor-section {
@@ -1213,6 +1244,7 @@ select {
 
   /* forms and editors: a readable width instead of the whole screen */
   .food-form,
+  .record-type-switch,
   .settings-targets,
   .settings-account,
   .meal-editor {

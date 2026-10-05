@@ -10,8 +10,11 @@ export const uk = {
   // Release 1.7 — the day's body records on Сьогодні and in Історія.
   records: {
     title: "Цукор і ліки",
-    addSugar: "+ Цукор",
-    addMedication: "+ Ліки",
+    add: "+ Додати",
+    addTitle: "Новий запис",
+    typeLabel: "Що записати",
+    typeSugar: "Цукор",
+    typeMedication: "Ліки",
     empty: "Сьогодні ще немає вимірювань цукру чи прийому ліків.",
     sugarLine: (value: string, contextLabel: string) => `Цукор ${value} ммоль/л (${contextLabel})`,
     yesterdayMedication: (time: string, label: string) => `Учора ${time} · ${label}`,
@@ -43,7 +46,6 @@ export const uk = {
   weight: {
     label: "Вага",
     addButton: "+ Вага",
-    editButton: "Редагувати",
     addTitle: "Додати вагу",
     editTitle: "Редагувати вагу",
     empty: "Ваги ще немає.",
@@ -71,9 +73,9 @@ export const uk = {
     mealsTitle: "Учора",
   },
   order: {
-    label: "Порядок записів",
     newest: "Спочатку нові",
     oldest: "Спочатку старі",
+    switchTo: (current: string, next: string) => `${current}. Натисніть — ${next.toLowerCase()}`,
   },
   history: {
     title: "Історія",
@@ -137,7 +139,6 @@ export const uk = {
     unknownValuesNotice: (count: number) => `Позицій з невідомими значеннями: ${count} (не враховано в підсумках вище).`,
     // One edit button per meal (opens the meal editor) — replaced the old
     // per-dish Редагувати/Перенести/Видалити row, which was too crowded.
-    editMealButton: "Редагувати",
     editMealLabel: (mealType: string) => `Редагувати прийом їжі: ${mealType}`,
     // The same stats the daily status shows (Settings' show* toggles), plus
     // the meal's weight — see mealStatItems in lib/mealStats.ts.
@@ -374,7 +375,6 @@ export const uk = {
       button: "Увійти через Google",
     },
     addButton: "Додати вимірювання",
-    editButton: "Редагувати",
     editTitle: "Редагувати вимірювання",
     editEntryLabel: (time: string) => `Редагувати вимірювання о ${time}`,
     todayLabel: "Сьогодні",
@@ -402,12 +402,6 @@ export const uk = {
       timeLabel: "Коли зроблено вимірювання",
       timeHint: "Час самого вимірювання, а не запису — його можна змінити.",
       futureError: "Час вимірювання не може бути в майбутньому.",
-    },
-    mealsBefore: {
-      toggleLabel: "Прийоми їжі перед цим вимірюванням",
-      empty: "Немає записів прийомів їжі перед цим вимірюванням.",
-      lessThanHourAgo: "менше години тому",
-      hoursAgo: (hours: number) => `${hours.toFixed(1)} год тому`,
     },
   },
   settings: {

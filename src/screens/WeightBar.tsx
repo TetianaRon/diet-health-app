@@ -6,6 +6,7 @@ import { uk } from "../i18n/uk";
 import { formatDecimal } from "../lib/numberFormat";
 import { localDateKey } from "../lib/dailyLog";
 import { weightTrend, type WeightComparison, type WeightEntry } from "../lib/weight";
+import EditIconButton from "./EditIconButton";
 
 export function weightComparisonText(comparison: WeightComparison): string {
   const t = uk.weight;
@@ -47,9 +48,7 @@ export default function WeightBar({
       </p>
       <div className="weight-actions">
         {todayEntry ? (
-          <button type="button" className="button-secondary" onClick={() => onEdit(todayEntry)}>
-            {uk.weight.editButton}
-          </button>
+          <EditIconButton label={uk.weight.editTitle} onClick={() => onEdit(todayEntry)} />
         ) : (
           <button type="button" className="button-secondary" onClick={onAdd}>
             {uk.weight.addButton}

@@ -1,4 +1,4 @@
-// «Спочатку нові» / «Спочатку старі» — a toggle on the screen itself, one per
+// «Спочатку нові» / «Спочатку старі» — an arrows button on the screen itself, one per
 // screen (Сьогодні, Історія), remembered on the device only: a viewing
 // preference, not data, so it's never written to the sheet (release 1.7).
 import { useState } from "react";
@@ -29,20 +29,20 @@ export function useDisplayOrder(screen: string): [DisplayOrder, (order: DisplayO
   return [order, update];
 }
 
+/**
+ * One small arrows button: tap flips the order. The arrow for the current
+ * order is drawn in the accent colour (down = newest first, up = oldest
+ * first); the full wording is in the tooltip / screen-reader label.
+ */
 export default function OrderToggle({ order, onChange }: { order: DisplayOrder; onChange: (order: DisplayOrder) => void }) {
+  const next: DisplayOrder = order === "newest" ? "oldest" : "newest";
+  const label = uk.order.switchTo(uk.order[order], uk.order[next]);
   return (
-    <div className="order-toggle" role="group" aria-label={uk.order.label}>
-      {(["newest", "oldest"] as const).map((value) => (
-        <button
-          key={value}
-          type="button"
-          className={order === value ? "order-option active" : "order-option"}
-          aria-pressed={order === value}
-          onClick={() => onChange(value)}
-        >
-          {uk.order[value]}
-        </button>
-      ))}
-    </div>
+    <button type="button" className={`order-toggle order-${order}`} aria-label={label} title={label} onClick={() => onChange(next)}>
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <path className="order-arrow-down" d="M8 4v15m-4-4 4 4 4-4" />
+        <path className="order-arrow-up" d="M16 20V5m-4 4 4-4 4 4" />
+      </svg>
+    </button>
   );
 }

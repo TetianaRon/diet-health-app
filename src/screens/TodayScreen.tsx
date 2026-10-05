@@ -32,6 +32,7 @@ import WeightBar from "./WeightBar";
 import DayRecordsList from "./DayRecordsList";
 import OrderToggle, { useDisplayOrder } from "./OrderToggle";
 import { CompactMealsList } from "./MealsReadOnly";
+import EditIconButton from "./EditIconButton";
 
 function ProgressBar({ label, value, target, unit }: { label: string; value: number; target: number; unit: string }) {
   const pct = target > 0 ? Math.min(100, Math.round((value / target) * 100)) : 0;
@@ -51,7 +52,7 @@ function ProgressBar({ label, value, target, unit }: { label: string; value: num
 }
 
 // One meal's dishes plus its combined total. Read-only on purpose: changing
-// a meal goes through one Редагувати button per meal (see MealHeader).
+// a meal goes through one edit (pencil) button per meal (see MealHeader).
 function MealItemsList({ meal, settings }: { meal: MealGroup; settings: DayData["settings"] | null }) {
   return (
     <>
@@ -73,9 +74,7 @@ function MealHeader({ title, time, mealType, onEdit }: { title: string; time: st
       <h2>
         {title} <span className="entry-time">· {time}</span>
       </h2>
-      <button type="button" className="button-secondary meal-edit-button" aria-label={uk.today.editMealLabel(mealType)} onClick={onEdit}>
-        {uk.today.editMealButton}
-      </button>
+      <EditIconButton label={uk.today.editMealLabel(mealType)} onClick={onEdit} />
     </div>
   );
 }
@@ -205,21 +204,36 @@ export default function TodayScreen({
       setForm(null);
       refresh();
     };
-    const title =
-      form.kind === "sugar"
-        ? form.original
-          ? uk.bloodSugar.editTitle
-          : uk.bloodSugar.addButton
+    // A new sugar/medicine record starts from one «+ Додати»; the type is picked here.
+    const isNewRecord = !form.original && form.kind !== "weight";
+    const title = isNewRecord
+      ? uk.records.addTitle
+      : form.kind === "sugar"
+        ? uk.bloodSugar.editTitle
         : form.kind === "medication"
-          ? form.original
-            ? uk.medication.editTitle
-            : uk.medication.addTitle
+          ? uk.medication.editTitle
           : form.original
             ? uk.weight.editTitle
             : uk.weight.addTitle;
     return (
       <section className="screen">
         <Breadcrumb trail={[{ label: uk.today.title, onClick: close }]} current={title} />
+        {isNewRecord && (
+          <div className="record-type-switch" role="radiogroup" aria-label={uk.records.typeLabel}>
+            {(["sugar", "medication"] as const).map((kind) => (
+              <button
+                key={kind}
+                type="button"
+                role="radio"
+                aria-checked={form.kind === kind}
+                className={form.kind === kind ? "record-type-option active" : "record-type-option"}
+                onClick={() => setForm({ kind })}
+              >
+                {kind === "sugar" ? uk.records.typeSugar : uk.records.typeMedication}
+              </button>
+            ))}
+          </div>
+        )}
         {form.kind === "sugar" && <BloodSugarForm original={form.original} settings={settings} onSaved={saved} onCancel={close} />}
         {form.kind === "medication" && (
           <MedicationIntakeForm
@@ -324,10 +338,7 @@ export default function TodayScreen({
               <h2>{uk.records.title}</h2>
               <div className="block-actions">
                 <button type="button" className="button-secondary" onClick={() => setForm({ kind: "sugar" })}>
-                  {uk.records.addSugar}
-                </button>
-                <button type="button" className="button-secondary" onClick={() => setForm({ kind: "medication" })}>
-                  {uk.records.addMedication}
+                  {uk.records.add}
                 </button>
               </div>
             </div>
@@ -336,7 +347,6 @@ export default function TodayScreen({
               <DayRecordsList
                 records={records}
                 settings={settings}
-                logEntries={allEntries}
                 yesterdayLastIntake={yesterdayLastIntake}
                 yesterdayFirst={order === "oldest"}
                 onEditSugar={(entry) => setForm({ kind: "sugar", original: entry })}
