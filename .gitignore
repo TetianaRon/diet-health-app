@@ -26,3 +26,6 @@ build/
 
 # Raw user food-data contributions (private; only reviewed, sourced entries are committed to src/data)
 contributions/
+
+# Local screenshots from testing sessions
+screenshots/
