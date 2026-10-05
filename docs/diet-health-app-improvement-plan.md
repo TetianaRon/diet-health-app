@@ -124,7 +124,7 @@ This plan works no issues-log entries. The roadmap's open Intake items stay wher
 
 ⏸ HUMAN CHECKPOINT [Governance] — the developer approves the new `CLAUDE.md` text and the memory changes before they're written.
 
-### Phase 3 — Task files for recurring workflows ⏳ pending
+### Phase 3 — Task files for recurring workflows 🔄 in progress
 
 - **`docs/tasks/dha-task-release.md`:**
   - release and hotfix branches;
@@ -222,3 +222,4 @@ This plan works no issues-log entries. The roadmap's open Intake items stay wher
   - `CLAUDE.md` v2.0 written as approved, and `docs/tasks/dha-task-interview.md` created (Interview Mode as it was, plus one line: a follow-up interview starts from the open items).
   - Memory: 8 files deleted; `MEMORY.md` now lists 4 (two marked to move to Phase 3 task files).
   - The checkpoint passed with the text approval, so the phase is complete. Phase 3 is next.
+- **Phase 3 started** ("Yes, start Phase 3"): drafting the four task files; routing rows are added after review.
