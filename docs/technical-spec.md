@@ -581,9 +581,9 @@ Today's Продукти screen with the tabs swapped: **dishes** first, **produ
 On the developer's devices, the emulator and a Ukrainian-locale test sheet — never relying on mom's phone.
 
 
-## Local-first app (2.x, design draft 2026-10-05 — decisions pending)
+## Local-first app (2.x, designed 2026-10-05)
 
-> **Status:** 📝 Draft for the developer's review. Items marked **[decide]** are open; the rest are proposals that follow from them. Roadmap → 2.x.
+> **Status:** 📝 Designed with the developer 2026-10-05; not built. Roadmap → 2.x. The first step is the SQLite-in-the-browser proof.
 
 ### Goals
 1. **Instant and offline:** every screen reads from the device. No read-limit errors (429), and no waiting for Google.
@@ -625,21 +625,13 @@ Every screen reads its tabs from Sheets (Today and History read them in one `bat
   - in both → the newer `updatedAt` wins (last writer wins, per row).
 
   This suits mostly-append data: meals, readings, weight. Settings merge per key.
-- **Edits made by hand in the sheet [decide]:**
-  - **(A) Supported** — recommended. The app remembers a fingerprint of each row as last synced. A row whose content changed in the sheet without a new `UpdatedAt` counts as an edit made at sync time. Rows typed in by hand without an `Id` get one.
-  - **(B) Not supported:** the sheet is the app's copy, and manual edits may be overwritten.
-- **Deletions [decide]:**
-  - **(A) The row is removed from the sheet, and its ID goes to a small «Видалені» tab** (id, tab, time) so other devices delete it too — recommended. The sheet stays clean to read.
-  - **(B) The row stays, with a «Видалено» mark.** Simpler, but deleted rows stay visible in the sheet.
+- **Edits made by hand in the sheet are supported** (developer, 2026-10-05). The app remembers a fingerprint of each row as last synced. A row whose content changed in the sheet without a new `UpdatedAt` counts as an edit made at sync time. Rows typed in by hand without an `Id` get one.
+- **Deletions** (developer, 2026-10-05): the row is removed from the sheet, and its ID goes to a small «Видалені» tab (id, tab, time) so other devices delete it too. The sheet stays clean to read.
 - **Clock differences between devices** only matter when the same row is edited on two devices between syncs. For a single person's data that's rare, so it's accepted.
 
 ### Without Google (local-only)
 - First run offers «Почати без Google» or «Підключити Google Таблицю». A Google sheet can be connected later; the first sync then uploads everything.
-- **Backup [decide]:**
-  - **(A) An .xlsx file in the same layout as the sheet** — recommended. It's readable in any spreadsheet app, the same file can be restored, and it can be uploaded to Google later.
-  - **(B) A JSON file** (simpler, but not readable).
-
-  Saved from Settings («Зберегти копію даних») or restored («Відновити з файлу»). A reminder appears when the last backup is over 30 days old. Android's own backup of app data is checked during the build; if it covers the database, it's an extra layer of protection.
+- **Backup: an .xlsx file in the same layout as the sheet** (developer, 2026-10-05). It's readable in any spreadsheet app, the same file can be restored, and it can be uploaded to Google later. Saved from Settings («Зберегти копію даних») or restored («Відновити з файлу»). A reminder appears when the last backup is over 30 days old. Android's own backup of app data is checked during the build; if it covers the database, it's an extra layer of protection.
 - **The web version without Google** keeps data in that browser only. Saying so in the UI is enough.
 
 ### Sets and the clean start
@@ -648,6 +640,7 @@ Every screen reads its tabs from Sheets (Today and History read them in one `bat
 - **Moving mom over:** built-in items she has used (in meals or recipes) become her rows automatically; everything else is offered as sets. Nothing she sees today disappears.
 
 ### Releases (proposed order)
+0. **Proof: SQLite in the browser** (WebAssembly build, persistence across reloads, the target browsers). A spike on its own branch, not shipped.
 1. **Local store + sync for reading.** Row IDs for every tab; screens read the device; sync pulls; writes still go to the sheet and to the device. This removes the 429s and makes reading offline.
 2. **Offline writes + full sync.** A change queue, `UpdatedAt`, deletions, merging and manual-edit detection.
 3. **Local-only mode + backup:** export, restore and the reminder.
