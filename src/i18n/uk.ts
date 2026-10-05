@@ -258,6 +258,8 @@ export const uk = {
     reliability: { high: "висока надійність", medium: "середня надійність", low: "низька надійність" } as Record<string, string>,
     giStatus: { measured: "виміряне", conventional: "умовне", unknown: "немає даних", notApplicable: "не застосовується" } as Record<string, string>,
     giNotApplicable: "ГІ не застосовується",
+    // Dry grains, pasta and legumes carry the GI of the cooked food (nobody eats them raw) — said next to the number.
+    afterCooking: "після варіння",
     entry: (entryId: string) => `запис ${entryId}`,
     verifiedOn: (date: string) => `Перевірено: ${date}`,
     disclaimer: "Довідкові значення з указаного джерела, не медична порада.",

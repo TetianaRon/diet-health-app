@@ -127,6 +127,7 @@ Spec: "Planned: spreadsheet detection + Google Picker". Detection and removing t
 
 ### 2.2 — Food families in the dish composer · 📝 planned
 Spec: "Planned: food families with cooking states". Raw weight + state in the finished dish; carbs by mass balance, GI from the cooked state; published whole-dish GI shown only as a check. The data already exists from 1.8/2.0.
+- **Dry products get their GI through the family** (developer, 2026-10-05): until 2.2, dry grains, pasta and legumes carry the GI of their cooked form (labelled «після варіння»), so dishes composed from pack values keep a GI. With families, the composer asks how the product is cooked and takes the GI from the family's cooked entry; the dry entries then stop storing a GI of their own (one source per value).
 
 ### 2.x — Local-first app, free and paid versions · 💡 idea, design needed (developer, 2026-10-04)
 Prompted by the read-limit errors (429) in the 1.6 test. Not scheduled — needs its own design before any building.

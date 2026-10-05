@@ -104,7 +104,9 @@ function foodMetaText(
         ? `ГІ ${uk.today.unknownValueLabel}`
         : entry?.gi.status === "conventional"
           ? `ГІ ${item.gi} (${uk.verified.giStatus.conventional})`
-          : `${item.giVerified || entry ? "" : "≈"}ГІ ${item.gi} (${uk.health.gi[classifyGi(item.gi)]})`;
+          : entry?.state === "dry"
+            ? `ГІ ${item.gi} (${uk.verified.afterCooking}, ${uk.health.gi[classifyGi(item.gi)]})`
+            : `${item.giVerified || entry ? "" : "≈"}ГІ ${item.gi} (${uk.health.gi[classifyGi(item.gi)]})`;
   return `${carbs}, ${gi}`;
 }
 
