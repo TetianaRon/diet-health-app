@@ -497,7 +497,7 @@ Deferred by the developer; the decisions are already made:
 
 **File structure:**
 - `sources` — registry of datasets (name, edition/version, full citation, URL). Entries refer to a key here, so a citation is written once. Today: `usda-sr-legacy`, `gi-2021-st1`, `gi-2021-st2`, `gi-2008`, `calculation` (our own arithmetic; its description says what was computed from which entries).
-- `categories` — every entry belongs to one (Крупи та макарони, Хліб, Молочні продукти, М'ясо і птиця, Риба, Яйця, Бобові, Овочі, Гриби, Фрукти та ягоди, Горіхи, Олії та жири, Напої), so the database can be offered as **sets** (local-first design, 2.x).
+- `categories` — every entry belongs to one (Крупи та макарони, Хліб, Молочні продукти, М'ясо і птиця, Риба, Яйця, Бобові, Овочі, Гриби, Фрукти та ягоди, Горіхи, Олії та жири, Напої), so the database can be offered as **sets** (local-first, roadmap 2.3).
 - `entries` — one per food in one state:
   - `id` — the permanent `B` ID (never changed or reused; a replaced entry stays as `status: "retired"` with `replacedBy`).
   - `family` + `state` — what the food is across states (`buckwheat`: `dry` and `boiled`); states: raw, dry, boiled, baked, fried, steamed, canned, dried, fermented, processed, brewed (coffee).
@@ -529,7 +529,7 @@ Deferred by the developer; the decisions are already made:
 
 ## Search and GI suggestions (release 1.9, designed 2026-10-05)
 
-Only what works the same wherever her data lives — the database is bundled in the app; sets come with the local-first design (roadmap 2.x).
+Only what works the same wherever her data lives — the database is bundled in the app; sets come with local-first (roadmap 2.3).
 
 **Matching** (`src/lib/foodSearch.ts`, pure, unit-tested) — one function behind every search: the Продукти/Страви lists, the add-product form, the meal picker and the dish composer.
 - Text is normalised (lower case, apostrophes and punctuation dropped, «ё»→«е»); words match by **word start** (a query word matches a name word that starts with it, or that it starts with, from 4 letters — so «гречки» finds «Гречка», «макаронні» finds «Макарони»).
@@ -581,9 +581,9 @@ Today's Продукти screen with the tabs swapped: **dishes** first, **produ
 On the developer's devices, the emulator and a Ukrainian-locale test sheet — never relying on mom's phone.
 
 
-## Local-first app (2.x, designed 2026-10-05)
+## Local-first app (2.0–2.3, designed 2026-10-05)
 
-> **Status:** 📝 Designed with the developer 2026-10-05; proof passed the same day; not built. Roadmap → 2.x.
+> **Status:** 📝 Designed with the developer 2026-10-05; proof passed the same day; not built. Roadmap → 2.0–2.3.
 
 ### Goals
 1. **Instant and offline:** every screen reads from the device. No read-limit errors (429), and no waiting for Google.
@@ -654,9 +654,9 @@ Every screen reads its tabs from Sheets (Today and History read them in one `bat
 
 ### Releases (proposed order)
 0. ✅ **Proof: SQLite in the browser and the app's WebView** (2026-10-05, see Storage).
-1. **Local store + sync for reading.** Row IDs for every tab; screens read the device; sync pulls; writes still go to the sheet and to the device. This removes the 429s and makes reading offline.
-2. **Offline writes + full sync.** A change queue, `UpdatedAt`, deletions, merging and manual-edit detection.
-3. **Android without Google + backup:** export, restore and the reminder. The web version stays sign-in only.
-4. **Sets + clean start + moving mom over.** Then 2.0 (mom's data, verified) as sets plus her own rows.
+1. **2.0 — Local store + sync for reading.** Row IDs for every tab; screens read the device; sync pulls; writes still go to the sheet and to the device. This removes the 429s and makes reading offline.
+2. **2.1 — Offline writes + full sync.** A change queue, `UpdatedAt`, deletions, merging and manual-edit detection.
+3. **2.2 — Android without Google + backup:** export, restore and the reminder. The web version stays sign-in only.
+4. **2.3 — Sets + clean start + moving mom over.** Then 2.4 (mom's data, verified) as sets plus her own rows.
 
 **Free/paid** is decided separately, before the public launch. Nothing above depends on it: sync, USDA search and label reading are separable features that can be switched on or off later.

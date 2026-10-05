@@ -1,6 +1,6 @@
 # Importing a user's own food data
 
-**When:** a user's own food records (products and dishes, never logs or blood sugar) are brought into the app or the database. The first case is mom's old spreadsheet (roadmap 2.0, after local-first).
+**When:** a user's own food records (products and dishes, never logs or blood sugar) are brought into the app or the database. The first case is mom's old spreadsheet (roadmap 2.4, after local-first).
 
 Her sources are often popular Ukrainian tables, which repeat outdated values (boiled carrot GI ~85 from the early 1980s; current research gives 39) or mix up raw and cooked. Branded packaging values are trustworthy.
 
