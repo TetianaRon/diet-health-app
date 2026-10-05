@@ -154,7 +154,7 @@ This plan works no issues-log entries. The roadmap's open Intake items stay wher
 
 ⏸ HUMAN CHECKPOINT [Governance] — the developer reviews each task file. It's then tried for real on the next release.
 
-### Phase 4 — Docs cleanup 🔄 in progress
+### Phase 4 — Docs cleanup 🔄 in progress (work done, waiting for review)
 
 - **README:** replace the Status section with 3–4 current lines and a link to the roadmap's "start here"; fix the docs list (add the roadmap and this plan; drop "interview mode" from the `CLAUDE.md` line).
 - **Roadmap:**
@@ -184,6 +184,11 @@ This plan works no issues-log entries. The roadmap's open Intake items stay wher
 | `docs/tasks/dha-task-device-testing.md` | ✅ Applied | Phase 3 |
 | `docs/tasks/dha-task-verified-db-change.md` | ✅ Applied | Phase 3; absorbs the not-a-medical-app memory |
 | `docs/tasks/dha-task-user-data-import.md` | ✅ Applied | Phase 3; absorbs the reconciliation memory |
+| `README.md` | 🔄 Drafted | Phase 4; full rewrite |
+| `docs/roadmap.md` + `docs/roadmap-archive.md` | 🔄 Drafted | Phase 4; released sections and resolved intake moved word-for-word |
+| `docs/build-log.md` + `docs/build-log-archive-2026-04-09.md` | 🔄 Drafted | Phase 4; split before the 2026-09-27 entry (start of 1.5) |
+| `docs/technical-spec.md` (UI section) | 🔄 Drafted | Phase 4; current tabs + UI conventions |
+| `docs/requirements-open-questions.md`, `docs/automation-candidates.md` | 🔄 Drafted | Phase 4; headers and status |
 | Memory (`MEMORY.md` + 4 files) | ✅ Applied | Phase 2; 8 files deleted, 2 kept for Phase 3, 2 kept for good |
 
 ---
@@ -233,3 +238,10 @@ This plan works no issues-log entries. The roadmap's open Intake items stay wher
   - `CLAUDE.md` → v2.1, with 4 routing rows (a minor increment: routing rows were added, nothing restructured).
   - Memory: `feedback_not_medical_app.md` and `feedback_user_data_reconciliation.md` deleted, now covered by the verified-db and import task files; `MEMORY.md` lists 2 person-level memories.
   - Phase 4 started.
+- **Phase 4 work done:**
+  - README rewritten (doc-formatting skill).
+  - **Build log:** split at 2026-09-27; the archive has 1,358 lines, the main log about 130. The archive file is named `-2026-04-09` because the entries start in April, not August as the plan said.
+  - **Roadmap:** about 100 lines. "How we work" is now a pointer to `CLAUDE.md` (its data rules are already rule 5 there). Released release sections and 9 resolved intake items moved word-for-word to `roadmap-archive.md`, with one-liners for 1.7–1.9 added to Released. The deferred "dev sign-in survives a reload" item went to Intake.
+  - **Spec:** the UI section was out of date (4 tabs from before 1.7); it now shows the current tabs, plus UI conventions (dialogs, outcome-named buttons, decimal comma, `uk.ts`).
+  - Open-questions and automation-candidates headers updated.
+  - **Proposed, not made** (`CLAUDE.md` changes need confirmation): add the two archive files to `CLAUDE.md`'s Docs list as history to read only when needed (v2.2).
