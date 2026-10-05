@@ -484,6 +484,32 @@ Deferred by the developer; the decisions are already made:
 
 **To research before building:** the Picker runs inside a Google page; inside the Android app's WebView there may be no Google session, so on Android it may have to open in the system browser (a small picker page on the web app's domain, returning the file ID to the app via a deep link) — verify that the per-file grant made there applies to the Android OAuth client too (same Cloud project). **Setup the developer does in Google Cloud:** enable the Google Picker API, create a browser API key restricted to the app's origins, note the project number (Picker "App ID").
 
+## Verified food database (release 1.8, designed 2026-10-04)
+
+**One file, `src/data/verified-foods.json`,** replaces `starter-foods.ts` / `starter-dishes.ts` as the source of the app's built-in items and, later, of the public data pages on roncreator.com. Types and the validator: `src/data/verifiedFoods.ts`; `verifiedFoods.test.ts` runs the validator over the real file, so **the test suite refuses any entry that breaks a rule**.
+
+**File structure:**
+- `sources` — registry of datasets (name, edition/version, full citation, URL). Entries refer to a key here, so a citation is written once. Today: `usda-sr-legacy`, `gi-2021-st1`, `gi-2021-st2`, `gi-2008`, `calculation` (our own arithmetic; its description says what was computed from which entries).
+- `categories` — every entry belongs to one (Крупи та макарони, Хліб, Молочні продукти, М'ясо і птиця, Риба, Яйця, Бобові, Овочі, Гриби, Фрукти та ягоди, Горіхи, Олії та жири), so the database can be offered as **sets** (1.9).
+- `entries` — one per food in one state:
+  - `id` — the permanent `B` ID (never changed or reused; a replaced entry stays as `status: "retired"` with `replacedBy`).
+  - `family` + `state` — what the food is across states (`buckwheat`: `dry` and `boiled`); states: raw, dry, boiled, baked, fried, steamed, canned, dried, fermented, processed.
+  - `nameUk`, `nameEn` — proper names, stating what the values assume (fat %, cooked without salt…).
+  - **`nutrients`** — values per 100 g (kcal, carbs, fibre, sugars, protein, fat, sodium), `unknown` for fields the source lacks (held as 0, excluded from totals), `source` (dataset + entry ID + the dataset's own description), `reliability`, `reason` (Ukrainian + English), `verified` date.
+  - **`gi`** — `status`: `measured` (a GI table value, with its source), `conventional` (no measurable GI — too little carbohydrate to test — a conventional value labelled «умовне» so the carbs still count in GL), or `unknown` (value null, GL not counted, «немає даних»); plus its own `reliability`, `reason`, `verified`.
+
+**Verification is per part:** nutrients and GI each carry their own source, reliability and date; nothing is called "verified" as a whole, and an entry may be incomplete (GI unknown).
+
+**Sources and choices (developer, 2026-10-04):**
+- **Nutrients:** USDA FoodData Central (SR Legacy; Foundation where it is the better match), raw and cooked forms where USDA has both. **Cooked forms: the "without salt" entries** — salt depends on her cooking; the unsalted entry describes the food itself.
+- **The 12 cooked dishes** use USDA's **measured cooked entries** (no more raw values ÷ an unrecorded yield factor); the yield calculation stays only as a cross-check. Semolina and cornmeal porridge have no cooked USDA entry: look in FNDDS, else `calculation` from the dry product with low reliability and the reason. No stand-in foods.
+- **GI: the 2021 international tables** (Atkinson et al., *Am J Clin Nutr* 2021) as the main source — Supplemental Table 1 (ISO method) can rate higher, Supplemental Table 2 (less robust methods) lower, with the reason. The 2008 tables only where a food isn't in 2021, named as such.
+- **Low-carb vegetables:** conventional GI 15, «умовне», with the reason.
+- **Reliability:** high = an exact match from a well-replicated source (a table mean, a direct USDA analysis); medium = a single study, a close variant, or sources that disagree; low = an old/small study, a loose match, or our own calculation. The reason always says which and why.
+- **Wording:** values are "from the cited source"; no claim about what is good for anyone (see the not-a-medical-app rules).
+
+**Steps:** (1) format + guard test ✅; (2) data for the 69 built-in items (57 foods + 12 cooked dishes); (3) review page — the developer decides per entry with buttons that name the outcome; (4) app: read the file, ⓘ per value, «неперевірено» on the user's own items, offer to update saved copies of built-in items.
+
 ## Daily records and the new Today (release 1.7, designed 2026-10-04)
 
 > **Status:** 📝 Designed with the developer, not built. Mom asked for medicine and weight logging as soon as possible; the developer added the UX update (one daily surface). Supersedes "Planned: medication log" (2026-09-29), whose decisions are kept below.

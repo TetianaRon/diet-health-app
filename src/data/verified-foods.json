@@ -1,0 +1,50 @@
+{
+  "formatVersion": 1,
+  "sources": {
+    "usda-sr-legacy": {
+      "name": "USDA FoodData Central — SR Legacy",
+      "version": "SR Legacy, April 2018 (final release)",
+      "citation": "U.S. Department of Agriculture, Agricultural Research Service. FoodData Central: SR Legacy. 2018.",
+      "url": "https://fdc.nal.usda.gov/"
+    },
+    "gi-2021-st1": {
+      "name": "International tables of glycemic index and glycemic load values 2021 — Supplemental Table 1 (ISO-method values)",
+      "version": "2021",
+      "citation": "Atkinson FS, Brand-Miller JC, Foster-Powell K, Buyken AE, Goletzke J. International tables of glycemic index and glycemic load values 2021: a systematic review. Am J Clin Nutr. 2021;114(5):1625-1632. doi:10.1093/ajcn/nqab233",
+      "url": "https://doi.org/10.1093/ajcn/nqab233"
+    },
+    "gi-2021-st2": {
+      "name": "International tables of glycemic index and glycemic load values 2021 — Supplemental Table 2 (values from less robust methods)",
+      "version": "2021",
+      "citation": "Atkinson FS, Brand-Miller JC, Foster-Powell K, Buyken AE, Goletzke J. International tables of glycemic index and glycemic load values 2021: a systematic review. Am J Clin Nutr. 2021;114(5):1625-1632. doi:10.1093/ajcn/nqab233",
+      "url": "https://doi.org/10.1093/ajcn/nqab233"
+    },
+    "gi-2008": {
+      "name": "International tables of glycemic index and glycemic load values: 2008",
+      "version": "2008",
+      "citation": "Atkinson FS, Foster-Powell K, Brand-Miller JC. International tables of glycemic index and glycemic load values: 2008. Diabetes Care. 2008;31(12):2281-2283. doi:10.2337/dc08-1239",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2584181/"
+    },
+    "calculation": {
+      "name": "Calculated by Track My Meals",
+      "version": "see the entry's description",
+      "citation": "Our own arithmetic from the sources named in the entry's description.",
+      "url": "https://roncreator.com/track-my-meals"
+    }
+  },
+  "categories": [
+    { "id": "grains", "nameUk": "Крупи та макарони", "nameEn": "Grains and pasta" },
+    { "id": "bread", "nameUk": "Хліб", "nameEn": "Bread" },
+    { "id": "dairy", "nameUk": "Молочні продукти", "nameEn": "Dairy" },
+    { "id": "meat", "nameUk": "М'ясо і птиця", "nameEn": "Meat and poultry" },
+    { "id": "fish", "nameUk": "Риба", "nameEn": "Fish" },
+    { "id": "eggs", "nameUk": "Яйця", "nameEn": "Eggs" },
+    { "id": "legumes", "nameUk": "Бобові", "nameEn": "Legumes" },
+    { "id": "vegetables", "nameUk": "Овочі", "nameEn": "Vegetables" },
+    { "id": "mushrooms", "nameUk": "Гриби", "nameEn": "Mushrooms" },
+    { "id": "fruit", "nameUk": "Фрукти та ягоди", "nameEn": "Fruit and berries" },
+    { "id": "nuts", "nameUk": "Горіхи", "nameEn": "Nuts" },
+    { "id": "fats", "nameUk": "Олії та жири", "nameEn": "Oils and fats" }
+  ],
+  "entries": []
+}
