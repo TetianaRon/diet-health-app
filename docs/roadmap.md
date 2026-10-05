@@ -13,7 +13,7 @@ The planner for Track My Meals / Трекер Харчування and the roncr
 ---
 
 ## Next session — start here (set 2026-10-04)
-1. **1.7 released** (2026-10-04). **1.7.1 ready for release** (connecting a spreadsheet). Then **1.8 — verified food database:** the format (`verified-foods.json`, categories for sets, verification per part of an entry), then re-check the 57 built-in foods and the 12 cooked dishes against USDA (entry numbers already found for 10 of the 12 dishes — see 1.7), with GI from the tables; developer reviews on a review page.
+1. **1.7 released** (2026-10-04). **1.7.1 released** (connecting a spreadsheet). Then **1.8 — verified food database:** the format (`verified-foods.json`, categories for sets, verification per part of an entry), then re-check the 57 built-in foods and the 12 cooked dishes against USDA (entry numbers already found for 10 of the 12 dishes — see 1.7), with GI from the tables; developer reviews on a review page.
 2. Note from 1.6: the next Play update on the developer's phone is a chance to confirm the stale-screens fix (new version on first open).
 
 ## Current and upcoming releases
@@ -84,7 +84,7 @@ Mom asked to log the medicine she takes alongside blood sugar, and her weight, a
 - **New tabs** `Medications`, `MedicationLog`, `Weight` — added silently (1.6 mechanism) with the one-time upgrade note.
 - Tests on the developer's devices / emulator / a Ukrainian-locale test sheet (not mom's phone).
 
-### 1.7.1 — Connecting a spreadsheet · 👀 ready for release (developer, 2026-10-04)
+### 1.7.1 — Connecting a spreadsheet · ✅ released (2026-10-04, Play + web)
 Simplify the spreadsheet part of Settings and detect the user's sheet. Design: spec → "Connecting a spreadsheet (release 1.7.1)".
 - **Settings:** the connected sheet (link + copy-link icon) and «Підключити іншу таблицю»; with none, just «Підключити таблицю».
 - **The connect window:** sheets found in her Google Drive (made by the app) → create a new one → sheets connected before on this device (stored only on the device) → built-in sheets (mom's, test, dev) shown only to accounts that can open them → paste a link.
