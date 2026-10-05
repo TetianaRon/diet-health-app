@@ -12,9 +12,9 @@ The planner for Track My Meals / Трекер Харчування and the roncr
 
 ---
 
-## Next session — start here (set 2026-10-04)
-1. **1.7 released** (2026-10-04). **1.7.1 released** (connecting a spreadsheet). **1.8 released** (verified food database, 2026-10-05). Next: 1.9 (search, GI suggestions); sets moved to the local-first design (2.x). Earlier plan for 1.8: — verified food database:** the format (`verified-foods.json`, categories for sets, verification per part of an entry), then re-check the 57 built-in foods and the 12 cooked dishes against USDA (entry numbers already found for 10 of the 12 dishes — see 1.7), with GI from the tables; developer reviews on a review page.
-2. Note from 1.6: the next Play update on the developer's phone is a chance to confirm the stale-screens fix (new version on first open).
+## Next session — start here (set 2026-10-05)
+1. **1.9 released** (2026-10-05: search, GI suggestions, deleting items, coffee). Mom's data import (2.0) waits for local-first (2.x) — decided 2026-10-05. Next candidates: the local-first design (2.x, design before building), 2.1 Google Picker, or Intake items (Android permission asks, reminder follow-ups, nutrition-label photo reader).
+2. Chromium issue 569300356: reply sent 2026-10-05 (repro APK, videos; Chrome itself now affected too) — check for answers now and then.
 
 ## Current and upcoming releases
 
@@ -113,8 +113,8 @@ Only what works the same wherever her data lives (the database is bundled in the
 - **Database additions shipped with the app:** coffee — brewed (B0097, how mom's is made) and espresso (B0098), reviewed and accepted. Ukrainian breads not added (too many brands; mom picks the lowest-sugar rye bread each time) — the nutrition-label photo reader went to Intake instead.
 - *Done:* all of the above, plus delete questions as dialogs and the decimal comma everywhere; checked on the test sheet (build log 2026-10-05).
 
-### 2.0 — Mom's data, verified · 📝 planned (after 1.9)
-Her import was planned as "add the sets she needs + her own items"; sets now come with local-first (2.x), so decide at the start of this release: import before local-first (verified items into the bundled database, her own items into her sheet) or after it (as sets).
+### 2.0 — Mom's data, verified · 📝 planned — **after local-first** (developer, 2026-10-05)
+Her import comes **after the local-first design (2.x)**, as sets plus her own rows, so it's built once (developer chose this over an earlier import into the bundled database, 2026-10-05). The release number stays; it ships after local-first.
 Spec rules: memory of the import decisions (2026-09-29) + the review page.
 - **Database content:** every item of hers with a genuine match (~90, incl. olives black + green, trout + salmon, beef/pork heart raw + boiled, cocoa), under proper names — **plus the raw/cooked partner** of each wherever the source has both.
 - **Ingredients her dishes likely need** — estimated from each dish, added to the database so she can compose them later. **Her dishes themselves are not recalculated:** her value is kept and the dish is flagged «потрібно скласти рецепт».
