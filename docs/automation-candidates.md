@@ -4,6 +4,16 @@ A running list of mechanics and workflows that showed up while building this app
 
 Add to this as new sessions surface more. When something on this list actually gets built into a skill/agent/plugin, note that here (what it became, where it lives) rather than deleting the entry — the "why" is worth keeping even after the "what" ships.
 
+## Status (2026-10-05)
+
+The claude-governance plugin (session discipline, plan discipline, issue logging, doc formatting, build standards) now covers the "Operating principles" below and the decision logging. This project's own recurring workflows became task files in `tasks/`:
+
+- the pre-distribution checklist → `tasks/dha-task-release.md`;
+- the food-data contribution reviewer → `tasks/dha-task-user-data-import.md` and `tasks/dha-task-verified-db-change.md`, with the builder in `../tools/verified-db/`;
+- the stakeholder interview → `tasks/dha-task-interview.md`.
+
+The candidates below stay candidates for *cross-project* skills or agents.
+
 ## Candidate skills
 
 **Stakeholder interview mode.** `CLAUDE.md`'s Interview Mode (trigger phrase → switch language/tone entirely → cover fixed topics one question at a time → close with a structured bilingual summary appended to a docs file) was hand-written per-project. The mechanic itself — non-technical-stakeholder interview with a fixed topic checklist, conversational pacing, and a structured handoff summary — isn't specific to this app. Worth extracting into a real skill once a second project needs the same shape of interview, parameterized by topic list and target language(s).
