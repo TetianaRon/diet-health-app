@@ -2,7 +2,9 @@
 // removed from her sheet — final, so the confirmation says plainly that the
 // app can't bring it back (only Google Sheets' version history can). A
 // product still used in her dishes isn't deleted: she gets a button per dish
-// to go and change that dish first (developer, 2026-10-05).
+// to go and change that dish first (developer, 2026-10-05). Both questions
+// are dialogs: the delete button sits at the very end of a long form, so
+// anything shown below it was off-screen on a phone (the 1.8.1 lesson).
 import { useState } from "react";
 import { uk } from "../i18n/uk";
 import type { Dish } from "../lib/dishes";
@@ -44,44 +46,46 @@ export default function DeleteItem({
 
   return (
     <div className="delete-item">
-      {step === "idle" && (
-        <button type="button" className="button-danger" onClick={start}>
-          {kind === "dish" ? t.deleteDish : t.deleteIngredient}
-        </button>
-      )}
+      <button type="button" className="button-danger" onClick={start}>
+        {kind === "dish" ? t.deleteDish : t.deleteIngredient}
+      </button>
 
       {step === "blocked" && (
-        <div className="today-warning">
-          <p>{t.usedIn(name)}</p>
-          <div className="delete-item-actions">
-            {usedIn.map((dish) => (
-              <button key={dish.id} type="button" className="button-secondary" onClick={() => onEditDish?.(dish)}>
-                {t.editDish(dish.nameUk)}
+        <div className="modal-backdrop">
+          <div className="modal" role="alertdialog" aria-modal="true" aria-labelledby="delete-item-text">
+            <p id="delete-item-text">{t.usedIn(name)}</p>
+            <div className="modal-actions">
+              {usedIn.map((dish) => (
+                <button key={dish.id} type="button" className="button-secondary" onClick={() => onEditDish?.(dish)}>
+                  {t.editDish(dish.nameUk)}
+                </button>
+              ))}
+              <button type="button" className="button-secondary" onClick={() => setStep("idle")}>
+                {t.cancel}
               </button>
-            ))}
-            <button type="button" className="button-secondary" onClick={() => setStep("idle")}>
-              {t.cancel}
-            </button>
+            </div>
           </div>
         </div>
       )}
 
       {step === "confirm" && (
-        <div className="today-warning">
-          <p>
-            <strong>{t.confirmTitle(name)}</strong>
-          </p>
-          <p>{t.final}</p>
-          {isCopy && <p>{t.copyNote}</p>}
-          {kind === "dish" && <p>{t.mealsKept}</p>}
-          {error && <p className="food-form-error">{error}</p>}
-          <div className="delete-item-actions">
-            <button type="button" className="button-danger" onClick={() => void confirm()} disabled={busy}>
-              {busy ? t.deleting : t.confirm(name)}
-            </button>
-            <button type="button" className="button-secondary" onClick={() => setStep("idle")} disabled={busy}>
-              {t.cancel}
-            </button>
+        <div className="modal-backdrop">
+          <div className="modal" role="alertdialog" aria-modal="true" aria-labelledby="delete-item-text">
+            <p id="delete-item-text">
+              <strong>{t.confirmTitle(name)}</strong>
+            </p>
+            <p>{t.final}</p>
+            {isCopy && <p>{t.copyNote}</p>}
+            {kind === "dish" && <p>{t.mealsKept}</p>}
+            {error && <p className="food-form-error">{error}</p>}
+            <div className="modal-actions">
+              <button type="button" className="button-danger" onClick={() => void confirm()} disabled={busy}>
+                {busy ? t.deleting : t.confirm(name)}
+              </button>
+              <button type="button" className="button-secondary" onClick={() => setStep("idle")} disabled={busy}>
+                {t.cancel}
+              </button>
+            </div>
           </div>
         </div>
       )}
