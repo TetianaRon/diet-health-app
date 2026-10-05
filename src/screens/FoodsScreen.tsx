@@ -577,83 +577,6 @@ function EditIngredientForm({
   );
 }
 
-// Browse the pre-computed starter bundle and add one as-is. Composing a
-// custom multi-ingredient recipe is ComposeDishForm, below.
-function AddDishForm({
-  availableDishes,
-  onSaved,
-  onCancel,
-}: {
-  availableDishes: Dish[];
-  onSaved: (dish: Dish) => void;
-  onCancel: () => void;
-}) {
-  const [search, setSearch] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // Only searches once something's typed, and over the full available list
-  // (bundle + whatever's already saved) — same reasoning as AddFoodForm's
-  // suggestions: showing everything by default looked like a pre-existing
-  // list rather than a search, and searching only the static bundle missed
-  // an already-saved dish that isn't part of it.
-  const matches = search.trim()
-    ? availableDishes.filter((d) => d.nameUk.toLowerCase().includes(search.toLowerCase()))
-    : [];
-
-  const handleAdd = async (dish: Dish) => {
-    if (!isBuiltInId(dish.id)) {
-      onSaved(dish); // already one of her saved dishes — nothing to add
-      return;
-    }
-    setSaving(true);
-    setError(null);
-    try {
-      onSaved(await saveDishCopy(dish, dish.glycemicFlag));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <div className="food-form">
-      <label>
-        {uk.dishes.form.searchLabel}
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder={uk.dishes.form.searchPlaceholder}
-        />
-      </label>
-      <p className="food-form-hint">{uk.dishes.form.hint}</p>
-
-      {error && <p className="food-form-error">{error}</p>}
-
-      <ul className="food-list">
-        {matches.map((dish) => (
-          <li key={dish.id} className="food-list-item-with-action">
-            <span>
-              <strong>{dish.nameUk}</strong> <span className="food-name-en">({dish.nameEn})</span> —{" "}
-              {foodMetaText({ ...dish, giVerified: false })}
-            </span>
-            <button type="button" onClick={() => void handleAdd(dish)} disabled={saving}>
-              {uk.dishes.form.addButton}
-            </button>
-          </li>
-        ))}
-      </ul>
-      {search && matches.length === 0 && <p>{uk.dishes.noResults}</p>}
-
-      <div className="food-form-actions">
-        <button type="button" onClick={onCancel} disabled={saving}>
-          {uk.foods.cancelButton}
-        </button>
-      </div>
-    </div>
-  );
-}
 
 interface ComposeRow {
   // The picked ingredient's ID; cleared when the name is typed over, so a
@@ -914,7 +837,6 @@ function ComposeDishForm({
 }
 
 type FoodsSubTab = "ingredients" | "dishes";
-type DishAddMode = "starter" | "custom";
 
 export default function FoodsScreen() {
   const { signedIn, initializing, signIn, sessionExpired } = useAuth();
@@ -925,7 +847,6 @@ export default function FoodsScreen() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [showAddForm, setShowAddForm] = useState(false);
-  const [dishAddMode, setDishAddMode] = useState<DishAddMode>("starter");
   const [editingIngredient, setEditingIngredient] = useState<Ingredient | null>(null);
   const [editingDish, setEditingDish] = useState<Dish | null>(null);
 
@@ -945,7 +866,6 @@ export default function FoodsScreen() {
   const switchSubTab = (tab: FoodsSubTab) => {
     setSubTab(tab);
     setShowAddForm(false);
-    setDishAddMode("starter");
     setSearch("");
   };
 
@@ -1066,7 +986,6 @@ export default function FoodsScreen() {
   // «Це він — використати наявний»: close the form and show that item in its list.
   const showExistingItem = (item: NamedItem) => {
     setShowAddForm(false);
-    setDishAddMode("starter");
     setSubTab(item.kind === "dish" ? "dishes" : "ingredients");
     setSearch(item.nameUk);
   };
@@ -1074,10 +993,7 @@ export default function FoodsScreen() {
   // While an add/edit form is open it replaces the title and sub-tabs with a
   // breadcrumb at the top — the way back must never depend on scrolling down
   // to the form's own Cancel button.
-  const closeAddForm = () => {
-    setShowAddForm(false);
-    setDishAddMode("starter");
-  };
+  const closeAddForm = () => setShowAddForm(false);
   const listCrumb = (label: string, close: () => void): Crumb => ({ label, onClick: close });
   let breadcrumb: { trail: Crumb[]; current: string } | null = null;
   if (editingIngredient) {
@@ -1093,16 +1009,8 @@ export default function FoodsScreen() {
   } else if (showAddForm && subTab === "ingredients") {
     breadcrumb = { trail: [listCrumb(uk.foods.subTabs.ingredients, closeAddForm)], current: uk.foods.addButton };
   } else if (showAddForm && subTab === "dishes") {
-    breadcrumb =
-      dishAddMode === "custom"
-        ? {
-            trail: [
-              listCrumb(uk.foods.subTabs.dishes, closeAddForm),
-              listCrumb(uk.dishes.addButton, () => setDishAddMode("starter")),
-            ],
-            current: uk.dishes.customRecipeCrumb,
-          }
-        : { trail: [listCrumb(uk.foods.subTabs.dishes, closeAddForm)], current: uk.dishes.addButton };
+    // Since 1.8 there are no built-in dishes to pick from: adding a dish is composing one.
+    breadcrumb = { trail: [listCrumb(uk.foods.subTabs.dishes, closeAddForm)], current: uk.dishes.customRecipeCrumb };
   }
 
   return (
@@ -1171,24 +1079,7 @@ export default function FoodsScreen() {
         />
       )}
 
-      {!editingIngredient && !editingDish && showAddForm && subTab === "dishes" && dishAddMode === "starter" && (
-        <>
-          <button type="button" className="compose-cta" onClick={() => setDishAddMode("custom")}>
-            {uk.dishes.composeLinkLabel}
-          </button>
-          <AddDishForm
-            availableDishes={availableDishes}
-            onSaved={(dish) => {
-              setDishes((prev) => [...(prev ?? []).filter((d) => d.id !== dish.id), dish]);
-              setShowAddForm(false);
-              setSearch("");
-            }}
-            onCancel={() => setShowAddForm(false)}
-          />
-        </>
-      )}
-
-      {!editingIngredient && !editingDish && showAddForm && subTab === "dishes" && dishAddMode === "custom" && (
+      {!editingIngredient && !editingDish && showAddForm && subTab === "dishes" && (
         <>
           <ComposeDishForm
             ingredients={availableIngredients}
