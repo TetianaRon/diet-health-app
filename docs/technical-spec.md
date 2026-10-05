@@ -520,6 +520,21 @@ Deferred by the developer; the decisions are already made:
 
 **Steps:** (1) format + guard test ✅; (2) data — 69 built-in items grown to 96 entries through the review (rice, oats, potato, rye bread, banana, pear types; durum pasta; mashed potatoes; kefir 2.5%) ✅; (3) review page — the developer decided per entry with buttons that name the outcome; all 96 accepted on 2026-10-05 ✅; (4) app: read the file, ⓘ per value, «неперевірено» on the user's own items, offer to update saved copies of built-in items ✅ (2026-10-05; `data/builtInFoods.ts`, `lib/builtInStatus.ts`, `screens/VerifiedInfoDialog.tsx`, `screens/CopyUpdateOffer.tsx`; old built-ins frozen in `data/legacyBuiltIns.ts` for name matching and the update offer).
 
+## Search and GI suggestions (release 1.9, designed 2026-10-05)
+
+Only what works the same wherever her data lives — the database is bundled in the app; sets come with the local-first design (roadmap 2.x).
+
+**Matching** (`src/lib/foodSearch.ts`, pure, unit-tested) — one function behind every search: the Продукти/Страви lists, the add-product form, the meal picker and the dish composer.
+- Text is normalised (lower case, apostrophes and punctuation dropped, «ё»→«е»); words match by **word start** (a query word matches a name word that starts with it, or that it starts with, from 4 letters — so «гречки» finds «Гречка», «макаронні» finds «Макарони»).
+- **Everyday synonyms per food family** (`FAMILY_SYNONYMS`): e.g. спагетті / паста / вермішель → pasta; геркулес / вівсянка → oats; манка → semolina; перловка → pearl barley; пшонка → millet; мамалига / полента → corn grits; творог → cottage cheese. A synonym counts like a word of the name.
+- **Ranking:** all query words matched first, then more matched words, then a match at the name's start; database entries before her own items at equal score, types of one family kept together. Nothing is hidden: a word that matches nothing just ranks lower.
+
+**GI suggestions for her own items** (developer, 2026-10-05):
+- In the add-product and edit-product forms, while the GI field is empty — or holds a GI without a source — the form shows up to 3 closest database matches for the name: «У базі: Гречка (ядриця), суха — ГІ 50 (після варіння), середня надійність ⓘ» with a button per match **«Взяти ГІ 50 з бази»**. Only the GI is taken; her nutrients (e.g. from the pack) stay as they are. Matches whose GI is «не застосовується» or unknown aren't offered.
+- **Where her GI came from is stored:** a new Ingredients column **`GiFrom`** (readable name «ГІ з бази») holds the database ID; added silently by the sheet upgrade (additive). Typing a GI by hand, or clearing it, empties `GiFrom`.
+- **Display:** her product keeps «неперевірено» for its nutrients, and gets **ⓘ for the GI** («ГІ з бази: …» — the entry's GI part: value, reliability, reason, source, date). A dish made from it gets its GI from the ingredients as before (carb-weighted).
+- Not a medical claim: the suggestion is "the database's GI for a similar food", with its reliability and the database entry's own note (e.g. «після варіння» for dry products).
+
 ## Daily records and the new Today (release 1.7, designed 2026-10-04)
 
 > **Status:** 📝 Designed with the developer, not built. Mom asked for medicine and weight logging as soon as possible; the developer added the UX update (one daily surface). Supersedes "Planned: medication log" (2026-09-29), whose decisions are kept below.
