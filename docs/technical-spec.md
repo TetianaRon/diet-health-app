@@ -512,7 +512,7 @@ Deferred by the developer; the decisions are already made:
 - **Reliability:** high = an exact match from a well-replicated source (a table mean, a direct USDA analysis); medium = a single study, a close variant, or sources that disagree; low = an old/small study, a loose match, or our own calculation. The reason always says which and why.
 - **Wording:** values are "from the cited source"; no claim about what is good for anyone (see the not-a-medical-app rules).
 
-**Steps:** (1) format + guard test ✅; (2) data for the 69 built-in items (57 foods + 12 cooked dishes); (3) review page — the developer decides per entry with buttons that name the outcome; (4) app: read the file, ⓘ per value, «неперевірено» on the user's own items, offer to update saved copies of built-in items.
+**Steps:** (1) format + guard test ✅; (2) data — 69 built-in items grown to 96 entries through the review (rice, oats, potato, rye bread, banana, pear types; durum pasta; mashed potatoes; kefir 2.5%) ✅; (3) review page — the developer decided per entry with buttons that name the outcome; all 96 accepted on 2026-10-05 ✅; (4) app: read the file, ⓘ per value, «неперевірено» on the user's own items, offer to update saved copies of built-in items.
 
 ## Daily records and the new Today (release 1.7, designed 2026-10-04)
 
