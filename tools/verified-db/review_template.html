@@ -1,0 +1,305 @@
+<title>Перевірка бази продуктів</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a ledger of entries grouped by category — summary and open questions first, each entry a row card with old → new values side by side. */
+:root {
+  --bg: #f4f6f2; --surface: #ffffff; --ink: #1d2620; --muted: #5d6a61; --line: #dde3dc;
+  --accent: #2f7a4f; --accent-soft: #e4f1e8; --warn: #9a5b00; --warn-soft: #fbf0dc; --bad: #a3302a; --bad-soft: #f8e3e1;
+  --hi: #2f7a4f; --mid: #9a5b00; --lo: #a3302a;
+  --f-body: "Onest", "Segoe UI", system-ui, sans-serif; --f-num: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #131915; --surface: #1b231e; --ink: #e6ece7; --muted: #9aa89f; --line: #2c3830;
+  --accent: #6cc28e; --accent-soft: #1f3327; --warn: #e3b05c; --warn-soft: #3a2e17; --bad: #ec8a83; --bad-soft: #3d201e;
+  --hi: #6cc28e; --mid: #e3b05c; --lo: #ec8a83; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #131915; --surface: #1b231e; --ink: #e6ece7; --muted: #9aa89f; --line: #2c3830;
+  --accent: #6cc28e; --accent-soft: #1f3327; --warn: #e3b05c; --warn-soft: #3a2e17; --bad: #ec8a83; --bad-soft: #3d201e;
+  --hi: #6cc28e; --mid: #e3b05c; --lo: #ec8a83; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.5; }
+.wrap { max-width: 980px; margin: 0 auto; padding-inline: 16px; padding-block: 24px 64px; display: grid; gap: 28px; }
+h1 { font-size: 1.7rem; margin: 0; text-wrap: balance; }
+h2 { font-size: 1.15rem; margin: 0; text-wrap: balance; }
+h3 { font-size: 1rem; margin: 0; }
+p { margin: 0; }
+.lede { color: var(--muted); max-width: 70ch; }
+.top { display: grid; gap: 10px; }
+.status { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; font-size: 0.9rem; color: var(--muted); }
+.status strong { color: var(--ink); font-family: var(--f-num); font-weight: 500; }
+.meter { flex: 1 1 200px; height: 8px; background: var(--line); border-radius: 4px; overflow: hidden; min-width: 120px; }
+.meter > i { display: block; height: 100%; background: var(--accent); width: 0; transition: width .3s; }
+.save-state { font-size: 0.85rem; }
+.save-state.err { color: var(--bad); }
+.filters { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 5px 12px; font: inherit; font-size: 0.85rem; cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 14px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 0.85rem; color: var(--muted); }
+.q { display: grid; gap: 8px; padding-top: 14px; border-top: 1px solid var(--line); }
+.q:first-of-type { border-top: 0; padding-top: 0; }
+.q .why { color: var(--muted); font-size: 0.9rem; max-width: 75ch; }
+.choices { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 8px; padding: 8px 12px; font: inherit; font-size: 0.9rem; cursor: pointer; text-align: left; }
+.btn:hover { border-color: var(--accent); }
+.btn[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); font-weight: 600; }
+.btn.rework[aria-pressed="true"] { background: var(--warn-soft); border-color: var(--warn); }
+button:focus-visible, textarea:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.cat { display: grid; gap: 10px; }
+.cat > h2 { display: flex; gap: 10px; align-items: baseline; }
+.cat > h2 small { font-weight: 400; color: var(--muted); font-size: 0.85rem; font-family: var(--f-num); }
+.entry { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 10px; }
+.entry.accepted { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+.entry.rework { border-color: var(--warn); }
+.entry.updated { border-color: var(--accent); border-style: dashed; }
+.reply { background: var(--accent-soft); border-radius: 8px; padding: 10px 12px; font-size: 0.9rem; display: grid; gap: 4px; max-width: 80ch; }
+.reply strong { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--accent); }
+.new { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; color: var(--accent); }
+.head { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; justify-content: space-between; }
+.head .names { min-width: 0; display: grid; gap: 2px; }
+.head .en { color: var(--muted); font-size: 0.85rem; }
+.head .old { color: var(--muted); font-size: 0.85rem; }
+.id { font-family: var(--f-num); font-size: 0.8rem; color: var(--muted); }
+.vals { overflow-x: auto; }
+table { border-collapse: collapse; font-family: var(--f-num); font-size: 0.85rem; font-variant-numeric: tabular-nums; min-width: 560px; width: 100%; }
+th, td { padding: 4px 8px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; font-family: var(--f-body); color: var(--muted); }
+thead th { font-family: var(--f-body); font-weight: 500; color: var(--muted); font-size: 0.8rem; }
+td.changed { background: var(--warn-soft); }
+td.unknown { color: var(--muted); }
+.parts { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; }
+.part { border-top: 1px solid var(--line); padding-top: 8px; display: grid; gap: 4px; min-width: 0; }
+.part .line { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+.gi-val { font-family: var(--f-num); font-size: 1.05rem; font-weight: 500; }
+.gi-old { font-family: var(--f-num); color: var(--muted); font-size: 0.85rem; }
+.badge { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; border: 1px solid currentColor; }
+.badge.high { color: var(--hi); } .badge.medium { color: var(--mid); } .badge.low { color: var(--lo); }
+.tag { font-size: 0.8rem; color: var(--muted); }
+details { font-size: 0.85rem; }
+summary { cursor: pointer; color: var(--accent); width: fit-content; }
+details .body { display: grid; gap: 4px; padding-top: 6px; color: var(--ink); overflow-wrap: anywhere; }
+details .body .src { font-family: var(--f-num); font-size: 0.8rem; color: var(--muted); }
+.decide { display: grid; gap: 8px; border-top: 1px solid var(--line); padding-top: 10px; }
+textarea { font: inherit; font-size: 0.9rem; width: 100%; min-height: 60px; padding: 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); resize: vertical; box-sizing: border-box; }
+.offline { background: var(--warn-soft); color: var(--ink); border: 1px solid var(--warn); border-radius: 8px; padding: 10px 14px; font-size: 0.9rem; }
+@media (prefers-reduced-motion: reduce) { .meter > i { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <h1>Перевірка бази продуктів</h1>
+    <p class="lede">Чернетка релізу 1.8: вбудовані продукти, перевірених за USDA FoodData Central (SR Legacy) і міжнародними таблицями ГІ 2021 року. Для кожного продукту — було → стало, джерело, надійність і пояснення. Рішення зберігаються автоматично.</p>
+    <div class="status" aria-live="polite">
+      <span>Вирішено <strong id="count-done">0</strong> з <strong id="count-all">0</strong></span>
+      <span class="meter" aria-hidden="true"><i id="meter"></i></span>
+      <span>на доопрацювання: <strong id="count-rework">0</strong></span>
+      <span class="save-state" id="save-state">Підключення до сховища…</span>
+    </div>
+    <p class="offline" id="offline" hidden>Сховище рішень недоступне в цьому перегляді — сторінку можна читати, але рішення не збережуться. Відкрийте її на claude.ai, увійшовши в акаунт.</p>
+  </header>
+
+  <section class="panel" aria-labelledby="q-title">
+    <h2 id="q-title">Спершу — загальні рішення</h2>
+    <div id="questions"></div>
+  </section>
+
+  <section class="panel" aria-labelledby="legend-title">
+    <h3 id="legend-title">Як читати</h3>
+    <div class="legend">
+      <span><span class="badge high">висока</span> точний запис або кілька узгоджених досліджень</span>
+      <span><span class="badge medium">середня</span> одне дослідження, близький варіант або розбіжність</span>
+      <span><span class="badge low">низька</span> старе/мале дослідження, приблизна відповідність або розрахунок</span>
+      <span>Жовтим виділено значення, що змінилися більш ніж на 10%.</span>
+    </div>
+    <div class="filters" role="group" aria-label="Фільтр">
+      <button class="chip" data-filter="all" aria-pressed="true">Усі</button>
+      <button class="chip" data-filter="open" aria-pressed="false">Ще не вирішені</button>
+      <button class="chip" data-filter="rework" aria-pressed="false">На доопрацювання</button>
+      <button class="chip" data-filter="low" aria-pressed="false">З низькою надійністю</button>
+    </div>
+  </section>
+
+  <main id="entries" class="wrap" style="padding:0"></main>
+</div>
+
+<script id="data" type="application/json">__DATA__</script>
+<script>
+const DATA = JSON.parse(document.getElementById("data").textContent);
+const FIELDS = [["caloriesKcal", "Калорії, ккал"], ["carbsG", "Вуглеводи, г"], ["fiberG", "Клітковина, г"], ["sugarsG", "Цукри, г"], ["proteinG", "Білки, г"], ["fatG", "Жири, г"], ["sodiumMg", "Натрій, мг"]];
+const REL = { high: "висока", medium: "середня", low: "низька" };
+const GI_STATUS = { measured: "виміряне", conventional: "умовне", unknown: "немає даних", notApplicable: "не застосовується" };
+const STATE_UK = { raw: "сирий", dry: "сухий", boiled: "варений", baked: "запечений", fried: "смажений", steamed: "на пару", canned: "консервований", dried: "сушений", fermented: "кисломолочний", processed: "оброблений" };
+const decisions = {}; // id -> {choice, note, reply}
+// A rework Claude has answered (reply set) needs another look, so it counts as open.
+const ENTRY = Object.fromEntries(DATA.entries.map((e) => [e.id, e]));
+// Changed after the decision (a later review round): needs another look.
+const isStale = (id) => { const d = decisions[id], e = ENTRY[id]; return !!d && !!e && !!e.reopen && !!d.at && d.at < (e.changedAt || DATA.roundAt); };
+const isDecided = (id) => { const d = decisions[id]; return !!d && !(d.choice === "rework" && d.reply) && !isStale(id); };
+const answers = {};   // question id -> choice
+let db = null, filter = "all";
+
+const el = (tag, attrs = {}, ...kids) => {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "class") n.className = v; else if (k === "text") n.textContent = v; else if (k.startsWith("on")) n.addEventListener(k.slice(2), v); else n.setAttribute(k, v);
+  }
+  for (const kid of kids) if (kid) n.append(kid);
+  return n;
+};
+const fmt = (v) => (v === null || v === undefined ? "—" : String(Math.round(v * 10) / 10).replace(".", ","));
+
+function setSaveState(text, isError = false) {
+  const s = document.getElementById("save-state");
+  s.textContent = text;
+  s.classList.toggle("err", isError);
+}
+
+async function save(path, data) {
+  if (!db) { setSaveState("Не збережено: сховище недоступне", true); return; }
+  setSaveState("Збереження…");
+  try {
+    await db.doc(path).set({ ...data, at: new Date().toISOString() });
+    setSaveState("Збережено");
+  } catch (e) {
+    setSaveState("Не збережено: " + (e && e.message ? e.message : "помилка сховища") + ". Спробуйте ще раз.", true);
+  }
+}
+
+function renderQuestions() {
+  const box = document.getElementById("questions");
+  box.replaceChildren(...DATA.questions.map((q) => el("div", { class: "q" },
+    el("h3", { text: q.title }),
+    el("p", { class: "why", text: q.why }),
+    el("div", { class: "choices" }, ...q.options.map((o) => el("button", {
+      class: "btn", "aria-pressed": String(answers[q.id] === o.id), text: o.label,
+      onclick: () => { answers[q.id] = o.id; renderQuestions(); save("questions/" + q.id, { choice: o.id, label: o.label }); },
+    }))),
+  )));
+}
+
+function valuesTable(e) {
+  const n = e.nutrients, old = e.old;
+  const unknown = new Set(n.unknown || []);
+  return el("div", { class: "vals" }, el("table", {},
+    el("thead", {}, el("tr", {}, el("th", { text: "на 100 г" }), ...FIELDS.map(([, label]) => el("th", { text: label })))),
+    el("tbody", {},
+      old ? el("tr", {}, el("td", { text: "було" }), ...FIELDS.map(([k]) => el("td", { text: fmt(old[k]) }))) : null,
+      el("tr", {}, el("td", { text: "стало" }), ...FIELDS.map(([k]) => {
+        if (unknown.has(k)) return el("td", { class: "unknown", text: "немає в джерелі" });
+        const v = n.per100g[k], o = old ? old[k] : null;
+        const changed = o !== null && o !== undefined && Math.abs(v - o) > Math.max(0.5, Math.abs(o) * 0.1);
+        return el("td", { class: changed ? "changed" : "", text: fmt(v) });
+      })),
+    ),
+  ));
+}
+
+function sourceDetails(part, datasetName) {
+  const s = part.source;
+  return el("details", {}, el("summary", { text: "ⓘ джерело і пояснення" }), el("div", { class: "body" },
+    el("p", { text: part.reason.uk }),
+    s ? el("p", { class: "src", text: `${datasetName(s.dataset)}${s.entryId ? " · " + s.entryId : ""}` }) : null,
+    s ? el("p", { class: "src", text: s.description }) : null,
+    el("p", { class: "src", text: "Перевірено: " + part.verified }),
+  ));
+}
+
+function entryCard(e) {
+  const d = decisions[e.id];
+  const datasetName = (key) => (DATA.sources[key] ? DATA.sources[key].name : key);
+  const gi = e.gi;
+  const answered = d && d.choice === "rework" && d.reply;
+  const stale = isStale(e.id);
+  const card = el("article", { class: "entry" + (answered || stale ? " updated" : d ? " " + (d.choice === "accept" ? "accepted" : "rework") : ""), id: e.id },
+    el("div", { class: "head" },
+      el("div", { class: "names" },
+        el("h3", { text: e.nameUk }),
+        el("span", { class: "en", text: e.nameEn + " · " + (STATE_UK[e.state] || e.state) }),
+        e.oldName && e.oldName !== e.nameUk ? el("span", { class: "old", text: "Було: " + e.oldName }) : null),
+      el("span", { class: "id" }, e.old ? "" : el("span", { class: "new", text: "нове · " }), e.id)),
+    e.change && (stale || !d) ? el("div", { class: "reply" }, el("strong", { text: stale ? "Змінено після вашого рішення" : "Що змінено" }), el("p", { text: e.change })) : null,
+    answered ? el("div", { class: "reply" }, el("strong", { text: "Відповідь на ваш коментар" }), el("p", { text: "Ваш коментар: " + d.note }), el("p", { text: d.reply })) : null,
+    valuesTable(e),
+    el("div", { class: "parts" },
+      el("div", { class: "part" },
+        el("div", { class: "line" }, el("strong", { text: "Поживні речовини" }), el("span", { class: "badge " + e.nutrients.reliability, text: REL[e.nutrients.reliability] })),
+        sourceDetails(e.nutrients, datasetName)),
+      el("div", { class: "part" },
+        el("div", { class: "line" },
+          el("strong", { text: "ГІ" }),
+          el("span", { class: "gi-val", text: gi.value === null ? "—" : String(gi.value) }),
+          el("span", { class: "tag", text: GI_STATUS[gi.status] }),
+          el("span", { class: "badge " + gi.reliability, text: REL[gi.reliability] }),
+          e.oldGi !== null && e.oldGi !== undefined ? el("span", { class: "gi-old", text: "було " + e.oldGi }) : null),
+        sourceDetails(gi, datasetName)),
+    ),
+  );
+  const note = el("textarea", { id: "note-" + e.id, placeholder: "Що змінити (обов'язково для доопрацювання)", "aria-label": "Коментар до " + e.nameUk });
+  note.value = d && d.note ? d.note : "";
+  const noteWrap = el("div", {}, note);
+  if (answered) note.value = "";
+  noteWrap.hidden = !(d && d.choice === "rework" && !answered);
+  const decide = el("div", { class: "decide" },
+    el("div", { class: "choices" },
+      el("button", { class: "btn", "aria-pressed": String(!answered && !stale && d?.choice === "accept"), text: "Прийняти ці значення", onclick: () => decide_(e, "accept", "") }),
+      el("button", { class: "btn rework", "aria-pressed": String(!answered && !stale && d?.choice === "rework"), text: "Повернути на доопрацювання з коментарем", onclick: () => { noteWrap.hidden = false; note.focus(); if (note.value.trim()) decide_(e, "rework", note.value.trim()); } }),
+    ),
+    noteWrap,
+  );
+  note.addEventListener("change", () => { if (note.value.trim()) decide_(e, "rework", note.value.trim()); });
+  card.append(decide);
+  return card;
+}
+
+function decide_(e, choice, note) {
+  decisions[e.id] = { choice, note };
+  save("decisions/" + e.id, { choice, note, name: e.nameUk });
+  render();
+}
+
+function visible(e) {
+  const d = decisions[e.id];
+  if (filter === "open") return !isDecided(e.id);
+  if (filter === "rework") return d && d.choice === "rework" && !d.reply;
+  if (filter === "low") return e.nutrients.reliability === "low" || e.gi.reliability === "low";
+  return true;
+}
+
+function render() {
+  const main = document.getElementById("entries");
+  const groups = DATA.categories.map((c) => {
+    const items = DATA.entries.filter((e) => e.category === c.id && visible(e));
+    if (!items.length) return null;
+    return el("section", { class: "cat", "aria-label": c.nameUk }, el("h2", {}, c.nameUk, el("small", { text: String(items.length) })), ...items.map(entryCard));
+  }).filter(Boolean);
+  main.replaceChildren(...(groups.length ? groups : [el("p", { class: "lede", text: "У цьому фільтрі нічого немає." })]));
+  const done = DATA.entries.filter((e) => isDecided(e.id)).length;
+  document.getElementById("count-done").textContent = done;
+  document.getElementById("count-all").textContent = DATA.entries.length;
+  document.getElementById("count-rework").textContent = DATA.entries.filter((e) => decisions[e.id]?.choice === "rework" && !decisions[e.id].reply).length;
+  document.getElementById("meter").style.width = (100 * done / DATA.entries.length) + "%";
+}
+
+document.querySelectorAll(".chip").forEach((b) => b.addEventListener("click", () => {
+  filter = b.dataset.filter;
+  document.querySelectorAll(".chip").forEach((c) => c.setAttribute("aria-pressed", String(c === b)));
+  render();
+}));
+
+renderQuestions();
+render();
+
+(async () => {
+  db = window.claude ? await window.claude.use("db") : null;
+  if (!db) { document.getElementById("offline").hidden = false; setSaveState("Сховище недоступне", true); return; }
+  setSaveState("Підключено");
+  db.collection("decisions").onSnapshot((snap) => {
+    for (const doc of snap.docs) { const v = doc.data(); if (v) decisions[doc.id] = { choice: v.choice, note: v.note || "", reply: v.reply || "", at: v.at || "" }; }
+    render();
+  }, () => setSaveState("Не вдалося прочитати рішення", true));
+  db.collection("questions").onSnapshot((snap) => {
+    for (const doc of snap.docs) { const v = doc.data(); if (v) answers[doc.id] = v.choice; }
+    renderQuestions();
+  }, () => {});
+})();
+</script>
