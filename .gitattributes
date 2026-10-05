@@ -1,0 +1,19 @@
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.svg text eol=lf
+*.pdf binary
+*.zip binary
+*.skill binary
+*.plugin binary
+# Android
+*.bat text eol=crlf
+*.jar binary
+*.webp binary
+*.aab binary
+*.apk binary
+*.jks binary
+*.keystore binary
