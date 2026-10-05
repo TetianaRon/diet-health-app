@@ -214,3 +214,4 @@ This plan works no issues-log entries. The roadmap's open Intake items stay wher
   - **Delete now** (their rules are in the draft): branch workflow, plan-before-building, no mom testing, release notes in English, Sheets automation, explicit buttons, data-accuracy audits, and the project overview (out of date; its useful point, non-English user paths, moved to Identity).
   - **Keep until Phase 3**, which gives them a task file: not-a-medical-app details, and user-data reconciliation.
   - **Keep:** the designer role and the domains/email setup (both cross-project).
+- **Phase 2 text approved** by the developer ("Approved, write it and update memory"): writing `CLAUDE.md` v2.0 and the interview task file, and applying the memory plan.
