@@ -3801,6 +3801,100 @@
           "description": "White spaghetti, boiled, mean of 11 foods — GI 47 (summary row). Entries used: #1465 33, #1466 44, #1467 45, #1468 46, #1469 48, #1470 48, #1471 49, #1472 50, #1473 51, #1474 52, #1475 56"
         }
       }
+    },
+    {
+      "id": "B0083",
+      "status": "active",
+      "category": "vegetables",
+      "family": "potato",
+      "variant": "mashed-milk",
+      "state": "boiled",
+      "nameUk": "Картопляне пюре на молоці, з сіллю",
+      "nameEn": "Potatoes, mashed, home-prepared, whole milk added",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 83.0,
+          "carbsG": 17.57,
+          "fiberG": 1.5,
+          "sugarsG": 1.48,
+          "proteinG": 1.91,
+          "fatG": 0.57,
+          "sodiumMg": 302.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "170493",
+          "description": "Potatoes, mashed, home-prepared, whole milk added"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані. Рецепт USDA містить сіль (близько 300 мг натрію на 100 г).",
+          "en": "The USDA entry describes exactly this food in this state. USDA's recipe includes salt (about 300 mg sodium per 100 g)."
+        },
+        "verified": "2026-10-04"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 81,
+        "reliability": "high",
+        "verified": "2026-10-04",
+        "reason": {
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (5 записів, які підсумовує рядок таблиці «Mashed potato, mean of five studies»; середнє авторів — 79, діапазон 73–91). Пюре з вареної картоплі; що саме додавали (молоко, масло), у дослідженнях не завжди вказано. Пюре швидкого приготування (з пластівців) — окремий рядок таблиці, 84.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (5 entries covered by the table's row 'Mashed potato, mean of five studies'; the authors' mean is 79, range 73–91). Mashed boiled potato; what was added (milk, butter) isn't always stated in the studies. Instant mash (from flakes) is a separate row of the table, 84."
+        },
+        "source": {
+          "dataset": "gi-2021-st1",
+          "entryId": "summary row; #1861–#1865",
+          "description": "Mashed potato, mean of five studies — GI 79 (summary row). Entries used: #1861 73, #1862 76, #1863 76, #1864 81, #1865 91"
+        }
+      }
+    },
+    {
+      "id": "B0084",
+      "status": "active",
+      "category": "vegetables",
+      "family": "potato",
+      "variant": "mashed-milk-butter",
+      "state": "boiled",
+      "nameUk": "Картопляне пюре на молоці з вершковим маслом, з сіллю",
+      "nameEn": "Potatoes, mashed, home-prepared, whole milk and butter added",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 113.0,
+          "carbsG": 16.81,
+          "fiberG": 1.5,
+          "sugarsG": 1.43,
+          "proteinG": 1.86,
+          "fatG": 4.22,
+          "sodiumMg": 317.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "168555",
+          "description": "Potatoes, mashed, home-prepared, whole milk and butter added"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані. Рецепт USDA містить сіль (близько 300 мг натрію на 100 г).",
+          "en": "The USDA entry describes exactly this food in this state. USDA's recipe includes salt (about 300 mg sodium per 100 g)."
+        },
+        "verified": "2026-10-04"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 81,
+        "reliability": "high",
+        "verified": "2026-10-04",
+        "reason": {
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (5 записів, які підсумовує рядок таблиці «Mashed potato, mean of five studies»; середнє авторів — 79, діапазон 73–91). Пюре з вареної картоплі; що саме додавали (молоко, масло), у дослідженнях не завжди вказано. Пюре швидкого приготування (з пластівців) — окремий рядок таблиці, 84.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (5 entries covered by the table's row 'Mashed potato, mean of five studies'; the authors' mean is 79, range 73–91). Mashed boiled potato; what was added (milk, butter) isn't always stated in the studies. Instant mash (from flakes) is a separate row of the table, 84."
+        },
+        "source": {
+          "dataset": "gi-2021-st1",
+          "entryId": "summary row; #1861–#1865",
+          "description": "Mashed potato, mean of five studies — GI 79 (summary row). Entries used: #1861 73, #1862 76, #1863 76, #1864 81, #1865 91"
+        }
+      }
     }
   ]
 }
