@@ -28,7 +28,12 @@ function SourceLine({ source }: { source: VerifiedFoodEntry["nutrients"]["source
 export default function VerifiedInfoDialog({ entry, onClose }: { entry: VerifiedFoodEntry; onClose: () => void }) {
   const n = entry.nutrients;
   const gi = entry.gi;
-  const giText = gi.status === "notApplicable" ? t.giNotApplicable : gi.value === null ? t.giStatus.unknown : `${gi.value} · ${t.giStatus[gi.status]}`;
+  const giText =
+    gi.status === "notApplicable"
+      ? t.giNotApplicable
+      : gi.value === null
+        ? t.giStatus.unknown
+        : `${gi.value}${entry.state === "dry" ? ` (${t.afterCooking})` : ""} · ${t.giStatus[gi.status]}`;
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal verified-info" role="dialog" aria-modal="true" aria-labelledby="verified-title" onClick={(e) => e.stopPropagation()}>
