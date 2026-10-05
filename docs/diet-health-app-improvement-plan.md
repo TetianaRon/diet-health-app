@@ -147,7 +147,8 @@ This plan works no issues-log entries. The roadmap's open Intake items stay wher
   - the local dev server and when sign-in is needed;
   - the test sheet versus mom's sheet, and no testing on her phone;
   - adb from Git Bash (`MSYS_NO_PATHCONV=1`), screen recordings, the emulator.
-- **Interview Mode** task file (if Phase 2 keeps it).
+- **`docs/tasks/dha-task-user-data-import.md`:** the reconciliation rules for importing a user's own food data (mom's sheet in 2.0). Added 2026-10-05: these rules live in memory and have no other home.
+- (The Interview Mode task file is written in Phase 2.)
 
 **Decision** (decided 2026-10-05: `dha-task-`, in `docs/tasks/`): the file-name prefix. The standard's `[project-id]-task-[artifact].md` gives e.g. `dha-task-release.md`. A folder (`docs/tasks/`) is fine because the project runs only in the repo, with no chat Project.
 
@@ -207,3 +208,9 @@ This plan works no issues-log entries. The roadmap's open Intake items stay wher
   - `screenshots/` gitignored; the unrelated pomodoro-guardian permissions removed from `.claude/settings.local.json` (local file, not in git).
   - **Leftover:** git still prints "CRLF will be replaced by LF" for files written on Windows. These are warnings only, and nothing goes into git with CRLF. They come from `core.autocrlf=true` in the machine's git config, which the developer may want to set to `input`; that's local configuration, outside this plan.
 - **Phase 1 approved** by the developer ("Approved, start Phase 2"). Phase 2 started: drafting the new `CLAUDE.md` for review before writing it.
+- **Phase 2 draft:** a new `CLAUDE.md` (v2.0). Sections: issues log, identity, production flow, task routing (interview only; Phase 3 adds its rows when those files exist), skills (6 governance skills, all soft gates), 8 standing rules, code map, docs list.
+  - **Deviations from the standard's default rules, with reasons:** rule 3 is adapted (as decided). Rule 5 (hyperlinks to documentation pages) is dropped: the project has no external documentation pages.
+- **Memory plan:**
+  - **Delete now** (their rules are in the draft): branch workflow, plan-before-building, no mom testing, release notes in English, Sheets automation, explicit buttons, data-accuracy audits, and the project overview (out of date; its useful point, non-English user paths, moved to Identity).
+  - **Keep until Phase 3**, which gives them a task file: not-a-medical-app details, and user-data reconciliation.
+  - **Keep:** the designer role and the domains/email setup (both cross-project).
