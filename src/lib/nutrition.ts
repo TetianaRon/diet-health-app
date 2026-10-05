@@ -1,5 +1,5 @@
 // External nutrition lookup: translation + USDA FoodData Central, for foods
-// not covered by the bundle (src/data/starter-foods.ts — checked directly by
+// not in the built-in database (src/data/verified-foods.json, via builtInFoods.ts — checked directly by
 // the UI's browsable suggestion list, not by this module; see lookupExternal
 // below for why). USDA goes through our own proxy (api/usda.js) so its key
 // stays off the device (2026-09-28).

@@ -700,6 +700,82 @@ select {
   color: #6b6b6b;
 }
 
+/* Verified database (1.8): ⓘ opens the source details; «неперевірено» marks her own or changed values. */
+.info-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0 6px;
+  border: none;
+  background: transparent;
+  color: #2f7a4f;
+  font-size: 1.05rem;
+  vertical-align: middle;
+}
+
+.unverified-tag {
+  display: inline-block;
+  padding: 1px 8px;
+  border: 1px solid #c9b48a;
+  border-radius: 999px;
+  color: #7a5a1a;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+/* Inside a screen, ".screen p" (1.1rem + browser margins) would blow the dialog up. */
+.screen .verified-info p,
+.verified-info p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.screen .verified-info .verified-source,
+.screen .verified-info .verified-date,
+.verified-info .verified-source,
+.verified-info .verified-date {
+  font-size: 0.82rem;
+  color: #5d6a61;
+}
+
+.verified-info section {
+  display: grid;
+  gap: 4px;
+  padding: 10px 0;
+  border-top: 1px solid #e2e6e2;
+}
+
+.verified-info h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.verified-source,
+.verified-date {
+  color: #5d6a61;
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+}
+
+.verified-description {
+  font-size: 0.8rem;
+}
+
+.copy-update-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.copy-update-list li {
+  display: grid;
+  gap: 2px;
+}
+
 /* Weight: neutral on purpose — no green/red judging up or down. */
 .weight-bar {
   display: flex;

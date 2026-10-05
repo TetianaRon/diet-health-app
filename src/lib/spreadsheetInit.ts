@@ -19,8 +19,8 @@ import { planItemIdUpgrade } from "./sheetUpgrade";
 import { planColumnMigrations } from "./columnMigrations";
 import { ID_COUNTER_KEYS, type SheetItemKind } from "./itemIds";
 import { writeItemCounter } from "./itemIdStore";
-import { STARTER_FOODS } from "../data/starter-foods";
-import { STARTER_DISHES } from "../data/starter-dishes";
+import { BUILT_IN_FOODS } from "../data/builtInFoods";
+import { LEGACY_BUILT_INS } from "../data/legacyBuiltIns";
 import { DEFAULT_SETTINGS, SETTINGS_KEYS, settingsToRows, type Settings } from "./settings";
 import { INGREDIENTS_HEADERS } from "./ingredients";
 import { DISHES_HEADERS } from "./dishes";
@@ -416,8 +416,10 @@ async function applyItemIdUpgrade({ rowsByTab }: HealthScan, summary: UpgradeSum
   const plan = planItemIdUpgrade({
     ingredientsRows,
     dishesRows,
-    builtInFoods: STARTER_FOODS,
-    builtInDishes: STARTER_DISHES,
+    // Current names plus the pre-1.8 ones (B0058–B0069 were built-in dishes then, so
+    // an old dish copy in the Dishes tab still links to its ID).
+    builtInFoods: [...BUILT_IN_FOODS, ...LEGACY_BUILT_INS.filter((l) => l.kind === "food")],
+    builtInDishes: LEGACY_BUILT_INS.filter((l) => l.kind === "dish"),
     counters: { ingredient: counterValue(settingsRows, "ingredient"), dish: counterValue(settingsRows, "dish") },
   });
   if (plan.unresolved.length > 0) {

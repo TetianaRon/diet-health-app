@@ -48,6 +48,8 @@ interface SheetHealthContextValue {
   closeConnect: () => void;
   /** Connects this device to a spreadsheet, remembers it on the device, checks it and reloads the screens. */
   connectSpreadsheet: (sheet: SheetOption) => Promise<void>;
+  /** Remounts the screens so they re-read the sheet (after an app-level write, e.g. updating saved copies). */
+  reloadScreens: () => void;
 }
 
 const SheetHealthContext = createContext<SheetHealthContextValue | null>(null);
@@ -150,6 +152,7 @@ export function SheetHealthProvider({ children }: { children: ReactNode }) {
   }, []);
   const dismissUpgradeSummary = useCallback(() => setUpgradeSummary(null), []);
   const openConnect = useCallback(() => setConnectOpen(true), []);
+  const reloadScreens = useCallback(() => setVersion((v) => v + 1), []);
   const closeConnect = useCallback(() => setConnectOpen(false), []);
 
   const connectSpreadsheet = useCallback(
@@ -191,6 +194,7 @@ export function SheetHealthProvider({ children }: { children: ReactNode }) {
         openConnect,
         closeConnect,
         connectSpreadsheet,
+        reloadScreens,
       }}
     >
       {children}

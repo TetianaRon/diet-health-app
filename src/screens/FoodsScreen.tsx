@@ -1,3 +1,7 @@
+import { formatDecimal } from "../lib/numberFormat";
+import VerifiedInfoDialog from "./VerifiedInfoDialog";
+import { builtInMatch } from "../lib/builtInStatus";
+import type { VerifiedFoodEntry } from "../data/verifiedFoods";
 import { useEffect, useState } from "react";
 import { uk } from "../i18n/uk";
 import { useAuth } from "../context/AuthContext";
@@ -5,7 +9,7 @@ import { classifyGi } from "../lib/health";
 import {
   addIngredient,
   listIngredients,
-  mergeWithStarterFoods,
+  mergeWithBuiltInFoods,
   setIngredientFavorite,
   setIngredientGlycemicFlag,
   sortFavoritesFirst,
@@ -17,6 +21,7 @@ import {
   addDish,
   computeDishNutrition,
   computeDishUnknownFields,
+  unknownGiCarbShare,
   dishContainsFlaggedIngredient,
   listDishes,
   resolveItemRef,
@@ -35,7 +40,6 @@ import {
   TRANSLATED_CANDIDATE_COUNT,
   type NutritionEstimate,
 } from "../lib/nutrition";
-import { mergeWithStarterDishes } from "../data/starter-dishes";
 import Breadcrumb, { type Crumb } from "./Breadcrumb";
 import DuplicateNameNotice, { type NamedItem } from "./DuplicateNameNotice";
 import { findNameMatch, isBuiltInId, suggestFreeName } from "../lib/itemIds";
@@ -84,14 +88,40 @@ function formValuesFromItem(item: { unknownFields: NutritionKey[] } & Record<Num
 
 // One-line "carbs, GI" summary for a list row — "невідомо" (never a
 // misleading 0) for a field the person left blank.
-function foodMetaText(item: { carbsG: number; gi: number; giVerified: boolean; unknownFields: NutritionKey[] }): string {
+function foodMetaText(
+  item: { carbsG: number; gi: number; giVerified: boolean; unknownFields: NutritionKey[] },
+  entry: VerifiedFoodEntry | null = null,
+): string {
   const carbs = item.unknownFields.includes("carbsG")
     ? `вуглеводи ${uk.today.unknownValueLabel}`
-    : `${item.carbsG} г вуглеводів`;
-  const gi = item.unknownFields.includes("gi")
-    ? `ГІ ${uk.today.unknownValueLabel}`
-    : `${item.giVerified ? "" : "≈"}ГІ ${item.gi} (${uk.health.gi[classifyGi(item.gi)]})`;
+    : `${formatDecimal(Math.round(item.carbsG * 10) / 10)} г вуглеводів`;
+  // A database product says what kind of GI it has (since 1.8): «умовне» or «не застосовується»;
+  // its value has a cited source (ⓘ), so no «≈» — that mark stays for values entered without one.
+  const gi =
+    entry?.gi.status === "notApplicable"
+      ? uk.verified.giNotApplicable
+      : item.unknownFields.includes("gi")
+        ? `ГІ ${uk.today.unknownValueLabel}`
+        : entry?.gi.status === "conventional"
+          ? `ГІ ${item.gi} (${uk.verified.giStatus.conventional})`
+          : `${item.giVerified || entry ? "" : "≈"}ГІ ${item.gi} (${uk.health.gi[classifyGi(item.gi)]})`;
   return `${carbs}, ${gi}`;
+}
+
+// ⓘ for a product whose values come unchanged from the verified database, «неперевірено» for everything else.
+function SourceBadge({ entry, name, onOpen }: { entry: VerifiedFoodEntry | null; name: string; onOpen: (entry: VerifiedFoodEntry) => void }) {
+  if (!entry) {
+    return (
+      <span className="unverified-tag" title={uk.verified.unverifiedHint}>
+        {uk.verified.unverified}
+      </span>
+    );
+  }
+  return (
+    <button type="button" className="info-button" aria-label={uk.verified.infoLabel(name)} title={uk.verified.infoLabel(name)} onClick={() => onOpen(entry)}>
+      ⓘ
+    </button>
+  );
 }
 
 // Saving a built-in item (favouriting, flagging or editing it) stores her own
@@ -578,83 +608,6 @@ function EditIngredientForm({
   );
 }
 
-// Browse the pre-computed starter bundle and add one as-is. Composing a
-// custom multi-ingredient recipe is ComposeDishForm, below.
-function AddDishForm({
-  availableDishes,
-  onSaved,
-  onCancel,
-}: {
-  availableDishes: Dish[];
-  onSaved: (dish: Dish) => void;
-  onCancel: () => void;
-}) {
-  const [search, setSearch] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // Only searches once something's typed, and over the full available list
-  // (bundle + whatever's already saved) — same reasoning as AddFoodForm's
-  // suggestions: showing everything by default looked like a pre-existing
-  // list rather than a search, and searching only the static bundle missed
-  // an already-saved dish that isn't part of it.
-  const matches = search.trim()
-    ? availableDishes.filter((d) => d.nameUk.toLowerCase().includes(search.toLowerCase()))
-    : [];
-
-  const handleAdd = async (dish: Dish) => {
-    if (!isBuiltInId(dish.id)) {
-      onSaved(dish); // already one of her saved dishes — nothing to add
-      return;
-    }
-    setSaving(true);
-    setError(null);
-    try {
-      onSaved(await saveDishCopy(dish, dish.glycemicFlag));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <div className="food-form">
-      <label>
-        {uk.dishes.form.searchLabel}
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder={uk.dishes.form.searchPlaceholder}
-        />
-      </label>
-      <p className="food-form-hint">{uk.dishes.form.hint}</p>
-
-      {error && <p className="food-form-error">{error}</p>}
-
-      <ul className="food-list">
-        {matches.map((dish) => (
-          <li key={dish.id} className="food-list-item-with-action">
-            <span>
-              <strong>{dish.nameUk}</strong> <span className="food-name-en">({dish.nameEn})</span> —{" "}
-              {foodMetaText({ ...dish, giVerified: false })}
-            </span>
-            <button type="button" onClick={() => void handleAdd(dish)} disabled={saving}>
-              {uk.dishes.form.addButton}
-            </button>
-          </li>
-        ))}
-      </ul>
-      {search && matches.length === 0 && <p>{uk.dishes.noResults}</p>}
-
-      <div className="food-form-actions">
-        <button type="button" onClick={onCancel} disabled={saving}>
-          {uk.foods.cancelButton}
-        </button>
-      </div>
-    </div>
-  );
-}
 
 interface ComposeRow {
   // The picked ingredient's ID; cleared when the name is typed over, so a
@@ -731,6 +684,8 @@ function ComposeDishForm({
       : null;
 
   const previewUnknown = preview ? computeDishUnknownFields(resolvedRefs, findIngredient) : [];
+  // A small unknown-GI share that the dish GI leaves out (≤ 5%, see SMALL_UNKNOWN_GI_SHARE) — said, not hidden.
+  const omittedGiShare = preview && !previewUnknown.includes("gi") ? unknownGiCarbShare(resolvedRefs, findIngredient) : 0;
 
   const handleSave = async () => {
     const allResolved = rows.every((row) => row.nameUk.trim() === "" || findIngredient(row));
@@ -885,6 +840,7 @@ function ComposeDishForm({
             {uk.dishes.composeForm.preview(preview.carbsG, preview.caloriesKcal, preview.gi, giVerified ? "" : "≈")}
           </p>
           <p className="food-form-hint">{uk.dishes.approximateGiNote}</p>
+          {omittedGiShare > 0 && <p className="food-form-hint">{uk.dishes.composeForm.smallUnknownGi(Math.max(1, Math.round(omittedGiShare * 100)))}</p>}
           {previewUnknown.length > 0 && (
             <p className="today-warning">
               {uk.dishes.composeForm.unknownFromIngredients(
@@ -915,7 +871,6 @@ function ComposeDishForm({
 }
 
 type FoodsSubTab = "ingredients" | "dishes";
-type DishAddMode = "starter" | "custom";
 
 export default function FoodsScreen() {
   const { signedIn, initializing, signIn, sessionExpired } = useAuth();
@@ -926,9 +881,9 @@ export default function FoodsScreen() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [showAddForm, setShowAddForm] = useState(false);
-  const [dishAddMode, setDishAddMode] = useState<DishAddMode>("starter");
   const [editingIngredient, setEditingIngredient] = useState<Ingredient | null>(null);
   const [editingDish, setEditingDish] = useState<Dish | null>(null);
+  const [infoEntry, setInfoEntry] = useState<VerifiedFoodEntry | null>(null);
 
   useEffect(() => {
     // Also after a renewed sign-in (sessionExpired true -> false): reload,
@@ -946,7 +901,6 @@ export default function FoodsScreen() {
   const switchSubTab = (tab: FoodsSubTab) => {
     setSubTab(tab);
     setShowAddForm(false);
-    setDishAddMode("starter");
     setSearch("");
   };
 
@@ -1044,9 +998,9 @@ export default function FoodsScreen() {
   // The whole bundle is browsable/pickable by default, merged with whatever
   // is actually saved to the personal sheet — no need to "add" a bundle item
   // just to make it available for browsing, dish composition, or meal
-  // logging. See mergeWithStarterFoods/mergeWithStarterDishes.
-  const availableIngredients = mergeWithStarterFoods(ingredients ?? []);
-  const availableDishes = mergeWithStarterDishes(dishes ?? []);
+  // logging. See mergeWithBuiltInFoods; built-in cooked foods are products since 1.8.
+  const availableIngredients = mergeWithBuiltInFoods(ingredients ?? []);
+  const availableDishes = dishes ?? [];
 
   const filteredIngredients = sortFavoritesFirst(
     availableIngredients.filter((i) => i.nameUk.toLowerCase().includes(search.toLowerCase())),
@@ -1067,7 +1021,6 @@ export default function FoodsScreen() {
   // «Це він — використати наявний»: close the form and show that item in its list.
   const showExistingItem = (item: NamedItem) => {
     setShowAddForm(false);
-    setDishAddMode("starter");
     setSubTab(item.kind === "dish" ? "dishes" : "ingredients");
     setSearch(item.nameUk);
   };
@@ -1075,10 +1028,7 @@ export default function FoodsScreen() {
   // While an add/edit form is open it replaces the title and sub-tabs with a
   // breadcrumb at the top — the way back must never depend on scrolling down
   // to the form's own Cancel button.
-  const closeAddForm = () => {
-    setShowAddForm(false);
-    setDishAddMode("starter");
-  };
+  const closeAddForm = () => setShowAddForm(false);
   const listCrumb = (label: string, close: () => void): Crumb => ({ label, onClick: close });
   let breadcrumb: { trail: Crumb[]; current: string } | null = null;
   if (editingIngredient) {
@@ -1094,16 +1044,8 @@ export default function FoodsScreen() {
   } else if (showAddForm && subTab === "ingredients") {
     breadcrumb = { trail: [listCrumb(uk.foods.subTabs.ingredients, closeAddForm)], current: uk.foods.addButton };
   } else if (showAddForm && subTab === "dishes") {
-    breadcrumb =
-      dishAddMode === "custom"
-        ? {
-            trail: [
-              listCrumb(uk.foods.subTabs.dishes, closeAddForm),
-              listCrumb(uk.dishes.addButton, () => setDishAddMode("starter")),
-            ],
-            current: uk.dishes.customRecipeCrumb,
-          }
-        : { trail: [listCrumb(uk.foods.subTabs.dishes, closeAddForm)], current: uk.dishes.addButton };
+    // Since 1.8 there are no built-in dishes to pick from: adding a dish is composing one.
+    breadcrumb = { trail: [listCrumb(uk.foods.subTabs.dishes, closeAddForm)], current: uk.dishes.customRecipeCrumb };
   }
 
   return (
@@ -1172,24 +1114,7 @@ export default function FoodsScreen() {
         />
       )}
 
-      {!editingIngredient && !editingDish && showAddForm && subTab === "dishes" && dishAddMode === "starter" && (
-        <>
-          <button type="button" className="compose-cta" onClick={() => setDishAddMode("custom")}>
-            {uk.dishes.composeLinkLabel}
-          </button>
-          <AddDishForm
-            availableDishes={availableDishes}
-            onSaved={(dish) => {
-              setDishes((prev) => [...(prev ?? []).filter((d) => d.id !== dish.id), dish]);
-              setShowAddForm(false);
-              setSearch("");
-            }}
-            onCancel={() => setShowAddForm(false)}
-          />
-        </>
-      )}
-
-      {!editingIngredient && !editingDish && showAddForm && subTab === "dishes" && dishAddMode === "custom" && (
+      {!editingIngredient && !editingDish && showAddForm && subTab === "dishes" && (
         <>
           <ComposeDishForm
             ingredients={availableIngredients}
@@ -1223,11 +1148,13 @@ export default function FoodsScreen() {
           {filteredIngredients.length === 0 && <p>{uk.foods.noResults}</p>}
 
           <ul className="food-list">
-            {filteredIngredients.map((ingredient) => (
+            {filteredIngredients.map((ingredient) => {
+              const entry = builtInMatch(ingredient);
+              return (
               <li key={ingredient.id} className="food-list-item-with-action">
                 <span>
                   <strong>{ingredient.nameUk}</strong> <span className="food-name-en">({ingredient.nameEn})</span> —{" "}
-                  {foodMetaText(ingredient)}
+                  {foodMetaText(ingredient, entry)} <SourceBadge entry={entry} name={ingredient.nameUk} onOpen={setInfoEntry} />
                 </span>
                 <div className="food-list-actions">
                   <button
@@ -1259,7 +1186,8 @@ export default function FoodsScreen() {
                   </button>
                 </div>
               </li>
-            ))}
+              );
+            })}
           </ul>
         </>
       )}
@@ -1346,6 +1274,7 @@ export default function FoodsScreen() {
           </ul>
         </>
       )}
+      {infoEntry && <VerifiedInfoDialog entry={infoEntry} onClose={() => setInfoEntry(null)} />}
     </section>
   );
 }

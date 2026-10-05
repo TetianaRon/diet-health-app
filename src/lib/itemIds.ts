@@ -110,11 +110,13 @@ export function suggestFreeName(name: string, takenNames: readonly string[]): st
  * without `basedOn` but with the same (normalised) name as a built-in item
  * also replaces it — how copies were stored before 1.6, until the sheet
  * upgrade fills in `basedOn`. Everything else is listed as it is, so the
- * user's own «Яблуко» can sit next to a built-in one.
+ * user's own «Яблуко» can sit next to a built-in one. `aliases` are earlier
+ * names of built-in items (1.8 renamed them), matched the same way.
  */
 export function mergeBuiltInsById<T extends { id: string; basedOn: string; nameUk: string }>(
   builtIns: readonly T[],
   sheetRows: readonly T[],
+  aliases: ReadonlyMap<string, readonly string[]> = new Map(),
 ): T[] {
   const copyOf = new Map<string, T>();
   for (const row of sheetRows) if (row.basedOn) copyOf.set(row.basedOn, row);
@@ -123,7 +125,8 @@ export function mergeBuiltInsById<T extends { id: string; basedOn: string; nameU
 
   const used = new Set<T>();
   const merged = builtIns.map((item) => {
-    const replacement = copyOf.get(item.id) ?? legacyByName.get(normalizeItemName(item.nameUk));
+    const names = [item.nameUk, ...(aliases.get(item.id) ?? [])];
+    const replacement = copyOf.get(item.id) ?? names.map((name) => legacyByName.get(normalizeItemName(name))).find((row) => row && !used.has(row));
     if (replacement && !used.has(replacement)) {
       used.add(replacement);
       return replacement;

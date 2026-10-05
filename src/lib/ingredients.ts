@@ -5,7 +5,7 @@
 // Sheets UI — still parses correctly.
 import { batchUpdateRanges, readRange, writeRange } from "./sheets";
 import { buildColumnIndex, buildRow, cell, columnLetter, parseTab, SCAN_LAST_COLUMN, type ColumnIndex, type ParsedTab } from "./sheetRow";
-import { STARTER_FOODS } from "../data/starter-foods";
+import { BUILT_IN_ALIASES, BUILT_IN_FOODS } from "../data/builtInFoods";
 import { toGlycemicFlag, type GlycemicFlag } from "./glycemicFlag";
 import { parseUnknownNutritionFields, type NutritionKey } from "./dishes";
 import { mergeBuiltInsById } from "./itemIds";
@@ -148,13 +148,10 @@ export function sortFavoritesFirst<T extends { favorite: boolean }>(items: T[]):
   return [...items].sort((a, b) => Number(b.favorite) - Number(a.favorite));
 }
 
-function starterFoodToIngredient(food: (typeof STARTER_FOODS)[number]): Ingredient {
-  return { ...food, basedOn: "", source: "starter", dateAdded: "", favorite: false, glycemicFlag: "none", giVerified: false, unknownFields: [] };
-}
-
 /**
- * Merges the bundled starter foods with the personal Ingredients sheet, so
- * the whole bundle is browsable/pickable (main list, dish composition, meal
+ * Merges the built-in products (the verified food database, see
+ * data/builtInFoods.ts) with the personal Ingredients sheet, so the whole
+ * database is browsable/pickable (main list, dish composition, meal
  * logging) without first requiring each one to be individually saved —
  * "saving" an ingredient is only needed to customize its values, add
  * something outside the bundle, or mark it favorite (which saves a copy,
@@ -163,8 +160,8 @@ function starterFoodToIngredient(food: (typeof STARTER_FOODS)[number]): Ingredie
  * (yet) in the sheet has dateAdded: "" — a signal, not a schema field of its
  * own, that it isn't a real saved row.
  */
-export function mergeWithStarterFoods(sheetIngredients: Ingredient[]): Ingredient[] {
-  return mergeBuiltInsById(STARTER_FOODS.map(starterFoodToIngredient), sheetIngredients);
+export function mergeWithBuiltInFoods(sheetIngredients: Ingredient[]): Ingredient[] {
+  return mergeBuiltInsById(BUILT_IN_FOODS, sheetIngredients, BUILT_IN_ALIASES);
 }
 
 async function readIngredientsSheet(): Promise<ParsedTab> {
@@ -231,6 +228,20 @@ export async function setIngredientGlycemicFlag(id: string, glycemicFlag: Glycem
  * Rewrites every known column, so a rename is just part of the same write
  * (safe since 1.6: nothing refers to an ingredient by name any more).
  */
+/** Rewrites several saved rows in one read and one write (stays clear of Google's per-minute read limit). */
+export async function updateIngredients(items: readonly Ingredient[]): Promise<void> {
+  if (items.length === 0) return;
+  const { columnIndex, dataRows, firstDataRow } = await readIngredientsSheet();
+  const lastCol = columnLetter(Math.max(...columnIndex.values()));
+  const updates = items.map((item) => {
+    const i = dataRows.findIndex((row) => String(cell(row, columnIndex, "Id") ?? "").trim() === item.id);
+    if (i < 0) throw new Error(`Ingredient ${item.id} not found`);
+    const rowNumber = firstDataRow + i;
+    return { range: `Ingredients!A${rowNumber}:${lastCol}${rowNumber}`, values: [ingredientToRow(item, columnIndex)] };
+  });
+  await batchUpdateRanges(updates);
+}
+
 export async function updateIngredient(ingredient: Ingredient): Promise<void> {
   const { rowNumber, columnIndex } = await findIngredientRow(ingredient.id);
   const lastCol = columnLetter(Math.max(...columnIndex.values()));
