@@ -102,6 +102,9 @@ Simplify the spreadsheet part of Settings and detect the user's sheet. Design: s
 - **ⓘ** next to every built-in value (source, reliability, reason, date) and **«неперевірено»** on everything not from the database (the user's own items, edited copies).
 - ✅ *Decided 2026-10-04:* low-carb vegetables get a conventional GI 15 labelled «умовне»; cooked forms use USDA's unsalted entries; GI from the **2021** tables (2008 only as a fallback).
 
+### 1.8.1 — Hotfix: meal editor's Cancel and breadcrumb · ✅ built (2026-10-05) — developer's bug report
+- On the phone, with an unsaved meal, Cancel and the breadcrumb seemed dead: the "discard changes?" question appeared off-screen (and not at all from the add/edit-dish steps). It's now a centred dialog, from every step; deleting a meal asks the same way. Build log 2026-10-05.
+
 ### 1.9 — Search and GI suggestions · 🔨 in progress (started 2026-10-05) — spec → "Search and GI suggestions"
 Only what works the same wherever her data lives (the database is bundled in the app); everything tied to storage — sets, a clean start, database updates from a server — moved to the local-first design (2.x), so it's built once (developer, 2026-10-05).
 - **Search: our database first (in Ukrainian, no translation needed), then USDA.** Fewer paid translations; works for a free version. Types grouped by family in results (rice → basmati, parboiled…).
