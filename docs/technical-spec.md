@@ -587,7 +587,7 @@ On the developer's devices, the emulator and a Ukrainian-locale test sheet — n
 
 ### Goals
 1. **Instant and offline:** every screen reads from the device. No read-limit errors (429), and no waiting for Google.
-2. **Works without Google:** a fully local version (no sign-in), with a backup the user controls.
+2. **The phone works without Google:** a fully local Android app (no sign-in), with a backup the user controls. The web version always signs in.
 3. **Sync across devices** through the user's own Google Sheet, which stays readable and editable as a spreadsheet.
 4. **Sets and a clean start:** the verified database is offered as sets, and everything a user adds becomes their own row.
 5. **Mom moves over without losing anything,** in small releases, each shippable on its own.
@@ -629,10 +629,15 @@ Every screen reads its tabs from Sheets (Today and History read them in one `bat
 - **Deletions** (developer, 2026-10-05): the row is removed from the sheet, and its ID goes to a small «Видалені» tab (id, tab, time) so other devices delete it too. The sheet stays clean to read.
 - **Clock differences between devices** only matter when the same row is edited on two devices between syncs. For a single person's data that's rare, so it's accepted.
 
-### Without Google (local-only)
-- First run offers «Почати без Google» or «Підключити Google Таблицю». A Google sheet can be connected later; the first sync then uploads everything.
-- **Backup: an .xlsx file in the same layout as the sheet** (developer, 2026-10-05). It's readable in any spreadsheet app, the same file can be restored, and it can be uploaded to Google later. Saved from Settings («Зберегти копію даних») or restored («Відновити з файлу»). A reminder appears when the last backup is over 30 days old. Android's own backup of app data is checked during the build; if it covers the database, it's an extra layer of protection.
-- **The web version without Google** keeps data in that browser only. Saying so in the UI is enough.
+### Without Google: the Android app only (developer, 2026-10-05)
+- **Android:** first run offers «Почати без Google» or «Підключити Google Таблицю». A Google sheet can be connected later; the first sync then uploads everything.
+- **The web version requires Google sign-in.** Using the browser without Google isn't a real use case, and nobody restores a spreadsheet backup in a browser. On the web, the local database is a **fast copy of the user's sheet plus a queue of changes waiting to sync**. The sheet is the source of truth there.
+  - If the browser clears its storage, the copy is downloaded again. Only changes not yet synced could be lost, and sync runs a few seconds after each change.
+  - Before signing out, unsynced changes are synced first (or the user is warned if that fails).
+- **Backup (Android without Google): an .xlsx file in the same layout as the sheet** (developer, 2026-10-05). It's readable in any spreadsheet app, the same file can be restored, and it can be uploaded to Google later.
+  - Saved from Settings («Зберегти копію даних») through Android's share/save sheet, or restored («Відновити з файлу»).
+  - A reminder appears when the last backup is over 30 days old.
+  - Android's own backup of app data is checked during the build; if it covers the database, it's an extra layer of protection.
 
 ### Sets and the clean start
 - The verified database stays bundled in the app (works offline). Later, updates come from a static file on the roncreator site, the same file the public pages are built from.
@@ -643,7 +648,7 @@ Every screen reads its tabs from Sheets (Today and History read them in one `bat
 0. **Proof: SQLite in the browser** (WebAssembly build, persistence across reloads, the target browsers). A spike on its own branch, not shipped.
 1. **Local store + sync for reading.** Row IDs for every tab; screens read the device; sync pulls; writes still go to the sheet and to the device. This removes the 429s and makes reading offline.
 2. **Offline writes + full sync.** A change queue, `UpdatedAt`, deletions, merging and manual-edit detection.
-3. **Local-only mode + backup:** export, restore and the reminder.
+3. **Android without Google + backup:** export, restore and the reminder. The web version stays sign-in only.
 4. **Sets + clean start + moving mom over.** Then 2.0 (mom's data, verified) as sets plus her own rows.
 
 **Free/paid** is decided separately, before the public launch. Nothing above depends on it: sync, USDA search and label reading are separable features that can be switched on or off later.
