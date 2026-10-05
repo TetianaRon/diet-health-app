@@ -1,4 +1,5 @@
 // Single source of Ukrainian UI strings — don't hardcode UI text elsewhere.
+import { formatDecimal as n } from "../lib/numberFormat";
 export const uk = {
   appName: "Трекер харчування",
   tabs: {
@@ -89,7 +90,7 @@ export const uk = {
     todayLabel: "Сьогодні",
     yesterdayLabel: "Учора",
     weight: (kg: string) => `Вага: ${kg} кг`,
-    totals: (calories: number, gl: number) => `${calories} ккал · ГН ${gl}`,
+    totals: (calories: number, gl: number) => `${n(calories)} ккал · ГН ${n(gl)}`,
   },
   // Per-item GI/GL classification labels — see classifyGi/classifyGl in
   // src/lib/health.ts (standard bands, matching mom's own reference table).
@@ -113,24 +114,24 @@ export const uk = {
       glycemicLoad: "Глікемічне навантаження",
     },
     totals: {
-      fat: (grams: number) => `Жири сьогодні: ${grams} г`,
-      sugars: (grams: number) => `Цукри сьогодні: ${grams} г`,
-      protein: (grams: number) => `Білки сьогодні: ${grams} г`,
-      sodium: (mg: number) => `Натрій сьогодні: ${mg} мг`,
+      fat: (grams: number) => `Жири сьогодні: ${n(grams)} г`,
+      sugars: (grams: number) => `Цукри сьогодні: ${n(grams)} г`,
+      protein: (grams: number) => `Білки сьогодні: ${n(grams)} г`,
+      sodium: (mg: number) => `Натрій сьогодні: ${n(mg)} мг`,
     },
     mealGapWarning: (hours: number) =>
-      `Минуло ${hours.toFixed(1)} год з останнього прийому їжі — час перекусити.`,
+      `Минуло ${n(hours)} год з останнього прийому їжі — час перекусити.`,
     fatWarning: (mealType: string, overByGrams: number) =>
-      `${mealType}: жиру забагато на ${overByGrams.toFixed(1)} г понад ліміт на прийом їжі.`,
+      `${mealType}: жиру забагато на ${n(overByGrams)} г понад ліміт на прийом їжі.`,
     addButton: "Додати прийом їжі",
     empty: "Сьогодні ще немає записів.",
     mealsLeft: (left: number, planned: number) => `Залишилось прийомів їжі: ${left}/${planned}`,
-    latestBloodSugar: (valueMmolL: number, contextLabel: string) => `${valueMmolL} ммоль/л (${contextLabel})`,
+    latestBloodSugar: (valueMmolL: number, contextLabel: string) => `${n(valueMmolL)} ммоль/л (${contextLabel})`,
     // A dish's line inside a meal on Today — weight only; the meal's own
     // line carries the full stats (see mealStat below).
-    dishWeight: (portionGrams: number) => `${portionGrams} г`,
-    carbsValue: (g: number) => `${g} г вуглеводів`,
-    caloriesValue: (kcal: number) => `${kcal} ккал`,
+    dishWeight: (portionGrams: number) => `${n(portionGrams)} г`,
+    carbsValue: (g: number) => `${n(g)} г вуглеводів`,
+    caloriesValue: (kcal: number) => `${n(kcal)} ккал`,
     unknownValueLabel: "невідомо",
     // Meal- and day-level caveats — the underlying totals already exclude
     // an unknown field from the sum (see sumKnownField in dailyLog.ts), so
@@ -143,14 +144,14 @@ export const uk = {
     // The same stats the daily status shows (Settings' show* toggles), plus
     // the meal's weight — see mealStatItems in lib/mealStats.ts.
     mealStat: {
-      weight: (g: number) => `Вага: ${g} г`,
-      carbs: (g: number) => `Вуглеводи: ${g} г`,
-      calories: (kcal: number) => `Калорії: ${kcal} ккал`,
-      gl: (gl: number) => `ГН: ${gl}`,
-      fat: (g: number) => `Жири: ${g} г`,
-      sugars: (g: number) => `Цукри: ${g} г`,
-      protein: (g: number) => `Білки: ${g} г`,
-      sodium: (mg: number) => `Натрій: ${mg} мг`,
+      weight: (g: number) => `Вага: ${n(g)} г`,
+      carbs: (g: number) => `Вуглеводи: ${n(g)} г`,
+      calories: (kcal: number) => `Калорії: ${n(kcal)} ккал`,
+      gl: (gl: number) => `ГН: ${n(gl)}`,
+      fat: (g: number) => `Жири: ${n(g)} г`,
+      sugars: (g: number) => `Цукри: ${n(g)} г`,
+      protein: (g: number) => `Білки: ${n(g)} г`,
+      sodium: (mg: number) => `Натрій: ${n(mg)} мг`,
     },
     // Label-only forms of the mealStat entries, for a stat with no known value ("Калорії: невідомо").
     mealStatLabel: {
@@ -199,15 +200,15 @@ export const uk = {
       disclaimer:
         "Це лише математичний розрахунок рівномірного розподілу ваших власних денних лімітів, а не медична порада. Питання харчування й лікування обговорюйте з лікарем.",
       basis: (mealsSharing: number, fullPercent: number, snackPercent: number | null) =>
-        `Залишок денних лімітів поділено на заплановані прийоми, що ще залишилися (${mealsSharing}). Повний прийом — ${fullPercent} % денного ліміту (налаштування)${
-          snackPercent !== null ? `, перекус — ${Math.round(snackPercent * 10) / 10} % (розраховано з решти)` : ""
+        `Залишок денних лімітів поділено на заплановані прийоми, що ще залишилися (${mealsSharing}). Повний прийом — ${n(fullPercent)} % денного ліміту (налаштування)${
+          snackPercent !== null ? `, перекус — ${n(snackPercent)} % (розраховано з решти)` : ""
         }.`,
-      dailyLeft: (left: number, target: number, unit: string) => `Залишиться за день: ${left} із ${target}${unit}`,
-      dailyOver: (over: number, unit: string) => `Ліміт на день перевищено на ${over}${unit}`,
-      calories: (current: number, recommended: number) => `Калорії: ${current} із ≈${recommended} ккал`,
-      carbs: (current: number, recommended: number) => `Вуглеводи: ${current} із ≈${recommended} г`,
-      gl: (current: number, recommended: number) => `ГН: ${current} із ≈${recommended}`,
-      fat: (current: number, limit: number) => `Жири: ${current} г (ліміт на прийом ${limit} г)`,
+      dailyLeft: (left: number, target: number, unit: string) => `Залишиться за день: ${n(left)} із ${n(target)}${unit}`,
+      dailyOver: (over: number, unit: string) => `Ліміт на день перевищено на ${n(over)}${unit}`,
+      calories: (current: number, recommended: number) => `Калорії: ${n(current)} із ≈${n(recommended)} ккал`,
+      carbs: (current: number, recommended: number) => `Вуглеводи: ${n(current)} із ≈${n(recommended)} г`,
+      gl: (current: number, recommended: number) => `ГН: ${n(current)} із ≈${n(recommended)}`,
+      fat: (current: number, limit: number) => `Жири: ${n(current)} г (ліміт на прийом ${n(limit)} г)`,
       fewerFitNote:
         "До вашого часу сну за звичайного інтервалу вже не встигнуть усі заплановані прийоми. Залишок не переноситься на пізніші прийоми — це лише орієнтир.",
     },
@@ -264,6 +265,28 @@ export const uk = {
     verifiedOn: (date: string) => `Перевірено: ${date}`,
     disclaimer: "Довідкові значення з указаного джерела, не медична порада.",
     close: "Закрити",
+  },
+  giSuggest: {
+    title: "ГІ з бази для схожого продукту:",
+    line: (name: string, gi: string, reliability: string) => `${name} — ГІ ${gi}, ${reliability}`,
+    take: (gi: number) => `Взяти ГІ ${gi} з бази`,
+    taken: (name: string) => `ГІ з бази: ${name}`,
+    hint: "Береться лише ГІ — поживні речовини залишаються вашими (наприклад, з упаковки).",
+    giFromDatabase: "з бази",
+  },
+  deleteItem: {
+    deleteIngredient: "Видалити продукт",
+    deleteDish: "Видалити страву",
+    confirmTitle: (name: string) => `Видалити «${name}»?`,
+    final: "Рядок буде видалено з вашої таблиці. У застосунку його не можна буде відновити — лише через історію версій Google Таблиці.",
+    copyNote: "Це ваша копія вбудованого продукту — після видалення в списку знову буде продукт із бази.",
+    mealsKept: "Минулі прийоми їжі з цією стравою збережуть свої значення.",
+    usedIn: (name: string) => `«${name}» є у ваших стравах, тому його не можна видалити. Спершу приберіть його зі страв:`,
+    editDish: (dish: string) => `Редагувати «${dish}»`,
+    confirm: (name: string) => `Так, видалити «${name}»`,
+    deleting: "Видалення…",
+    cancel: "Скасувати",
+    failed: (message: string) => `Не вдалося видалити: ${message}`,
   },
   copyUpdate: {
     notice: (n: number) => `Для ${n} ${n % 10 === 1 && n % 100 !== 11 ? "продукту" : "продуктів"} є уточнені значення`,
@@ -380,13 +403,13 @@ export const uk = {
       yieldLabel: "Вага готової страви (г)",
       yieldHint: "Загальна вага після приготування — вода додає вагу, але не калорії.",
       smallUnknownGi: (percent: number) =>
-        `ГІ страви не враховує ${percent}% вуглеводів — з продуктів, для яких ГІ невідомий (їх так мало, що на результат вони майже не впливають).`,
+        `ГІ страви не враховує ${n(percent)}% вуглеводів — з продуктів, для яких ГІ невідомий (їх так мало, що на результат вони майже не впливають).`,
       unknownFromIngredients: (fields: string) =>
         `Деякі інгредієнти мають невідомі значення (${fields}) — для страви вони теж збережуться як невідомі.`,
       unresolvedIngredient: "Такого продукту немає в базі — спочатку додайте його на вкладці «Продукти».",
       // giVerifiedMarker: "" once she's checked "Я перевірив(ла)...", "≈" until then.
       preview: (carbsG: number, caloriesKcal: number, gi: number, giVerifiedMarker: string) =>
-        `На 100 г готової страви: ${String(Math.round(carbsG * 10) / 10).replace(".", ",")} г вуглеводів, ${Math.round(caloriesKcal)} ккал, ${giVerifiedMarker}ГІ ${gi}`,
+        `На 100 г готової страви: ${n(carbsG)} г вуглеводів, ${Math.round(caloriesKcal)} ккал, ${giVerifiedMarker}ГІ ${gi}`,
       saveButton: "Зберегти",
       validationError: "Заповніть назву страви, оберіть інгредієнти з бази з коректними грамами та вкажіть вагу готової страви.",
     },
@@ -439,9 +462,9 @@ export const uk = {
       "Частка повного прийому має бути більше 0, і разом з усіма повними прийомами не перевищувати 100 % — інакше на перекуси нічого не лишається.",
     shareSummary: {
       full: (percent: number, kcal: number | null) =>
-        `Повний прийом: ${percent} % денного ліміту${kcal !== null ? ` (≈${kcal} ккал)` : ""}.`,
+        `Повний прийом: ${n(percent)} % денного ліміту${kcal !== null ? ` (≈${n(kcal)} ккал)` : ""}.`,
       snack: (percent: number, kcal: number | null) =>
-        `Перекус (розраховується з решти): ${percent} %${kcal !== null ? ` (≈${kcal} ккал)` : ""}.`,
+        `Перекус (розраховується з решти): ${n(percent)} %${kcal !== null ? ` (≈${n(kcal)} ккал)` : ""}.`,
     },
     snacksValidationError: "Кількість перекусів має бути від 0 до кількості прийомів їжі на день.",
     privacyPolicyLink: "Політика конфіденційності",
@@ -557,6 +580,7 @@ export const uk = {
       MealId: "Ідентифікатор прийому їжі",
       Id: "Ідентифікатор",
       BasedOn: "Копія вбудованого",
+      GiFrom: "ГІ з бази",
       ItemId: "Ідентифікатор продукту/страви",
       Name: "Назва",
       Dose: "Доза",
@@ -588,7 +612,7 @@ export const uk = {
   },
   duplicateName: {
     exists: (kind: "ingredient" | "dish", name: string) => `${kind === "dish" ? "Страва" : "Продукт"} «${name}» уже є`,
-    card: (calories: number, source: string) => `${calories} ккал на 100 г · ${source}`,
+    card: (calories: number, source: string) => `${n(calories)} ккал на 100 г · ${source}`,
     useExisting: "Це він — використати наявний",
     rename: (name: string) => `Це інший — назвати «${name}»`,
     hint: "Краще додати марку чи вид — так легше розрізнити.",

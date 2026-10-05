@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { builtInMatch, copyUpdates, dishCopyUpdates } from "./builtInStatus";
+import { builtInMatch, copyUpdates, dishCopyUpdates, giSourceEntry } from "./builtInStatus";
 import type { Dish } from "./dishes";
 import { BUILT_IN_FOODS, entryToIngredient, verifiedEntry } from "../data/builtInFoods";
 import { LEGACY_BUILT_INS } from "../data/legacyBuiltIns";
@@ -81,5 +81,19 @@ describe("dishCopyUpdates", () => {
 
   it("leaves a dish copy she changed alone", () => {
     expect(dishCopyUpdates([{ ...copy, carbsG: copy.carbsG + 2 }])).toEqual([]);
+  });
+});
+
+describe("giSourceEntry", () => {
+  const own: Ingredient = { ...buckwheat, id: "I5", basedOn: "", source: "manual", nameUk: "Гречка Хуторок", carbsG: 72, giFrom: "B0001" };
+
+  it("is the database entry while her GI still equals it", () => {
+    expect(giSourceEntry(own)?.id).toBe("B0001");
+  });
+
+  it("is null once she changed the GI, for an unknown GI, or without a source", () => {
+    expect(giSourceEntry({ ...own, gi: own.gi + 5 })).toBeNull();
+    expect(giSourceEntry({ ...own, unknownFields: ["gi"] })).toBeNull();
+    expect(giSourceEntry({ ...own, giFrom: "" })).toBeNull();
   });
 });

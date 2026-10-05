@@ -490,14 +490,14 @@ Deferred by the developer; the decisions are already made:
 
 **File structure:**
 - `sources` — registry of datasets (name, edition/version, full citation, URL). Entries refer to a key here, so a citation is written once. Today: `usda-sr-legacy`, `gi-2021-st1`, `gi-2021-st2`, `gi-2008`, `calculation` (our own arithmetic; its description says what was computed from which entries).
-- `categories` — every entry belongs to one (Крупи та макарони, Хліб, Молочні продукти, М'ясо і птиця, Риба, Яйця, Бобові, Овочі, Гриби, Фрукти та ягоди, Горіхи, Олії та жири), so the database can be offered as **sets** (local-first design, 2.x).
+- `categories` — every entry belongs to one (Крупи та макарони, Хліб, Молочні продукти, М'ясо і птиця, Риба, Яйця, Бобові, Овочі, Гриби, Фрукти та ягоди, Горіхи, Олії та жири, Напої), so the database can be offered as **sets** (local-first design, 2.x).
 - `entries` — one per food in one state:
   - `id` — the permanent `B` ID (never changed or reused; a replaced entry stays as `status: "retired"` with `replacedBy`).
-  - `family` + `state` — what the food is across states (`buckwheat`: `dry` and `boiled`); states: raw, dry, boiled, baked, fried, steamed, canned, dried, fermented, processed.
+  - `family` + `state` — what the food is across states (`buckwheat`: `dry` and `boiled`); states: raw, dry, boiled, baked, fried, steamed, canned, dried, fermented, processed, brewed (coffee).
   - `variant` (optional) — a type within the family **whose GI differs** (developer, 2026-10-05, from the rice review: one entry per type, e.g. family `rice`: long-grain white, basmati, parboiled, jasmine, round-grain, brown). When USDA has no entry for the type, its nutrients come from the closest one (medium reliability, reason stated) — the GI is still worth having.
   - `nameUk`, `nameEn` — proper names, stating what the values assume (fat %, cooked without salt…).
   - **`nutrients`** — values per 100 g (kcal, carbs, fibre, sugars, protein, fat, sodium), `unknown` for fields the source lacks (held as 0, excluded from totals), `source` (dataset + entry ID + the dataset's own description), `reliability`, `reason` (Ukrainian + English), `verified` date.
-  - **`gi`** — `status`: `measured` (a GI table value, with its source), `conventional` (no measurable GI — too little carbohydrate to test — a conventional value labelled «умовне» so the carbs still count in GL), or `unknown` (value null, GL not counted, «немає даних»); plus its own `reliability`, `reason`, `verified`.
+  - **`gi`** — `status`: `measured` (a GI table value, with its source), `conventional` (no measurable GI — too little carbohydrate to test — a conventional value labelled «умовне» so the carbs still count in GL), `notApplicable` (value null, «не застосовується», GL 0 — at most 1 g carbohydrate per 100 g: meat, fish, oils, butter; or, like black coffee, up to 2 g with no sugars at all, where USDA's carbohydrate "by difference" isn't sugar or starch), or `unknown` (value null, GL not counted, «немає даних»); plus its own `reliability`, `reason`, `verified`.
 
 **Verification is per part:** nutrients and GI each carry their own source, reliability and date; nothing is called "verified" as a whole, and an entry may be incomplete (GI unknown).
 
@@ -519,6 +519,23 @@ Deferred by the developer; the decisions are already made:
 - **Types** (rice, potato, banana…) are shown as a **flat list** with descriptive names in 1.8; grouping by family comes with the 1.9 search.
 
 **Steps:** (1) format + guard test ✅; (2) data — 69 built-in items grown to 96 entries through the review (rice, oats, potato, rye bread, banana, pear types; durum pasta; mashed potatoes; kefir 2.5%) ✅; (3) review page — the developer decided per entry with buttons that name the outcome; all 96 accepted on 2026-10-05 ✅; (4) app: read the file, ⓘ per value, «неперевірено» on the user's own items, offer to update saved copies of built-in items ✅ (2026-10-05; `data/builtInFoods.ts`, `lib/builtInStatus.ts`, `screens/VerifiedInfoDialog.tsx`, `screens/CopyUpdateOffer.tsx`; old built-ins frozen in `data/legacyBuiltIns.ts` for name matching and the update offer).
+
+## Search and GI suggestions (release 1.9, designed 2026-10-05)
+
+Only what works the same wherever her data lives — the database is bundled in the app; sets come with the local-first design (roadmap 2.x).
+
+**Matching** (`src/lib/foodSearch.ts`, pure, unit-tested) — one function behind every search: the Продукти/Страви lists, the add-product form, the meal picker and the dish composer.
+- Text is normalised (lower case, apostrophes and punctuation dropped, «ё»→«е»); words match by **word start** (a query word matches a name word that starts with it, or that it starts with, from 4 letters — so «гречки» finds «Гречка», «макаронні» finds «Макарони»).
+- **Everyday synonyms per food family** (`FAMILY_SYNONYMS`): e.g. спагетті / паста / вермішель → pasta; геркулес / вівсянка → oats; манка → semolina; перловка → pearl barley; пшонка → millet; мамалига / полента → corn grits; творог → cottage cheese. A synonym counts like a word of the name.
+- **Ranking:** all query words matched first, then more matched words, then a match at the name's start; database entries before her own items at equal score, types of one family kept together. Nothing is hidden: a word that matches nothing just ranks lower.
+
+**GI suggestions for her own items** (developer, 2026-10-05):
+- In the add-product and edit-product forms, while the GI field is empty — or holds a GI without a source — the form shows up to 3 closest database matches for the name: «У базі: Гречка (ядриця), суха — ГІ 50 (після варіння), середня надійність ⓘ» with a button per match **«Взяти ГІ 50 з бази»**. Only the GI is taken; her nutrients (e.g. from the pack) stay as they are. Matches whose GI is «не застосовується» or unknown aren't offered.
+- **Where her GI came from is stored:** a new Ingredients column **`GiFrom`** (readable name «ГІ з бази») holds the database ID; added silently by the sheet upgrade (additive). Typing a GI by hand, or clearing it, empties `GiFrom`.
+- **Display:** her product keeps «неперевірено» for its nutrients, and gets **ⓘ for the GI** («ГІ з бази: …» — the entry's GI part: value, reliability, reason, source, date). A dish made from it gets its GI from the ingredients as before (carb-weighted).
+- Not a medical claim: the suggestion is "the database's GI for a similar food", with its reliability and the database entry's own note (e.g. «після варіння» for dry products).
+
+**Deleting her products and dishes** (developer, 2026-10-05 — there was no way to delete at all): «Видалити продукт» / «Видалити страву» under the edit form of her saved items (built-in products can't be deleted; deleting her copy of one brings the database version back). The row is **removed** from the sheet (`deleteSheetRow`, a `deleteDimension` request) — the confirmation says the app can't bring it back, only Google Sheets' version history. Past meals keep their own values. **A product used in her dishes isn't deleted:** the app lists those dishes with a «Редагувати «…»» button each, which opens that dish's editor (`dishesUsingIngredient`; a recipe line pointing at a built-in ID doesn't count for her copy of it). Both questions — the confirmation and the used-in-dishes list — open as a **dialog**, not below the button: the button is at the end of a long form, so anything under it was off-screen on a phone (same lesson as hotfix 1.8.1).
 
 ## Daily records and the new Today (release 1.7, designed 2026-10-04)
 

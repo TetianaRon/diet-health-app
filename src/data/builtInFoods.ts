@@ -43,6 +43,7 @@ export function entryToIngredient(entry: VerifiedFoodEntry): Ingredient {
     glycemicFlag: "none",
     giVerified: false,
     unknownFields,
+    giFrom: "",
   };
 }
 

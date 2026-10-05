@@ -3,6 +3,7 @@ import {
   computeDishNutrition,
   computeDishUnknownFields,
   unknownGiCarbShare,
+  dishesUsingIngredient,
   dishContainsFlaggedIngredient,
   dishToRow,
   parseUnknownNutritionFields,
@@ -346,5 +347,19 @@ describe("computeDishUnknownFields", () => {
   it("makes GI unknown when an ingredient's carbs are unknown, since GI is carb-weighted", () => {
     const result = computeDishUnknownFields([{ nameUk: "A", grams: 100 }], lookup({ A: { ...known, unknownFields: ["carbsG"] } }));
     expect(result).toEqual(["carbsG", "gi"]);
+  });
+});
+
+describe("dishesUsingIngredient", () => {
+  const dish = (id: string, refs: { id?: string; nameUk: string }[]) =>
+    ({ id, ingredients: refs.map((r) => ({ ...r, grams: 100 })) }) as unknown as Parameters<typeof dishesUsingIngredient>[1][number];
+
+  it("finds dishes that use the product by ID, or by name for old lines without an ID", () => {
+    const dishes = [dish("D1", [{ id: "I3", nameUk: "Гречка" }]), dish("D2", [{ nameUk: "гречка " }]), dish("D3", [{ id: "I4", nameUk: "Рис" }])];
+    expect(dishesUsingIngredient({ id: "I3", nameUk: "Гречка" }, dishes).map((d) => d.id)).toEqual(["D1", "D2"]);
+  });
+
+  it("doesn't count a line that points at the built-in item her copy stands for", () => {
+    expect(dishesUsingIngredient({ id: "I3", nameUk: "Гречка суха" }, [dish("D1", [{ id: "B0001", nameUk: "Гречка суха" }])])).toEqual([]);
   });
 });

@@ -715,6 +715,19 @@ export async function getTabGrids(): Promise<Map<string, TabGrid>> {
   );
 }
 
+/**
+ * Removes one row (1-based sheet row number) from a tab — the row itself, not
+ * just its values, so the rows below move up. Final: only the spreadsheet's
+ * version history can bring it back (release 1.9, deleting items).
+ */
+export async function deleteSheetRow(tab: string, rowNumber: number): Promise<void> {
+  const grid = (await getTabGrids()).get(tab);
+  if (!grid) throw new Error(`Tab ${tab} not found`);
+  await structuralBatchUpdate([
+    { deleteDimension: { range: { sheetId: grid.sheetId, dimension: "ROWS", startIndex: rowNumber - 1, endIndex: rowNumber } } },
+  ]);
+}
+
 // --- Creating a brand-new spreadsheet from the app ---
 //
 // Lets someone start using this app without first building a spreadsheet by

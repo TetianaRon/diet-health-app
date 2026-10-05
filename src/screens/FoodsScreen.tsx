@@ -1,6 +1,12 @@
+import DeleteItem from "./DeleteItem";
+import { deleteIngredient } from "../lib/ingredients";
+import { deleteDish, dishesUsingIngredient } from "../lib/dishes";
+import GiSuggestions from "./GiSuggestions";
+import { verifiedEntry } from "../data/builtInFoods";
+import { searchFoods } from "../lib/foodSearch";
 import { formatDecimal } from "../lib/numberFormat";
 import VerifiedInfoDialog from "./VerifiedInfoDialog";
-import { builtInMatch } from "../lib/builtInStatus";
+import { builtInMatch, giSourceEntry } from "../lib/builtInStatus";
 import type { VerifiedFoodEntry } from "../data/verifiedFoods";
 import { useEffect, useState } from "react";
 import { uk } from "../i18n/uk";
@@ -110,13 +116,43 @@ function foodMetaText(
   return `${carbs}, ${gi}`;
 }
 
+/** The GI's database source to store: kept only while the GI still equals that entry's (1.9). */
+function giFromIfStill(giFrom: string, gi: number, unknownFields: NutritionKey[]): string {
+  const entry = giFrom ? verifiedEntry(giFrom) : null;
+  return entry && !unknownFields.includes("gi") && entry.gi.value === gi ? entry.id : "";
+}
+
 // ⓘ for a product whose values come unchanged from the verified database, «неперевірено» for everything else.
-function SourceBadge({ entry, name, onOpen }: { entry: VerifiedFoodEntry | null; name: string; onOpen: (entry: VerifiedFoodEntry) => void }) {
+// Her own item whose GI came from the database (1.9) keeps «неперевірено» for its nutrients and gets ⓘ for the GI.
+function SourceBadge({
+  entry,
+  giEntry = null,
+  name,
+  onOpen,
+}: {
+  entry: VerifiedFoodEntry | null;
+  giEntry?: VerifiedFoodEntry | null;
+  name: string;
+  onOpen: (entry: VerifiedFoodEntry, giOnly?: boolean) => void;
+}) {
   if (!entry) {
     return (
-      <span className="unverified-tag" title={uk.verified.unverifiedHint}>
-        {uk.verified.unverified}
-      </span>
+      <>
+        <span className="unverified-tag" title={uk.verified.unverifiedHint}>
+          {uk.verified.unverified}
+        </span>
+        {giEntry && (
+          <button
+            type="button"
+            className="info-button"
+            aria-label={uk.giSuggest.taken(giEntry.nameUk)}
+            title={uk.giSuggest.taken(giEntry.nameUk)}
+            onClick={() => onOpen(giEntry, true)}
+          >
+            ⓘ ГІ
+          </button>
+        )}
+      </>
     );
   }
   return (
@@ -170,6 +206,8 @@ function AddFoodForm({
   // "we researched it" isn't the same as "a person confirmed it against a
   // trusted source." See the giVerified comment on the Ingredient type.
   const [giVerified, setGiVerified] = useState(false);
+  // The database entry the GI was taken from (a picked database product or a GI suggestion), else "".
+  const [giFrom, setGiFrom] = useState("");
   const [lookupLoading, setLookupLoading] = useState(false);
   const [lookupAttempted, setLookupAttempted] = useState(false);
   const [candidates, setCandidates] = useState<NutritionEstimate[]>([]);
@@ -201,6 +239,7 @@ function AddFoodForm({
   ) => {
     setLookupAttempted(true);
     setGiVerified(false); // a new pick hasn't been confirmed, even if a previous one was
+    setGiFrom("");
     if (estimate) {
       const unknown = estimate.unknownFields ?? [];
       const show = (field: NumericField, value: number | null) =>
@@ -283,6 +322,9 @@ function AddFoodForm({
       },
       food.nameUk,
     );
+    // A database product (or her copy of one) brings its GI's source along.
+    const entry = builtInMatch(food);
+    setGiFrom(entry ? entry.id : giSourceEntry(food)?.id ?? "");
   };
 
   // Only searches once something's actually typed — showing the entire
@@ -295,7 +337,7 @@ function AddFoodForm({
   const suggestions =
     lookupAttempted || !search.trim()
       ? []
-      : availableFoods.filter((food) => food.nameUk.toLowerCase().includes(search.toLowerCase()));
+      : searchFoods(search, availableFoods, (food) => verifiedEntry(food.basedOn || food.id));
 
   const nameMatch = findNameMatch(saveNameUk, existingItems);
 
@@ -325,6 +367,7 @@ function AddFoodForm({
         giVerified: giVerified && !unknownFields.includes("gi"),
         unknownFields,
         ...parsed,
+        giFrom: giFromIfStill(giFrom, parsed.gi, unknownFields),
       });
       onSaved(saved);
     } catch (err) {
@@ -361,8 +404,8 @@ function AddFoodForm({
             {suggestions.map((food) => (
               <li key={food.id} className="food-list-item-with-action">
                 <span>
-                  <strong>{food.nameUk}</strong> <span className="food-name-en">({food.nameEn})</span> —{" "}
-                  {foodMetaText({ ...food, giVerified: true })}
+                  <strong>{food.nameUk}</strong> {food.nameEn && <span className="food-name-en">({food.nameEn})</span>} —{" "}
+                  {foodMetaText({ ...food, giVerified: true }, builtInMatch(food))}
                 </span>
                 <button type="button" onClick={() => handlePickSuggestion(food)}>
                   {uk.foods.form.pickButton}
@@ -391,12 +434,12 @@ function AddFoodForm({
                 <span>
                   {nameUk ? (
                     <>
-                      <strong>{nameUk}</strong> <span className="food-name-en">({candidate.nameEn})</span>
+                      <strong>{nameUk}</strong> {candidate.nameEn && <span className="food-name-en">({candidate.nameEn})</span>}
                     </>
                   ) : (
                     <strong>{candidate.nameEn}</strong>
                   )}{" "}
-                  — {candidate.carbsG} г вуглеводів
+                  — {formatDecimal(candidate.carbsG)} г вуглеводів
                   {candidate.gi !== null && `, ГІ ${candidate.gi} (${uk.health.gi[classifyGi(candidate.gi)]})`}
                 </span>
                 <button type="button" onClick={() => applyEstimate(candidate, nameUk ?? search)}>
@@ -411,7 +454,7 @@ function AddFoodForm({
           {candidates.slice(TRANSLATED_CANDIDATE_COUNT).map((candidate, i) => (
             <li key={`en-${i}`} className="food-list-item-with-action food-list-item-muted">
               <span>
-                {candidate.nameEn} — {candidate.carbsG} г вуглеводів
+                {candidate.nameEn} — {formatDecimal(candidate.carbsG)} г вуглеводів
                 {candidate.gi !== null && `, ГІ ${candidate.gi} (${uk.health.gi[classifyGi(candidate.gi)]})`}
               </span>
               <button type="button" onClick={() => applyEstimate(candidate, search)}>
@@ -462,10 +505,26 @@ function AddFoodForm({
             step="0.1"
             value={values[field]}
             placeholder={uk.foods.form.unknownPlaceholder}
-            onChange={(e) => setValues({ ...values, [field]: e.target.value })}
+            onChange={(e) => {
+              setValues({ ...values, [field]: e.target.value });
+              if (field === "gi") setGiFrom(""); // a GI typed by hand has no database source
+            }}
           />
+          {field === "gi" && (
+            <GiSuggestions
+              name={saveNameUk || search}
+              giValue={values.gi}
+              giFrom={giFrom}
+              onTake={(entry) => {
+                setValues({ ...values, gi: String(entry.gi.value) });
+                setGiFrom(entry.id);
+                setGiVerified(false);
+              }}
+            />
+          )}
         </label>
       ))}
+
 
       <label className="settings-checkbox">
         <input
@@ -510,8 +569,11 @@ function EditIngredientForm({
   const [nameEn, setNameEn] = useState(ingredient.nameEn);
   const [values, setValues] = useState<FormValues>(() => formValuesFromItem(ingredient));
   const [giVerified, setGiVerified] = useState(ingredient.giVerified);
+  const [giFrom, setGiFrom] = useState(ingredient.giFrom);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // A database product (or an unchanged copy) already has its GI's source — no suggestions there.
+  const isDatabaseValues = builtInMatch(ingredient) !== null;
 
   const nameMatch = findNameMatch(nameUk, existingItems, ingredient.id);
 
@@ -534,6 +596,7 @@ function EditIngredientForm({
         giVerified: giVerified && !unknownFields.includes("gi"),
         unknownFields,
         ...parsed,
+        giFrom: giFromIfStill(isDatabaseValues ? ingredient.basedOn || ingredient.id : giFrom, parsed.gi, unknownFields),
       };
       if (isBuiltInId(ingredient.id)) {
         // Editing a built-in item saves her own copy, which takes its place.
@@ -580,11 +643,27 @@ function EditIngredientForm({
             placeholder={uk.foods.form.unknownPlaceholder}
             onChange={(e) => {
               setValues({ ...values, [field]: e.target.value });
-              if (field === "gi") setGiVerified(false); // a changed GI invalidates any prior confirmation
+              if (field === "gi") {
+                setGiVerified(false); // a changed GI invalidates any prior confirmation
+                setGiFrom(""); // …and has no database source
+              }
             }}
           />
+          {field === "gi" && !isDatabaseValues && (
+            <GiSuggestions
+              name={nameUk}
+              giValue={values.gi}
+              giFrom={giFrom}
+              onTake={(entry) => {
+                setValues({ ...values, gi: String(entry.gi.value) });
+                setGiFrom(entry.id);
+                setGiVerified(false);
+              }}
+            />
+          )}
         </label>
       ))}
+
 
       <label className="settings-checkbox">
         <input
@@ -762,7 +841,7 @@ function ComposeDishForm({
         const suggestions =
           resolvedIngredient && row.nameUk.trim() === resolvedIngredient.nameUk
             ? []
-            : sortedIngredients.filter((i) => i.nameUk.toLowerCase().includes(row.nameUk.trim().toLowerCase()));
+            : searchFoods(row.nameUk, sortedIngredients, (i) => verifiedEntry(i.basedOn || i.id));
 
         return (
           <div key={index} className="compose-row">
@@ -787,7 +866,7 @@ function ComposeDishForm({
                         </span>
                       )}
                       <strong>{ingredient.nameUk}</strong>{" "}
-                      <span className="food-name-en">({ingredient.nameEn})</span>
+                      {ingredient.nameEn && <span className="food-name-en">({ingredient.nameEn})</span>}
                     </span>
                     <button type="button" onClick={() => updateRow(index, { id: ingredient.id, nameUk: ingredient.nameUk })}>
                       {uk.foods.form.pickButton}
@@ -885,7 +964,8 @@ export default function FoodsScreen() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingIngredient, setEditingIngredient] = useState<Ingredient | null>(null);
   const [editingDish, setEditingDish] = useState<Dish | null>(null);
-  const [infoEntry, setInfoEntry] = useState<VerifiedFoodEntry | null>(null);
+  const [infoEntry, setInfoEntry] = useState<{ entry: VerifiedFoodEntry; giOnly: boolean } | null>(null);
+  const openInfo = (entry: VerifiedFoodEntry, giOnly = false) => setInfoEntry({ entry, giOnly });
 
   useEffect(() => {
     // Also after a renewed sign-in (sessionExpired true -> false): reload,
@@ -1004,10 +1084,11 @@ export default function FoodsScreen() {
   const availableIngredients = mergeWithBuiltInFoods(ingredients ?? []);
   const availableDishes = dishes ?? [];
 
-  const filteredIngredients = sortFavoritesFirst(
-    availableIngredients.filter((i) => i.nameUk.toLowerCase().includes(search.toLowerCase())),
-  );
-  const filteredDishes = availableDishes.filter((d) => d.nameUk.toLowerCase().includes(search.toLowerCase()));
+  // Favourites first while browsing; best match first while searching (1.9, see foodSearch.ts).
+  const filteredIngredients = search.trim()
+    ? searchFoods(search, availableIngredients, (i) => verifiedEntry(i.basedOn || i.id))
+    : sortFavoritesFirst(availableIngredients);
+  const filteredDishes = searchFoods(search, availableDishes, () => null);
 
   // Live cross-reference for the derived "contains a flagged ingredient"
   // hint — see dishContainsFlaggedIngredient in lib/dishes.ts.
@@ -1088,6 +1169,24 @@ export default function FoodsScreen() {
           onCancel={() => setEditingIngredient(null)}
         />
       )}
+      {editingIngredient && !isBuiltInId(editingIngredient.id) && (
+        <DeleteItem
+          kind="ingredient"
+          name={editingIngredient.nameUk}
+          isCopy={editingIngredient.basedOn !== ""}
+          usedIn={dishesUsingIngredient(editingIngredient, availableDishes)}
+          onConfirm={async () => {
+            await deleteIngredient(editingIngredient.id);
+            setIngredients((prev) => (prev ?? []).filter((i) => i.id !== editingIngredient.id));
+            setEditingIngredient(null);
+          }}
+          onEditDish={(dish) => {
+            setEditingIngredient(null);
+            setSubTab("dishes");
+            setEditingDish(dish);
+          }}
+        />
+      )}
 
       {editingDish && (
         <ComposeDishForm
@@ -1099,6 +1198,17 @@ export default function FoodsScreen() {
             setEditingDish(null);
           }}
           onCancel={() => setEditingDish(null)}
+        />
+      )}
+      {editingDish && !isBuiltInId(editingDish.id) && (
+        <DeleteItem
+          kind="dish"
+          name={editingDish.nameUk}
+          onConfirm={async () => {
+            await deleteDish(editingDish.id);
+            setDishes((prev) => (prev ?? []).filter((d) => d.id !== editingDish.id));
+            setEditingDish(null);
+          }}
         />
       )}
 
@@ -1152,11 +1262,12 @@ export default function FoodsScreen() {
           <ul className="food-list">
             {filteredIngredients.map((ingredient) => {
               const entry = builtInMatch(ingredient);
+              const giEntry = entry ? null : giSourceEntry(ingredient);
               return (
               <li key={ingredient.id} className="food-list-item-with-action">
                 <span>
-                  <strong>{ingredient.nameUk}</strong> <span className="food-name-en">({ingredient.nameEn})</span> —{" "}
-                  {foodMetaText(ingredient, entry)} <SourceBadge entry={entry} name={ingredient.nameUk} onOpen={setInfoEntry} />
+                  <strong>{ingredient.nameUk}</strong> {ingredient.nameEn && <span className="food-name-en">({ingredient.nameEn})</span>} —{" "}
+                  {foodMetaText(ingredient, entry ?? giEntry)} <SourceBadge entry={entry} giEntry={giEntry} name={ingredient.nameUk} onOpen={openInfo} />
                 </span>
                 <div className="food-list-actions">
                   <button
@@ -1218,7 +1329,7 @@ export default function FoodsScreen() {
                 <li key={dish.id}>
                   <div className="food-list-item-with-action">
                     <span>
-                      <strong>{dish.nameUk}</strong> <span className="food-name-en">({dish.nameEn})</span> —{" "}
+                      <strong>{dish.nameUk}</strong> {dish.nameEn && <span className="food-name-en">({dish.nameEn})</span>} —{" "}
                       {foodMetaText(dish)} (на 100г)
                     </span>
                     <div className="food-list-actions">
@@ -1276,7 +1387,7 @@ export default function FoodsScreen() {
           </ul>
         </>
       )}
-      {infoEntry && <VerifiedInfoDialog entry={infoEntry} onClose={() => setInfoEntry(null)} />}
+      {infoEntry && <VerifiedInfoDialog entry={infoEntry.entry} giOnly={infoEntry.giOnly} onClose={() => setInfoEntry(null)} />}
     </section>
   );
 }

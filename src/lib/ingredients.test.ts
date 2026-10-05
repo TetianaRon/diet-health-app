@@ -42,6 +42,7 @@ describe("rowToIngredient", () => {
       glycemicFlag: "watch",
       giVerified: true,
       unknownFields: [],
+      giFrom: "",
     });
   });
 
@@ -91,6 +92,7 @@ describe("ingredientToRow", () => {
     glycemicFlag: "none",
     giVerified: false,
     unknownFields: [],
+    giFrom: "",
   };
 
   it("round-trips through rowToIngredient", () => {
@@ -144,6 +146,7 @@ describe("sortFavoritesFirst", () => {
     glycemicFlag: "none" as const,
     giVerified: false,
     unknownFields: [],
+    giFrom: "",
   };
 
   it("moves favorites to the front, preserving relative order within each group", () => {
@@ -195,6 +198,7 @@ describe("mergeWithBuiltInFoods", () => {
       glycemicFlag: "none",
       giVerified: false,
       unknownFields: [],
+      giFrom: "",
     };
 
     const merged = mergeWithBuiltInFoods([savedVersion]);
@@ -224,6 +228,7 @@ describe("mergeWithBuiltInFoods", () => {
       glycemicFlag: "none",
       giVerified: false,
       unknownFields: [],
+      giFrom: "",
     };
     const merged = mergeWithBuiltInFoods([custom]);
     expect(merged).toHaveLength(BUILT_IN_FOODS.length + 1);

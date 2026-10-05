@@ -1,3 +1,6 @@
+import { formatDecimal } from "../lib/numberFormat";
+import { verifiedEntry } from "../data/builtInFoods";
+import { searchFoods } from "../lib/foodSearch";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { App as CapacitorApp } from "@capacitor/app";
 import { uk } from "../i18n/uk";
@@ -128,7 +131,7 @@ function AddDishToMealForm({
 
   const matches =
     !selected || search !== selected.nameUk
-      ? foods.filter((f) => f.nameUk.toLowerCase().includes(search.toLowerCase()))
+      ? searchFoods(search, foods, (f) => verifiedEntry(f.id))
       : [];
 
   const handlePick = (food: PickableFood) => {
@@ -220,10 +223,10 @@ function AddDishToMealForm({
                         {GLYCEMIC_FLAG_SYMBOL[food.glycemicFlag]}{" "}
                       </span>
                     )}
-                    <strong>{food.nameUk}</strong> <span className="food-name-en">({food.nameEn})</span> —{" "}
+                    <strong>{food.nameUk}</strong> {food.nameEn && <span className="food-name-en">({food.nameEn})</span>} —{" "}
                     {food.unknownFields.includes("carbsG")
                       ? `вуглеводи ${uk.today.unknownValueLabel}`
-                      : `${food.per100g.carbsG} г вуглеводів/100г`}
+                      : `${formatDecimal(food.per100g.carbsG)} г вуглеводів/100г`}
                   </span>
                   <button type="button" onClick={() => handlePick(food)}>
                     {uk.foods.form.pickButton}

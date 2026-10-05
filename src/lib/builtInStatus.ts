@@ -114,3 +114,13 @@ export function dishCopyUpdates(
   }
   return updates;
 }
+
+/**
+ * The database entry her item's GI was taken from (a GI suggestion, 1.9), if
+ * the GI still equals that entry's — a GI she changed afterwards has no source.
+ */
+export function giSourceEntry(item: Ingredient, lookup: (id: string) => VerifiedFoodEntry | null = verifiedEntry): VerifiedFoodEntry | null {
+  if (!item.giFrom || item.unknownFields.includes("gi")) return null;
+  const entry = lookup(item.giFrom);
+  return entry && entry.gi.value !== null && entry.gi.value === item.gi ? entry : null;
+}

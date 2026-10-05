@@ -25,7 +25,8 @@ function SourceLine({ source }: { source: VerifiedFoodEntry["nutrients"]["source
   );
 }
 
-export default function VerifiedInfoDialog({ entry, onClose }: { entry: VerifiedFoodEntry; onClose: () => void }) {
+/** `giOnly`: her own product whose GI came from this entry — only the GI part applies to it. */
+export default function VerifiedInfoDialog({ entry, giOnly = false, onClose }: { entry: VerifiedFoodEntry; giOnly?: boolean; onClose: () => void }) {
   const n = entry.nutrients;
   const gi = entry.gi;
   const giText =
@@ -40,6 +41,7 @@ export default function VerifiedInfoDialog({ entry, onClose }: { entry: Verified
         <h2 id="verified-title">{entry.nameUk}</h2>
         <p className="food-form-hint">{t.title}</p>
 
+        {!giOnly && (
         <section>
           <h3>{t.nutrients}</h3>
           <p>
@@ -49,6 +51,7 @@ export default function VerifiedInfoDialog({ entry, onClose }: { entry: Verified
           <SourceLine source={n.source} />
           <p className="verified-date">{t.verifiedOn(dmy(n.verified))}</p>
         </section>
+        )}
 
         <section>
           <h3>{t.gi}</h3>

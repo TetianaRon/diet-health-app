@@ -7,7 +7,7 @@
 // Schema is deliberately kept consistent with Ingredient: NameUk/NameEn
 // first, Source/DateAdded last, same nutrient column names in between —
 // only IngredientsJson/YieldGrams are Dish-specific, inserted in the middle.
-import { batchUpdateRanges, readRange, writeRange } from "./sheets";
+import { batchUpdateRanges, deleteSheetRow, readRange, writeRange } from "./sheets";
 import { buildColumnIndex, buildRow, cell, columnLetter, parseTab, SCAN_LAST_COLUMN, type ColumnIndex, type ParsedTab } from "./sheetRow";
 import { toGlycemicFlag, type GlycemicFlag } from "./glycemicFlag";
 import { reserveItemId } from "./itemIdStore";
@@ -427,4 +427,21 @@ export async function updateDish(dish: Dish): Promise<void> {
   const { rowNumber, columnIndex } = await findDishRow(dish.id);
   const lastCol = columnLetter(Math.max(...columnIndex.values()));
   await batchUpdateRanges([{ range: `Dishes!A${rowNumber}:${lastCol}${rowNumber}`, values: [dishToRow(dish, columnIndex)] }]);
+}
+
+/** Removes her saved dish's row from the sheet (by ID). Past meals keep their own values. */
+export async function deleteDish(id: string): Promise<void> {
+  const { rowNumber } = await findDishRow(id);
+  await deleteSheetRow("Dishes", rowNumber);
+}
+
+/**
+ * Her dishes whose recipe uses this product — it can't be deleted while they
+ * do (they'd lose an ingredient). A recipe line pointing at a built-in ID
+ * doesn't count for her copy of it: after deleting the copy, that line uses
+ * the built-in product again.
+ */
+export function dishesUsingIngredient(ingredient: { id: string; nameUk: string }, dishes: readonly Dish[]): Dish[] {
+  const name = ingredient.nameUk.trim().toLowerCase();
+  return dishes.filter((dish) => dish.ingredients.some((ref) => (ref.id ? ref.id === ingredient.id : ref.nameUk.trim().toLowerCase() === name)));
 }
