@@ -13,7 +13,7 @@ The planner for Track My Meals / Трекер Харчування and the roncr
 ---
 
 ## Next session — start here (set 2026-10-04)
-1. **1.7 released** (2026-10-04). **1.7.1 released** (connecting a spreadsheet). **1.8 ready for release** (verified food database). Then 1.9 (sets, search, GI suggestions). Earlier plan for 1.8: — verified food database:** the format (`verified-foods.json`, categories for sets, verification per part of an entry), then re-check the 57 built-in foods and the 12 cooked dishes against USDA (entry numbers already found for 10 of the 12 dishes — see 1.7), with GI from the tables; developer reviews on a review page.
+1. **1.7 released** (2026-10-04). **1.7.1 released** (connecting a spreadsheet). **1.8 released** (verified food database, 2026-10-05). Next: 1.9 (sets, search, GI suggestions). Earlier plan for 1.8: — verified food database:** the format (`verified-foods.json`, categories for sets, verification per part of an entry), then re-check the 57 built-in foods and the 12 cooked dishes against USDA (entry numbers already found for 10 of the 12 dishes — see 1.7), with GI from the tables; developer reviews on a review page.
 2. Note from 1.6: the next Play update on the developer's phone is a chance to confirm the stale-screens fix (new version on first open).
 
 ## Current and upcoming releases
@@ -91,7 +91,7 @@ Simplify the spreadsheet part of Settings and detect the user's sheet. Design: s
 - **No more test-sheet fallback:** without a connected sheet the app says so and offers «Підключити таблицю».
 - Brings forward the detection part of 2.1; the Google Picker stays in 2.1.
 
-### 1.8 — Verified food database · 👀 ready for release (2026-10-05) — spec → "Verified food database"
+### 1.8 — Verified food database · ✅ released (2026-10-05, Play + web) — spec → "Verified food database"
 *Done:* 96 entries (69 built-in items + types, durum pasta, mashed potatoes, kefir 2.5%) reviewed and accepted in five rounds; the app reads the database (built-in cooked foods are products, no built-in dishes), ⓘ per product, «неперевірено» on her own/changed items, one-time update offer for unchanged saved copies (products and old dish copies), dish GI keeps counting with a small unknown-GI share (≤5% of carbs), USDA-search GI fill-in from the database. Details: build log 2026-10-04/05.
 - **Categories in the format** (developer, 2026-10-04): every entry belongs to a category (Крупи, Овочі, Молочні продукти…), so the database can be offered as **sets** (1.9). The file stays the single source for the app and the public pages.
 - **Format** (`src/data/verified-foods.json`, also the source of the public pages on roncreator.com later): per entry the permanent `B` ID, family + state (raw / boiled / baked / canned…), Ukrainian + English names, values per 100 g, **nutrient source** (dataset + entry ID + description + version), **GI with its own source** (table + entry), reliability (high / medium / low) + **reasoning in Ukrainian and English**, verified dates. An automatic test refuses any entry missing a source, reliability, reason or date.
