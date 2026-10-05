@@ -1,6 +1,6 @@
 # Diet Health App Improvement Plan
 **Created:** 2026-10-05
-**Status:** In progress — Phase 1 complete 2026-10-05
+**Status:** In progress — Phase 2 complete 2026-10-05
 **Session context:** After installing the claude-governance plugin, the developer asked for a full review of the project's workflow and documentation; this plan comes from a build-standards Improve-mode audit against the project and common standards.
 
 ---
@@ -102,7 +102,7 @@ This plan works no issues-log entries. The roadmap's open Intake items stay wher
 
 ⏸ HUMAN CHECKPOINT [Governance] — the developer reviews the moved scripts and the `.gitattributes` commit before Phase 2.
 
-### Phase 2 — `CLAUDE.md` rewrite and memory realignment 🔄 in progress
+### Phase 2 — `CLAUDE.md` rewrite and memory realignment ✅ complete 2026-10-05
 
 - **Rewrite `CLAUDE.md` with these sections:**
   - **Identity:** the developer's mom's health context, current facts only.
@@ -178,6 +178,9 @@ This plan works no issues-log entries. The roadmap's open Intake items stay wher
 | `docs/diet-health-app-improvement-plan.md` | ✅ Reviewed | This plan, approved 2026-10-05 |
 | `.gitattributes` | ✅ Applied | Phase 1 |
 | `tools/verified-db/` (8 scripts + `README.md`) | ✅ Applied | Phase 1; output byte-identical to the committed JSON |
+| `CLAUDE.md` (v2.0) | ✅ Applied | Phase 2 |
+| `docs/tasks/dha-task-interview.md` | ✅ Applied | Phase 2; adds one line: a follow-up interview starts from the open items |
+| Memory (`MEMORY.md` + 4 files) | ✅ Applied | Phase 2; 8 files deleted, 2 kept for Phase 3, 2 kept for good |
 
 ---
 
@@ -215,3 +218,7 @@ This plan works no issues-log entries. The roadmap's open Intake items stay wher
   - **Keep until Phase 3**, which gives them a task file: not-a-medical-app details, and user-data reconciliation.
   - **Keep:** the designer role and the domains/email setup (both cross-project).
 - **Phase 2 text approved** by the developer ("Approved, write it and update memory"): writing `CLAUDE.md` v2.0 and the interview task file, and applying the memory plan.
+- **Phase 2 done:**
+  - `CLAUDE.md` v2.0 written as approved, and `docs/tasks/dha-task-interview.md` created (Interview Mode as it was, plus one line: a follow-up interview starts from the open items).
+  - Memory: 8 files deleted; `MEMORY.md` now lists 4 (two marked to move to Phase 3 task files).
+  - The checkpoint passed with the text approval, so the phase is complete. Phase 3 is next.
