@@ -580,3 +580,75 @@ Today's Продукти screen with the tabs swapped: **dishes** first, **produ
 ### Tests
 On the developer's devices, the emulator and a Ukrainian-locale test sheet — never relying on mom's phone.
 
+
+## Local-first app (2.x, design draft 2026-10-05 — decisions pending)
+
+> **Status:** 📝 Draft for the developer's review. Items marked **[decide]** are open; the rest are proposals that follow from them. Roadmap → 2.x.
+
+### Goals
+1. **Instant and offline:** every screen reads from the device. No read-limit errors (429), and no waiting for Google.
+2. **Works without Google:** a fully local version (no sign-in), with a backup the user controls.
+3. **Sync across devices** through the user's own Google Sheet, which stays readable and editable as a spreadsheet.
+4. **Sets and a clean start:** the verified database is offered as sets, and everything a user adds becomes their own row.
+5. **Mom moves over without losing anything,** in small releases, each shippable on its own.
+
+### Today, for comparison
+Every screen reads its tabs from Sheets (Today and History read them in one `batchGet`, the others per tab). There's a read cache for offline display, but writes go straight to the sheet and fail offline. Row identity:
+- **IDs already:** Ingredients and Dishes (`I…`/`D…`, 1.6), Medications (`Id`).
+- **No row ID:** DailyLog rows (`MealId` groups a meal; there's no ID per row), BloodSugar, MedicationLog and Weight (one per date).
+
+### Architecture
+- **A local database on each device is the source of truth for the screens.** It has one table per sheet tab, with the same fields, plus three bookkeeping fields per record:
+  - `id`: permanent; new prefixes for records that lack one, e.g. `L…` log row, `S…` sugar, `T…` medicine taken, `W…` weight;
+  - `updatedAt`: an ISO timestamp from the device that made the change;
+  - `deleted`: a deletion marker.
+- **Storage [decide]:**
+  - **(A) IndexedDB, through the small Dexie library** — recommended. One code path for web and Android. In the Android app the data lives in the app's own storage and survives updates (only "Clear data" or uninstalling removes it). On the web the app asks the browser for persistent storage.
+  - **(B) Native SQLite on Android** (Capacitor plugin). Sturdier, but the web needs a second implementation.
+
+  The data is small either way (mom's sheet: about 3,000 rows a year).
+- **Screens only read and write the local database.** A sync module is the only code that talks to Sheets.
+
+### Sync with the Google Sheet
+- **When:**
+  - at app start;
+  - on returning to the app after more than 5 minutes;
+  - a few seconds after local changes (debounced);
+  - from a «Синхронізувати» button that shows the last sync time.
+- **Cost:** each sync is about 3 requests (one `batchGet` of all tabs; one `batchUpdate` for changed rows; appends for new rows), far under the limits.
+- **Sheet layout stays as it is:** row 1 keys, row 2 readable names. New columns `Id` (on tabs without one) and `UpdatedAt` are added by the silent upgrade.
+- **Merge, row by row, by `id`:**
+  - only on the device → push it;
+  - only in the sheet → pull it;
+  - in both → the newer `updatedAt` wins (last writer wins, per row).
+
+  This suits mostly-append data: meals, readings, weight. Settings merge per key.
+- **Edits made by hand in the sheet [decide]:**
+  - **(A) Supported** — recommended. The app remembers a fingerprint of each row as last synced. A row whose content changed in the sheet without a new `UpdatedAt` counts as an edit made at sync time. Rows typed in by hand without an `Id` get one.
+  - **(B) Not supported:** the sheet is the app's copy, and manual edits may be overwritten.
+- **Deletions [decide]:**
+  - **(A) The row is removed from the sheet, and its ID goes to a small «Видалені» tab** (id, tab, time) so other devices delete it too — recommended. The sheet stays clean to read.
+  - **(B) The row stays, with a «Видалено» mark.** Simpler, but deleted rows stay visible in the sheet.
+- **Clock differences between devices** only matter when the same row is edited on two devices between syncs. For a single person's data that's rare, so it's accepted.
+
+### Without Google (local-only)
+- First run offers «Почати без Google» or «Підключити Google Таблицю». A Google sheet can be connected later; the first sync then uploads everything.
+- **Backup [decide]:**
+  - **(A) An .xlsx file in the same layout as the sheet** — recommended. It's readable in any spreadsheet app, the same file can be restored, and it can be uploaded to Google later.
+  - **(B) A JSON file** (simpler, but not readable).
+
+  Saved from Settings («Зберегти копію даних») or restored («Відновити з файлу»). A reminder appears when the last backup is over 30 days old. Android's own backup of app data is checked during the build; if it covers the database, it's an extra layer of protection.
+- **The web version without Google** keeps data in that browser only. Saying so in the UI is enough.
+
+### Sets and the clean start
+- The verified database stays bundled in the app (works offline). Later, updates come from a static file on the roncreator site, the same file the public pages are built from.
+- **New data starts empty.** The app offers sets by category (Крупи, Овочі, Молочні…), and later from Продукти as well. Adding a set or a single item creates the user's own rows linked to the database (`BasedOn = B…`). The 1.8 update offer generalises to all such rows.
+- **Moving mom over:** built-in items she has used (in meals or recipes) become her rows automatically; everything else is offered as sets. Nothing she sees today disappears.
+
+### Releases (proposed order)
+1. **Local store + sync for reading.** Row IDs for every tab; screens read the device; sync pulls; writes still go to the sheet and to the device. This removes the 429s and makes reading offline.
+2. **Offline writes + full sync.** A change queue, `UpdatedAt`, deletions, merging and manual-edit detection.
+3. **Local-only mode + backup:** export, restore and the reminder.
+4. **Sets + clean start + moving mom over.** Then 2.0 (mom's data, verified) as sets plus her own rows.
+
+**Free/paid** is decided separately, before the public launch. Nothing above depends on it: sync, USDA search and label reading are separable features that can be switched on or off later.
