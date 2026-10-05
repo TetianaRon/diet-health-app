@@ -5,6 +5,7 @@
 //                                closing it = "later", it returns at the
 //                                next check (sign-in, sheet switch, app start)
 //   • silent sheet upgrade     → info: what changed + how to undo, closes itself
+//   • no spreadsheet connected → action: «Підключити» opens the connect window
 // Renders nothing itself.
 import { useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
@@ -15,7 +16,7 @@ import { summarizeIssues } from "./SheetHealthIssues";
 import { upgradeNoticeLines } from "./SheetUpgradeNotice";
 
 export default function AppNotifications() {
-  const { sessionExpired, signIn } = useAuth();
+  const { signedIn, sessionExpired, signIn } = useAuth();
   const { show, remove } = useNotifications();
   const health = useSheetHealth();
 
@@ -72,6 +73,20 @@ export default function AppNotifications() {
       onDismiss: dismissUpgradeSummary,
     });
   }, [upgradeSummary, dismissUpgradeSummary, show]);
+
+  const { hasSpreadsheet, openConnect } = health;
+  useEffect(() => {
+    if (!signedIn || hasSpreadsheet) {
+      remove("no-spreadsheet");
+      return;
+    }
+    show({
+      key: "no-spreadsheet",
+      kind: "action",
+      title: uk.connectSheet.noSpreadsheetNotice,
+      actions: [{ label: uk.connectSheet.connectButton, onClick: openConnect }],
+    });
+  }, [signedIn, hasSpreadsheet, openConnect, show, remove]);
 
   return null;
 }

@@ -9,6 +9,7 @@ import { NotificationsProvider } from "./context/NotificationsContext";
 import { AuthProvider } from "./context/AuthContext";
 import { SheetHealthProvider, useSheetHealth } from "./context/SheetHealthContext";
 import SheetHealthDialog from "./screens/SheetHealthDialog";
+import ConnectSheetDialog from "./screens/ConnectSheetDialog";
 import { initMealReminders } from "./lib/reminderScheduler";
 import TodayScreen from "./screens/TodayScreen";
 import FoodsScreen from "./screens/FoodsScreen";
@@ -99,6 +100,7 @@ export default function App() {
         </ScreensAfterRepair>
 
         <SheetHealthDialog onOpenSettings={() => setActiveTab("settings")} />
+        <ConnectSheetDialog />
         <Toaster />
 
         {!editorOpen && (
