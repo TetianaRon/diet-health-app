@@ -1,6 +1,6 @@
 # Diet Health App Improvement Plan
 **Created:** 2026-10-05
-**Status:** In progress — plan approved 2026-10-05
+**Status:** In progress — Phase 1 complete 2026-10-05
 **Session context:** After installing the claude-governance plugin, the developer asked for a full review of the project's workflow and documentation; this plan comes from a build-standards Improve-mode audit against the project and common standards.
 
 ---
@@ -86,7 +86,7 @@ This plan works no issues-log entries. The roadmap's open Intake items stay wher
 
 ## Improvement Roadmap
 
-### Phase 1 — Repo hygiene and a reproducible database 🔄 in progress (work done, waiting for review)
+### Phase 1 — Repo hygiene and a reproducible database ✅ complete 2026-10-05
 
 - Add `.gitattributes` with the standard minimum lines, plus `*.aab binary`, `*.apk binary`, `*.keystore binary` and `*.jks binary`. Then commit a `git add --renormalize .` on its own.
 - Move the verified-database builder into the repo, e.g. `tools/verified-db/`:
@@ -102,7 +102,7 @@ This plan works no issues-log entries. The roadmap's open Intake items stay wher
 
 ⏸ HUMAN CHECKPOINT [Governance] — the developer reviews the moved scripts and the `.gitattributes` commit before Phase 2.
 
-### Phase 2 — `CLAUDE.md` rewrite and memory realignment ⏳ pending
+### Phase 2 — `CLAUDE.md` rewrite and memory realignment 🔄 in progress
 
 - **Rewrite `CLAUDE.md` with these sections:**
   - **Identity:** the developer's mom's health context, current facts only.
@@ -175,8 +175,8 @@ This plan works no issues-log entries. The roadmap's open Intake items stay wher
 | File | Status | Notes |
 |---|---|---|
 | `docs/diet-health-app-improvement-plan.md` | ✅ Reviewed | This plan, approved 2026-10-05 |
-| `.gitattributes` | 🔄 Drafted | Phase 1 |
-| `tools/verified-db/` (8 scripts + `README.md`) | 🔄 Drafted | Phase 1; output byte-identical to the committed JSON |
+| `.gitattributes` | ✅ Applied | Phase 1 |
+| `tools/verified-db/` (8 scripts + `README.md`) | ✅ Applied | Phase 1; output byte-identical to the committed JSON |
 
 ---
 
@@ -206,3 +206,4 @@ This plan works no issues-log entries. The roadmap's open Intake items stay wher
   - The builder moved to `tools/verified-db/`: generated files go to `contributions/2026-10-verified-db/`, the GI sources stay in `contributions/references/`. `build_verified.py` rebuilt `verified-foods.json` byte-identical, `build_review.py` and `gi_find.py` ran, and a README documents the pipeline.
   - `screenshots/` gitignored; the unrelated pomodoro-guardian permissions removed from `.claude/settings.local.json` (local file, not in git).
   - **Leftover:** git still prints "CRLF will be replaced by LF" for files written on Windows. These are warnings only, and nothing goes into git with CRLF. They come from `core.autocrlf=true` in the machine's git config, which the developer may want to set to `input`; that's local configuration, outside this plan.
+- **Phase 1 approved** by the developer ("Approved, start Phase 2"). Phase 2 started: drafting the new `CLAUDE.md` for review before writing it.
