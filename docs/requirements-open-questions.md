@@ -1,6 +1,6 @@
 # Requirements — Open Questions
 
-All questions to clarify with mom before development begins. To be filled after the interview.
+Questions for mom and her answers. The interview ran on 2026-09-07; items still open are unticked below and listed under Open Questions. A follow-up interview starts from them (`tasks/dha-task-interview.md`).
 
 > **Status:** ✅ Interview completed 2026-09-07 — see Mom's Answers below. A few items still open (marked below and in Open Questions).
 

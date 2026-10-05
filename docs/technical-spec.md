@@ -430,12 +430,19 @@ Today screen shows: running totals vs. Settings targets (carbs, calories), time-
 
 ## UI/UX: screen structure, navigation
 
-4-tab shell, Ukrainian labels:
+Three tabs, Ukrainian labels (since 1.7, see "Daily records and the new Today"):
 
-- **Сьогодні** (Today) — daily log, quick-add meal, progress vs. targets
-- **Продукти** (Foods) — Ingredients + Dishes, search/add/edit
-- **Цукор** (Blood Sugar) — log + history
-- **Налаштування** (Settings) — targets, meal schedule, Google account
+- **Сьогодні** (Today): the day's meals, progress against targets, weight, blood sugar and medicine
+- **Історія** (History): past days, read-only
+- **Страви** (Dishes and Products): search, add, edit and delete
+- **Налаштування** (Settings) opens from the gear: targets, meal schedule, the connected spreadsheet, the Google account
+
+### UI conventions
+
+- **Questions and confirmations open as a dialog** (`.modal-backdrop` / `.modal`, `role="alertdialog"`), never inline below a button. A button at the end of a long form or in a pinned footer would leave an inline question off-screen on a phone.
+- **Buttons name their outcome** («Так, видалити «…»», «Продовжити редагування»); no bare "OK" or "Disagree".
+- **Numbers use a decimal comma:** every displayed number goes through `formatDecimal`, including inside `uk.ts` strings.
+- **Every UI string is in `src/i18n/uk.ts`.**
 
 ## Deployment and access
 
