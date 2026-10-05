@@ -574,6 +574,42 @@ export default function MealEditorScreen({
     });
   };
 
+  // The confirmations are a dialog over the screen (1.8.1): inline, they landed far from the pinned
+  // Cancel button and the top breadcrumb — off-screen, so tapping looked like it did nothing — and
+  // from the add/edit-dish steps they weren't rendered at all.
+  const confirmDialog =
+    confirming === "none" ? null : (
+      <div className="modal-backdrop">
+        <div className="modal" role="alertdialog" aria-modal="true" aria-labelledby="meal-confirm-text">
+          {confirming === "discard" ? (
+            <>
+              <p id="meal-confirm-text">{uk.today.mealEditor.discardConfirm}</p>
+              <div className="modal-actions">
+                <button type="button" className="button-danger" onClick={onCancel}>
+                  {uk.today.mealEditor.discardYes}
+                </button>
+                <button type="button" className="button-secondary" onClick={() => setConfirming("none")}>
+                  {uk.today.mealEditor.discardNo}
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <p id="meal-confirm-text">{uk.today.mealEditor.deleteMealConfirm}</p>
+              <div className="modal-actions">
+                <button type="button" className="button-danger" onClick={() => void handleDeleteMeal()} disabled={saving}>
+                  {uk.today.mealEditor.deleteMealYes}
+                </button>
+                <button type="button" className="button-secondary" onClick={() => setConfirming("none")} disabled={saving}>
+                  {uk.foods.cancelButton}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    );
+
   const editorTitle = original ? uk.today.mealEditor.editTitle : uk.today.mealEditor.newTitle;
   // Leaving the meal itself goes through requestCancel, so unsaved changes still get the discard confirmation.
   const rootCrumb = { label: uk.tabs.today, onClick: requestCancel };
@@ -594,6 +630,7 @@ export default function MealEditorScreen({
           }}
           onBack={() => setView({ kind: "meal" })}
         />
+        {confirmDialog}
       </section>
     );
   }
@@ -611,6 +648,7 @@ export default function MealEditorScreen({
           }}
           onBack={() => setView({ kind: "meal" })}
         />
+        {confirmDialog}
       </section>
     );
   }
@@ -763,34 +801,6 @@ export default function MealEditorScreen({
 
       {error && <p className="food-form-error">{error}</p>}
 
-      {confirming === "discard" && (
-        <div className="today-warning">
-          <p>{uk.today.mealEditor.discardConfirm}</p>
-          <div className="food-form-actions">
-            <button type="button" className="button-danger" onClick={onCancel}>
-              {uk.today.mealEditor.discardYes}
-            </button>
-            <button type="button" onClick={() => setConfirming("none")}>
-              {uk.today.mealEditor.discardNo}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {confirming === "deleteMeal" && (
-        <div className="today-warning">
-          <p>{uk.today.mealEditor.deleteMealConfirm}</p>
-          <div className="food-form-actions">
-            <button type="button" className="button-danger" onClick={() => void handleDeleteMeal()} disabled={saving}>
-              {uk.today.mealEditor.deleteMealYes}
-            </button>
-            <button type="button" onClick={() => setConfirming("none")} disabled={saving}>
-              {uk.foods.cancelButton}
-            </button>
-          </div>
-        </div>
-      )}
-
       {original && confirming !== "deleteMeal" && (
         <button
           type="button"
@@ -812,6 +822,7 @@ export default function MealEditorScreen({
           </button>
         </div>
       </div>
+      {confirmDialog}
     </section>
   );
 }
