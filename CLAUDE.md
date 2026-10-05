@@ -1,6 +1,6 @@
 # Track My Meals — Project Instructions
 
-**Version:** v2.0
+**Version:** v2.1
 
 ## Issues log
 
@@ -24,6 +24,10 @@ Track My Meals (Трекер харчування) is a Ukrainian-language meal 
 
 | Task | Read |
 |---|---|
+| Releasing a version or a hotfix | `docs/tasks/dha-task-release.md` |
+| Checking a change in the running app (web or Android) | `docs/tasks/dha-task-device-testing.md` |
+| Adding or changing verified food database entries | `docs/tasks/dha-task-verified-db-change.md` |
+| Importing a user's own food data | `docs/tasks/dha-task-user-data-import.md` |
 | Interviewing mom (trigger message `МАМА: ПОЧАТИ ОПИТУВАННЯ`) | `docs/tasks/dha-task-interview.md` |
 
 ## Skills

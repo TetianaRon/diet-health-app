@@ -1,6 +1,6 @@
 # Diet Health App Improvement Plan
 **Created:** 2026-10-05
-**Status:** In progress — Phase 2 complete 2026-10-05
+**Status:** In progress — Phase 3 complete 2026-10-05
 **Session context:** After installing the claude-governance plugin, the developer asked for a full review of the project's workflow and documentation; this plan comes from a build-standards Improve-mode audit against the project and common standards.
 
 ---
@@ -124,7 +124,7 @@ This plan works no issues-log entries. The roadmap's open Intake items stay wher
 
 ⏸ HUMAN CHECKPOINT [Governance] — the developer approves the new `CLAUDE.md` text and the memory changes before they're written.
 
-### Phase 3 — Task files for recurring workflows 🔄 in progress
+### Phase 3 — Task files for recurring workflows ✅ complete 2026-10-05
 
 - **`docs/tasks/dha-task-release.md`:**
   - release and hotfix branches;
@@ -154,7 +154,7 @@ This plan works no issues-log entries. The roadmap's open Intake items stay wher
 
 ⏸ HUMAN CHECKPOINT [Governance] — the developer reviews each task file. It's then tried for real on the next release.
 
-### Phase 4 — Docs cleanup ⏳ pending
+### Phase 4 — Docs cleanup 🔄 in progress
 
 - **README:** replace the Status section with 3–4 current lines and a link to the roadmap's "start here"; fix the docs list (add the roadmap and this plan; drop "interview mode" from the `CLAUDE.md` line).
 - **Roadmap:**
@@ -178,12 +178,12 @@ This plan works no issues-log entries. The roadmap's open Intake items stay wher
 | `docs/diet-health-app-improvement-plan.md` | ✅ Reviewed | This plan, approved 2026-10-05 |
 | `.gitattributes` | ✅ Applied | Phase 1 |
 | `tools/verified-db/` (8 scripts + `README.md`) | ✅ Applied | Phase 1; output byte-identical to the committed JSON |
-| `CLAUDE.md` (v2.0) | ✅ Applied | Phase 2 |
+| `CLAUDE.md` (v2.1) | ✅ Applied | Phase 2 (v2.0); Phase 3 added 4 routing rows (v2.1) |
 | `docs/tasks/dha-task-interview.md` | ✅ Applied | Phase 2; adds one line: a follow-up interview starts from the open items |
-| `docs/tasks/dha-task-release.md` | 🔄 Drafted | Phase 3 |
-| `docs/tasks/dha-task-device-testing.md` | 🔄 Drafted | Phase 3 |
-| `docs/tasks/dha-task-verified-db-change.md` | 🔄 Drafted | Phase 3; absorbs the not-a-medical-app memory |
-| `docs/tasks/dha-task-user-data-import.md` | 🔄 Drafted | Phase 3; absorbs the reconciliation memory |
+| `docs/tasks/dha-task-release.md` | ✅ Applied | Phase 3 |
+| `docs/tasks/dha-task-device-testing.md` | ✅ Applied | Phase 3 |
+| `docs/tasks/dha-task-verified-db-change.md` | ✅ Applied | Phase 3; absorbs the not-a-medical-app memory |
+| `docs/tasks/dha-task-user-data-import.md` | ✅ Applied | Phase 3; absorbs the reconciliation memory |
 | Memory (`MEMORY.md` + 4 files) | ✅ Applied | Phase 2; 8 files deleted, 2 kept for Phase 3, 2 kept for good |
 
 ---
@@ -229,3 +229,7 @@ This plan works no issues-log entries. The roadmap's open Intake items stay wher
 - **Phase 3 started** ("Yes, start Phase 3"): drafting the four task files; routing rows are added after review.
 - **Phase 3 drafts written** (not yet in the routing table): release, device testing, verified-db change, user-data import.
   - Found while drafting: the spec's sheet roles say structure changes go to the **dev** sheet, but this session's 1.9 checks used the test sheet, so the `GiFrom` column reached it before release. It's harmless (an additive column, and 1.9 has now shipped), but the device-testing task file states the rule.
+- **Phase 3 approved** ("Approved, add the routing and start Phase 4"):
+  - `CLAUDE.md` → v2.1, with 4 routing rows (a minor increment: routing rows were added, nothing restructured).
+  - Memory: `feedback_not_medical_app.md` and `feedback_user_data_reconciliation.md` deleted, now covered by the verified-db and import task files; `MEMORY.md` lists 2 person-level memories.
+  - Phase 4 started.
