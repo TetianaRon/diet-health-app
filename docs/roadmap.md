@@ -11,7 +11,7 @@ The workflow (intake → release branch → verify → release) and the standing
 ---
 
 ## Next session — start here (set 2026-10-05)
-1. **1.9 released** (2026-10-05: search, GI suggestions, deleting items, coffee). Mom's data import (2.0) waits for local-first (2.x) — decided 2026-10-05. Next candidates: the local-first design (2.x, design before building), 2.1 Google Picker, or Intake items (Android permission asks, reminder follow-ups, nutrition-label photo reader).
+1. **Local-first designed** (2026-10-05, spec → "Local-first app"). Next: step 0, the SQLite-in-the-browser proof (a spike on its own branch), then release 1 (local store + sync for reading). Mom's data import (2.0) comes after local-first.
 2. Chromium issue 569300356: reply sent 2026-10-05 (repro APK, videos; Chrome itself now affected too) — check for answers now and then.
 
 ## Current and upcoming releases
