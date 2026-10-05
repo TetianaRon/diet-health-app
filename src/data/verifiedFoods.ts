@@ -49,9 +49,11 @@ export interface NutrientsPart extends Provenance {
  * conventional — no measurable GI (too little carbohydrate to test); a
  *                conventional value, labelled «умовне», so its carbs still
  *                count in glycemic load (developer, 2026-10-04);
- * unknown      — no usable value; GL can't be counted («немає даних»).
+ * unknown      — no usable value; GL can't be counted («немає даних»);
+ * notApplicable — practically no carbohydrate (meat, fish, oils), so GI
+ *                isn't defined and GL counts as 0 («не застосовується»).
  */
-export type GiStatus = "measured" | "conventional" | "unknown";
+export type GiStatus = "measured" | "conventional" | "unknown" | "notApplicable";
 
 export interface GiPart extends Provenance {
   status: GiStatus;
@@ -181,10 +183,11 @@ export function validateVerifiedFoods(file: VerifiedFoodsFile, today: string): s
         checkSource(`${at} gi`, gi.source);
       } else if (gi.status === "conventional") {
         if (typeof gi.value !== "number" || gi.value < 1 || gi.value > 120) problems.push(`${at} gi: a conventional value must be a number from 1 to 120`);
-      } else if (gi.status === "unknown") {
-        if (gi.value !== null) problems.push(`${at} gi: an unknown GI must have value null`);
+      } else if (gi.status === "unknown" || gi.status === "notApplicable") {
+        if (gi.value !== null) problems.push(`${at} gi: an ${gi.status} GI must have value null`);
+        if (gi.status === "notApplicable" && n && n.per100g.carbsG > 1) problems.push(`${at} gi: notApplicable is only for foods with at most 1 g carbohydrate per 100 g`);
       } else {
-        problems.push(`${at} gi: status must be measured, conventional or unknown`);
+        problems.push(`${at} gi: status must be measured, conventional, unknown or notApplicable`);
       }
       checkProvenance(`${at} gi`, gi);
     }

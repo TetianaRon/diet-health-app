@@ -79,6 +79,9 @@ describe("validateVerifiedFoods", () => {
     expect(validateVerifiedFoods(withEntries({ ...e, gi: { ...e.gi, status: "unknown", value: 50, source: null } }), TODAY)).toEqual([
       "B0001 gi: an unknown GI must have value null",
     ]);
+    expect(validateVerifiedFoods(withEntries({ ...e, gi: { ...e.gi, status: "notApplicable", value: null, source: null } }), TODAY)).toEqual([
+      "B0001 gi: notApplicable is only for foods with at most 1 g carbohydrate per 100 g",
+    ]);
   });
 
   it("keeps unknown nutrient fields at 0 and refuses negative values", () => {
