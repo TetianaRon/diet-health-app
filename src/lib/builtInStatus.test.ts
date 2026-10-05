@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { builtInMatch, copyUpdates } from "./builtInStatus";
+import { builtInMatch, copyUpdates, dishCopyUpdates } from "./builtInStatus";
+import type { Dish } from "./dishes";
 import { BUILT_IN_FOODS, entryToIngredient, verifiedEntry } from "../data/builtInFoods";
 import { LEGACY_BUILT_INS } from "../data/legacyBuiltIns";
 import type { Ingredient } from "./ingredients";
@@ -58,5 +59,27 @@ describe("copyUpdates", () => {
   it("drops her GI confirmation when the GI changed", () => {
     const [update] = copyUpdates([{ ...oldCopy, giVerified: true }]);
     expect(update.updated.giVerified).toBe(oldBuckwheat.values.gi === buckwheat.gi);
+  });
+});
+
+describe("dishCopyUpdates", () => {
+  const oldDish = LEGACY_BUILT_INS.find((l) => l.id === "B0059")!; // «Рис білий варений», a built-in dish before 1.8
+  const copy: Dish = {
+    id: "D2", basedOn: "B0059", nameUk: oldDish.nameUk, nameEn: "white rice, cooked", ingredients: [{ id: "B0002", nameUk: "Рис білий сирий", grams: 100 }],
+    yieldGrams: 280, source: "starter", dateAdded: "2026-09-20", glycemicFlag: "none", giVerified: false, unknownFields: [], ...oldDish.values,
+  };
+
+  it("brings an unchanged old dish copy to the verified cooked product, as 100 g of it", () => {
+    const [update] = dishCopyUpdates([copy]);
+    const product = BUILT_IN_FOODS.find((f) => f.id === "B0059")!;
+    expect(update.updated.id).toBe("D2");
+    expect(update.updated.nameUk).toBe(product.nameUk);
+    expect(update.updated.gi).toBe(product.gi);
+    expect(update.updated.ingredients).toEqual([{ id: "B0059", nameUk: product.nameUk, grams: 100 }]);
+    expect(update.updated.yieldGrams).toBe(100);
+  });
+
+  it("leaves a dish copy she changed alone", () => {
+    expect(dishCopyUpdates([{ ...copy, carbsG: copy.carbsG + 2 }])).toEqual([]);
   });
 });

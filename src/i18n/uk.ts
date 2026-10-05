@@ -384,7 +384,7 @@ export const uk = {
       unresolvedIngredient: "Такого продукту немає в базі — спочатку додайте його на вкладці «Продукти».",
       // giVerifiedMarker: "" once she's checked "Я перевірив(ла)...", "≈" until then.
       preview: (carbsG: number, caloriesKcal: number, gi: number, giVerifiedMarker: string) =>
-        `На 100г готової страви: ${carbsG} г вуглеводів, ${caloriesKcal} ккал, ${giVerifiedMarker}ГІ ${gi}`,
+        `На 100 г готової страви: ${String(Math.round(carbsG * 10) / 10).replace(".", ",")} г вуглеводів, ${Math.round(caloriesKcal)} ккал, ${giVerifiedMarker}ГІ ${gi}`,
       saveButton: "Зберегти",
       validationError: "Заповніть назву страви, оберіть інгредієнти з бази з коректними грамами та вкажіть вагу готової страви.",
     },

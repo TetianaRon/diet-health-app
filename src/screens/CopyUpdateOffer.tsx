@@ -12,7 +12,8 @@ import { useSheetHealth } from "../context/SheetHealthContext";
 import { useNotifications } from "../context/NotificationsContext";
 import { getSpreadsheetId } from "../lib/sheets";
 import { listIngredients, updateIngredients } from "../lib/ingredients";
-import { copyUpdates, type CopyUpdate } from "../lib/builtInStatus";
+import { listDishes, updateDishes } from "../lib/dishes";
+import { copyUpdates, dishCopyUpdates, type CopyUpdate, type DishCopyUpdate } from "../lib/builtInStatus";
 import { formatDecimal } from "../lib/numberFormat";
 
 const t = uk.copyUpdate;
@@ -38,7 +39,7 @@ export default function CopyUpdateOffer() {
   const { signedIn, sessionExpired } = useAuth();
   const { hasSpreadsheet, reports, reloadScreens } = useSheetHealth();
   const { show, remove } = useNotifications();
-  const [updates, setUpdates] = useState<CopyUpdate[] | null>(null);
+  const [updates, setUpdates] = useState<(CopyUpdate | DishCopyUpdate)[] | null>(null);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,10 +50,10 @@ export default function CopyUpdateOffer() {
   useEffect(() => {
     if (!signedIn || sessionExpired || !sheetId || reports === null || reports.length > 0 || checkedSheet === sheetId) return;
     setCheckedSheet(sheetId);
-    listIngredients()
-      .then((rows) => {
+    Promise.all([listIngredients(), listDishes()])
+      .then(([ingredientRows, dishRows]) => {
         const kept = keptIds(sheetId);
-        setUpdates(copyUpdates(rows).filter((u) => !kept.has(u.copy.id)));
+        setUpdates([...copyUpdates(ingredientRows), ...dishCopyUpdates(dishRows)].filter((u) => !kept.has(u.copy.id)));
       })
       .catch(() => setUpdates(null)); // not worth an error of its own; it's checked again next time
   }, [signedIn, sessionExpired, sheetId, reports, checkedSheet]);
@@ -80,7 +81,9 @@ export default function CopyUpdateOffer() {
     setBusy(true);
     setError(null);
     try {
-      await updateIngredients(updates.map((u) => u.updated));
+      // Products and dishes live in different tabs: I… / D… IDs tell them apart.
+      await updateIngredients(updates.filter((u): u is CopyUpdate => !("ingredients" in u.updated)).map((u) => u.updated));
+      await updateDishes(updates.filter((u): u is DishCopyUpdate => "ingredients" in u.updated).map((u) => u.updated));
       setUpdates([]);
       close();
       show({ key: "copy-update-done", kind: "info", title: t.done });

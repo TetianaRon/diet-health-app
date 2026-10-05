@@ -408,6 +408,21 @@ export async function setDishGlycemicFlag(id: string, glycemicFlag: GlycemicFlag
  * flow's counterpart to addDish's always-append behavior. A rename is just
  * part of the same write: nothing refers to a dish by name any more (1.6).
  */
+/** Rewrites several saved dishes in one read and one write. */
+export async function updateDishes(dishes: readonly Dish[]): Promise<void> {
+  if (dishes.length === 0) return;
+  const { columnIndex, dataRows, firstDataRow } = await readDishesSheet();
+  const lastCol = columnLetter(Math.max(...columnIndex.values()));
+  await batchUpdateRanges(
+    dishes.map((dish) => {
+      const i = dataRows.findIndex((row) => String(cell(row, columnIndex, "Id") ?? "").trim() === dish.id);
+      if (i < 0) throw new Error(`Dish ${dish.id} not found in Dishes`);
+      const rowNumber = firstDataRow + i;
+      return { range: `Dishes!A${rowNumber}:${lastCol}${rowNumber}`, values: [dishToRow(dish, columnIndex)] };
+    }),
+  );
+}
+
 export async function updateDish(dish: Dish): Promise<void> {
   const { rowNumber, columnIndex } = await findDishRow(dish.id);
   const lastCol = columnLetter(Math.max(...columnIndex.values()));
