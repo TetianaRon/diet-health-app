@@ -47,6 +47,10 @@ export interface Ingredient {
   // built from it inherits it (see computeDishUnknownFields). Additive
   // UnknownFields column; a blank cell means nothing is unknown.
   unknownFields: NutritionKey[];
+  // The verified-database entry her GI was taken from (a GI suggestion,
+  // release 1.9), else "" — typing a GI by hand empties it. Lets her own
+  // item show ⓘ for its GI while its nutrients stay «неперевірено».
+  giFrom: string;
 }
 
 // Canonical column order — what a brand-new sheet gets initialized with (see
@@ -73,6 +77,7 @@ export const INGREDIENTS_HEADERS = [
   "UnknownFields",
   "Id",
   "BasedOn",
+  "GiFrom",
 ] as const;
 const DEFAULT_COLUMN_INDEX = buildColumnIndex(INGREDIENTS_HEADERS);
 
@@ -113,6 +118,7 @@ export function rowToIngredient(row: unknown[], columnIndex: ColumnIndex = DEFAU
     glycemicFlag: toGlycemicFlag(cell(row, columnIndex, "GlycemicFlag")),
     giVerified: toBoolean(cell(row, columnIndex, "GiVerified")),
     unknownFields: parseUnknownNutritionFields(cell(row, columnIndex, "UnknownFields")),
+    giFrom: String(cell(row, columnIndex, "GiFrom") ?? "").trim(),
   };
 }
 
@@ -138,6 +144,7 @@ export function ingredientToRow(ingredient: Ingredient, columnIndex: ColumnIndex
       UnknownFields: ingredient.unknownFields.join(","),
       Id: ingredient.id,
       BasedOn: ingredient.basedOn,
+      GiFrom: ingredient.giFrom,
     },
     columnIndex,
   );
@@ -175,7 +182,7 @@ export async function listIngredients(): Promise<Ingredient[]> {
 
 /** Appends a new ingredient with the next free `I…` ID and returns it as saved. */
 export async function addIngredient(
-  ingredient: Omit<Ingredient, "dateAdded" | "favorite" | "glycemicFlag" | "id" | "basedOn"> & { basedOn?: string },
+  ingredient: Omit<Ingredient, "dateAdded" | "favorite" | "glycemicFlag" | "id" | "basedOn" | "giFrom"> & { basedOn?: string; giFrom?: string },
   favorite = false,
   glycemicFlag: GlycemicFlag = "none",
 ): Promise<Ingredient> {
@@ -185,6 +192,7 @@ export async function addIngredient(
     ...ingredient,
     id,
     basedOn: ingredient.basedOn ?? "",
+    giFrom: ingredient.giFrom ?? "",
     dateAdded: new Date().toISOString().slice(0, 10),
     favorite,
     glycemicFlag,

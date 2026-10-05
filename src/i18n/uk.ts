@@ -265,6 +265,14 @@ export const uk = {
     disclaimer: "Довідкові значення з указаного джерела, не медична порада.",
     close: "Закрити",
   },
+  giSuggest: {
+    title: "ГІ з бази для схожого продукту:",
+    line: (name: string, gi: string, reliability: string) => `${name} — ГІ ${gi}, ${reliability}`,
+    take: (gi: number) => `Взяти ГІ ${gi} з бази`,
+    taken: (name: string) => `ГІ з бази: ${name}`,
+    hint: "Береться лише ГІ — поживні речовини залишаються вашими (наприклад, з упаковки).",
+    giFromDatabase: "з бази",
+  },
   copyUpdate: {
     notice: (n: number) => `Для ${n} ${n % 10 === 1 && n % 100 !== 11 ? "продукту" : "продуктів"} є уточнені значення`,
     review: "Переглянути",
@@ -557,6 +565,7 @@ export const uk = {
       MealId: "Ідентифікатор прийому їжі",
       Id: "Ідентифікатор",
       BasedOn: "Копія вбудованого",
+      GiFrom: "ГІ з бази",
       ItemId: "Ідентифікатор продукту/страви",
       Name: "Назва",
       Dose: "Доза",
