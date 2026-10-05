@@ -640,6 +640,66 @@ select {
   color: #ffffff;
 }
 
+/* Settings: the connected sheet's link with its copy button. */
+.connected-sheet {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.connected-sheet p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* The «Підключити таблицю» window. */
+.connect-sheet section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 0;
+  border-top: 1px solid #e2e6e2;
+}
+
+.connect-sheet h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.connect-sheet label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.connect-sheet-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.connect-sheet-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 0;
+}
+
+.connect-sheet-title {
+  overflow-wrap: anywhere;
+}
+
+.connect-sheet-actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 4px;
+}
+
+.connect-sheet-forget {
+  color: #6b6b6b;
+}
+
 /* Weight: neutral on purpose — no green/red judging up or down. */
 .weight-bar {
   display: flex;

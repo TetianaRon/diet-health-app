@@ -13,7 +13,7 @@ The planner for Track My Meals / Трекер Харчування and the roncr
 ---
 
 ## Next session — start here (set 2026-10-04)
-1. **1.7 released** (2026-10-04). Next: **1.8 — verified food database:** the format (`verified-foods.json`, categories for sets, verification per part of an entry), then re-check the 57 built-in foods and the 12 cooked dishes against USDA (entry numbers already found for 10 of the 12 dishes — see 1.7), with GI from the tables; developer reviews on a review page.
+1. **1.7 released** (2026-10-04). **1.7.1 in progress** (connecting a spreadsheet). Then **1.8 — verified food database:** the format (`verified-foods.json`, categories for sets, verification per part of an entry), then re-check the 57 built-in foods and the 12 cooked dishes against USDA (entry numbers already found for 10 of the 12 dishes — see 1.7), with GI from the tables; developer reviews on a review page.
 2. Note from 1.6: the next Play update on the developer's phone is a chance to confirm the stale-screens fix (new version on first open).
 
 ## Current and upcoming releases
@@ -84,6 +84,13 @@ Mom asked to log the medicine she takes alongside blood sugar, and her weight, a
 - **New tabs** `Medications`, `MedicationLog`, `Weight` — added silently (1.6 mechanism) with the one-time upgrade note.
 - Tests on the developer's devices / emulator / a Ukrainian-locale test sheet (not mom's phone).
 
+### 1.7.1 — Connecting a spreadsheet · 🔨 in progress (developer, 2026-10-04)
+Simplify the spreadsheet part of Settings and detect the user's sheet. Design: spec → "Connecting a spreadsheet (release 1.7.1)".
+- **Settings:** the connected sheet (link + copy-link icon) and «Підключити іншу таблицю»; with none, just «Підключити таблицю».
+- **The connect window:** sheets found in her Google Drive (made by the app) → create a new one → sheets connected before on this device (stored only on the device) → built-in sheets (mom's, test, dev) shown only to accounts that can open them → paste a link.
+- **No more test-sheet fallback:** without a connected sheet the app says so and offers «Підключити таблицю».
+- Brings forward the detection part of 2.1; the Google Picker stays in 2.1.
+
 ### 1.8 — Verified food database · 📝 planned (after 1.7)
 - **Categories in the format** (developer, 2026-10-04): every entry belongs to a category (Крупи, Овочі, Молочні продукти…), so the database can be offered as **sets** (1.9). The file stays the single source for the app and the public pages.
 - **Format** (`src/data/verified-foods.json`, also the source of the public pages on roncreator.com later): per entry the permanent `B` ID, family + state (raw / boiled / baked / canned…), Ukrainian + English names, values per 100 g, **nutrient source** (dataset + entry ID + description + version), **GI with its own source** (table + entry), reliability (high / medium / low) + **reasoning in Ukrainian and English**, verified dates. An automatic test refuses any entry missing a source, reliability, reason or date.
@@ -113,8 +120,8 @@ Spec rules: memory of the import decisions (2026-09-29) + the review page.
 - **Her own sheet:** branded packaging items (her values) and values we couldn't verify (kept as she has them, marked «неперевірено»); her dishes with the flag. **Not added:** items without a genuine match and the dropped ones (кукурудза варена, гірчиця американська, тунець, fructose sweets, calculation leftovers).
 - Import mechanism (how the rows get into her sheet) to be decided at the start of this release.
 
-### 2.1 — Sheet detection + Google Picker · 📝 planned
-Spec: "Planned: spreadsheet detection + Google Picker". Auto-detect the user's sheet, Picker for existing ones, remove the shared test-sheet fallback. Research first: Picker inside the Android WebView. Needs Google Cloud setup by the developer.
+### 2.1 — Google Picker · 📝 planned
+Spec: "Planned: spreadsheet detection + Google Picker". Detection and removing the test-sheet fallback moved to 1.7.1; left here: the Picker for sheets the app didn't create (replaces pasting a link), then dropping the `spreadsheets` scope. Research first: Picker inside the Android WebView. Needs Google Cloud setup by the developer.
 
 ### 2.2 — Food families in the dish composer · 📝 planned
 Spec: "Planned: food families with cooking states". Raw weight + state in the finished dish; carbs by mass balance, GI from the cooked state; published whole-dish GI shown only as a check. The data already exists from 1.8/2.0.
@@ -164,7 +171,7 @@ Prompted by the read-limit errors (429) in the 1.6 test. Not scheduled — needs
 - **Reminder missed if due during a phone restart** (2026-09-30, developer's Pixel, 1.5.1 debug build): a reminder due while the phone is off/booting is silently dropped. Cause: in `@capacitor/local-notifications` 8.3.1, `LocalNotificationRestoreReceiver` skips one-shots whose time has passed as "triggered" (`isTriggered()` = `at <= now`) before its own "show what was missed while off" branch, which is never reached for one-shots. A reminder due *after* the restart is restored fine (verified: exact `RTC_WAKEUP` alarm back after unlock, fired on time without opening the app). Fix idea: patch the plugin (patch-package) so a one-shot due after the last boot started (`currentTimeMillis − elapsedRealtime`) counts as missed and is shown 15 s after boot; report upstream.
 - **Reminder is easy to miss: quiet sound, no vibration** (2026-09-30): Android played the channel's default sound (`notification_alert` beep=1) at the phone's notification volume (3/7 on the Pixel), but the `meal-reminders` channel was created with vibration off. Fix idea: a new channel with vibration on (channel sound/vibration can't be changed after creation; users' manual channel tweaks would reset), maybe a more noticeable sound; check mom's notification volume at setup.
 
-- **«Підключити мамину таблицю» points to her old sheet** (2026-10-01): mom created a new sheet via the app; the button (`VITE_DEFAULT_SPREADSHEET_ID` / build-time ID) still opens the old one. Decide which sheet is hers going forward; ties into 2.0 (sheet detection + Picker), which removes these build-time IDs anyway.
+- ➡️ *Placed in 1.7.1 (the button is replaced by the connect window).* **«Підключити мамину таблицю» points to her old sheet** (2026-10-01): mom created a new sheet via the app; the button (`VITE_DEFAULT_SPREADSHEET_ID` / build-time ID) still opens the old one. Decide which sheet is hers going forward; ties into 2.0 (sheet detection + Picker), which removes these build-time IDs anyway.
 - **Test sheet in the Ukrainian locale** (2026-10-01, chore): the 1.5.3 bug only appeared in Ukrainian-locale sheets; keep a test sheet with that locale for every release check.
 
 - ✅ *Fixed in 1.5.4.* **Web: after the sign-in expires, the app just fails to reach the sheet** (2026-10-01, developer): a web page left open past the ~1-hour Google access token keeps acting signed in, but every sheet request fails, with no prompt to sign in again. Likely cause: on a 401 `authorizedFetch` tries `refreshAccessToken()`, which is a no-op on the web (no refresh token there by design), then throws a generic error while the UI still shows the user as signed in. Fix idea: on a web 401, first try a silent new token from Google Identity Services (no popup if the Google session is still active); if that fails, switch the app to signed-out and show «Увійти через Google» with a short note instead of failing quietly.

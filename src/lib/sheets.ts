@@ -1,6 +1,7 @@
 // Google Sheets client wrapper — the app's database and cross-device sync layer.
-// Needs VITE_GOOGLE_CLIENT_ID and VITE_SPREADSHEET_ID (see .env.example and
-// docs/technical-spec.md -> "Google Sheets API integration" for one-time setup).
+// Needs VITE_GOOGLE_CLIENT_ID (see .env.example and docs/technical-spec.md ->
+// "Google Sheets API integration" for one-time setup). Which spreadsheet is
+// used is chosen per device (see "Spreadsheet selection" below).
 //
 // Auth branches by platform:
 // - Web/PWA: Google Identity Services' token client (public SPA flow, no
@@ -17,6 +18,7 @@
 //   name + signing certificate instead, and — bonus — issues no client
 //   secret at all, so this path ends up fully secret-free too. See
 //   docs/technical-spec.md for the full story).
+import { knownSheetIds } from "./sheetConnections";
 import { Capacitor } from "@capacitor/core";
 import { App } from "@capacitor/app";
 import { Browser } from "@capacitor/browser";
@@ -376,15 +378,11 @@ export function isSignedIn(): boolean {
 
 // --- Spreadsheet selection ---
 //
-// VITE_SPREADSHEET_ID is a single value baked into the build at compile
-// time — fine while this app had exactly one user, but every install (this
-// developer's phone, mom's phone, ...) shares one binary, so a build-time
-// value can only ever point everyone at the same spreadsheet. A per-device
-// override, entered once in Settings and kept in localStorage (persists
-// across app restarts, private to this device, no new dependency needed —
-// works the same in a browser tab and inside the Capacitor WebView), lets
-// each install point at its own spreadsheet while the env var remains a
-// reasonable default for local development.
+// Each device remembers its own connected spreadsheet (localStorage —
+// private to the device, works the same in a browser tab and inside the
+// Capacitor WebView). Since 1.7.1 there is no build-time fallback: a device
+// that never connected one has none («Підключити таблицю»), instead of
+// quietly landing in the testers' shared sheet.
 const SPREADSHEET_ID_STORAGE_KEY = "trackmymeals.spreadsheetId";
 
 /** Pulls the spreadsheet ID out of a pasted Google Sheets URL, or returns the input as-is if it's already a bare ID. */
@@ -394,42 +392,48 @@ export function parseSpreadsheetId(input: string): string {
   return match ? match[1] : trimmed;
 }
 
+/** The connected spreadsheet's ID, or "" when this device has none yet. */
 export function getSpreadsheetId(): string {
-  return localStorage.getItem(SPREADSHEET_ID_STORAGE_KEY) || import.meta.env.VITE_SPREADSHEET_ID;
+  try {
+    return localStorage.getItem(SPREADSHEET_ID_STORAGE_KEY) ?? "";
+  } catch {
+    return "";
+  }
 }
 
 export function setSpreadsheetId(urlOrId: string): void {
   localStorage.setItem(SPREADSHEET_ID_STORAGE_KEY, parseSpreadsheetId(urlOrId));
 }
 
-/** Mom's real sheet — the "connect Mom's sheet" button points here, if configured. */
-export function getMomSpreadsheetId(): string {
-  return import.meta.env.VITE_DEFAULT_SPREADSHEET_ID;
+/** Thrown by any sheet request while no spreadsheet is connected. The message is user-facing (Ukrainian). */
+export class NoSpreadsheetError extends Error {
+  constructor() {
+    super(uk.connectSheet.noSpreadsheetError);
+    this.name = "NoSpreadsheetError";
+  }
+}
+
+function requireSpreadsheetId(): string {
+  const id = getSpreadsheetId();
+  if (!id) throw new NoSpreadsheetError();
+  return id;
 }
 
 /**
- * The stable test sheet real testers connect to — same value
- * VITE_SPREADSHEET_ID already falls back to when no per-device override is
- * set (see getSpreadsheetId above), just exposed as an explicit one-tap
- * button too. Kept matching whatever the currently-released app build
- * expects — schema changes during active development target
- * getDevSpreadsheetId() below instead, never this one, so testers on the
- * released build are never affected by in-progress work.
+ * Spreadsheets built into the app (mom's, the testers' and the dev sheet,
+ * plus any in VITE_KNOWN_SPREADSHEET_IDS). The connect window lists only
+ * those the signed-in account can actually open (getSpreadsheetTitle) —
+ * so access decides who sees which, without any emails in the app. Rule:
+ * these sheets must be shared with specific people only, never "anyone
+ * with the link" — their IDs are in the public app code.
  */
-export function getTestSpreadsheetId(): string {
-  return import.meta.env.VITE_SPREADSHEET_ID;
-}
-
-/**
- * The spreadsheet actual schema/data changes get tried against during
- * active development — separate from getTestSpreadsheetId() specifically so
- * in-progress schema work never risks breaking what real testers are using
- * with the currently-released build (added 2026-09-11, after the
- * header-based reorder-resilience refactor made schema experiments on a
- * shared sheet feel materially riskier).
- */
-export function getDevSpreadsheetId(): string {
-  return import.meta.env.VITE_DEV_SPREADSHEET_ID;
+export function getKnownSpreadsheetIds(): string[] {
+  return knownSheetIds([
+    import.meta.env.VITE_DEFAULT_SPREADSHEET_ID,
+    import.meta.env.VITE_KNOWN_SPREADSHEET_IDS,
+    import.meta.env.VITE_SPREADSHEET_ID,
+    import.meta.env.VITE_DEV_SPREADSHEET_ID,
+  ]);
 }
 
 export function getSpreadsheetUrl(id: string): string {
@@ -536,7 +540,7 @@ export function wasLastReadFromCache(): boolean {
  */
 export async function readRanges(requests: { tab: string; range: string }[]): Promise<unknown[][][]> {
   if (requests.length === 0) return [];
-  const spreadsheetId = getSpreadsheetId();
+  const spreadsheetId = requireSpreadsheetId();
   const params = new URLSearchParams(READ_OPTIONS);
   for (const { tab, range } of requests) params.append("ranges", `${tab}!${range}`);
   try {
@@ -558,7 +562,7 @@ export async function readRanges(requests: { tab: string; range: string }[]): Pr
 
 /** Reads a range, e.g. readRange("Ingredients", "A1:L200"). Falls back to the last successful read for this exact tab/range if the network is unreachable — see the comment above. */
 export async function readRange(tab: string, range: string): Promise<unknown[][]> {
-  const spreadsheetId = getSpreadsheetId();
+  const spreadsheetId = requireSpreadsheetId();
   const key = readCacheKey(tab, range);
   try {
     const response = await authorizedFetch(`${spreadsheetId}/values/${tab}!${range}?${READ_OPTIONS}`);
@@ -599,7 +603,7 @@ export async function writeRange(tab: string, range: string, values: unknown[][]
   if (values.length === 0 || values.some(isBlankRow)) {
     throw new Error(`writeRange: refusing to append a blank row to ${tab}`);
   }
-  const spreadsheetId = getSpreadsheetId();
+  const spreadsheetId = requireSpreadsheetId();
   const response = await authorizedFetch(`${spreadsheetId}/values/${tab}!${range}:append?valueInputOption=USER_ENTERED`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -617,7 +621,7 @@ export async function writeRange(tab: string, range: string, values: unknown[][]
  * e.g. "Settings!B3".
  */
 export async function batchUpdateRanges(updates: { range: string; values: unknown[][] }[]): Promise<void> {
-  const spreadsheetId = getSpreadsheetId();
+  const spreadsheetId = requireSpreadsheetId();
   await authorizedFetch(`${spreadsheetId}/values:batchUpdate`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -639,7 +643,7 @@ export async function batchUpdateRanges(updates: { range: string; values: unknow
 
 /** Lists a spreadsheet's existing tab (sheet) titles. */
 export async function listSheetTitles(): Promise<string[]> {
-  const spreadsheetId = getSpreadsheetId();
+  const spreadsheetId = requireSpreadsheetId();
   const response = await authorizedFetch(`${spreadsheetId}?fields=sheets.properties.title`);
   const data = await response.json();
   const sheets = (data.sheets ?? []) as { properties: { title: string } }[];
@@ -648,10 +652,26 @@ export async function listSheetTitles(): Promise<string[]> {
 
 /** The connected spreadsheet's own display name (its title in Drive/Sheets) — lets Settings show something more recognizable than a bare ID. */
 export async function getSpreadsheetName(): Promise<string> {
-  const spreadsheetId = getSpreadsheetId();
+  const spreadsheetId = requireSpreadsheetId();
   const response = await authorizedFetch(`${spreadsheetId}?fields=properties.title`);
   const data = await response.json();
   return String(data.properties?.title ?? "");
+}
+
+/**
+ * A spreadsheet's title if the signed-in account can open it, else null
+ * (no access, deleted, not a spreadsheet) — the access check behind the
+ * connect window's built-in sheets. A lost sign-in still throws.
+ */
+export async function getSpreadsheetTitle(spreadsheetId: string): Promise<string | null> {
+  try {
+    const response = await authorizedFetch(`${encodeURIComponent(spreadsheetId)}?fields=properties.title`);
+    const data = await response.json();
+    return String(data.properties?.title ?? "");
+  } catch (err) {
+    if (err instanceof SessionExpiredError) throw err;
+    return null;
+  }
 }
 
 /**
@@ -671,7 +691,7 @@ export async function addSheetTabs(titles: string[]): Promise<void> {
  */
 export async function structuralBatchUpdate(requests: object[]): Promise<void> {
   if (requests.length === 0) return;
-  const spreadsheetId = getSpreadsheetId();
+  const spreadsheetId = requireSpreadsheetId();
   await authorizedFetch(`${spreadsheetId}:batchUpdate`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -686,7 +706,7 @@ export interface TabGrid {
 
 /** Each tab's numeric sheetId (what structural requests address a tab by) and current grid width, keyed by title. */
 export async function getTabGrids(): Promise<Map<string, TabGrid>> {
-  const spreadsheetId = getSpreadsheetId();
+  const spreadsheetId = requireSpreadsheetId();
   const response = await authorizedFetch(`${spreadsheetId}?fields=sheets.properties(sheetId,title,gridProperties.columnCount)`);
   const data = await response.json();
   const sheets = (data.sheets ?? []) as { properties: { sheetId: number; title: string; gridProperties?: { columnCount?: number } } }[];
@@ -741,6 +761,19 @@ async function findOrCreateAppFolder(): Promise<string> {
  * caller must still call initializeSpreadsheet() to give it this app's 5
  * tabs, same as connecting any other blank spreadsheet.
  */
+/**
+ * Spreadsheets this app can see in the user's Google Drive — with the
+ * drive.file scope that is exactly the ones it created (or was given), so
+ * no wider Drive access is needed. Most recently changed first.
+ */
+export async function listAppSpreadsheets(): Promise<{ id: string; title: string; modifiedTime: string }[]> {
+  const query = encodeURIComponent("mimeType='application/vnd.google-apps.spreadsheet' and trashed=false");
+  const response = await authorizedFetchUrl(`${DRIVE_API_BASE}?q=${query}&orderBy=modifiedTime%20desc&pageSize=20&fields=files(id,name,modifiedTime)`);
+  const data = await response.json();
+  const files = (data.files ?? []) as { id: string; name?: string; modifiedTime?: string }[];
+  return files.map((f) => ({ id: f.id, title: f.name ?? "", modifiedTime: f.modifiedTime ?? "" }));
+}
+
 export async function createSpreadsheetInAppFolder(name: string): Promise<string> {
   const folderId = await findOrCreateAppFolder();
   const response = await authorizedFetchUrl(DRIVE_API_BASE, {

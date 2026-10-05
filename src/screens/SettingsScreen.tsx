@@ -6,18 +6,9 @@ import { getSettings, updateSettings, type Settings, type TimeFormat } from "../
 import { TimeInput } from "./TimeInput";
 import { fullMealShareLeavesNoRoom, mealShares } from "../lib/mealRecommendation";
 import { setTimeFormat } from "../lib/dateFormat";
-import {
-  getSpreadsheetId,
-  setSpreadsheetId,
-  getMomSpreadsheetId,
-  getTestSpreadsheetId,
-  getDevSpreadsheetId,
-  getSpreadsheetUrl,
-  getSpreadsheetName,
-  createSpreadsheetInAppFolder,
-} from "../lib/sheets";
-import { initializeSpreadsheet } from "../lib/spreadsheetInit";
+import { getSpreadsheetId, getSpreadsheetUrl } from "../lib/sheets";
 import { useSheetHealth } from "../context/SheetHealthContext";
+import { useNotifications } from "../context/NotificationsContext";
 import { SheetHealthIssueList, summarizeIssues } from "./SheetHealthIssues";
 
 const NUMERIC_FIELDS = [
@@ -74,191 +65,85 @@ const FIELDS = [...NUMERIC_FIELDS, ...TIME_FIELDS, ...BOOLEAN_FIELDS] as const s
 // link are gone.
 const PRIVACY_POLICY_URL = "https://roncreator.com/track-my-meals/privacy";
 
-// Not gated behind sign-in — which spreadsheet this device talks to is a
-// local, per-device setting independent of the signed-in Google account
-// (unlike the numeric targets below, which live in that spreadsheet's
-// Settings tab and so need a real read/write round-trip). See the
-// "Spreadsheet selection" comment in src/lib/sheets.ts for why this exists:
-// VITE_SPREADSHEET_ID is one value baked into the build, so every install
-// shared it until this override existed.
+// Settings shows only which spreadsheet is connected (a link to open it, a
+// copy-link button) and one button to connect a different one — everything
+// else (found sheets, create new, recent, built-in, paste a link) lives in
+// the «Підключити таблицю» window (ConnectSheetDialog, release 1.7.1). The
+// connected sheet is a per-device choice, kept on the device.
+function CopyLinkButton({ url }: { url: string }) {
+  const { show } = useNotifications();
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(url);
+      show({ key: "link-copied", kind: "info", title: uk.settings.spreadsheet.linkCopied });
+    } catch {
+      show({ key: "link-copied", kind: "info", title: uk.settings.spreadsheet.linkCopyFailed });
+    }
+  };
+  return (
+    <button type="button" className="icon-button" aria-label={uk.settings.spreadsheet.copyLinkLabel} title={uk.settings.spreadsheet.copyLinkLabel} onClick={() => void copy()}>
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="9" y="9" width="11" height="11" rx="2" />
+        <path d="M5 15V6a2 2 0 0 1 2-2h9" />
+      </svg>
+    </button>
+  );
+}
 
 function SpreadsheetSection({ signedIn }: { signedIn: boolean }) {
-  const [value, setValue] = useState(() => getSpreadsheetId());
-  const [error, setError] = useState<string | null>(null);
-  const [savedMessage, setSavedMessage] = useState<string | null>(null);
   const health = useSheetHealth();
-  const [newName, setNewName] = useState<string>(uk.settings.spreadsheet.newNameDefault);
-  const [creatingNew, setCreatingNew] = useState(false);
-  // The connected spreadsheet's own title — shown as a hyperlink so it's
-  // unmistakable which real file is connected, not just a bare ID (a gap
-  // noticed when the create-new flow worked but gave no visible proof of
-  // which spreadsheet it actually connected). Loaded alongside the tab
-  // check, not separately, since both need the same signed-in API access.
-  const [spreadsheetName, setSpreadsheetName] = useState<string | null>(null);
-  const momSpreadsheetId = getMomSpreadsheetId();
-  const testSpreadsheetId = getTestSpreadsheetId();
-  const devSpreadsheetId = getDevSpreadsheetId();
-
-  // The structure check itself is app-wide (SheetHealthContext, which also
-  // runs it on sign-in); this re-runs it after switching spreadsheets and
-  // refreshes the connected sheet's name alongside.
-  const runTabCheck = async () => {
-    setSpreadsheetName(null);
-    const [name] = await Promise.all([getSpreadsheetName().catch(() => null), health.check()]);
-    setSpreadsheetName(name);
-  };
-
-  useEffect(() => {
-    if (signedIn) void getSpreadsheetName().then(setSpreadsheetName, () => setSpreadsheetName(null));
-  }, [signedIn]);
-
-  const handleRepair = async () => {
-    setSavedMessage(null);
-    await health.repair();
-  };
-
-  const handleCreateNew = async () => {
-    if (!newName.trim()) {
-      setError(uk.settings.spreadsheet.newNameValidationError);
-      setSavedMessage(null);
-      return;
-    }
-    setCreatingNew(true);
-    setError(null);
-    setSavedMessage(null);
-    try {
-      const id = await createSpreadsheetInAppFolder(newName.trim());
-      setSpreadsheetId(id);
-      setValue(getSpreadsheetId());
-      await initializeSpreadsheet();
-      await runTabCheck();
-      setSavedMessage(uk.settings.spreadsheet.createdNew);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setCreatingNew(false);
-    }
-  };
-
-  const handleSave = () => {
-    if (!value.trim()) {
-      setError(uk.settings.spreadsheet.validationError);
-      setSavedMessage(null);
-      return;
-    }
-    setSpreadsheetId(value);
-    setValue(getSpreadsheetId()); // reflects the parsed-out ID, not whatever was pasted
-    setError(null);
-    setSavedMessage(uk.settings.spreadsheet.saved);
-    if (signedIn) void runTabCheck();
-  };
-
-  const handleConnectMom = () => {
-    setSpreadsheetId(momSpreadsheetId);
-    setValue(getSpreadsheetId());
-    setError(null);
-    setSavedMessage(uk.settings.spreadsheet.connectMomSaved);
-    if (signedIn) void runTabCheck();
-  };
-
-  const handleConnectTest = () => {
-    setSpreadsheetId(testSpreadsheetId);
-    setValue(getSpreadsheetId());
-    setError(null);
-    setSavedMessage(uk.settings.spreadsheet.connectTestSaved);
-    if (signedIn) void runTabCheck();
-  };
-
-  const handleConnectDev = () => {
-    setSpreadsheetId(devSpreadsheetId);
-    setValue(getSpreadsheetId());
-    setError(null);
-    setSavedMessage(uk.settings.spreadsheet.connectDevSaved);
-    if (signedIn) void runTabCheck();
-  };
+  const { hasSpreadsheet, spreadsheetName, openConnect } = health;
+  const s = uk.settings.spreadsheet;
+  const url = hasSpreadsheet ? getSpreadsheetUrl(getSpreadsheetId()) : "";
 
   const { lines, anyIssues, anyFixable, anyUnfixable, makesBackups } = summarizeIssues(health.reports);
 
   return (
     <div className="settings-account">
-      <h2>{uk.settings.spreadsheet.title}</h2>
+      <h2>{s.title}</h2>
 
-      {signedIn ? (
-        <div className="settings-spreadsheet-create">
-          <h3>{uk.settings.spreadsheet.newSpreadsheetTitle}</h3>
-          <p>{uk.settings.spreadsheet.newSpreadsheetHint}</p>
-          <label>
-            {uk.settings.spreadsheet.newNameLabel}
-            <input value={newName} onChange={(e) => setNewName(e.target.value)} />
-          </label>
-          <button type="button" onClick={() => void handleCreateNew()} disabled={creatingNew}>
-            {creatingNew ? uk.settings.spreadsheet.creating : uk.settings.spreadsheet.createButton}
+      {!signedIn ? (
+        <p>{s.signInToConnectHint}</p>
+      ) : hasSpreadsheet ? (
+        <>
+          <div className="connected-sheet">
+            <p>
+              {s.connectedLabel}{" "}
+              <a href={url} target="_blank" rel="noopener noreferrer">
+                {spreadsheetName || s.openSheetLink}
+              </a>
+            </p>
+            <CopyLinkButton url={url} />
+          </div>
+          <button type="button" className="button-secondary" onClick={openConnect}>
+            {s.connectOtherButton}
           </button>
-        </div>
+        </>
       ) : (
-        <p>{uk.settings.spreadsheet.signInToCreateHint}</p>
+        <>
+          <p>{s.notConnected}</p>
+          <button type="button" onClick={openConnect}>
+            {uk.connectSheet.connectButton}
+          </button>
+        </>
       )}
 
-      <h3>{uk.settings.spreadsheet.existingSpreadsheetTitle}</h3>
-      {signedIn && spreadsheetName && (
-        <p>
-          {uk.settings.spreadsheet.connectedLabel}{" "}
-          <a href={getSpreadsheetUrl(getSpreadsheetId())} target="_blank" rel="noopener noreferrer">
-            {spreadsheetName}
-          </a>
-        </p>
-      )}
-      <p>{uk.settings.spreadsheet.hint}</p>
-      <label>
-        {uk.settings.spreadsheet.inputLabel}
-        <input
-          value={value}
-          placeholder={uk.settings.spreadsheet.placeholder}
-          onChange={(e) => {
-            setValue(e.target.value);
-            setSavedMessage(null);
-          }}
-        />
-      </label>
-      {error && <p className="food-form-error">{error}</p>}
-      {savedMessage && <p>{savedMessage}</p>}
-      <div className="settings-actions">
-        <button type="button" onClick={handleSave}>
-          {uk.settings.spreadsheet.saveButton}
-        </button>
-        {momSpreadsheetId && (
-          <button type="button" onClick={handleConnectMom}>
-            {uk.settings.spreadsheet.connectMomButton}
-          </button>
-        )}
-        {testSpreadsheetId && (
-          <button type="button" onClick={handleConnectTest}>
-            {uk.settings.spreadsheet.connectTestButton}
-          </button>
-        )}
-        {devSpreadsheetId && (
-          <button type="button" onClick={handleConnectDev}>
-            {uk.settings.spreadsheet.connectDevButton}
-          </button>
-        )}
-      </div>
-
-      {signedIn && health.checking && <p>{uk.settings.spreadsheet.checking}</p>}
+      {signedIn && hasSpreadsheet && health.checking && <p>{s.checking}</p>}
       {signedIn && health.checkError && <p className="food-form-error">{health.checkError}</p>}
       {signedIn && health.repairError && <p className="food-form-error">{uk.sheetStructure.dialogRepairFailed(health.repairError)}</p>}
 
-      {signedIn && health.reports && !anyIssues && <p>{uk.settings.spreadsheet.tabsOk}</p>}
+      {signedIn && health.reports && !anyIssues && <p>{s.tabsOk}</p>}
 
       {signedIn && anyIssues && (
         <div className="today-warning">
-          <p>{uk.settings.spreadsheet.problemsFound}</p>
+          <p>{s.problemsFound}</p>
           <SheetHealthIssueList lines={lines} />
-          {anyUnfixable && <p>{uk.settings.spreadsheet.unfixableNote}</p>}
+          {anyUnfixable && <p>{s.unfixableNote}</p>}
           {anyFixable && (
             <>
-              {makesBackups && <p>{uk.settings.spreadsheet.repairBackupNote}</p>}
-              <button type="button" onClick={() => void handleRepair()} disabled={health.repairing}>
-                {health.repairing ? uk.settings.spreadsheet.repairing : uk.settings.spreadsheet.repairButton}
+              {makesBackups && <p>{s.repairBackupNote}</p>}
+              <button type="button" onClick={() => void health.repair()} disabled={health.repairing}>
+                {health.repairing ? s.repairing : s.repairButton}
               </button>
             </>
           )}

@@ -454,7 +454,24 @@ Deferred by the developer; the decisions are already made:
 - **Spreadsheet readable-names row (row 2):** a new sheet gets names in the app's language at creation; existing sheets keep theirs.
 - **Implementation notes:** all UI text is in `src/i18n/uk.ts` (~500 lines, 16 importing files) → an `en.ts` with the same shape plus a small language module. Meal types are stored in the sheet as Ukrainian words (`MEAL_TYPES` in `dailyLog.ts`) — keep them as stored keys and map to English only for display. Built-in foods already carry `nameEn`. Dates use `uk-UA` in `src/lib/dateFormat.ts` → follow the app language. Names people type themselves are never translated.
 
+## Connecting a spreadsheet (release 1.7.1, designed 2026-10-04)
+
+**Settings** shows only the connected sheet — «Підключена таблиця: <its title>» as a link that opens it, a copy-link icon — and **«Підключити іншу таблицю»**. With nothing connected: «Таблицю ще не підключено» + **«Підключити таблицю»**. Signed out: a hint to sign in. The structure status/repair lines stay under it.
+
+**The «Підключити таблицю» window** (`ConnectSheetDialog`), top to bottom; a sheet appears once, in the first section it belongs to, and the connected one is left out (`connectOptions()` in `src/lib/sheetConnections.ts`, unit-tested):
+1. **Знайдено на вашому Google Диску** — spreadsheets the app can see with the `drive.file` scope, i.e. the ones it created (or was given), newest change first (`listAppSpreadsheets()`, Drive `files.list`). Looked up again each time the window opens. A sheet made by hand isn't found here — that's what the sections below are for.
+2. **Нова таблиця** — name + «Створити й підключити» (in the «Track My Meals» Drive folder, with all tabs). If setting up the new file fails, the device stays on its previous sheet.
+3. **Раніше підключені на цьому пристрої** — kept **only on the device** (`localStorage` `trackmymeals.recentSheets`, newest first, max 10), never on a server. Each with ✕ «прибрати зі списку» (the sheet itself isn't touched). Devices connected before 1.7.1 get their current sheet added on the first check.
+4. **Інші доступні вам таблиці** — the sheets built into the app (`VITE_DEFAULT_SPREADSHEET_ID` mom's, `VITE_SPREADSHEET_ID` testers', `VITE_DEV_SPREADSHEET_ID` dev, optional comma list `VITE_KNOWN_SPREADSHEET_IDS`). **Shown only if the signed-in account can open them** (`getSpreadsheetTitle()` tries to read each title; no access → hidden). So mom sees her sheet, the developer sees all, anyone else sees none — **access decides, no emails in the app** (developer's choice, 2026-10-04). **Rule:** these sheets must be shared with specific people, never "anyone with the link" — their IDs are in the public app code, so a link-shared one would be listed for any signed-in user.
+5. **За посиланням** — paste a link/ID; the app checks it can open it first («Не вдалося відкрити цю таблицю…» otherwise).
+
+**No build-time fallback any more:** a device that never connected a sheet has none (`getSpreadsheetId()` → ""), instead of landing in the testers' shared sheet. Sheet requests then fail with `NoSpreadsheetError` («Таблицю не підключено…»), the structure check is skipped, and an action notice «Таблицю ще не підключено…» offers **«Підключити таблицю»** (opens the window). Detection **proposes**, it never connects on its own (developer, 2026-10-04 — changes the 2026-09-29 "one found → connect automatically" idea below).
+
+**Connecting** (`connectSpreadsheet()` in `SheetHealthContext`): saves the ID on the device, puts it at the top of the recent list, runs the structure check / silent upgrade, and remounts the screens so they read the new sheet.
+
 ## Planned: spreadsheet detection + Google Picker (decided 2026-09-29, not built)
+
+*Update 2026-10-04:* detection, the recent list and removing the test-sheet fallback were built in **1.7.1** (section above). Still planned here: the Google Picker (replacing the paste-a-link fallback), the `appProperties` marker, and dropping the `spreadsheets` scope.
 
 **Problem:** the app asks for the broad `spreadsheets` scope (any sheet the user can open, by link/ID) plus `drive.file`. `spreadsheets` is a Google *sensitive* scope — a heavier review for a public launch. On a new browser/device the web version also falls back to the testers' shared sheet (`VITE_SPREADSHEET_ID`), so a new web user would start inside someone else's test sheet.
 

@@ -3,10 +3,13 @@
 // screen's read/write trips over a broken tab (sheetRow.ts's
 // onSheetStructureError) — so a broken sheet is flagged immediately, in a
 // dialog (SheetHealthDialog), instead of only on the Settings screen.
+// Also owns which spreadsheet is connected (release 1.7.1): whether there is
+// one, the «Підключити таблицю» window (ConnectSheetDialog) and switching.
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { useAuth } from "./AuthContext";
 import { checkAndUpgradeSpreadsheet, repairSpreadsheet, type UpgradeSummary } from "../lib/spreadsheetInit";
-import { getSpreadsheetName } from "../lib/sheets";
+import { getSpreadsheetId, getSpreadsheetName, setSpreadsheetId } from "../lib/sheets";
+import { addRecentSheet, loadRecentSheets, renameRecentSheet, saveRecentSheets, type SheetOption } from "../lib/sheetConnections";
 import { onSheetStructureError } from "../lib/sheetRow";
 import type { TabReport } from "../lib/sheetSchema";
 
@@ -37,6 +40,14 @@ interface SheetHealthContextValue {
   /** What the last silent upgrade changed (null when nothing did, or once dismissed). */
   upgradeSummary: UpgradeSummary | null;
   dismissUpgradeSummary: () => void;
+  /** This device has a connected spreadsheet (false until one is chosen — no build-time fallback since 1.7.1). */
+  hasSpreadsheet: boolean;
+  /** The «Підключити таблицю» window is open. */
+  connectOpen: boolean;
+  openConnect: () => void;
+  closeConnect: () => void;
+  /** Connects this device to a spreadsheet, remembers it on the device, checks it and reloads the screens. */
+  connectSpreadsheet: (sheet: SheetOption) => Promise<void>;
 }
 
 const SheetHealthContext = createContext<SheetHealthContextValue | null>(null);
@@ -58,6 +69,8 @@ export function SheetHealthProvider({ children }: { children: ReactNode }) {
   // the same broken tab at once, and a slow earlier check must not
   // overwrite a newer one (e.g. after switching spreadsheets).
   const latestCheck = useRef(0);
+  const [hasSpreadsheet, setHasSpreadsheet] = useState(() => getSpreadsheetId() !== "");
+  const [connectOpen, setConnectOpen] = useState(false);
 
   const check = useCallback(async () => {
     const id = ++latestCheck.current;
@@ -65,6 +78,13 @@ export function SheetHealthProvider({ children }: { children: ReactNode }) {
     setCheckError(null);
     setDismissed(false);
     setDetailsOpen(false);
+    if (!getSpreadsheetId()) {
+      // Nothing to check yet — AppNotifications offers «Підключити».
+      setReports(null);
+      setSpreadsheetName(null);
+      setChecking(false);
+      return;
+    }
     try {
       // Silent, lossless upgrades (new columns, item IDs…) are applied here;
       // only what's left needs the dialog. If anything was written, screens
@@ -73,6 +93,7 @@ export function SheetHealthProvider({ children }: { children: ReactNode }) {
       if (id === latestCheck.current) {
         setReports(result.reports);
         setSpreadsheetName(name);
+        rememberConnectedSheet(name);
         if (result.upgrade) {
           setUpgradeSummary(result.upgrade);
           setVersion((v) => v + 1);
@@ -128,6 +149,21 @@ export function SheetHealthProvider({ children }: { children: ReactNode }) {
     setRepairError(null);
   }, []);
   const dismissUpgradeSummary = useCallback(() => setUpgradeSummary(null), []);
+  const openConnect = useCallback(() => setConnectOpen(true), []);
+  const closeConnect = useCallback(() => setConnectOpen(false), []);
+
+  const connectSpreadsheet = useCallback(
+    async (sheet: SheetOption) => {
+      setSpreadsheetId(sheet.id);
+      saveRecentSheets(addRecentSheet(loadRecentSheets(), sheet));
+      setHasSpreadsheet(true);
+      setConnectOpen(false);
+      setUpgradeSummary(null);
+      await check();
+      setVersion((v) => v + 1); // screens remount and read the new sheet
+    },
+    [check],
+  );
 
   const needsAttention = signedIn && !dismissed && (repairError !== null || (reports !== null && reports.length > 0));
   const dialogOpen = needsAttention && detailsOpen;
@@ -150,11 +186,28 @@ export function SheetHealthProvider({ children }: { children: ReactNode }) {
         dismissDialog,
         upgradeSummary,
         dismissUpgradeSummary,
+        hasSpreadsheet,
+        connectOpen,
+        openConnect,
+        closeConnect,
+        connectSpreadsheet,
       }}
     >
       {children}
     </SheetHealthContext.Provider>
   );
+}
+
+/**
+ * Keeps the device's "connected before" list current: adds the connected
+ * sheet if it isn't there (devices connected before 1.7.1) and refreshes its
+ * title (it may have been renamed in Google Sheets).
+ */
+function rememberConnectedSheet(title: string | null) {
+  const id = getSpreadsheetId();
+  if (!id || title === null) return;
+  const list = loadRecentSheets();
+  saveRecentSheets(list.some((s) => s.id === id) ? renameRecentSheet(list, id, title) : addRecentSheet(list, { id, title }));
 }
 
 export function useSheetHealth(): SheetHealthContextValue {
