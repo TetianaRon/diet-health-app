@@ -1,3 +1,4 @@
+import { formatDecimal } from "../lib/numberFormat";
 import VerifiedInfoDialog from "./VerifiedInfoDialog";
 import { builtInMatch } from "../lib/builtInStatus";
 import type { VerifiedFoodEntry } from "../data/verifiedFoods";
@@ -93,8 +94,9 @@ function foodMetaText(
 ): string {
   const carbs = item.unknownFields.includes("carbsG")
     ? `вуглеводи ${uk.today.unknownValueLabel}`
-    : `${item.carbsG} г вуглеводів`;
-  // A database product says what kind of GI it has (since 1.8): «умовне» or «не застосовується».
+    : `${formatDecimal(Math.round(item.carbsG * 10) / 10)} г вуглеводів`;
+  // A database product says what kind of GI it has (since 1.8): «умовне» or «не застосовується»;
+  // its value has a cited source (ⓘ), so no «≈» — that mark stays for values entered without one.
   const gi =
     entry?.gi.status === "notApplicable"
       ? uk.verified.giNotApplicable
@@ -102,7 +104,7 @@ function foodMetaText(
         ? `ГІ ${uk.today.unknownValueLabel}`
         : entry?.gi.status === "conventional"
           ? `ГІ ${item.gi} (${uk.verified.giStatus.conventional})`
-          : `${item.giVerified ? "" : "≈"}ГІ ${item.gi} (${uk.health.gi[classifyGi(item.gi)]})`;
+          : `${item.giVerified || entry ? "" : "≈"}ГІ ${item.gi} (${uk.health.gi[classifyGi(item.gi)]})`;
   return `${carbs}, ${gi}`;
 }
 

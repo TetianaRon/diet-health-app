@@ -9,6 +9,9 @@ import type { VerifiedFoodEntry } from "../data/verifiedFoods";
 
 const t = uk.verified;
 
+/** "2026-10-04" → "04.10.2026" */
+const dmy = (iso: string) => iso.split("-").reverse().join(".");
+
 function SourceLine({ source }: { source: VerifiedFoodEntry["nutrients"]["source"] | null }) {
   if (!source) return null;
   const dataset = VERIFIED_SOURCES[source.dataset];
@@ -39,7 +42,7 @@ export default function VerifiedInfoDialog({ entry, onClose }: { entry: Verified
           </p>
           <p>{n.reason.uk}</p>
           <SourceLine source={n.source} />
-          <p className="verified-date">{t.verifiedOn(n.verified)}</p>
+          <p className="verified-date">{t.verifiedOn(dmy(n.verified))}</p>
         </section>
 
         <section>
@@ -49,7 +52,7 @@ export default function VerifiedInfoDialog({ entry, onClose }: { entry: Verified
           </p>
           <p>{gi.reason.uk}</p>
           <SourceLine source={gi.source} />
-          <p className="verified-date">{t.verifiedOn(gi.verified)}</p>
+          <p className="verified-date">{t.verifiedOn(dmy(gi.verified))}</p>
         </section>
 
         <p className="food-form-hint">{t.disclaimer}</p>

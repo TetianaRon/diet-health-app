@@ -725,6 +725,21 @@ select {
   white-space: nowrap;
 }
 
+/* Inside a screen, ".screen p" (1.1rem + browser margins) would blow the dialog up. */
+.screen .verified-info p,
+.verified-info p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.screen .verified-info .verified-source,
+.screen .verified-info .verified-date,
+.verified-info .verified-source,
+.verified-info .verified-date {
+  font-size: 0.82rem;
+  color: #5d6a61;
+}
+
 .verified-info section {
   display: grid;
   gap: 4px;
