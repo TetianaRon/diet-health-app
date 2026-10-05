@@ -243,6 +243,7 @@
       "status": "active",
       "category": "grains",
       "family": "oats",
+      "variant": "rolled",
       "state": "dry",
       "nameUk": "Вівсяні пластівці (звичайні або швидкого приготування), сухі",
       "nameEn": "Oats, rolled, dry",
@@ -274,8 +275,8 @@
         "reliability": "high",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (8 записів, які підсумовує рядок таблиці «Porridge made from rolled oats, mean of eight foods»; середнє авторів — 58, діапазон 50–76). Каша з вівсяних пластівців на воді. Каша з різаного вівса (steel-cut) — 52, з пластівців миттєвого приготування — 82. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
-          "en": "Upper estimate: ¾ of the measurements are at or below this value (8 entries covered by the table's row 'Porridge made from rolled oats, mean of eight foods'; the authors' mean is 58, range 50–76). Rolled-oat porridge made with water. Steel-cut oat porridge is 52, instant oat porridge 82. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (8 записів, які підсумовує рядок таблиці «Porridge made from rolled oats, mean of eight foods»; середнє авторів — 58, діапазон 50–76). Каша з вівсяних пластівців на воді. Каша з різаного вівса (steel-cut) і з пластівців миттєвого приготування — окремі записи. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (8 entries covered by the table's row 'Porridge made from rolled oats, mean of eight foods'; the authors' mean is 58, range 50–76). Rolled-oat porridge made with water. Steel-cut and instant oat porridge have their own entries. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
         },
         "source": {
           "dataset": "gi-2021-st1",
@@ -525,6 +526,7 @@
       "status": "active",
       "category": "bread",
       "family": "rye-bread",
+      "variant": "rye-wheat",
       "state": "baked",
       "nameUk": "Хліб житньо-пшеничний",
       "nameEn": "Bread, rye (rye-wheat)",
@@ -552,17 +554,17 @@
       },
       "gi": {
         "status": "measured",
-        "value": 65,
+        "value": 78,
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (13 записів, які підсумовує рядок таблиці «Rye breads, mean of 13 foods»; середнє авторів — 60, діапазон 48–82). Різні житні хліби; цільнозерновий житній і пумперні́кель нижчі (41–58), житньо-пшеничні — близько 60.",
-          "en": "Upper estimate: ¾ of the measurements are at or below this value (13 entries covered by the table's row 'Rye breads, mean of 13 foods'; the authors' mean is 60, range 48–82). Various rye breads; wholegrain rye and pumpernickel are lower (41–58), rye-wheat breads about 60."
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (4 записи, Таблиця 1, метод ISO; діапазон 60–82, середнє 70). Житньо-пшеничний хліб (житнє борошно разом із пшеничним): 4 дослідження. Цільнозерновий житній хліб і пумпернікель — окремий запис, у них ГІ нижчий.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (4 entries, Table 1, ISO method; range 60–82, mean 70). Rye-wheat bread (rye flour together with wheat flour): 4 studies. Wholegrain rye bread and pumpernickel have their own entry, with lower GI."
         },
         "source": {
           "dataset": "gi-2021-st1",
-          "entryId": "summary row; #212–#224",
-          "description": "Rye breads, mean of 13 foods — GI 60 (summary row). Entries used: #212 76, #213 82, #214 51, #215 53, #216 49, #217 55, #218 62, #219 48, #220 67, #221 65, #222 61, #223 60, #224 55"
+          "entryId": "#212, #213, #218, #223",
+          "description": "#212 Bread, long rye (50% wholemeal wheat, 30% rye, 20% white wheat, yeast (13% net flour weight), 20 min rising time, 30 min proving time, 220°C baking temperature, 30 min bake time (New Zealand, 2010) — GI 76±15; #213 Bread, short rye (50% wholemeal wheat, 30% rye, 20% white wheat, yeast (1.3% net flour weight), no rising time, 30 min proving time, 220°C baking temperature, 30 min bake time (New Zealand, 2010) — GI 82±11; #218 Rye wheat sourdough bread (Paderborner, Lieken Urkorn, Dortmund, Germany) (Germany, 2014) — GI 62±4; #223 Rye, made with 30% wholemeal wheat, 20% kibbled rye, 30% wheat flour, and baker's yeast (New Zealand, 2010) — GI 60±3"
         }
       }
     },
@@ -617,6 +619,7 @@
       "status": "active",
       "category": "dairy",
       "family": "kefir",
+      "variant": "1%",
       "state": "fermented",
       "nameUk": "Кефір 1%",
       "nameEn": "Kefir, low-fat (1%), plain",
@@ -2217,8 +2220,8 @@
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (2 записи, Таблиця 1, метод ISO; діапазон 24–33, середнє 28). Те саме дослідження: недостигла груша 24, стигла 33.",
-          "en": "Upper estimate: ¾ of the measurements are at or below this value (2 entries, Table 1, ISO method; range 24–33, mean 28). The same study: under-ripe pear 24, ripe 33."
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (2 записи, Таблиця 1, метод ISO; діапазон 24–33, середнє 28). Для груші, стиглість якої невідома: те саме дослідження дає 24 для недостиглої і 33 для стиглої (окремі записи).",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (2 entries, Table 1, ISO method; range 24–33, mean 28). For a pear of unknown ripeness: the same study gives 24 under-ripe and 33 ripe (own entries)."
         },
         "source": {
           "dataset": "gi-2021-st1",
@@ -2263,8 +2266,8 @@
         "reliability": "high",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (4 записи, Таблиця 1, метод ISO; діапазон 47–57, середнє 52). Стиглість змінює ГІ: перестиглий банан — 57 (#1091), недостиглий нижчий.",
-          "en": "Upper estimate: ¾ of the measurements are at or below this value (4 entries, Table 1, ISO method; range 47–57, mean 52). Ripeness changes GI: overripe banana is 57 (#1091), under-ripe is lower."
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (4 записи, Таблиця 1, метод ISO; діапазон 47–57, середнє 52). Для банана, стиглість якого невідома. Якщо відома — оберіть запис «недостиглий», «стиглий» або «перестиглий».",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (4 entries, Table 1, ISO method; range 47–57, mean 52). For a banana of unknown ripeness. If it's known, pick the under-ripe, ripe or overripe entry."
         },
         "source": {
           "dataset": "gi-2021-st1",
@@ -2778,6 +2781,7 @@
       "status": "active",
       "category": "grains",
       "family": "oats",
+      "variant": "rolled",
       "state": "boiled",
       "nameUk": "Вівсяна каша з пластівців на воді, без солі",
       "nameEn": "Oatmeal, cooked with water, without salt",
@@ -2809,8 +2813,8 @@
         "reliability": "high",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (8 записів, які підсумовує рядок таблиці «Porridge made from rolled oats, mean of eight foods»; середнє авторів — 58, діапазон 50–76). Каша з вівсяних пластівців на воді. Каша з різаного вівса (steel-cut) — 52, з пластівців миттєвого приготування — 82.",
-          "en": "Upper estimate: ¾ of the measurements are at or below this value (8 entries covered by the table's row 'Porridge made from rolled oats, mean of eight foods'; the authors' mean is 58, range 50–76). Rolled-oat porridge made with water. Steel-cut oat porridge is 52, instant oat porridge 82."
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (8 записів, які підсумовує рядок таблиці «Porridge made from rolled oats, mean of eight foods»; середнє авторів — 58, діапазон 50–76). Каша з вівсяних пластівців на воді. Каша з різаного вівса (steel-cut) і з пластівців миттєвого приготування — окремі записи.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (8 entries covered by the table's row 'Porridge made from rolled oats, mean of eight foods'; the authors' mean is 58, range 50–76). Rolled-oat porridge made with water. Steel-cut and instant oat porridge have their own entries."
         },
         "source": {
           "dataset": "gi-2021-st1",
@@ -3940,6 +3944,523 @@
           "dataset": "gi-2021-st1",
           "entryId": "#1864, #1865",
           "description": "#1864 Potato, Folva, precooked, peeled, salted, vacuum packed and then boiled until soft to the center, drained and mashed (Superior Potet, Hoff SA, Gj±vik, Norway)  (Norway, 2019) — GI 81±4; #1865 Pontiac potato, peeled, cubed, boiled 15 min, mashed (Australia, 1998) — GI 91±9"
+        }
+      }
+    },
+    {
+      "id": "B0086",
+      "status": "active",
+      "category": "grains",
+      "family": "oats",
+      "variant": "steel-cut",
+      "state": "dry",
+      "nameUk": "Овес різаний (steel-cut), сухий",
+      "nameEn": "Oats, steel-cut, dry",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 379.0,
+          "carbsG": 67.7,
+          "fiberG": 10.1,
+          "sugarsG": 0.99,
+          "proteinG": 13.15,
+          "fatG": 6.52,
+          "sodiumMg": 6.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "173904",
+          "description": "Cereals, oats, regular and quick, not fortified, dry"
+        },
+        "reliability": "medium",
+        "reason": {
+          "uk": "Найближчий запис USDA — див. примітку. USDA не має окремого запису для різаного вівса; це те саме зерно, що й пластівці, тож поживні речовини — з запису для вівсяних пластівців.",
+          "en": "The closest USDA entry — see the note. USDA has no separate steel-cut oats entry; it's the same grain as rolled oats, so the nutrients come from the rolled-oats entry."
+        },
+        "verified": "2026-10-04"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 53,
+        "reliability": "high",
+        "verified": "2026-10-04",
+        "reason": {
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (5 записів, які підсумовує рядок таблиці «Porridge made from steel-cut oats, mean of five foods»; середнє авторів — 52, діапазон 48–57). Каша з різаного вівса (steel-cut), зварена на воді. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (5 entries covered by the table's row 'Porridge made from steel-cut oats, mean of five foods'; the authors' mean is 52, range 48–57). Steel-cut oat porridge cooked in water. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
+        },
+        "source": {
+          "dataset": "gi-2021-st1",
+          "entryId": "summary row; #438–#442",
+          "description": "Porridge made from steel-cut oats, mean of five foods — GI 52 (summary row). Entries used: #438 48, #439 51, #440 52, #441 53, #442 57"
+        }
+      }
+    },
+    {
+      "id": "B0087",
+      "status": "active",
+      "category": "grains",
+      "family": "oats",
+      "variant": "steel-cut",
+      "state": "boiled",
+      "nameUk": "Каша з різаного вівса на воді, без солі",
+      "nameEn": "Steel-cut oat porridge, cooked with water, without salt",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 71.0,
+          "carbsG": 12.0,
+          "fiberG": 1.7,
+          "sugarsG": 0.27,
+          "proteinG": 2.54,
+          "fatG": 1.52,
+          "sodiumMg": 4.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "173905",
+          "description": "Cereals, oats, regular and quick, unenriched, cooked with water (includes boiling and microwaving), without salt"
+        },
+        "reliability": "medium",
+        "reason": {
+          "uk": "Найближчий запис USDA — див. примітку. USDA не має окремого запису для різаного вівса; це те саме зерно, що й пластівці, тож поживні речовини — з запису для вівсяних пластівців.",
+          "en": "The closest USDA entry — see the note. USDA has no separate steel-cut oats entry; it's the same grain as rolled oats, so the nutrients come from the rolled-oats entry."
+        },
+        "verified": "2026-10-04"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 53,
+        "reliability": "high",
+        "verified": "2026-10-04",
+        "reason": {
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (5 записів, які підсумовує рядок таблиці «Porridge made from steel-cut oats, mean of five foods»; середнє авторів — 52, діапазон 48–57). Каша з різаного вівса (steel-cut), зварена на воді.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (5 entries covered by the table's row 'Porridge made from steel-cut oats, mean of five foods'; the authors' mean is 52, range 48–57). Steel-cut oat porridge cooked in water."
+        },
+        "source": {
+          "dataset": "gi-2021-st1",
+          "entryId": "summary row; #438–#442",
+          "description": "Porridge made from steel-cut oats, mean of five foods — GI 52 (summary row). Entries used: #438 48, #439 51, #440 52, #441 53, #442 57"
+        }
+      }
+    },
+    {
+      "id": "B0088",
+      "status": "active",
+      "category": "grains",
+      "family": "oats",
+      "variant": "instant",
+      "state": "dry",
+      "nameUk": "Вівсяні пластівці миттєвого приготування, сухі",
+      "nameEn": "Oats, instant, fortified, plain, dry",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 362.0,
+          "carbsG": 69.52,
+          "fiberG": 10.0,
+          "sugarsG": 1.5,
+          "proteinG": 11.92,
+          "fatG": 6.9,
+          "sodiumMg": 220.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "171661",
+          "description": "Cereals, oats, instant, fortified, plain, dry"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані. Запис USDA — збагачені пластівці миттєвого приготування без смакових добавок; збагачення додає мінерали й сіль (натрій).",
+          "en": "The USDA entry describes exactly this food in this state. The USDA entry is fortified plain instant oats; fortification adds minerals and some sodium."
+        },
+        "verified": "2026-10-04"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 84,
+        "reliability": "high",
+        "verified": "2026-10-04",
+        "reason": {
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (4 записи, які підсумовує рядок таблиці «Instant oat porridge, mean of four foods»; середнє авторів — 82, діапазон 76–87). Каша з вівсяних пластівців миттєвого приготування, на воді. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (4 entries covered by the table's row 'Instant oat porridge, mean of four foods'; the authors' mean is 82, range 76–87). Instant oat porridge made with water. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
+        },
+        "source": {
+          "dataset": "gi-2021-st1",
+          "entryId": "summary row; #426–#429",
+          "description": "Instant oat porridge, mean of four foods — GI 82 (summary row). Entries used: #426 76, #427 82, #428 83, #429 87"
+        }
+      }
+    },
+    {
+      "id": "B0089",
+      "status": "active",
+      "category": "grains",
+      "family": "oats",
+      "variant": "instant",
+      "state": "boiled",
+      "nameUk": "Вівсяна каша миттєвого приготування на воді",
+      "nameEn": "Oats, instant, fortified, plain, prepared with water",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 68.0,
+          "carbsG": 11.67,
+          "fiberG": 1.7,
+          "sugarsG": 0.46,
+          "proteinG": 2.37,
+          "fatG": 1.36,
+          "sodiumMg": 49.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "171662",
+          "description": "Cereals, oats, instant, fortified, plain, prepared with water (boiling water added or microwaved)"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані. Запис USDA — збагачені пластівці миттєвого приготування без смакових добавок; збагачення додає мінерали й сіль (натрій).",
+          "en": "The USDA entry describes exactly this food in this state. The USDA entry is fortified plain instant oats; fortification adds minerals and some sodium."
+        },
+        "verified": "2026-10-04"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 84,
+        "reliability": "high",
+        "verified": "2026-10-04",
+        "reason": {
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (4 записи, які підсумовує рядок таблиці «Instant oat porridge, mean of four foods»; середнє авторів — 82, діапазон 76–87). Каша з вівсяних пластівців миттєвого приготування, на воді.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (4 entries covered by the table's row 'Instant oat porridge, mean of four foods'; the authors' mean is 82, range 76–87). Instant oat porridge made with water."
+        },
+        "source": {
+          "dataset": "gi-2021-st1",
+          "entryId": "summary row; #426–#429",
+          "description": "Instant oat porridge, mean of four foods — GI 82 (summary row). Entries used: #426 76, #427 82, #428 83, #429 87"
+        }
+      }
+    },
+    {
+      "id": "B0090",
+      "status": "active",
+      "category": "bread",
+      "family": "rye-bread",
+      "variant": "wholegrain-rye",
+      "state": "baked",
+      "nameUk": "Хліб житній цільнозерновий (пумпернікель)",
+      "nameEn": "Bread, pumpernickel (wholegrain rye)",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 250.0,
+          "carbsG": 47.5,
+          "fiberG": 6.5,
+          "sugarsG": 0.53,
+          "proteinG": 8.7,
+          "fatG": 3.1,
+          "sodiumMg": 596.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "174918",
+          "description": "Bread, pumpernickel"
+        },
+        "reliability": "medium",
+        "reason": {
+          "uk": "Найближчий запис USDA — див. примітку. Запис USDA — хліб пумпернікель; рецепти цільнозернового житнього хліба різняться (частка житнього борошна, цілі зерна).",
+          "en": "The closest USDA entry — see the note. The USDA entry is pumpernickel bread; wholegrain rye recipes vary (share of rye flour, whole kernels)."
+        },
+        "verified": "2026-10-04"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 54,
+        "reliability": "medium",
+        "verified": "2026-10-04",
+        "reason": {
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (4 записи, Таблиця 1, метод ISO; діапазон 48–55, середнє 51). Хліб переважно з житнього борошна: пумпернікель, житній на заквасці, цільнозерновий житній із зернами.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (4 entries, Table 1, ISO method; range 48–55, mean 51). Bread made mostly from rye: pumpernickel, rye sourdough, wholegrain rye with kernels."
+        },
+        "source": {
+          "dataset": "gi-2021-st1",
+          "entryId": "#215, #216, #219, #224",
+          "description": "#215 Rye, Country Grain Organic (Country Life Bakery, Australia) Australia 2006- 2007 53±4 8 No — GI 53±4; #216 Pumpernickel Rye bread (Van der Meulen BV, Netherlands) (Netherlands, 2015) — GI 49±4; #219 Sourdough rye bread (Australia, 2004) — GI 48±5; #224 Wholemeal rye bread with intact grains and sunflower seeds (Kraftkerni, Lieken Urkorn, Dortmund, Germany) (Germany, 2014) — GI 55±4"
+        }
+      }
+    },
+    {
+      "id": "B0091",
+      "status": "active",
+      "category": "fruit",
+      "family": "banana",
+      "variant": "under-ripe",
+      "state": "raw",
+      "nameUk": "Банан недостиглий (жовтий із зеленими кінчиками)",
+      "nameEn": "Banana, slightly under-ripe",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 89.0,
+          "carbsG": 22.84,
+          "fiberG": 2.6,
+          "sugarsG": 12.23,
+          "proteinG": 1.09,
+          "fatG": 0.33,
+          "sodiumMg": 1.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "173944",
+          "description": "Bananas, raw"
+        },
+        "reliability": "medium",
+        "reason": {
+          "uk": "Найближчий запис USDA — див. примітку. Стиглість переводить крохмаль у цукри, а загальна кількість вуглеводів майже не змінюється, тож поживні речовини — ті самі (USDA, банан сирий).",
+          "en": "The closest USDA entry — see the note. Ripening turns starch into sugars while the total carbohydrate barely changes, so the nutrients are the same (USDA, raw banana)."
+        },
+        "verified": "2026-10-04"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 42,
+        "reliability": "low",
+        "verified": "2026-10-04",
+        "reason": {
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (2 записи, Таблиця 2, менш надійні методи; діапазон 41–42, середнє 42). Лише одне дослідження 1992 року у людей з діабетом 2 типу (Таблиця 2); у Таблиці 1 недостиглого десертного банана немає.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (2 entries, Table 2, less robust methods; range 41–42, mean 42). Only one 1992 study in people with type 2 diabetes (Table 2); Table 1 has no under-ripe dessert banana."
+        },
+        "source": {
+          "dataset": "gi-2021-st2",
+          "entryId": "#2906, #2907",
+          "description": "#2906 Banana, slightly under-ripe (yellow with green tips) (USA, 1992) — GI 41; #2907 Banana, slightly under-ripe (yellow with green sections) (USA, 1992) — GI 42"
+        }
+      }
+    },
+    {
+      "id": "B0092",
+      "status": "active",
+      "category": "fruit",
+      "family": "banana",
+      "variant": "ripe",
+      "state": "raw",
+      "nameUk": "Банан стиглий (повністю жовтий)",
+      "nameEn": "Banana, ripe",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 89.0,
+          "carbsG": 22.84,
+          "fiberG": 2.6,
+          "sugarsG": 12.23,
+          "proteinG": 1.09,
+          "fatG": 0.33,
+          "sodiumMg": 1.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "173944",
+          "description": "Bananas, raw"
+        },
+        "reliability": "medium",
+        "reason": {
+          "uk": "Найближчий запис USDA — див. примітку. Стиглість переводить крохмаль у цукри, а загальна кількість вуглеводів майже не змінюється, тож поживні речовини — ті самі (USDA, банан сирий).",
+          "en": "The closest USDA entry — see the note. Ripening turns starch into sugars while the total carbohydrate barely changes, so the nutrients are the same (USDA, raw banana)."
+        },
+        "verified": "2026-10-04"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 51,
+        "reliability": "high",
+        "verified": "2026-10-04",
+        "reason": {
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (3 записи, Таблиця 1, метод ISO; діапазон 47–53, середнє 50). Три узгоджені дослідження стиглого банана.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (3 entries, Table 1, ISO method; range 47–53, mean 50). Three consistent studies of ripe banana."
+        },
+        "source": {
+          "dataset": "gi-2021-st1",
+          "entryId": "#1088, #1089, #1090",
+          "description": "#1088 Banana, raw (Australia, 2008) — GI 47±5; #1089 Banana, lady finger (Moraitis, Australia) (Australia, 2014) — GI 49±5; #1090 Banana, lady finger (Moraitis, Australia) (Australia, 2014) — GI 53±4"
+        }
+      }
+    },
+    {
+      "id": "B0093",
+      "status": "active",
+      "category": "fruit",
+      "family": "banana",
+      "variant": "overripe",
+      "state": "raw",
+      "nameUk": "Банан перестиглий (з коричневими цятками)",
+      "nameEn": "Banana, overripe",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 89.0,
+          "carbsG": 22.84,
+          "fiberG": 2.6,
+          "sugarsG": 12.23,
+          "proteinG": 1.09,
+          "fatG": 0.33,
+          "sodiumMg": 1.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "173944",
+          "description": "Bananas, raw"
+        },
+        "reliability": "medium",
+        "reason": {
+          "uk": "Найближчий запис USDA — див. примітку. Стиглість переводить крохмаль у цукри, а загальна кількість вуглеводів майже не змінюється, тож поживні речовини — ті самі (USDA, банан сирий).",
+          "en": "The closest USDA entry — see the note. Ripening turns starch into sugars while the total carbohydrate barely changes, so the nutrients are the same (USDA, raw banana)."
+        },
+        "verified": "2026-10-04"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 57,
+        "reliability": "medium",
+        "verified": "2026-10-04",
+        "reason": {
+          "uk": "Значення запису (Таблиця 1, метод ISO). Одне дослідження перестиглого банана.",
+          "en": "The entry's value (Table 1, ISO method). A single study of overripe banana."
+        },
+        "source": {
+          "dataset": "gi-2021-st1",
+          "entryId": "#1091",
+          "description": "#1091 Banana, raw, overripe (Australia, 2008) — GI 57±8"
+        }
+      }
+    },
+    {
+      "id": "B0094",
+      "status": "active",
+      "category": "fruit",
+      "family": "pear",
+      "variant": "ripe",
+      "state": "raw",
+      "nameUk": "Груша стигла (м'яка)",
+      "nameEn": "Pear, ripe",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 57.0,
+          "carbsG": 15.23,
+          "fiberG": 3.1,
+          "sugarsG": 9.75,
+          "proteinG": 0.36,
+          "fatG": 0.14,
+          "sodiumMg": 1.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "169118",
+          "description": "Pears, raw"
+        },
+        "reliability": "medium",
+        "reason": {
+          "uk": "Найближчий запис USDA — див. примітку. Поживні речовини — ті самі (USDA, груша сира); стиглість змінює ГІ, а не кількість вуглеводів.",
+          "en": "The closest USDA entry — see the note. The nutrients are the same (USDA, raw pear); ripeness changes the GI, not the amount of carbohydrate."
+        },
+        "verified": "2026-10-04"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 33,
+        "reliability": "medium",
+        "verified": "2026-10-04",
+        "reason": {
+          "uk": "Значення запису (Таблиця 1, метод ISO). Одне дослідження: груша Williams, стигла.",
+          "en": "The entry's value (Table 1, ISO method). A single study: Williams pear, ripe."
+        },
+        "source": {
+          "dataset": "gi-2021-st1",
+          "entryId": "#1161",
+          "description": "#1161 Pear, Williams, raw, ripe/soft (Australia, 2015) — GI 33±4"
+        }
+      }
+    },
+    {
+      "id": "B0095",
+      "status": "active",
+      "category": "fruit",
+      "family": "pear",
+      "variant": "under-ripe",
+      "state": "raw",
+      "nameUk": "Груша недостигла (тверда)",
+      "nameEn": "Pear, under-ripe",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 57.0,
+          "carbsG": 15.23,
+          "fiberG": 3.1,
+          "sugarsG": 9.75,
+          "proteinG": 0.36,
+          "fatG": 0.14,
+          "sodiumMg": 1.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "169118",
+          "description": "Pears, raw"
+        },
+        "reliability": "medium",
+        "reason": {
+          "uk": "Найближчий запис USDA — див. примітку. Поживні речовини — ті самі (USDA, груша сира); стиглість змінює ГІ, а не кількість вуглеводів.",
+          "en": "The closest USDA entry — see the note. The nutrients are the same (USDA, raw pear); ripeness changes the GI, not the amount of carbohydrate."
+        },
+        "verified": "2026-10-04"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 24,
+        "reliability": "medium",
+        "verified": "2026-10-04",
+        "reason": {
+          "uk": "Значення запису (Таблиця 1, метод ISO). Одне дослідження: груша Williams, недостигла.",
+          "en": "The entry's value (Table 1, ISO method). A single study: Williams pear, under-ripe."
+        },
+        "source": {
+          "dataset": "gi-2021-st1",
+          "entryId": "#1160",
+          "description": "#1160 Pear, Williams, raw, under ripe/crunchy (Australia, 2015) — GI 24±3"
+        }
+      }
+    },
+    {
+      "id": "B0096",
+      "status": "active",
+      "category": "dairy",
+      "family": "kefir",
+      "variant": "2.5%",
+      "state": "fermented",
+      "nameUk": "Кефір 2,5%",
+      "nameEn": "Kefir, 2.5% fat (calculated)",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 56.3,
+          "carbsG": 4.77,
+          "fiberG": 0.0,
+          "sugarsG": 4.61,
+          "proteinG": 3.79,
+          "fatG": 2.5,
+          "sodiumMg": 40.0
+        },
+        "source": {
+          "dataset": "calculation",
+          "entryId": "",
+          "description": "Kefir, lowfat, plain, LIFEWAY (USDA SR Legacy #170904, 1.02 g fat) with fat set to 2.5 g and 13.3 kcal added (9 kcal per g of fat); carbohydrate, protein and the rest unchanged."
+        },
+        "reliability": "low",
+        "reason": {
+          "uk": "Наближена відповідність — див. примітку. Розрахунок: у USDA є лише кефір 1%; жир замінено на 2,5 г і додано калорії цього жиру (9 ккал на 1 г), вуглеводи й білки ті самі.",
+          "en": "An approximate match — see the note. A calculation: USDA has only 1% kefir; fat set to 2.5 g and its calories added (9 kcal per g), carbohydrate and protein unchanged."
+        },
+        "verified": "2026-10-04"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 36,
+        "reliability": "low",
+        "verified": "2026-10-04",
+        "reason": {
+          "uk": "Значення запису (Таблиця 1, метод ISO). Виміряно лише для кефіру 1%; для молока таблиця дає 27 для зниженої жирності й 37 для незбираного, тож жир, можливо, трохи змінює ГІ.",
+          "en": "The entry's value (Table 1, ISO method). Measured only for 1% kefir; for milk the table gives 27 reduced-fat and 37 full-fat, so fat may change GI a little."
+        },
+        "source": {
+          "dataset": "gi-2021-st1",
+          "entryId": "#933",
+          "description": "#933 Kefir, low-fat, plain (Lifeway Foods, Chicago, USA) (USA, 2012) — GI 36±9"
         }
       }
     }
