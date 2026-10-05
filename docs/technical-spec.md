@@ -583,7 +583,7 @@ On the developer's devices, the emulator and a Ukrainian-locale test sheet — n
 
 ## Local-first app (2.x, designed 2026-10-05)
 
-> **Status:** 📝 Designed with the developer 2026-10-05; not built. Roadmap → 2.x. The first step is the SQLite-in-the-browser proof.
+> **Status:** 📝 Designed with the developer 2026-10-05; proof passed the same day; not built. Roadmap → 2.x.
 
 ### Goals
 1. **Instant and offline:** every screen reads from the device. No read-limit errors (429), and no waiting for Google.
@@ -606,7 +606,15 @@ Every screen reads its tabs from Sheets (Today and History read them in one `bat
   - native SQLite on Android (Capacitor SQLite plugin);
   - SQLite compiled to WebAssembly in the browser, persisted in the browser's private file storage (OPFS) or IndexedDB.
 
-  **A proof comes first:** a small spike showing the web build works reliably in the browsers users have (Chrome on Android and desktop, plus Edge and Firefox), with persistence across reloads, before anything else depends on it. If it fails, the fallback is IndexedDB behind the same modules.
+  **Proof passed (2026-10-05, branch `spike/sqlite-web`, not merged):** `@sqlite.org/sqlite-wasm` 3.53.4 in a dedicated worker, with the OPFS "SAH pool" storage, which needs **no COOP/COEP headers**, so Google sign-in popups keep working.
+  - **Tested:** Chrome and Edge on Windows, Firefox (the developer's check), Chrome on the Pixel 10, and **the app's own WebView** (a debug build).
+  - **Data survives:** reloads everywhere; on Android also a full app stop and an app update.
+  - **Timings on the Pixel:** opening 0.15–0.34 s, writing 3,000 rows in one transaction 0.13–0.4 s, a monthly report 3–22 ms.
+  - **The same WebAssembly build runs inside the Android app,** so there's one implementation everywhere and no native SQLite plugin.
+  - **Limits found:**
+    - only one tab can hold the database: a second tab needs a takeover notice («Застосунок відкрито в іншій вкладці» / «Відкрити тут»);
+    - browsers don't grant persistent storage unasked, which doesn't matter because the web copy is disposable;
+    - the database reserves about 6 MB.
 
   Screens never touch the database directly; they go through the per-tab modules, so the engine stays replaceable.
 - **Screens only read and write the local database.** A sync module is the only code that talks to Sheets.
@@ -645,7 +653,7 @@ Every screen reads its tabs from Sheets (Today and History read them in one `bat
 - **Moving mom over:** built-in items she has used (in meals or recipes) become her rows automatically; everything else is offered as sets. Nothing she sees today disappears.
 
 ### Releases (proposed order)
-0. **Proof: SQLite in the browser** (WebAssembly build, persistence across reloads, the target browsers). A spike on its own branch, not shipped.
+0. ✅ **Proof: SQLite in the browser and the app's WebView** (2026-10-05, see Storage).
 1. **Local store + sync for reading.** Row IDs for every tab; screens read the device; sync pulls; writes still go to the sheet and to the device. This removes the 429s and makes reading offline.
 2. **Offline writes + full sync.** A change queue, `UpdatedAt`, deletions, merging and manual-edit detection.
 3. **Android without Google + backup:** export, restore and the reminder. The web version stays sign-in only.
