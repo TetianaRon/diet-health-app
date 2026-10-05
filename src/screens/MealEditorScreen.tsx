@@ -1,3 +1,4 @@
+import { formatDecimal } from "../lib/numberFormat";
 import { verifiedEntry } from "../data/builtInFoods";
 import { searchFoods } from "../lib/foodSearch";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -225,7 +226,7 @@ function AddDishToMealForm({
                     <strong>{food.nameUk}</strong> {food.nameEn && <span className="food-name-en">({food.nameEn})</span>} —{" "}
                     {food.unknownFields.includes("carbsG")
                       ? `вуглеводи ${uk.today.unknownValueLabel}`
-                      : `${food.per100g.carbsG} г вуглеводів/100г`}
+                      : `${formatDecimal(food.per100g.carbsG)} г вуглеводів/100г`}
                   </span>
                   <button type="button" onClick={() => handlePick(food)}>
                     {uk.foods.form.pickButton}

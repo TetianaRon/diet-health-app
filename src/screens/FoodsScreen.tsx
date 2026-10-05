@@ -439,7 +439,7 @@ function AddFoodForm({
                   ) : (
                     <strong>{candidate.nameEn}</strong>
                   )}{" "}
-                  — {candidate.carbsG} г вуглеводів
+                  — {formatDecimal(candidate.carbsG)} г вуглеводів
                   {candidate.gi !== null && `, ГІ ${candidate.gi} (${uk.health.gi[classifyGi(candidate.gi)]})`}
                 </span>
                 <button type="button" onClick={() => applyEstimate(candidate, nameUk ?? search)}>
@@ -454,7 +454,7 @@ function AddFoodForm({
           {candidates.slice(TRANSLATED_CANDIDATE_COUNT).map((candidate, i) => (
             <li key={`en-${i}`} className="food-list-item-with-action food-list-item-muted">
               <span>
-                {candidate.nameEn} — {candidate.carbsG} г вуглеводів
+                {candidate.nameEn} — {formatDecimal(candidate.carbsG)} г вуглеводів
                 {candidate.gi !== null && `, ГІ ${candidate.gi} (${uk.health.gi[classifyGi(candidate.gi)]})`}
               </span>
               <button type="button" onClick={() => applyEstimate(candidate, search)}>
