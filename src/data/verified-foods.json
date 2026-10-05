@@ -177,17 +177,17 @@
       },
       "gi": {
         "status": "measured",
-        "value": 71,
+        "value": 62,
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Середнє 9 записів (Таблиця 1, метод ISO), діапазон 47–83. Цей запис — для білого довгозернистого рису, сорт якого невідомий: середнє багатьох різних сортів, тому діапазон широкий. Якщо сорт відомий, оберіть його запис (басмати, пропарений, жасмин, круглозерний). Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
-          "en": "Mean of 9 entries (Table 1, ISO method), range 47–83. This entry is for long-grain white rice of unknown type: an average of many different varieties, hence the wide range. If the type is known, pick its own entry (basmati, parboiled, jasmine, round-grain). Value for the cooked food; GL from the dry weight counts the same carbohydrate."
+          "uk": "Зведене значення таблиці: «Rice long grain, mean of six foods» (6). Середнє, яке наводять самі автори таблиці. Цей запис — для білого довгозернистого рису без назви сорту (не басмати, не жасмин, не пропарений). Якщо сорт відомий, оберіть його запис. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
+          "en": "The table's summary row: 'Rice long grain, mean of six foods' (6). The mean given by the table's authors themselves. This entry is for long-grain white rice without a named type (not basmati, jasmine or parboiled). If the type is known, pick its own entry. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
         },
         "source": {
           "dataset": "gi-2021-st1",
-          "entryId": "#629, #634, #651, #652, #654, #655, #656, #657, #658",
-          "description": "#629 Long grain, white (Uncle Ben's, Auckland, New Zealand) (New Zealand, 2000) — GI 56±7; #634 Long-grain rice (Indica-type long-grain rice, polished), cooked 15 min (UK, 2009) — GI 47±6; #651 White rice, NS (China, 2005) — GI 83±1; #652 White rice, fully polished, prepared from the Indian rice variety \"Bapatla\" (BPT-5204), pressure cooked for 18 min (India, 2017) — GI 80±7; #654 White rice, Ponni, cooked in rice cooker for 33 min (India, 2012) — GI 70±4; #655 White rice, Ponni, refined, harvested 2013, pressure-cooked for 30 min (India, 2013) — GI 81±7; #656 White rice, Ponni, refined, harvested 2014, pressure-cooked for 30 min (India, 2014) — GI 77±8; #657 White rice, Sona Masuri variety, cooked in rice cooker for 35 min (India, 2012) — GI 72±5; #658 White rice, Surti Kolam variety, cooked in rice cooker for 32 min (India, 2012) — GI 77±4"
+          "entryId": "summary row",
+          "description": "Rice long grain, mean of six foods — GI 62 (summary row of the table)"
         }
       }
     },
@@ -244,7 +244,7 @@
       "category": "grains",
       "family": "oats",
       "state": "dry",
-      "nameUk": "Вівсяні пластівці, сухі",
+      "nameUk": "Вівсяні пластівці (звичайні або швидкого приготування), сухі",
       "nameEn": "Oats, rolled, dry",
       "nutrients": {
         "per100g": {
@@ -271,16 +271,16 @@
       "gi": {
         "status": "measured",
         "value": 58,
-        "reliability": "medium",
+        "reliability": "high",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Середнє 5 записів (Таблиця 1, метод ISO), діапазон 50–76. Каша з вівсяних пластівців на воді; тонші пластівці дають вищий ГІ (запис #436 — 76). Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
-          "en": "Mean of 5 entries (Table 1, ISO method), range 50–76. Rolled-oat porridge made with water; thinner flakes give a higher GI (entry #436 — 76). Value for the cooked food; GL from the dry weight counts the same carbohydrate."
+          "uk": "Зведене значення таблиці: «Porridge made from rolled oats, mean of eight foods» (8). Середнє, яке наводять самі автори таблиці. Каша з вівсяних пластівців на воді. Каша з різаного вівса (steel-cut) — 52, з пластівців миттєвого приготування — 82. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
+          "en": "The table's summary row: 'Porridge made from rolled oats, mean of eight foods' (8). The mean given by the table's authors themselves. Rolled-oat porridge made with water. Steel-cut oat porridge is 52, instant oat porridge 82. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
         },
         "source": {
           "dataset": "gi-2021-st1",
-          "entryId": "#430, #431, #432, #433, #436",
-          "description": "#430 Porridge oats (Freedom Foods, Australia) (Australia, 2007) — GI 50±4; #431 Porridge oats, traditional (Lowan Whole Foods, Australia) (Australia, 2004) — GI 51±8; #432 Porridge oats (China, 2005) — GI 55±2; #433 Porridge, Traditional Rolled Oats (Woolworths Select brand, Australia) (Australia, 2008) — GI 57±4; #436 Oat porridge made from 0.5-0.6 mm thick rolled oat flakes, cooked for 10 min (Elovena, Raisio Group Ltd, Raisio, Finland) (Finland, 2005) — GI 76±7"
+          "entryId": "summary row",
+          "description": "Porridge made from rolled oats, mean of eight foods — GI 58 (summary row of the table)"
         }
       }
     },
@@ -369,8 +369,8 @@
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Середнє 6 записів (Таблиця 1, метод ISO), діапазон 22–58. Записи — різні сорти ячменю, від 22 до 58; середнє, бо сорт перлової крупи на упаковці не вказують. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
-          "en": "Mean of 6 entries (Table 1, ISO method), range 22–58. The entries are different barley cultivars, 22 to 58; the mean is used because packs don't state the cultivar. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
+          "uk": "Середнє 6 записів (Таблиця 1, метод ISO), діапазон 22–58. Записи — різні сорти ячменю (22–58). Українські упаковки вказують номер крупи (№1–5, розмір зерна), а не сорт ячменю, тому взято середнє для перлової крупи. Зведене значення таблиці «Barley, mean of 20 foods» — 30 — включає й цільнозерновий ячмінь. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
+          "en": "Mean of 6 entries (Table 1, ISO method), range 22–58. The entries are different barley cultivars (22–58). Ukrainian packs state the grade number (№1–5, grain size), not the barley cultivar, so the pearled-barley mean is used. The table's summary 'Barley, mean of 20 foods' — 30 — also includes whole-grain barley. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
         },
         "source": {
           "dataset": "gi-2021-st1",
@@ -480,8 +480,8 @@
       "category": "grains",
       "family": "pasta",
       "state": "dry",
-      "nameUk": "Макарони з твердої пшениці, сухі",
-      "nameEn": "Pasta, durum wheat, dry",
+      "nameUk": "Макарони пшеничні, сухі",
+      "nameEn": "Pasta, wheat, enriched, dry",
       "nutrients": {
         "per100g": {
           "caloriesKcal": 371.0,
@@ -497,26 +497,26 @@
           "entryId": "169736",
           "description": "Pasta, dry, enriched"
         },
-        "reliability": "high",
+        "reliability": "medium",
         "reason": {
-          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
-          "en": "The USDA entry describes exactly this food in this state."
+          "uk": "Найближчий запис USDA — див. примітку. USDA не вказує вид пшениці: збагачені макарони в США зазвичай з твердої пшениці (семоліни), але не завжди.",
+          "en": "The closest USDA entry — see the note. USDA doesn't state the wheat type: US enriched pasta is usually durum semolina, but not always."
         },
         "verified": "2026-10-04"
       },
       "gi": {
         "status": "measured",
-        "value": 48,
-        "reliability": "high",
+        "value": 47,
+        "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Середнє 8 записів (Таблиця 1, метод ISO), діапазон 44–53. Вісім узгоджених досліджень білих макаронів із твердої пшениці, варених. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
-          "en": "Mean of 8 entries (Table 1, ISO method), range 44–53. Eight consistent studies of boiled white durum-wheat pasta. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
+          "uk": "Зведене значення таблиці: «White spaghetti, boiled, mean of 11 foods» (11). Середнє, яке наводять самі автори таблиці. Дослідження — білі макарони з твердої пшениці (дурум); макарони з м'якої пшениці (групи Б, В) у таблицях не вимірювали, їхній ГІ може відрізнятися. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
+          "en": "The table's summary row: 'White spaghetti, boiled, mean of 11 foods' (11). The mean given by the table's authors themselves. The studies are of white durum-wheat pasta; pasta from soft wheat (groups Б, В) wasn't measured in the tables, and its GI may differ. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
         },
         "source": {
           "dataset": "gi-2021-st1",
-          "entryId": "#1454, #1455, #1459, #1466, #1467, #1468, #1469, #1471",
-          "description": "#1454 Penne, durum wheat flour (Barilla, Italy) (Italy, 2006) — GI 50±7; #1455 Penne mezzane, durum wheat flour (De Cecco, Italy) (Italy, 2008) — GI 47±4; #1459 Pennette rigate, durum wheat flour (Barilla, Italy) (Italy, 2008) — GI 53±5; #1466 Spaghetti, white, boiled 15 min in salted water (Unico, Concord, ON, Canada) (Canada, 1999) — GI 44±3; #1467 Spaghetti, white (Unico, Canada) (Canada, 2001) — GI 45±9; #1468 Spaghetti, white (Nishin Shokuhin, Japan) (Japan, 2003) — GI 46±9; #1469 Spaghetti, white (Unico, Canada) (Canada, 2001) — GI 48±3; #1471 Spaghetti, white (Vetta, Greens Foods, Glendenning, Australia), boiled for 12 min (Australia, 1996) — GI 49±7"
+          "entryId": "summary row",
+          "description": "White spaghetti, boiled, mean of 11 foods — GI 47 (summary row of the table)"
         }
       }
     },
@@ -526,8 +526,8 @@
       "category": "bread",
       "family": "rye-bread",
       "state": "baked",
-      "nameUk": "Хліб житній",
-      "nameEn": "Bread, rye",
+      "nameUk": "Хліб житньо-пшеничний",
+      "nameEn": "Bread, rye (rye-wheat)",
       "nutrients": {
         "per100g": {
           "caloriesKcal": 259.0,
@@ -552,17 +552,17 @@
       },
       "gi": {
         "status": "measured",
-        "value": 61,
+        "value": 60,
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Середнє 2 записів (Таблиця 1, метод ISO), діапазон 60–62. Два дослідження житньо-пшеничного хліба; ГІ залежить від рецепту (суцільнозерновий житній — нижчий).",
-          "en": "Mean of 2 entries (Table 1, ISO method), range 60–62. Two studies of rye-wheat bread; GI depends on the recipe (wholegrain rye is lower)."
+          "uk": "Зведене значення таблиці: «Rye breads, mean of 13 foods» (13). Середнє, яке наводять самі автори таблиці. Різні житні хліби; цільнозерновий житній і пумперні́кель нижчі (41–58), житньо-пшеничні — близько 60.",
+          "en": "The table's summary row: 'Rye breads, mean of 13 foods' (13). The mean given by the table's authors themselves. Various rye breads; wholegrain rye and pumpernickel are lower (41–58), rye-wheat breads about 60."
         },
         "source": {
           "dataset": "gi-2021-st1",
-          "entryId": "#218, #223",
-          "description": "#218 Rye wheat sourdough bread (Paderborner, Lieken Urkorn, Dortmund, Germany) (Germany, 2014) — GI 62±4; #223 Rye, made with 30% wholemeal wheat, 20% kibbled rye, 30% wheat flour, and baker's yeast (New Zealand, 2010) — GI 60±3"
+          "entryId": "summary row",
+          "description": "Rye breads, mean of 13 foods — GI 60 (summary row of the table)"
         }
       }
     },
@@ -602,13 +602,13 @@
         "reliability": "high",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Середнє 23 записів (Таблиця 1, метод ISO), діапазон 59–88. Лише звичайний білий хліб: без добавок, хліба «з низьким ГІ» та дослідів із часом підходу; підгрупи одного дослідження враховано один раз.",
-          "en": "Mean of 23 entries (Table 1, ISO method), range 59–88. Plain white bread only: no additives, 'low GI' breads or proving-time experiments; subgroups of one study counted once."
+          "uk": "Зведене значення таблиці: «White wheat flour bread, mean of 35 foods» (35). Середнє, яке наводять самі автори таблиці. Звичайний білий пшеничний хліб.",
+          "en": "The table's summary row: 'White wheat flour bread, mean of 35 foods' (35). The mean given by the table's authors themselves. Plain white wheat bread."
         },
         "source": {
           "dataset": "gi-2021-st1",
-          "entryId": "#235, #236, #237, #238, #239, #243, #245, #246, #247, #248, #249, #253, #254, #255, #256, #258, #264, #265, #267, #268, #284, #285, #286",
-          "description": "#235 White bread (UK, 2006) — GI 59±11; #236 White bread (Giant Eagle King Size Enriched bread, Pittsburgh, PA, USA) (USA, 2011) — GI 60±6; #237 White bread (Pepperidge Farm Original White Bread, USA)  (USA, 2016) — GI 62±2; #238 White bread (France, 2019) — GI 63±7; #239 White bread (France, 2019) — GI 65±4; #243 White bread, WonderWhiteTM (Goodman Fielder Ltd, NSW, Australia) (Australia, 2010) — GI 70±3; #245 White bread, SunblestTM (Tip Top Bakeries, Australia) (Australia, 1999) — GI 70±5; #246 White bread (Taiwan, 2012) — GI 71±0.1; #247 White bread (Multiple countries, 2001) — GI 71±3; #248 White bread (Somerfield Plc, Oxford, UK) (UK, 2007) — GI 71±5; #249 White bread (Original White Bread, Pepperidge Farm, Norwalk, CT, USA) (USA, 2006) — GI 71±6; #253 White bread (Australia, 2014) — GI 74±3; #254 White bread (Canada, 2009) — GI 75±4; #255 White bread (Nishin Shokuhin, Japan) (Japan, 2003) — GI 75±10; #256 White bread (Vodova veka Penam, Olomouc, Czech Republic) (Czech Republic, 2003) — GI 75±10; #258 White bread (France, 2019) — GI 76±6; #264 White bread (Gardenia Bakeries (KL) Sdn Bhd Shah Alam, Selangor) (Malaysia, 2009) — GI 83±7; #265 White bread (Gardenia brand, NTUC Fairprice, Singapore) (Singapore, 2015) — GI 83±9; #267 White bread (lab made) (China, 2020) — GI 87±11; #268 White bread (China, 2005) — GI 88±3; #284 Enriched white bread, WonderTM (Interstate Brands Companies, Kansas City, USA) (USA, 1999) — GI 71±9; #285 Enriched white bread, WonderTM (Interstate Brands Companies, Kansas City, USA) (USA, 2000) — GI 72±4; #286 Enriched white bread, WonderTM (Interstate Brands Companies, Kansas City, USA) (USA, 2000) — GI 77±3"
+          "entryId": "summary row",
+          "description": "White wheat flour bread, mean of 35 foods — GI 73 (summary row of the table)"
         }
       }
     },
@@ -618,8 +618,8 @@
       "category": "dairy",
       "family": "kefir",
       "state": "fermented",
-      "nameUk": "Кефір нежирний",
-      "nameEn": "Kefir, low-fat, plain",
+      "nameUk": "Кефір 1%",
+      "nameEn": "Kefir, low-fat (1%), plain",
       "nutrients": {
         "per100g": {
           "caloriesKcal": 43.0,
@@ -637,8 +637,8 @@
         },
         "reliability": "medium",
         "reason": {
-          "uk": "Найближчий запис USDA — див. примітку. Єдиний кефір у USDA — конкретна марка (Lifeway).",
-          "en": "The closest USDA entry — see the note. The only kefir in USDA is one brand (Lifeway)."
+          "uk": "Найближчий запис USDA — див. примітку. Єдиний кефір у USDA — конкретна марка (Lifeway), 1% жиру.",
+          "en": "The closest USDA entry — see the note. The only kefir in USDA is one brand (Lifeway), 1% fat."
         },
         "verified": "2026-10-04"
       },
@@ -690,17 +690,17 @@
       },
       "gi": {
         "status": "measured",
-        "value": 30,
-        "reliability": "medium",
+        "value": 27,
+        "reliability": "high",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Середнє 2 записів (Таблиця 1, метод ISO), діапазон 26–34. Два дослідження молока зниженої жирності.",
-          "en": "Mean of 2 entries (Table 1, ISO method), range 26–34. Two studies of reduced-fat milk."
+          "uk": "Зведене значення таблиці: «Reduced-fat or low-fat milk, mean of six studies» (6). Середнє, яке наводять самі автори таблиці. Молоко зниженої жирності, без смакових добавок; для незбираного молока таблиця дає 37 (три дослідження).",
+          "en": "The table's summary row: 'Reduced-fat or low-fat milk, mean of six studies' (6). The mean given by the table's authors themselves. Reduced-fat milk, unflavoured; for full-fat milk the table gives 37 (three studies)."
         },
         "source": {
           "dataset": "gi-2021-st1",
-          "entryId": "#942, #943",
-          "description": "#942 Milk, reduced fat (Dairy Farmers Ltd, Australia) (Australia, 2006) — GI 26±6; #943 Milk, semi-skimmed, pasteurized, organic (Arla, UK) (UK, 2005) — GI 34±8"
+          "entryId": "summary row",
+          "description": "Reduced-fat or low-fat milk, mean of six studies — GI 27 (summary row of the table)"
         }
       }
     },
@@ -840,8 +840,8 @@
       "category": "dairy",
       "family": "sour-cream",
       "state": "fermented",
-      "nameUk": "Сметана зниженої жирності (~15%)",
-      "nameEn": "Sour cream, reduced fat",
+      "nameUk": "Сметана 12%",
+      "nameEn": "Sour cream, reduced fat (12%)",
       "nutrients": {
         "per100g": {
           "caloriesKcal": 135.0,
@@ -857,10 +857,10 @@
           "entryId": "171256",
           "description": "Cream, sour, reduced fat, cultured"
         },
-        "reliability": "medium",
+        "reliability": "high",
         "reason": {
-          "uk": "Найближчий запис USDA — див. примітку. Запис USDA — сметана зниженої жирності (близько 12–15%).",
-          "en": "The closest USDA entry — see the note. The USDA entry is reduced-fat sour cream (about 12–15%)."
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
         },
         "verified": "2026-10-04"
       },
@@ -1252,13 +1252,13 @@
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Середнє 8 записів (Таблиця 1, метод ISO), діапазон 10–23. Вісім сортів сочевиці з одного дослідження; старіші дослідження (Таблиця 2) — 18–37. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
-          "en": "Mean of 8 entries (Table 1, ISO method), range 10–23. Eight lentil cultivars from one study; older studies (Table 2) give 18–37. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
+          "uk": "Зведене значення таблиці: «Lentils, boiled, mean of eight foods» (8). Середнє, яке наводять самі автори таблиці. Вісім сортів сочевиці з одного дослідження; старіші дослідження (Таблиця 2) — 18–37. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
+          "en": "The table's summary row: 'Lentils, boiled, mean of eight foods' (8). The mean given by the table's authors themselves. Eight lentil cultivars from one study; older studies (Table 2) give 18–37. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
         },
         "source": {
           "dataset": "gi-2021-st1",
-          "entryId": "#1291, #1292, #1293, #1294, #1295, #1296, #1297, #1298",
-          "description": "#1291 Lentil, Asterix, washed, brought to boil in water (1:2.5 seed:water ratio) at 500°C (~11 min), once boiling was achieved temperature reduced to 280°C and continued to boil until soft (Saskatchewan Pulse Growers, Canada) (Canada, 2017) — GI 10±3; #1292 Lentil, Greenland, washed, brought to boil in water (1:2.5 seed:water ratio) at 500°C (~11 min), once boiling was achieved temperature reduced to 280°C and continued to boil until soft (Saskatchewan Pulse Growers, Canada) (Canada, 2017) — GI 23±5; #1293 Lentil, Imigreen, washed, brought to boil in water (1:2.5 seed:water ratio) at 500°C (~11 min), once boiling was achieved temperature reduced to 280°C and continued to boil until soft (Saskatchewan Pulse Growers, Canada) (Canada, 2017) — GI 14±3; #1294 Lentil, Impower, washed, brought to boil in water (1:2.5 seed:water ratio) at 500°C (~11 min), once boiling was achieved temperature reduced to 280°C and continued to boil until soft (Saskatchewan Pulse Growers, Canada) (Canada, 2017) — GI 17±4; #1295 Lentil, Improve, washed, brought to boil in water (1:2.5 seed:water ratio) at 500°C (~11 min), once boiling was achieved temperature reduced to 280°C and continued to boil until soft (Saskatchewan Pulse Growers, Canada) (Canada, 2017) — GI 15±5; #1296 Lentil, Redberry, washed, brought to boil in water (1:2.5 seed:water ratio) at 500°C (~11 min), once boiling was achieved temperature reduced to 280°C and continued to boil until soft (Saskatchewan Pulse Growers, Canada) (Canada, 2017) — GI 13±2; #1297 Lentil, Redbow, washed, brought to boil in water (1:2.5 seed:water ratio) at 500°C (~11 min), once boiling was achieved temperature reduced to 280°C and continued to boil until soft (Saskatchewan Pulse Growers, Canada) (Canada, 2017) — GI 18±3; #1298 Lentil, Redcliff, washed, brought to boil in water (1:2.5 seed:water ratio) at 500°C (~11 min), once boiling was achieved temperature reduced to 280°C and continued to boil until soft (Saskatchewan Pulse Growers, Canada) (Canada, 2017) — GI 18±3"
+          "entryId": "summary row",
+          "description": "Lentils, boiled, mean of eight foods — GI 16 (summary row of the table)"
         }
       }
     },
@@ -1344,13 +1344,13 @@
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Середнє 2 записів (Таблиця 1, метод ISO), діапазон 29–42. Два дослідження замороженого зеленого горошку.",
-          "en": "Mean of 2 entries (Table 1, ISO method), range 29–42. Two studies of frozen green peas."
+          "uk": "Зведене значення таблиці: «Peas, mean of two studies» (2). Середнє, яке наводять самі автори таблиці. Заморожений зелений горошок.",
+          "en": "The table's summary row: 'Peas, mean of two studies' (2). The mean given by the table's authors themselves. Frozen green peas."
         },
         "source": {
           "dataset": "gi-2021-st1",
-          "entryId": "#1797, #1798",
-          "description": "#1797 Peas, plain and frozen (Talleys Group Ltd, New Zealand) (New Zealand, 2011) — GI 29±2; #1798 Peas, frozen, heated in the microwave (McCain Foods Aust. Pty Ltd, Australia) (Australia, 2020) — GI 42±4"
+          "entryId": "summary row",
+          "description": "Peas, mean of two studies — GI 36 (summary row of the table)"
         }
       }
     },
@@ -1478,13 +1478,13 @@
         "reliability": "high",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Середнє 2 записів (Таблиця 1, метод ISO), діапазон 31–32. Два узгоджені дослідження вареної моркви за методом ISO.",
-          "en": "Mean of 2 entries (Table 1, ISO method), range 31–32. Two consistent ISO-method studies of boiled carrot."
+          "uk": "Зведене значення таблиці: «Carrots, mean of two foods» (2). Середнє, яке наводять самі автори таблиці. Варена морква, два узгоджені дослідження.",
+          "en": "The table's summary row: 'Carrots, mean of two foods' (2). The mean given by the table's authors themselves. Boiled carrot, two consistent studies."
         },
         "source": {
           "dataset": "gi-2021-st1",
-          "entryId": "#1804, #1805",
-          "description": "#1804 Carrots, unpeeled, boiled (Australia, 2020) — GI 32±4; #1805 Carrots, diced, frozen (Talleys Group Ltd)  (New Zealand, 2011) — GI 31±2"
+          "entryId": "summary row",
+          "description": "Carrots, mean of two foods — GI 32 (summary row of the table)"
         }
       }
     },
@@ -1539,9 +1539,10 @@
       "status": "active",
       "category": "vegetables",
       "family": "potato",
+      "variant": "hot",
       "state": "boiled",
-      "nameUk": "Картопля варена без шкірки, без солі",
-      "nameEn": "Potatoes, boiled without skin, without salt",
+      "nameUk": "Картопля варена без шкірки, гаряча, без солі",
+      "nameEn": "Potatoes, boiled without skin, hot, without salt",
       "nutrients": {
         "per100g": {
           "caloriesKcal": 86.0,
@@ -1566,17 +1567,17 @@
       },
       "gi": {
         "status": "measured",
-        "value": 68,
-        "reliability": "medium",
+        "value": 73,
+        "reliability": "high",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Середнє 2 записів (Таблиця 1, метод ISO), діапазон 66–70. Свіжозварена картопля; ГІ залежить від сорту, а охолоджена картопля має нижчий ГІ (40–56).",
-          "en": "Mean of 2 entries (Table 1, ISO method), range 66–70. Freshly boiled potato; GI depends on the variety, and cooled potatoes are lower (40–56)."
+          "uk": "Зведене значення таблиці: «Boiled potato, mean of 29 studies» (29). Середнє, яке наводять самі автори таблиці. Свіжозварена гаряча картопля; ГІ залежить і від сорту (у записах 58–82). Охолоджена, а потім розігріта картопля знову має високий ГІ (58–79).",
+          "en": "The table's summary row: 'Boiled potato, mean of 29 studies' (29). The mean given by the table's authors themselves. Freshly boiled, hot potato; GI also depends on the variety (58–82 in the entries). Cooled and then reheated potato is high again (58–79)."
         },
         "source": {
           "dataset": "gi-2021-st1",
-          "entryId": "#1842, #1844",
-          "description": "#1842 Potato, NS, boiled (China, 2005) — GI 66±1; #1844 Potato, frozen peeled cubes, boiled (McCain Purely Potato Cubes, McCains, Wendouree, VIC, Australia) (Australia, 2010) — GI 70±4"
+          "entryId": "summary row",
+          "description": "Boiled potato, mean of 29 studies — GI 73 (summary row of the table)"
         }
       }
     },
@@ -2124,13 +2125,13 @@
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Середнє 2 записів (Таблиця 1, метод ISO), діапазон 51–55. Два дослідження цукрової кукурудзи; сама таблиця наводить їх середнє — 53.",
-          "en": "Mean of 2 entries (Table 1, ISO method), range 51–55. Two studies of sweet corn; the table itself gives their mean, 53."
+          "uk": "Зведене значення таблиці: «Sweet corn, mean of two foods» (2). Середнє, яке наводять самі автори таблиці. Цукрова кукурудза, два дослідження.",
+          "en": "The table's summary row: 'Sweet corn, mean of two foods' (2). The mean given by the table's authors themselves. Sweet corn, two studies."
         },
         "source": {
           "dataset": "gi-2021-st1",
-          "entryId": "#558, #559",
-          "description": "#558 Sweet corn, cooked in microwave for 1.5 min (Australia, 2015) — GI 51±4; #559 Sweet corn, cooked (China, 2005) — GI 55±2"
+          "entryId": "summary row",
+          "description": "Sweet corn, mean of two foods — GI 53 (summary row of the table)"
         }
       }
     },
@@ -2140,7 +2141,7 @@
       "category": "fruit",
       "family": "apple",
       "state": "raw",
-      "nameUk": "Яблуко зі шкіркою, сире",
+      "nameUk": "Яблуко зі шкіркою",
       "nameEn": "Apples, raw, with skin",
       "nutrients": {
         "per100g": {
@@ -2186,7 +2187,7 @@
       "category": "fruit",
       "family": "pear",
       "state": "raw",
-      "nameUk": "Груша, сира",
+      "nameUk": "Груша",
       "nameEn": "Pears, raw",
       "nutrients": {
         "per100g": {
@@ -2232,7 +2233,7 @@
       "category": "fruit",
       "family": "banana",
       "state": "raw",
-      "nameUk": "Банан, сирий",
+      "nameUk": "Банан",
       "nameEn": "Bananas, raw",
       "nutrients": {
         "per100g": {
@@ -2278,7 +2279,7 @@
       "category": "fruit",
       "family": "orange",
       "state": "raw",
-      "nameUk": "Апельсин, сирий",
+      "nameUk": "Апельсин",
       "nameEn": "Oranges, raw",
       "nutrients": {
         "per100g": {
@@ -2324,7 +2325,7 @@
       "category": "fruit",
       "family": "strawberry",
       "state": "raw",
-      "nameUk": "Полуниця, свіжа",
+      "nameUk": "Полуниця свіжа",
       "nameEn": "Strawberries, raw",
       "nutrients": {
         "per100g": {
@@ -2370,7 +2371,7 @@
       "category": "fruit",
       "family": "plum",
       "state": "raw",
-      "nameUk": "Слива, сира",
+      "nameUk": "Слива",
       "nameEn": "Plums, raw",
       "nutrients": {
         "per100g": {
@@ -2416,8 +2417,8 @@
       "category": "fruit",
       "family": "grapes",
       "state": "raw",
-      "nameUk": "Виноград, сирий",
-      "nameEn": "Grapes, red or green, raw",
+      "nameUk": "Виноград червоний або зелений (європейський, напр. кишмиш)",
+      "nameEn": "Grapes, red or green (European type), raw",
       "nutrients": {
         "per100g": {
           "caloriesKcal": 69.0,
@@ -2711,17 +2712,17 @@
       },
       "gi": {
         "status": "measured",
-        "value": 71,
+        "value": 62,
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Середнє 9 записів (Таблиця 1, метод ISO), діапазон 47–83. Цей запис — для білого довгозернистого рису, сорт якого невідомий: середнє багатьох різних сортів, тому діапазон широкий. Якщо сорт відомий, оберіть його запис (басмати, пропарений, жасмин, круглозерний).",
-          "en": "Mean of 9 entries (Table 1, ISO method), range 47–83. This entry is for long-grain white rice of unknown type: an average of many different varieties, hence the wide range. If the type is known, pick its own entry (basmati, parboiled, jasmine, round-grain)."
+          "uk": "Зведене значення таблиці: «Rice long grain, mean of six foods» (6). Середнє, яке наводять самі автори таблиці. Цей запис — для білого довгозернистого рису без назви сорту (не басмати, не жасмин, не пропарений). Якщо сорт відомий, оберіть його запис.",
+          "en": "The table's summary row: 'Rice long grain, mean of six foods' (6). The mean given by the table's authors themselves. This entry is for long-grain white rice without a named type (not basmati, jasmine or parboiled). If the type is known, pick its own entry."
         },
         "source": {
           "dataset": "gi-2021-st1",
-          "entryId": "#629, #634, #651, #652, #654, #655, #656, #657, #658",
-          "description": "#629 Long grain, white (Uncle Ben's, Auckland, New Zealand) (New Zealand, 2000) — GI 56±7; #634 Long-grain rice (Indica-type long-grain rice, polished), cooked 15 min (UK, 2009) — GI 47±6; #651 White rice, NS (China, 2005) — GI 83±1; #652 White rice, fully polished, prepared from the Indian rice variety \"Bapatla\" (BPT-5204), pressure cooked for 18 min (India, 2017) — GI 80±7; #654 White rice, Ponni, cooked in rice cooker for 33 min (India, 2012) — GI 70±4; #655 White rice, Ponni, refined, harvested 2013, pressure-cooked for 30 min (India, 2013) — GI 81±7; #656 White rice, Ponni, refined, harvested 2014, pressure-cooked for 30 min (India, 2014) — GI 77±8; #657 White rice, Sona Masuri variety, cooked in rice cooker for 35 min (India, 2012) — GI 72±5; #658 White rice, Surti Kolam variety, cooked in rice cooker for 32 min (India, 2012) — GI 77±4"
+          "entryId": "summary row",
+          "description": "Rice long grain, mean of six foods — GI 62 (summary row of the table)"
         }
       }
     },
@@ -2778,7 +2779,7 @@
       "category": "grains",
       "family": "oats",
       "state": "boiled",
-      "nameUk": "Вівсяна каша на воді, без солі",
+      "nameUk": "Вівсяна каша з пластівців на воді, без солі",
       "nameEn": "Oatmeal, cooked with water, without salt",
       "nutrients": {
         "per100g": {
@@ -2805,16 +2806,16 @@
       "gi": {
         "status": "measured",
         "value": 58,
-        "reliability": "medium",
+        "reliability": "high",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Середнє 5 записів (Таблиця 1, метод ISO), діапазон 50–76. Каша з вівсяних пластівців на воді; тонші пластівці дають вищий ГІ (запис #436 — 76).",
-          "en": "Mean of 5 entries (Table 1, ISO method), range 50–76. Rolled-oat porridge made with water; thinner flakes give a higher GI (entry #436 — 76)."
+          "uk": "Зведене значення таблиці: «Porridge made from rolled oats, mean of eight foods» (8). Середнє, яке наводять самі автори таблиці. Каша з вівсяних пластівців на воді. Каша з різаного вівса (steel-cut) — 52, з пластівців миттєвого приготування — 82.",
+          "en": "The table's summary row: 'Porridge made from rolled oats, mean of eight foods' (8). The mean given by the table's authors themselves. Rolled-oat porridge made with water. Steel-cut oat porridge is 52, instant oat porridge 82."
         },
         "source": {
           "dataset": "gi-2021-st1",
-          "entryId": "#430, #431, #432, #433, #436",
-          "description": "#430 Porridge oats (Freedom Foods, Australia) (Australia, 2007) — GI 50±4; #431 Porridge oats, traditional (Lowan Whole Foods, Australia) (Australia, 2004) — GI 51±8; #432 Porridge oats (China, 2005) — GI 55±2; #433 Porridge, Traditional Rolled Oats (Woolworths Select brand, Australia) (Australia, 2008) — GI 57±4; #436 Oat porridge made from 0.5-0.6 mm thick rolled oat flakes, cooked for 10 min (Elovena, Raisio Group Ltd, Raisio, Finland) (Finland, 2005) — GI 76±7"
+          "entryId": "summary row",
+          "description": "Porridge made from rolled oats, mean of eight foods — GI 58 (summary row of the table)"
         }
       }
     },
@@ -2900,8 +2901,8 @@
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Середнє 6 записів (Таблиця 1, метод ISO), діапазон 22–58. Записи — різні сорти ячменю, від 22 до 58; середнє, бо сорт перлової крупи на упаковці не вказують.",
-          "en": "Mean of 6 entries (Table 1, ISO method), range 22–58. The entries are different barley cultivars, 22 to 58; the mean is used because packs don't state the cultivar."
+          "uk": "Середнє 6 записів (Таблиця 1, метод ISO), діапазон 22–58. Записи — різні сорти ячменю (22–58). Українські упаковки вказують номер крупи (№1–5, розмір зерна), а не сорт ячменю, тому взято середнє для перлової крупи. Зведене значення таблиці «Barley, mean of 20 foods» — 30 — включає й цільнозерновий ячмінь.",
+          "en": "Mean of 6 entries (Table 1, ISO method), range 22–58. The entries are different barley cultivars (22–58). Ukrainian packs state the grade number (№1–5, grain size), not the barley cultivar, so the pearled-barley mean is used. The table's summary 'Barley, mean of 20 foods' — 30 — also includes whole-grain barley."
         },
         "source": {
           "dataset": "gi-2021-st1",
@@ -3008,8 +3009,8 @@
       "category": "grains",
       "family": "pasta",
       "state": "boiled",
-      "nameUk": "Макарони варені, без солі",
-      "nameEn": "Pasta, cooked, without salt",
+      "nameUk": "Макарони пшеничні, варені, без солі",
+      "nameEn": "Pasta, wheat, enriched, cooked, without salt",
       "nutrients": {
         "per100g": {
           "caloriesKcal": 158.0,
@@ -3025,26 +3026,26 @@
           "entryId": "169737",
           "description": "Pasta, cooked, enriched, without added salt"
         },
-        "reliability": "high",
+        "reliability": "medium",
         "reason": {
-          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
-          "en": "The USDA entry describes exactly this food in this state."
+          "uk": "Найближчий запис USDA — див. примітку. USDA не вказує вид пшениці: збагачені макарони в США зазвичай з твердої пшениці (семоліни), але не завжди.",
+          "en": "The closest USDA entry — see the note. USDA doesn't state the wheat type: US enriched pasta is usually durum semolina, but not always."
         },
         "verified": "2026-10-04"
       },
       "gi": {
         "status": "measured",
-        "value": 48,
-        "reliability": "high",
+        "value": 47,
+        "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Середнє 8 записів (Таблиця 1, метод ISO), діапазон 44–53. Вісім узгоджених досліджень білих макаронів із твердої пшениці, варених.",
-          "en": "Mean of 8 entries (Table 1, ISO method), range 44–53. Eight consistent studies of boiled white durum-wheat pasta."
+          "uk": "Зведене значення таблиці: «White spaghetti, boiled, mean of 11 foods» (11). Середнє, яке наводять самі автори таблиці. Дослідження — білі макарони з твердої пшениці (дурум); макарони з м'якої пшениці (групи Б, В) у таблицях не вимірювали, їхній ГІ може відрізнятися.",
+          "en": "The table's summary row: 'White spaghetti, boiled, mean of 11 foods' (11). The mean given by the table's authors themselves. The studies are of white durum-wheat pasta; pasta from soft wheat (groups Б, В) wasn't measured in the tables, and its GI may differ."
         },
         "source": {
           "dataset": "gi-2021-st1",
-          "entryId": "#1454, #1455, #1459, #1466, #1467, #1468, #1469, #1471",
-          "description": "#1454 Penne, durum wheat flour (Barilla, Italy) (Italy, 2006) — GI 50±7; #1455 Penne mezzane, durum wheat flour (De Cecco, Italy) (Italy, 2008) — GI 47±4; #1459 Pennette rigate, durum wheat flour (Barilla, Italy) (Italy, 2008) — GI 53±5; #1466 Spaghetti, white, boiled 15 min in salted water (Unico, Concord, ON, Canada) (Canada, 1999) — GI 44±3; #1467 Spaghetti, white (Unico, Canada) (Canada, 2001) — GI 45±9; #1468 Spaghetti, white (Nishin Shokuhin, Japan) (Japan, 2003) — GI 46±9; #1469 Spaghetti, white (Unico, Canada) (Canada, 2001) — GI 48±3; #1471 Spaghetti, white (Vetta, Greens Foods, Glendenning, Australia), boiled for 12 min (Australia, 1996) — GI 49±7"
+          "entryId": "summary row",
+          "description": "White spaghetti, boiled, mean of 11 foods — GI 47 (summary row of the table)"
         }
       }
     },
@@ -3130,13 +3131,13 @@
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Середнє 8 записів (Таблиця 1, метод ISO), діапазон 10–23. Вісім сортів сочевиці з одного дослідження; старіші дослідження (Таблиця 2) — 18–37.",
-          "en": "Mean of 8 entries (Table 1, ISO method), range 10–23. Eight lentil cultivars from one study; older studies (Table 2) give 18–37."
+          "uk": "Зведене значення таблиці: «Lentils, boiled, mean of eight foods» (8). Середнє, яке наводять самі автори таблиці. Вісім сортів сочевиці з одного дослідження; старіші дослідження (Таблиця 2) — 18–37.",
+          "en": "The table's summary row: 'Lentils, boiled, mean of eight foods' (8). The mean given by the table's authors themselves. Eight lentil cultivars from one study; older studies (Table 2) give 18–37."
         },
         "source": {
           "dataset": "gi-2021-st1",
-          "entryId": "#1291, #1292, #1293, #1294, #1295, #1296, #1297, #1298",
-          "description": "#1291 Lentil, Asterix, washed, brought to boil in water (1:2.5 seed:water ratio) at 500°C (~11 min), once boiling was achieved temperature reduced to 280°C and continued to boil until soft (Saskatchewan Pulse Growers, Canada) (Canada, 2017) — GI 10±3; #1292 Lentil, Greenland, washed, brought to boil in water (1:2.5 seed:water ratio) at 500°C (~11 min), once boiling was achieved temperature reduced to 280°C and continued to boil until soft (Saskatchewan Pulse Growers, Canada) (Canada, 2017) — GI 23±5; #1293 Lentil, Imigreen, washed, brought to boil in water (1:2.5 seed:water ratio) at 500°C (~11 min), once boiling was achieved temperature reduced to 280°C and continued to boil until soft (Saskatchewan Pulse Growers, Canada) (Canada, 2017) — GI 14±3; #1294 Lentil, Impower, washed, brought to boil in water (1:2.5 seed:water ratio) at 500°C (~11 min), once boiling was achieved temperature reduced to 280°C and continued to boil until soft (Saskatchewan Pulse Growers, Canada) (Canada, 2017) — GI 17±4; #1295 Lentil, Improve, washed, brought to boil in water (1:2.5 seed:water ratio) at 500°C (~11 min), once boiling was achieved temperature reduced to 280°C and continued to boil until soft (Saskatchewan Pulse Growers, Canada) (Canada, 2017) — GI 15±5; #1296 Lentil, Redberry, washed, brought to boil in water (1:2.5 seed:water ratio) at 500°C (~11 min), once boiling was achieved temperature reduced to 280°C and continued to boil until soft (Saskatchewan Pulse Growers, Canada) (Canada, 2017) — GI 13±2; #1297 Lentil, Redbow, washed, brought to boil in water (1:2.5 seed:water ratio) at 500°C (~11 min), once boiling was achieved temperature reduced to 280°C and continued to boil until soft (Saskatchewan Pulse Growers, Canada) (Canada, 2017) — GI 18±3; #1298 Lentil, Redcliff, washed, brought to boil in water (1:2.5 seed:water ratio) at 500°C (~11 min), once boiling was achieved temperature reduced to 280°C and continued to boil until soft (Saskatchewan Pulse Growers, Canada) (Canada, 2017) — GI 18±3"
+          "entryId": "summary row",
+          "description": "Lentils, boiled, mean of eight foods — GI 16 (summary row of the table)"
         }
       }
     },
@@ -3219,17 +3220,17 @@
       },
       "gi": {
         "status": "measured",
-        "value": 59,
+        "value": 60,
         "reliability": "high",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Середнє 7 записів (Таблиця 1, метод ISO), діапазон 50–66. Лише білий басмати, варений. Розкид у межах басмати — через марку, час варіння й групу людей у дослідженні; експрес-, пропарений і бурий басмати не враховано, підгрупи одного дослідження — один раз. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
-          "en": "Mean of 7 entries (Table 1, ISO method), range 50–66. White basmati, boiled, only. The spread within basmati comes from the brand, cooking time and the people tested; express, easy-cook and brown basmati excluded, subgroups of one study counted once. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
+          "uk": "Зведене значення таблиці: «Basmati rice, white, mean of 10 studies» (10). Середнє, яке наводять самі автори таблиці. Білий басмати. Розкид у межах басмати — через марку, час варіння й групу людей у дослідженні; басмати швидкого приготування вищий (65). Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
+          "en": "The table's summary row: 'Basmati rice, white, mean of 10 studies' (10). The mean given by the table's authors themselves. White basmati. The spread within basmati comes from the brand, cooking time and the people tested; quick-cooking basmati is higher (65). Value for the cooked food; GL from the dry weight counts the same carbohydrate."
         },
         "source": {
           "dataset": "gi-2021-st1",
-          "entryId": "#574, #575, #576, #577, #578, #581, #582",
-          "description": "#574 Basmati, white, polished, cooked 10 min (UK, 2009) — GI 50±6; #575 Basmati rice (Dreamrice, Singapore) (Singapore, 2015) — GI 56±3; #576 Basmati rice (SunRice; Ricegrowers Ltd.; Leeton, NSW, Australia) (Australia, 2013) — GI 57±4; #577 Basmati, white, boiled (Mahatma brand, Australia) (Australia, 1995) — GI 58±8; #578 Basmati, white, boiled (SunRice brand, Rice Growers Co-Op., Australia) (Pakistan, 2003) — GI 59±6; #581 Basmati, white, boiled (SunRice brand, Rice Growers Co-Op., Australia) (Pakistan, 2005) — GI 65±7; #582 Basmati rice (Laila Basmati Rice, Surya Foods, Harwich, UK) (UK, 2015) — GI 66±7"
+          "entryId": "summary row",
+          "description": "Basmati rice, white, mean of 10 studies — GI 60 (summary row of the table)"
         }
       }
     },
@@ -3266,17 +3267,17 @@
       },
       "gi": {
         "status": "measured",
-        "value": 59,
+        "value": 60,
         "reliability": "high",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Середнє 7 записів (Таблиця 1, метод ISO), діапазон 50–66. Лише білий басмати, варений. Розкид у межах басмати — через марку, час варіння й групу людей у дослідженні; експрес-, пропарений і бурий басмати не враховано, підгрупи одного дослідження — один раз.",
-          "en": "Mean of 7 entries (Table 1, ISO method), range 50–66. White basmati, boiled, only. The spread within basmati comes from the brand, cooking time and the people tested; express, easy-cook and brown basmati excluded, subgroups of one study counted once."
+          "uk": "Зведене значення таблиці: «Basmati rice, white, mean of 10 studies» (10). Середнє, яке наводять самі автори таблиці. Білий басмати. Розкид у межах басмати — через марку, час варіння й групу людей у дослідженні; басмати швидкого приготування вищий (65).",
+          "en": "The table's summary row: 'Basmati rice, white, mean of 10 studies' (10). The mean given by the table's authors themselves. White basmati. The spread within basmati comes from the brand, cooking time and the people tested; quick-cooking basmati is higher (65)."
         },
         "source": {
           "dataset": "gi-2021-st1",
-          "entryId": "#574, #575, #576, #577, #578, #581, #582",
-          "description": "#574 Basmati, white, polished, cooked 10 min (UK, 2009) — GI 50±6; #575 Basmati rice (Dreamrice, Singapore) (Singapore, 2015) — GI 56±3; #576 Basmati rice (SunRice; Ricegrowers Ltd.; Leeton, NSW, Australia) (Australia, 2013) — GI 57±4; #577 Basmati, white, boiled (Mahatma brand, Australia) (Australia, 1995) — GI 58±8; #578 Basmati, white, boiled (SunRice brand, Rice Growers Co-Op., Australia) (Pakistan, 2003) — GI 59±6; #581 Basmati, white, boiled (SunRice brand, Rice Growers Co-Op., Australia) (Pakistan, 2005) — GI 65±7; #582 Basmati rice (Laila Basmati Rice, Surya Foods, Harwich, UK) (UK, 2015) — GI 66±7"
+          "entryId": "summary row",
+          "description": "Basmati rice, white, mean of 10 studies — GI 60 (summary row of the table)"
         }
       }
     },
@@ -3313,17 +3314,17 @@
       },
       "gi": {
         "status": "measured",
-        "value": 60,
+        "value": 64,
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Середнє 9 записів (Таблиця 1, метод ISO), діапазон 51–75. Розкид у межах пропареного рису — переважно через час варіння: той самий рис — 68 після 10 хв і 75 після 20 хв (#692, #693); решта — марка. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
-          "en": "Mean of 9 entries (Table 1, ISO method), range 51–75. The spread within parboiled rice comes mostly from cooking time: the same rice is 68 after 10 min and 75 after 20 min (#692, #693); the rest is the brand. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
+          "uk": "Зведене значення таблиці: «Parboiled rice, mean of 10 studies» (10). Середнє, яке наводять самі автори таблиці. Розкид у межах пропареного рису — переважно через час варіння: той самий рис — 68 після 10 хв і 75 після 20 хв (#692, #693); решта — марка. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
+          "en": "The table's summary row: 'Parboiled rice, mean of 10 studies' (10). The mean given by the table's authors themselves. The spread within parboiled rice comes mostly from cooking time: the same rice is 68 after 10 min and 75 after 20 min (#692, #693); the rest is the brand. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
         },
         "source": {
           "dataset": "gi-2021-st1",
-          "entryId": "#689, #690, #691, #692, #693, #694, #695, #696, #697",
-          "description": "#689 Parboiled rice, cooked 20 min, Uncle Ben's Natur-reis± (Masterfoods, Belgium) (Belgium, 2000) — GI 64±7; #690 Parboiled rice, long grain white Uncle Ben's± (Belgium, 2011) — GI 54±7; #691 Parboiled, long-grain rice (Harlem Foods AS, Oslo)  (Norway, 2019) — GI 57±5; #692 Parboiled, long grain, 10 min cooking time (Uncle Ben's, Masterfoods, Belgium) (Belgium, 2000) — GI 68±6; #693 Parboiled, long grain, 20 min cooking time (Uncle Ben's, Masterfoods, Belgium) (Belgium, 2000) — GI 75±7; #694 Rice, parboiled, NS (Canada, 2010) — GI 51±4; #695 Parboiled rice, NS (Riso Blond Risotti, Riso Gallo, Italy) (Italy, 2009) — GI 53±6; #696 Parboiled rice, NS (Uncle Ben's, Masterfoods Australia New Zealand, NSW, Australia) (Australia, 2013) — GI 57±3; #697 Parboiled rice, NS (Riso Blond Veloce e Versatile, Riso Gallo, Italy) (Italy, 2009) — GI 61±11"
+          "entryId": "summary row",
+          "description": "Parboiled rice, mean of 10 studies — GI 64 (summary row of the table)"
         }
       }
     },
@@ -3360,17 +3361,17 @@
       },
       "gi": {
         "status": "measured",
-        "value": 60,
+        "value": 64,
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Середнє 9 записів (Таблиця 1, метод ISO), діапазон 51–75. Розкид у межах пропареного рису — переважно через час варіння: той самий рис — 68 після 10 хв і 75 після 20 хв (#692, #693); решта — марка.",
-          "en": "Mean of 9 entries (Table 1, ISO method), range 51–75. The spread within parboiled rice comes mostly from cooking time: the same rice is 68 after 10 min and 75 after 20 min (#692, #693); the rest is the brand."
+          "uk": "Зведене значення таблиці: «Parboiled rice, mean of 10 studies» (10). Середнє, яке наводять самі автори таблиці. Розкид у межах пропареного рису — переважно через час варіння: той самий рис — 68 після 10 хв і 75 після 20 хв (#692, #693); решта — марка.",
+          "en": "The table's summary row: 'Parboiled rice, mean of 10 studies' (10). The mean given by the table's authors themselves. The spread within parboiled rice comes mostly from cooking time: the same rice is 68 after 10 min and 75 after 20 min (#692, #693); the rest is the brand."
         },
         "source": {
           "dataset": "gi-2021-st1",
-          "entryId": "#689, #690, #691, #692, #693, #694, #695, #696, #697",
-          "description": "#689 Parboiled rice, cooked 20 min, Uncle Ben's Natur-reis± (Masterfoods, Belgium) (Belgium, 2000) — GI 64±7; #690 Parboiled rice, long grain white Uncle Ben's± (Belgium, 2011) — GI 54±7; #691 Parboiled, long-grain rice (Harlem Foods AS, Oslo)  (Norway, 2019) — GI 57±5; #692 Parboiled, long grain, 10 min cooking time (Uncle Ben's, Masterfoods, Belgium) (Belgium, 2000) — GI 68±6; #693 Parboiled, long grain, 20 min cooking time (Uncle Ben's, Masterfoods, Belgium) (Belgium, 2000) — GI 75±7; #694 Rice, parboiled, NS (Canada, 2010) — GI 51±4; #695 Parboiled rice, NS (Riso Blond Risotti, Riso Gallo, Italy) (Italy, 2009) — GI 53±6; #696 Parboiled rice, NS (Uncle Ben's, Masterfoods Australia New Zealand, NSW, Australia) (Australia, 2013) — GI 57±3; #697 Parboiled rice, NS (Riso Blond Veloce e Versatile, Riso Gallo, Italy) (Italy, 2009) — GI 61±11"
+          "entryId": "summary row",
+          "description": "Parboiled rice, mean of 10 studies — GI 64 (summary row of the table)"
         }
       }
     },
@@ -3407,17 +3408,17 @@
       },
       "gi": {
         "status": "measured",
-        "value": 90,
+        "value": 89,
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Середнє 14 записів (Таблиця 1, метод ISO), діапазон 68–116. Жасмин високий в усіх дослідженнях; розкид — через марку й походження (тайські Hom Mali найвищі, 90–116), спосіб варіння й групу людей; підгрупи одного дослідження — один раз. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
-          "en": "Mean of 14 entries (Table 1, ISO method), range 68–116. Jasmine is high in every study; the spread comes from the brand and origin (Thai Hom Mali highest, 90–116), the cooking method and the people tested; subgroups of one study counted once. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
+          "uk": "Зведене значення таблиці: «Jasmine rice, white, mean of 18 studies» (18). Середнє, яке наводять самі автори таблиці. Жасмин високий в усіх дослідженнях; розкид — через марку й походження (тайські Hom Mali найвищі, 90–116), спосіб варіння й групу людей. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
+          "en": "The table's summary row: 'Jasmine rice, white, mean of 18 studies' (18). The mean given by the table's authors themselves. Jasmine is high in every study; the spread comes from the brand and origin (Thai Hom Mali highest, 90–116), the cooking method and the people tested. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
         },
         "source": {
           "dataset": "gi-2021-st1",
-          "entryId": "#599, #600, #601, #602, #603, #605, #606, #608, #609, #612, #613, #614, #615, #616",
-          "description": "#599 Jasmine rice, white Thai (Double FP brand, NTUC Fairprice Co-operative Ltd., Singapore), chewed 15 times (Singapore, 2014) — GI 68±3; #600 Jasmine rice, cooked in rice cooker (SunRice; Ricegrowers Ltd., NSW, Australia) (Australia, 2013) — GI 68±4; #601 Jasmine rice, steamed for 30 min, 31.6 g rice cooked with 35 mL water (COFCO China) (Thailand, 2016) — GI 76±5; #602 Jasmine Fragrant rice, white (SunRice brand, Ricegrowers Limited, Australia) (Australia, 2008) — GI 79±5; #603 Jasmine Fragrant rice (SunRice, Ricegrowers Limited, NSW) (Australia, 2011) — GI 80±3; #605 Jasmine long grain rice (Canada, 2010) — GI 82±8; #606 Jasmine white rice (Uncle Ben's Jasmine Rice, Mars Canada, Bolton, Ontario, Canada) (Canada, 2010) — GI 84±4; #608 Jasmine Fragrant rice, white (SunRice brand, Ricegrowers Limited, Australia) (Australia, 2006) — GI 89±4; #609 Jasmine rice (Double FP Thai Hom Mali premium quality fragrant rice, Thailand)  (Thailand, 2015) — GI 90±5; #612 Rice, white, Thai Hom Mali fragrant rice, cooked in rice cooker (NTUC Fairprice, Singapore) (Singapore, 2013) — GI 96±6; #613 Jasmine rice, Jazzmen, cooked in rice cooker (Jazzmen Rice, Inc., USA)  (USA, 2014) — GI 106±13; #614 Jasmine rice, white, cooked in rice cooker (Golden World Foods, Bangkok, Thailand) (Thailand, 2000) — GI 109±10; #615 Jasmine rice, Mahatma, cooked in rice cooker (Riviana Foods Inc., Thailand)  (Thailand, 2014) — GI 115±7; #616 Jasmine rice, Reindeer, cooked in rice cooker (Oriental Jasmine Rice Co., Thailand)  (Thailand, 2014) — GI 116±11"
+          "entryId": "summary row",
+          "description": "Jasmine rice, white, mean of 18 studies — GI 89 (summary row of the table)"
         }
       }
     },
@@ -3454,17 +3455,17 @@
       },
       "gi": {
         "status": "measured",
-        "value": 90,
+        "value": 89,
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Середнє 14 записів (Таблиця 1, метод ISO), діапазон 68–116. Жасмин високий в усіх дослідженнях; розкид — через марку й походження (тайські Hom Mali найвищі, 90–116), спосіб варіння й групу людей; підгрупи одного дослідження — один раз.",
-          "en": "Mean of 14 entries (Table 1, ISO method), range 68–116. Jasmine is high in every study; the spread comes from the brand and origin (Thai Hom Mali highest, 90–116), the cooking method and the people tested; subgroups of one study counted once."
+          "uk": "Зведене значення таблиці: «Jasmine rice, white, mean of 18 studies» (18). Середнє, яке наводять самі автори таблиці. Жасмин високий в усіх дослідженнях; розкид — через марку й походження (тайські Hom Mali найвищі, 90–116), спосіб варіння й групу людей.",
+          "en": "The table's summary row: 'Jasmine rice, white, mean of 18 studies' (18). The mean given by the table's authors themselves. Jasmine is high in every study; the spread comes from the brand and origin (Thai Hom Mali highest, 90–116), the cooking method and the people tested."
         },
         "source": {
           "dataset": "gi-2021-st1",
-          "entryId": "#599, #600, #601, #602, #603, #605, #606, #608, #609, #612, #613, #614, #615, #616",
-          "description": "#599 Jasmine rice, white Thai (Double FP brand, NTUC Fairprice Co-operative Ltd., Singapore), chewed 15 times (Singapore, 2014) — GI 68±3; #600 Jasmine rice, cooked in rice cooker (SunRice; Ricegrowers Ltd., NSW, Australia) (Australia, 2013) — GI 68±4; #601 Jasmine rice, steamed for 30 min, 31.6 g rice cooked with 35 mL water (COFCO China) (Thailand, 2016) — GI 76±5; #602 Jasmine Fragrant rice, white (SunRice brand, Ricegrowers Limited, Australia) (Australia, 2008) — GI 79±5; #603 Jasmine Fragrant rice (SunRice, Ricegrowers Limited, NSW) (Australia, 2011) — GI 80±3; #605 Jasmine long grain rice (Canada, 2010) — GI 82±8; #606 Jasmine white rice (Uncle Ben's Jasmine Rice, Mars Canada, Bolton, Ontario, Canada) (Canada, 2010) — GI 84±4; #608 Jasmine Fragrant rice, white (SunRice brand, Ricegrowers Limited, Australia) (Australia, 2006) — GI 89±4; #609 Jasmine rice (Double FP Thai Hom Mali premium quality fragrant rice, Thailand)  (Thailand, 2015) — GI 90±5; #612 Rice, white, Thai Hom Mali fragrant rice, cooked in rice cooker (NTUC Fairprice, Singapore) (Singapore, 2013) — GI 96±6; #613 Jasmine rice, Jazzmen, cooked in rice cooker (Jazzmen Rice, Inc., USA)  (USA, 2014) — GI 106±13; #614 Jasmine rice, white, cooked in rice cooker (Golden World Foods, Bangkok, Thailand) (Thailand, 2000) — GI 109±10; #615 Jasmine rice, Mahatma, cooked in rice cooker (Riviana Foods Inc., Thailand)  (Thailand, 2014) — GI 115±7; #616 Jasmine rice, Reindeer, cooked in rice cooker (Oriental Jasmine Rice Co., Thailand)  (Thailand, 2014) — GI 116±11"
+          "entryId": "summary row",
+          "description": "Jasmine rice, white, mean of 18 studies — GI 89 (summary row of the table)"
         }
       }
     },
@@ -3657,6 +3658,53 @@
           "dataset": "gi-2021-st2",
           "entryId": "#2742",
           "description": "#2742 Saskatchewan wild rice Canada 1984- 1992 58±6 26 Type 1 & 2, 9 50 79.0 Bread, 3h Yes 0,30, — GI 58±6"
+        }
+      }
+    },
+    {
+      "id": "B0080",
+      "status": "active",
+      "category": "vegetables",
+      "family": "potato",
+      "variant": "cooled",
+      "state": "boiled",
+      "nameUk": "Картопля варена без шкірки, охолоджена, без солі",
+      "nameEn": "Potatoes, boiled without skin, cooled, without salt",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 86.0,
+          "carbsG": 20.01,
+          "fiberG": 1.8,
+          "sugarsG": 0.89,
+          "proteinG": 1.71,
+          "fatG": 0.1,
+          "sodiumMg": 5.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "170440",
+          "description": "Potatoes, boiled, cooked without skin, flesh, without salt"
+        },
+        "reliability": "medium",
+        "reason": {
+          "uk": "Найближчий запис USDA — див. примітку. USDA вимірює свіжозварену картоплю; охолодження не змінює кількості вуглеводів — частина крохмалю стає резистентним (перетравлюється повільніше), саме це знижує ГІ.",
+          "en": "The closest USDA entry — see the note. USDA measures freshly boiled potato; cooling doesn't change the amount of carbohydrate — part of the starch becomes resistant (digested more slowly), which is what lowers GI."
+        },
+        "verified": "2026-10-04"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 49,
+        "reliability": "high",
+        "verified": "2026-10-04",
+        "reason": {
+          "uk": "Зведене значення таблиці: «Potato cooked then cooled, mean of eight foods» (8). Середнє, яке наводять самі автори таблиці. Зварена, охолоджена в холодильнику (16–28 год) і з'їдена холодною. Якщо розігріти, ГІ знову зростає (58–79).",
+          "en": "The table's summary row: 'Potato cooked then cooled, mean of eight foods' (8). The mean given by the table's authors themselves. Boiled, cooled in the fridge (16–28 h) and eaten cold. Reheating raises it again (58–79)."
+        },
+        "source": {
+          "dataset": "gi-2021-st1",
+          "entryId": "summary row",
+          "description": "Potato cooked then cooled, mean of eight foods — GI 49 (summary row of the table)"
         }
       }
     }
