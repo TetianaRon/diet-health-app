@@ -5,7 +5,7 @@ import { classifyGi } from "../lib/health";
 import {
   addIngredient,
   listIngredients,
-  mergeWithStarterFoods,
+  mergeWithBuiltInFoods,
   setIngredientFavorite,
   setIngredientGlycemicFlag,
   sortFavoritesFirst,
@@ -35,7 +35,6 @@ import {
   TRANSLATED_CANDIDATE_COUNT,
   type NutritionEstimate,
 } from "../lib/nutrition";
-import { mergeWithStarterDishes } from "../data/starter-dishes";
 import Breadcrumb, { type Crumb } from "./Breadcrumb";
 import DuplicateNameNotice, { type NamedItem } from "./DuplicateNameNotice";
 import { findNameMatch, isBuiltInId, suggestFreeName } from "../lib/itemIds";
@@ -1044,9 +1043,9 @@ export default function FoodsScreen() {
   // The whole bundle is browsable/pickable by default, merged with whatever
   // is actually saved to the personal sheet — no need to "add" a bundle item
   // just to make it available for browsing, dish composition, or meal
-  // logging. See mergeWithStarterFoods/mergeWithStarterDishes.
-  const availableIngredients = mergeWithStarterFoods(ingredients ?? []);
-  const availableDishes = mergeWithStarterDishes(dishes ?? []);
+  // logging. See mergeWithBuiltInFoods; built-in cooked foods are products since 1.8.
+  const availableIngredients = mergeWithBuiltInFoods(ingredients ?? []);
+  const availableDishes = dishes ?? [];
 
   const filteredIngredients = sortFavoritesFirst(
     availableIngredients.filter((i) => i.nameUk.toLowerCase().includes(search.toLowerCase())),

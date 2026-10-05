@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { ingredientToRow, mergeWithStarterFoods, rowToIngredient, sortFavoritesFirst, type Ingredient } from "./ingredients";
+import { ingredientToRow, mergeWithBuiltInFoods, rowToIngredient, sortFavoritesFirst, type Ingredient } from "./ingredients";
 import { buildColumnIndex } from "./sheetRow";
-import { STARTER_FOODS } from "../data/starter-foods";
+import { BUILT_IN_FOODS } from "../data/builtInFoods";
 
 describe("rowToIngredient", () => {
   it("maps a full row in column order", () => {
@@ -167,15 +167,15 @@ describe("sortFavoritesFirst", () => {
   });
 });
 
-describe("mergeWithStarterFoods", () => {
+describe("mergeWithBuiltInFoods", () => {
   it("includes the whole bundle when the personal sheet is empty", () => {
-    const merged = mergeWithStarterFoods([]);
-    expect(merged).toHaveLength(STARTER_FOODS.length);
+    const merged = mergeWithBuiltInFoods([]);
+    expect(merged).toHaveLength(BUILT_IN_FOODS.length);
     expect(merged.every((i) => i.source === "starter" && i.dateAdded === "" && i.favorite === false)).toBe(true);
   });
 
   it("lets a sheet row override the bundle default for the same name (e.g. a favorited or edited entry)", () => {
-    const bundleEntry = STARTER_FOODS[0];
+    const bundleEntry = BUILT_IN_FOODS[0];
     const savedVersion: Ingredient = {
       id: "I1",
       basedOn: "",
@@ -197,11 +197,11 @@ describe("mergeWithStarterFoods", () => {
       unknownFields: [],
     };
 
-    const merged = mergeWithStarterFoods([savedVersion]);
+    const merged = mergeWithBuiltInFoods([savedVersion]);
     const result = merged.find((i) => i.nameUk === bundleEntry.nameUk);
     expect(result?.favorite).toBe(true);
     expect(result?.dateAdded).toBe("2026-08-13");
-    expect(merged).toHaveLength(STARTER_FOODS.length);
+    expect(merged).toHaveLength(BUILT_IN_FOODS.length);
   });
 
   it("includes sheet-only ingredients not in the bundle", () => {
@@ -225,9 +225,18 @@ describe("mergeWithStarterFoods", () => {
       giVerified: false,
       unknownFields: [],
     };
-    const merged = mergeWithStarterFoods([custom]);
-    expect(merged).toHaveLength(STARTER_FOODS.length + 1);
+    const merged = mergeWithBuiltInFoods([custom]);
+    expect(merged).toHaveLength(BUILT_IN_FOODS.length + 1);
     expect(merged.some((i) => i.nameUk === "Дуже рідкісний продукт")).toBe(true);
+  });
+
+  it("recognises a row saved under a pre-1.8 built-in name (an alias) as that item", () => {
+    // «Гречка суха» was B0001's name before the verified database renamed it.
+    const oldCopy: Ingredient = { ...BUILT_IN_FOODS[0], id: "I7", nameUk: "Гречка суха", source: "starter", dateAdded: "2026-09-01", favorite: true };
+    const merged = mergeWithBuiltInFoods([oldCopy]);
+    expect(merged).toHaveLength(BUILT_IN_FOODS.length);
+    expect(merged.find((i) => i.id === "I7")?.favorite).toBe(true);
+    expect(merged.some((i) => i.id === "B0001")).toBe(false);
   });
 });
 

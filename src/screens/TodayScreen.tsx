@@ -10,8 +10,7 @@ import { App as CapacitorApp } from "@capacitor/app";
 import { uk } from "../i18n/uk";
 import { useAuth } from "../context/AuthContext";
 import { checkFatLimit, mealGapWarning, mealsLeftToday } from "../lib/health";
-import { mergeWithStarterFoods, sortFavoritesFirst } from "../lib/ingredients";
-import { mergeWithStarterDishes } from "../data/starter-dishes";
+import { mergeWithBuiltInFoods, sortFavoritesFirst } from "../lib/ingredients";
 import { wasLastReadFromCache } from "../lib/sheets";
 import { formatTime } from "../lib/dateFormat";
 import { scheduleMealReminder } from "../lib/reminderScheduler";
@@ -150,12 +149,13 @@ export default function TodayScreen({
     if (lastEntry) void scheduleMealReminder(new Date(lastEntry.timestamp), settings);
   }, [entries, settings]);
 
-  // Meal logging picks from the whole bundle (dishes first, then favourite
-  // ingredients) — nothing needs to be "added" first just to be loggable.
+  // Meal logging picks from her dishes first, then all products (built-in
+  // database + her own, favourites first) — nothing needs to be "added" first
+  // just to be loggable. Built-in cooked foods are products since 1.8.
   const foods = useMemo<PickableFood[]>(
     () => [
-      ...mergeWithStarterDishes(data?.dishes ?? []).map(toPickable),
-      ...sortFavoritesFirst(mergeWithStarterFoods(data?.ingredients ?? [])).map(toPickable),
+      ...(data?.dishes ?? []).map(toPickable),
+      ...sortFavoritesFirst(mergeWithBuiltInFoods(data?.ingredients ?? [])).map(toPickable),
     ],
     [data],
   );

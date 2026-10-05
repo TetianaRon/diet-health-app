@@ -1,3 +1,4 @@
+import { BUILT_IN_FOODS } from "../data/builtInFoods";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   isLatinQuery,
@@ -315,13 +316,14 @@ describe("searchUsda", () => {
       vi.fn().mockResolvedValue({
         ok: true,
         json: async () => ({
-          foods: [{ description: "buckwheat, raw", foodNutrients: [] }],
+          foods: [{ description: "Buckwheat groats, roasted, dry", foodNutrients: [] }],
         }),
       }),
     );
 
+    // The value comes from the verified database (B0001), the same as the built-in item.
     const result = await searchUsda("some unrelated query");
-    expect(result[0].gi).toBe(50);
+    expect(result[0].gi).toBe(BUILT_IN_FOODS.find((f) => f.id === "B0001")?.gi);
   });
 
   it("does not fall back to the search query for GI — a candidate unrelated to the query gets no guessed value", async () => {
