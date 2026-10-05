@@ -512,6 +512,11 @@ Deferred by the developer; the decisions are already made:
 - **Reliability:** high = an exact match from a well-replicated source (a table mean, a direct USDA analysis); medium = a single study, a close variant, or sources that disagree; low = an old/small study, a loose match, or our own calculation. The reason always says which and why.
 - **Wording:** values are "from the cited source"; no claim about what is good for anyone (see the not-a-medical-app rules).
 
+**App side — decisions (developer, 2026-10-05):**
+- **Saved copies of built-in items** (`BasedOn = B…`) that still hold the *old* built-in values (she didn't change them) get a one-time notice «Для N продуктів є уточнені значення» with the list and «Оновити копії (N)» / «Залишити як є». Copies she edited are never offered or touched.
+- **Built-in cooked foods** (гречка варена, рис варений…) appear **among products, as defaults** for when the precise values aren't known; «Страви» are the user's own composed dishes (raw pack values + cooking, where her water and weights decide the result). A dish's GI already follows from its ingredients (carb-weighted), so a GI on the raw product is enough.
+- **Types** (rice, potato, banana…) are shown as a **flat list** with descriptive names in 1.8; grouping by family comes with the 1.9 search.
+
 **Steps:** (1) format + guard test ✅; (2) data — 69 built-in items grown to 96 entries through the review (rice, oats, potato, rye bread, banana, pear types; durum pasta; mashed potatoes; kefir 2.5%) ✅; (3) review page — the developer decided per entry with buttons that name the outcome; all 96 accepted on 2026-10-05 ✅; (4) app: read the file, ⓘ per value, «неперевірено» on the user's own items, offer to update saved copies of built-in items.
 
 ## Daily records and the new Today (release 1.7, designed 2026-10-04)
