@@ -418,8 +418,8 @@
         "reliability": "low",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Значення запису (Таблиця 2, менш надійні методи). Немає вимірювання саме манної каші на воді; найближчий запис — каша з фарини (Cream of Wheat), у людей з діабетом, менш надійний метод. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
-          "en": "The entry's value (Table 2, less robust methods). No measurement of plain semolina porridge; the closest entry is farina porridge (Cream of Wheat), in people with diabetes, less robust method. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
+          "uk": "Значення запису (Таблиця 2, менш надійні методи). Каша з фарини (Cream of Wheat) — тієї самої крупи з м'якої пшениці, що й манна; одне дослідження у людей з діабетом, менш надійний метод. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
+          "en": "The entry's value (Table 2, less robust methods). Farina porridge (Cream of Wheat) — the same soft-wheat крупа as semolina (манка); a single study in people with diabetes, less robust method. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
         },
         "source": {
           "dataset": "gi-2021-st2",
@@ -464,8 +464,8 @@
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Значення запису (Таблиця 1, метод ISO). Одне дослідження (Китай) кукурудзяної каші. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
-          "en": "The entry's value (Table 1, ISO method). A single study (China) of cornmeal porridge. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
+          "uk": "Значення запису (Таблиця 1, метод ISO). Одне дослідження (Китай) кукурудзяної каші; каші саме з кукурудзяної крупи (grits) окремо не вимірювали, це найближче вимірювання. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
+          "en": "The entry's value (Table 1, ISO method). A single study (China) of cornmeal porridge; porridge from corn grits wasn't measured separately, so this is the closest measurement. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
         },
         "source": {
           "dataset": "gi-2021-st1",
@@ -2946,8 +2946,8 @@
         "reliability": "low",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Значення запису (Таблиця 2, менш надійні методи). Немає вимірювання саме манної каші на воді; найближчий запис — каша з фарини (Cream of Wheat), у людей з діабетом, менш надійний метод.",
-          "en": "The entry's value (Table 2, less robust methods). No measurement of plain semolina porridge; the closest entry is farina porridge (Cream of Wheat), in people with diabetes, less robust method."
+          "uk": "Значення запису (Таблиця 2, менш надійні методи). Каша з фарини (Cream of Wheat) — тієї самої крупи з м'якої пшениці, що й манна; одне дослідження у людей з діабетом, менш надійний метод.",
+          "en": "The entry's value (Table 2, less robust methods). Farina porridge (Cream of Wheat) — the same soft-wheat крупа as semolina (манка); a single study in people with diabetes, less robust method."
         },
         "source": {
           "dataset": "gi-2021-st2",
@@ -2992,8 +2992,8 @@
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Значення запису (Таблиця 1, метод ISO). Одне дослідження (Китай) кукурудзяної каші.",
-          "en": "The entry's value (Table 1, ISO method). A single study (China) of cornmeal porridge."
+          "uk": "Значення запису (Таблиця 1, метод ISO). Одне дослідження (Китай) кукурудзяної каші; каші саме з кукурудзяної крупи (grits) окремо не вимірювали, це найближче вимірювання.",
+          "en": "The entry's value (Table 1, ISO method). A single study (China) of cornmeal porridge; porridge from corn grits wasn't measured separately, so this is the closest measurement."
         },
         "source": {
           "dataset": "gi-2021-st1",
