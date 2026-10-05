@@ -1,6 +1,6 @@
 # Track My Meals — Project Instructions
 
-**Version:** v2.1
+**Version:** v2.2
 
 ## Issues log
 
@@ -80,3 +80,4 @@ Track My Meals (Трекер харчування) is a Ukrainian-language meal 
 - `docs/project-brief.md`: health context and nutritional parameters.
 - `docs/requirements-open-questions.md`: mom's interview answers and what's still open.
 - `docs/automation-candidates.md`: patterns worth turning into skills or agents.
+- `docs/roadmap-archive.md`, `docs/build-log-archive-2026-04-09.md`: history (released releases, resolved intake, log entries before 1.5). Read only when a task needs that history.

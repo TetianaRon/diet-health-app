@@ -1,6 +1,6 @@
 # Diet Health App Improvement Plan
 **Created:** 2026-10-05
-**Status:** In progress — Phase 3 complete 2026-10-05
+**Status:** Complete — Phase 4 complete 2026-10-05
 **Session context:** After installing the claude-governance plugin, the developer asked for a full review of the project's workflow and documentation; this plan comes from a build-standards Improve-mode audit against the project and common standards.
 
 ---
@@ -154,7 +154,7 @@ This plan works no issues-log entries. The roadmap's open Intake items stay wher
 
 ⏸ HUMAN CHECKPOINT [Governance] — the developer reviews each task file. It's then tried for real on the next release.
 
-### Phase 4 — Docs cleanup 🔄 in progress (work done, waiting for review)
+### Phase 4 — Docs cleanup ✅ complete 2026-10-05
 
 - **README:** replace the Status section with 3–4 current lines and a link to the roadmap's "start here"; fix the docs list (add the roadmap and this plan; drop "interview mode" from the `CLAUDE.md` line).
 - **Roadmap:**
@@ -178,17 +178,17 @@ This plan works no issues-log entries. The roadmap's open Intake items stay wher
 | `docs/diet-health-app-improvement-plan.md` | ✅ Reviewed | This plan, approved 2026-10-05 |
 | `.gitattributes` | ✅ Applied | Phase 1 |
 | `tools/verified-db/` (8 scripts + `README.md`) | ✅ Applied | Phase 1; output byte-identical to the committed JSON |
-| `CLAUDE.md` (v2.1) | ✅ Applied | Phase 2 (v2.0); Phase 3 added 4 routing rows (v2.1) |
+| `CLAUDE.md` (v2.2) | ✅ Applied | Phase 2 (v2.0); Phase 3 added 4 routing rows (v2.1); Phase 4 added the archives to Docs (v2.2) |
 | `docs/tasks/dha-task-interview.md` | ✅ Applied | Phase 2; adds one line: a follow-up interview starts from the open items |
 | `docs/tasks/dha-task-release.md` | ✅ Applied | Phase 3 |
 | `docs/tasks/dha-task-device-testing.md` | ✅ Applied | Phase 3 |
 | `docs/tasks/dha-task-verified-db-change.md` | ✅ Applied | Phase 3; absorbs the not-a-medical-app memory |
 | `docs/tasks/dha-task-user-data-import.md` | ✅ Applied | Phase 3; absorbs the reconciliation memory |
-| `README.md` | 🔄 Drafted | Phase 4; full rewrite |
-| `docs/roadmap.md` + `docs/roadmap-archive.md` | 🔄 Drafted | Phase 4; released sections and resolved intake moved word-for-word |
-| `docs/build-log.md` + `docs/build-log-archive-2026-04-09.md` | 🔄 Drafted | Phase 4; split before the 2026-09-27 entry (start of 1.5) |
-| `docs/technical-spec.md` (UI section) | 🔄 Drafted | Phase 4; current tabs + UI conventions |
-| `docs/requirements-open-questions.md`, `docs/automation-candidates.md` | 🔄 Drafted | Phase 4; headers and status |
+| `README.md` | ✅ Applied | Phase 4; full rewrite |
+| `docs/roadmap.md` + `docs/roadmap-archive.md` | ✅ Applied | Phase 4; released sections and resolved intake moved word-for-word |
+| `docs/build-log.md` + `docs/build-log-archive-2026-04-09.md` | ✅ Applied | Phase 4; split before the 2026-09-27 entry (start of 1.5) |
+| `docs/technical-spec.md` (UI section) | ✅ Applied | Phase 4; current tabs + UI conventions |
+| `docs/requirements-open-questions.md`, `docs/automation-candidates.md` | ✅ Applied | Phase 4; headers and status |
 | Memory (`MEMORY.md` + 4 files) | ✅ Applied | Phase 2; 8 files deleted, 2 kept for Phase 3, 2 kept for good |
 
 ---
@@ -245,3 +245,4 @@ This plan works no issues-log entries. The roadmap's open Intake items stay wher
   - **Spec:** the UI section was out of date (4 tabs from before 1.7); it now shows the current tabs, plus UI conventions (dialogs, outcome-named buttons, decimal comma, `uk.ts`).
   - Open-questions and automation-candidates headers updated.
   - **Proposed, not made** (`CLAUDE.md` changes need confirmation): add the two archive files to `CLAUDE.md`'s Docs list as history to read only when needed (v2.2).
+- **Phase 4 approved** ("Approved, add the archives to CLAUDE.md and finish the plan"): `CLAUDE.md` → v2.2, with the two archive files in Docs. All phases complete. Next: closing cleanliness sweep, merging into `main`, and the retirement question.
