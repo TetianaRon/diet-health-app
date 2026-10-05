@@ -148,7 +148,8 @@
       "id": "B0002",
       "status": "active",
       "category": "grains",
-      "family": "white-rice",
+      "family": "rice",
+      "variant": "long-grain-white",
       "state": "dry",
       "nameUk": "Рис білий довгозернистий, сухий",
       "nameEn": "Rice, white, long-grain, dry",
@@ -176,17 +177,17 @@
       },
       "gi": {
         "status": "measured",
-        "value": 75,
+        "value": 71,
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Середнє 11 записів (Таблиця 1, метод ISO), діапазон 47–96. ГІ рису дуже залежить від сорту. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
-          "en": "Mean of 11 entries (Table 1, ISO method), range 47–96. Rice GI depends strongly on the variety. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
+          "uk": "Середнє 9 записів (Таблиця 1, метод ISO), діапазон 47–83. ГІ рису дуже залежить від сорту; для басмати, пропареного, жасмину й круглозерного — окремі записи. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
+          "en": "Mean of 9 entries (Table 1, ISO method), range 47–83. Rice GI depends strongly on the variety; basmati, parboiled, jasmine and round-grain have their own entries. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
         },
         "source": {
           "dataset": "gi-2021-st1",
-          "entryId": "#612, #634, #649, #651, #652, #653, #654, #655, #656, #657, #658",
-          "description": "#612 Rice, white, Thai Hom Mali fragrant rice, cooked in rice cooker (NTUC Fairprice, Singapore) (Singapore, 2013) — GI 96±6; #634 Long-grain rice (Indica-type long-grain rice, polished), cooked 15 min (UK, 2009) — GI 47±6; #649 Medium grain white rice, boiled 12 min (Sun Rice brand, Rice Growers Co-Op., Australia) (Australia, 2005) — GI 75±8; #651 White rice, NS (China, 2005) — GI 83±1; #652 White rice, fully polished, prepared from the Indian rice variety \"Bapatla\" (BPT-5204), pressure cooked for 18 min (India, 2017) — GI 80±7; #653 White rice, Carnaroli, regular (Scotti, Italy) (Italy, 2009) — GI 64±11; #654 White rice, Ponni, cooked in rice cooker for 33 min (India, 2012) — GI 70±4; #655 White rice, Ponni, refined, harvested 2013, pressure-cooked for 30 min (India, 2013) — GI 81±7; #656 White rice, Ponni, refined, harvested 2014, pressure-cooked for 30 min (India, 2014) — GI 77±8; #657 White rice, Sona Masuri variety, cooked in rice cooker for 35 min (India, 2012) — GI 72±5; #658 White rice, Surti Kolam variety, cooked in rice cooker for 32 min (India, 2012) — GI 77±4"
+          "entryId": "#629, #634, #651, #652, #654, #655, #656, #657, #658",
+          "description": "#629 Long grain, white (Uncle Ben's, Auckland, New Zealand) (New Zealand, 2000) — GI 56±7; #634 Long-grain rice (Indica-type long-grain rice, polished), cooked 15 min (UK, 2009) — GI 47±6; #651 White rice, NS (China, 2005) — GI 83±1; #652 White rice, fully polished, prepared from the Indian rice variety \"Bapatla\" (BPT-5204), pressure cooked for 18 min (India, 2017) — GI 80±7; #654 White rice, Ponni, cooked in rice cooker for 33 min (India, 2012) — GI 70±4; #655 White rice, Ponni, refined, harvested 2013, pressure-cooked for 30 min (India, 2013) — GI 81±7; #656 White rice, Ponni, refined, harvested 2014, pressure-cooked for 30 min (India, 2014) — GI 77±8; #657 White rice, Sona Masuri variety, cooked in rice cooker for 35 min (India, 2012) — GI 72±5; #658 White rice, Surti Kolam variety, cooked in rice cooker for 32 min (India, 2012) — GI 77±4"
         }
       }
     },
@@ -194,7 +195,8 @@
       "id": "B0003",
       "status": "active",
       "category": "grains",
-      "family": "brown-rice",
+      "family": "rice",
+      "variant": "brown",
       "state": "dry",
       "nameUk": "Рис бурий довгозернистий, сухий",
       "nameEn": "Rice, brown, long-grain, dry",
@@ -2680,7 +2682,8 @@
       "id": "B0059",
       "status": "active",
       "category": "grains",
-      "family": "white-rice",
+      "family": "rice",
+      "variant": "long-grain-white",
       "state": "boiled",
       "nameUk": "Рис білий довгозернистий, варений, без солі",
       "nameEn": "Rice, white, long-grain, cooked, without salt",
@@ -2708,17 +2711,17 @@
       },
       "gi": {
         "status": "measured",
-        "value": 75,
+        "value": 71,
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Середнє 11 записів (Таблиця 1, метод ISO), діапазон 47–96. ГІ рису дуже залежить від сорту.",
-          "en": "Mean of 11 entries (Table 1, ISO method), range 47–96. Rice GI depends strongly on the variety."
+          "uk": "Середнє 9 записів (Таблиця 1, метод ISO), діапазон 47–83. ГІ рису дуже залежить від сорту; для басмати, пропареного, жасмину й круглозерного — окремі записи.",
+          "en": "Mean of 9 entries (Table 1, ISO method), range 47–83. Rice GI depends strongly on the variety; basmati, parboiled, jasmine and round-grain have their own entries."
         },
         "source": {
           "dataset": "gi-2021-st1",
-          "entryId": "#612, #634, #649, #651, #652, #653, #654, #655, #656, #657, #658",
-          "description": "#612 Rice, white, Thai Hom Mali fragrant rice, cooked in rice cooker (NTUC Fairprice, Singapore) (Singapore, 2013) — GI 96±6; #634 Long-grain rice (Indica-type long-grain rice, polished), cooked 15 min (UK, 2009) — GI 47±6; #649 Medium grain white rice, boiled 12 min (Sun Rice brand, Rice Growers Co-Op., Australia) (Australia, 2005) — GI 75±8; #651 White rice, NS (China, 2005) — GI 83±1; #652 White rice, fully polished, prepared from the Indian rice variety \"Bapatla\" (BPT-5204), pressure cooked for 18 min (India, 2017) — GI 80±7; #653 White rice, Carnaroli, regular (Scotti, Italy) (Italy, 2009) — GI 64±11; #654 White rice, Ponni, cooked in rice cooker for 33 min (India, 2012) — GI 70±4; #655 White rice, Ponni, refined, harvested 2013, pressure-cooked for 30 min (India, 2013) — GI 81±7; #656 White rice, Ponni, refined, harvested 2014, pressure-cooked for 30 min (India, 2014) — GI 77±8; #657 White rice, Sona Masuri variety, cooked in rice cooker for 35 min (India, 2012) — GI 72±5; #658 White rice, Surti Kolam variety, cooked in rice cooker for 32 min (India, 2012) — GI 77±4"
+          "entryId": "#629, #634, #651, #652, #654, #655, #656, #657, #658",
+          "description": "#629 Long grain, white (Uncle Ben's, Auckland, New Zealand) (New Zealand, 2000) — GI 56±7; #634 Long-grain rice (Indica-type long-grain rice, polished), cooked 15 min (UK, 2009) — GI 47±6; #651 White rice, NS (China, 2005) — GI 83±1; #652 White rice, fully polished, prepared from the Indian rice variety \"Bapatla\" (BPT-5204), pressure cooked for 18 min (India, 2017) — GI 80±7; #654 White rice, Ponni, cooked in rice cooker for 33 min (India, 2012) — GI 70±4; #655 White rice, Ponni, refined, harvested 2013, pressure-cooked for 30 min (India, 2013) — GI 81±7; #656 White rice, Ponni, refined, harvested 2014, pressure-cooked for 30 min (India, 2014) — GI 77±8; #657 White rice, Sona Masuri variety, cooked in rice cooker for 35 min (India, 2012) — GI 72±5; #658 White rice, Surti Kolam variety, cooked in rice cooker for 32 min (India, 2012) — GI 77±4"
         }
       }
     },
@@ -2726,7 +2729,8 @@
       "id": "B0060",
       "status": "active",
       "category": "grains",
-      "family": "brown-rice",
+      "family": "rice",
+      "variant": "brown",
       "state": "boiled",
       "nameUk": "Рис бурий довгозернистий, варений, без солі",
       "nameEn": "Rice, brown, long-grain, cooked, without salt",
@@ -2913,31 +2917,28 @@
       "family": "semolina",
       "state": "boiled",
       "nameUk": "Манна каша на воді, без солі",
-      "nameEn": "Semolina porridge, cooked with water, without salt",
+      "nameEn": "Farina (semolina) porridge, cooked with water, without salt",
       "nutrients": {
         "per100g": {
-          "caloriesKcal": 53.7,
-          "carbsG": 10.9,
-          "fiberG": 0.6,
-          "sugarsG": 0,
-          "proteinG": 1.9,
-          "fatG": 0.2,
-          "sodiumMg": 0.1
+          "caloriesKcal": 55.0,
+          "carbsG": 10.92,
+          "fiberG": 0.8,
+          "sugarsG": 0.76,
+          "proteinG": 1.82,
+          "fatG": 0.34,
+          "sodiumMg": 18.0
         },
         "source": {
-          "dataset": "calculation",
-          "entryId": "",
-          "description": "Semolina, enriched, dry (USDA SR Legacy #169715) × 0.149 — the water uptake of USDA's farina porridge (#171658 dry 73.19 g carbohydrate → #171659 cooked with water 10.92 g per 100 g); no salt added."
+          "dataset": "usda-sr-legacy",
+          "entryId": "171659",
+          "description": "Cereals, farina, enriched, assorted brands including CREAM OF WHEAT, quick (1-3 minutes), cooked with water, without salt"
         },
-        "reliability": "low",
+        "reliability": "medium",
         "reason": {
-          "uk": "Розрахунок — див. опис джерела.",
-          "en": "A calculation — see the source description."
+          "uk": "Найближчий запис USDA — див. примітку. Фарина — та сама крупа з м'якої пшениці, що й манна; запис USDA — швидка фарина (Cream of Wheat), зварена на воді без солі.",
+          "en": "The closest USDA entry — see the note. Farina is the same soft-wheat крупа as semolina (манка); the USDA entry is quick farina (Cream of Wheat) cooked with water, without salt."
         },
-        "verified": "2026-10-04",
-        "unknown": [
-          "sugarsG"
-        ]
+        "verified": "2026-10-04"
       },
       "gi": {
         "status": "measured",
@@ -3182,6 +3183,480 @@
           "dataset": "gi-2021-st1",
           "entryId": "#1284, #1285",
           "description": "#1284 Chickpeas, canned, drained (Edgell, Simplot Australia, Australia) (Australia, 2018) — GI 35±3; #1285 Chickpeas (Garbanzo beans, Bengal gram), canned, drained, Edgell'sTM brand (Simplot Australia, Australia) (Australia, 2003) — GI 38±3"
+        }
+      }
+    },
+    {
+      "id": "B0070",
+      "status": "active",
+      "category": "grains",
+      "family": "rice",
+      "variant": "basmati",
+      "state": "dry",
+      "nameUk": "Рис басмати, сухий",
+      "nameEn": "Rice, basmati, white, dry",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 365.0,
+          "carbsG": 79.95,
+          "fiberG": 1.3,
+          "sugarsG": 0.12,
+          "proteinG": 7.13,
+          "fatG": 0.66,
+          "sodiumMg": 5.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "168877",
+          "description": "Rice, white, long-grain, regular, raw, enriched"
+        },
+        "reliability": "medium",
+        "reason": {
+          "uk": "Найближчий запис USDA — див. примітку. USDA не має окремого запису для цього сорту; поживні речовини — звичайного довгозернистого білого рису, з яким він майже збігається.",
+          "en": "The closest USDA entry — see the note. USDA has no separate entry for this variety; nutrients are those of regular long-grain white rice, which it closely matches."
+        },
+        "verified": "2026-10-04"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 59,
+        "reliability": "high",
+        "verified": "2026-10-04",
+        "reason": {
+          "uk": "Середнє 7 записів (Таблиця 1, метод ISO), діапазон 50–66. Білий басмати, варений; експрес-, пропарений і бурий басмати не враховано, підгрупи одного дослідження — один раз. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
+          "en": "Mean of 7 entries (Table 1, ISO method), range 50–66. White basmati, boiled; express, easy-cook and brown basmati excluded, subgroups of one study counted once. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
+        },
+        "source": {
+          "dataset": "gi-2021-st1",
+          "entryId": "#574, #575, #576, #577, #578, #581, #582",
+          "description": "#574 Basmati, white, polished, cooked 10 min (UK, 2009) — GI 50±6; #575 Basmati rice (Dreamrice, Singapore) (Singapore, 2015) — GI 56±3; #576 Basmati rice (SunRice; Ricegrowers Ltd.; Leeton, NSW, Australia) (Australia, 2013) — GI 57±4; #577 Basmati, white, boiled (Mahatma brand, Australia) (Australia, 1995) — GI 58±8; #578 Basmati, white, boiled (SunRice brand, Rice Growers Co-Op., Australia) (Pakistan, 2003) — GI 59±6; #581 Basmati, white, boiled (SunRice brand, Rice Growers Co-Op., Australia) (Pakistan, 2005) — GI 65±7; #582 Basmati rice (Laila Basmati Rice, Surya Foods, Harwich, UK) (UK, 2015) — GI 66±7"
+        }
+      }
+    },
+    {
+      "id": "B0071",
+      "status": "active",
+      "category": "grains",
+      "family": "rice",
+      "variant": "basmati",
+      "state": "boiled",
+      "nameUk": "Рис басмати, варений, без солі",
+      "nameEn": "Rice, basmati, white, cooked, without salt",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 130.0,
+          "carbsG": 28.17,
+          "fiberG": 0.4,
+          "sugarsG": 0.05,
+          "proteinG": 2.69,
+          "fatG": 0.28,
+          "sodiumMg": 1.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "168878",
+          "description": "Rice, white, long-grain, regular, enriched, cooked"
+        },
+        "reliability": "medium",
+        "reason": {
+          "uk": "Найближчий запис USDA — див. примітку. USDA не має окремого запису для цього сорту; поживні речовини — звичайного довгозернистого білого рису, з яким він майже збігається.",
+          "en": "The closest USDA entry — see the note. USDA has no separate entry for this variety; nutrients are those of regular long-grain white rice, which it closely matches."
+        },
+        "verified": "2026-10-04"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 59,
+        "reliability": "high",
+        "verified": "2026-10-04",
+        "reason": {
+          "uk": "Середнє 7 записів (Таблиця 1, метод ISO), діапазон 50–66. Білий басмати, варений; експрес-, пропарений і бурий басмати не враховано, підгрупи одного дослідження — один раз.",
+          "en": "Mean of 7 entries (Table 1, ISO method), range 50–66. White basmati, boiled; express, easy-cook and brown basmati excluded, subgroups of one study counted once."
+        },
+        "source": {
+          "dataset": "gi-2021-st1",
+          "entryId": "#574, #575, #576, #577, #578, #581, #582",
+          "description": "#574 Basmati, white, polished, cooked 10 min (UK, 2009) — GI 50±6; #575 Basmati rice (Dreamrice, Singapore) (Singapore, 2015) — GI 56±3; #576 Basmati rice (SunRice; Ricegrowers Ltd.; Leeton, NSW, Australia) (Australia, 2013) — GI 57±4; #577 Basmati, white, boiled (Mahatma brand, Australia) (Australia, 1995) — GI 58±8; #578 Basmati, white, boiled (SunRice brand, Rice Growers Co-Op., Australia) (Pakistan, 2003) — GI 59±6; #581 Basmati, white, boiled (SunRice brand, Rice Growers Co-Op., Australia) (Pakistan, 2005) — GI 65±7; #582 Basmati rice (Laila Basmati Rice, Surya Foods, Harwich, UK) (UK, 2015) — GI 66±7"
+        }
+      }
+    },
+    {
+      "id": "B0072",
+      "status": "active",
+      "category": "grains",
+      "family": "rice",
+      "variant": "parboiled",
+      "state": "dry",
+      "nameUk": "Рис пропарений довгозернистий, сухий",
+      "nameEn": "Rice, white, long-grain, parboiled, dry",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 374.0,
+          "carbsG": 80.89,
+          "fiberG": 1.8,
+          "sugarsG": 0.33,
+          "proteinG": 7.51,
+          "fatG": 1.03,
+          "sodiumMg": 2.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "169707",
+          "description": "Rice, white, long-grain, parboiled, enriched, dry"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-04"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 60,
+        "reliability": "medium",
+        "verified": "2026-10-04",
+        "reason": {
+          "uk": "Середнє 9 записів (Таблиця 1, метод ISO), діапазон 51–75. Довше варіння підвищує ГІ: той самий рис — 68 після 10 хв і 75 після 20 хв (#692, #693). Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
+          "en": "Mean of 9 entries (Table 1, ISO method), range 51–75. Longer cooking raises GI: the same rice is 68 after 10 min and 75 after 20 min (#692, #693). Value for the cooked food; GL from the dry weight counts the same carbohydrate."
+        },
+        "source": {
+          "dataset": "gi-2021-st1",
+          "entryId": "#689, #690, #691, #692, #693, #694, #695, #696, #697",
+          "description": "#689 Parboiled rice, cooked 20 min, Uncle Ben's Natur-reis± (Masterfoods, Belgium) (Belgium, 2000) — GI 64±7; #690 Parboiled rice, long grain white Uncle Ben's± (Belgium, 2011) — GI 54±7; #691 Parboiled, long-grain rice (Harlem Foods AS, Oslo)  (Norway, 2019) — GI 57±5; #692 Parboiled, long grain, 10 min cooking time (Uncle Ben's, Masterfoods, Belgium) (Belgium, 2000) — GI 68±6; #693 Parboiled, long grain, 20 min cooking time (Uncle Ben's, Masterfoods, Belgium) (Belgium, 2000) — GI 75±7; #694 Rice, parboiled, NS (Canada, 2010) — GI 51±4; #695 Parboiled rice, NS (Riso Blond Risotti, Riso Gallo, Italy) (Italy, 2009) — GI 53±6; #696 Parboiled rice, NS (Uncle Ben's, Masterfoods Australia New Zealand, NSW, Australia) (Australia, 2013) — GI 57±3; #697 Parboiled rice, NS (Riso Blond Veloce e Versatile, Riso Gallo, Italy) (Italy, 2009) — GI 61±11"
+        }
+      }
+    },
+    {
+      "id": "B0073",
+      "status": "active",
+      "category": "grains",
+      "family": "rice",
+      "variant": "parboiled",
+      "state": "boiled",
+      "nameUk": "Рис пропарений довгозернистий, варений, без солі",
+      "nameEn": "Rice, white, long-grain, parboiled, cooked, without salt",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 123.0,
+          "carbsG": 26.05,
+          "fiberG": 0.9,
+          "sugarsG": 0.11,
+          "proteinG": 2.91,
+          "fatG": 0.37,
+          "sodiumMg": 2.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "169708",
+          "description": "Rice, white, long-grain, parboiled, enriched, cooked"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-04"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 60,
+        "reliability": "medium",
+        "verified": "2026-10-04",
+        "reason": {
+          "uk": "Середнє 9 записів (Таблиця 1, метод ISO), діапазон 51–75. Довше варіння підвищує ГІ: той самий рис — 68 після 10 хв і 75 після 20 хв (#692, #693).",
+          "en": "Mean of 9 entries (Table 1, ISO method), range 51–75. Longer cooking raises GI: the same rice is 68 after 10 min and 75 after 20 min (#692, #693)."
+        },
+        "source": {
+          "dataset": "gi-2021-st1",
+          "entryId": "#689, #690, #691, #692, #693, #694, #695, #696, #697",
+          "description": "#689 Parboiled rice, cooked 20 min, Uncle Ben's Natur-reis± (Masterfoods, Belgium) (Belgium, 2000) — GI 64±7; #690 Parboiled rice, long grain white Uncle Ben's± (Belgium, 2011) — GI 54±7; #691 Parboiled, long-grain rice (Harlem Foods AS, Oslo)  (Norway, 2019) — GI 57±5; #692 Parboiled, long grain, 10 min cooking time (Uncle Ben's, Masterfoods, Belgium) (Belgium, 2000) — GI 68±6; #693 Parboiled, long grain, 20 min cooking time (Uncle Ben's, Masterfoods, Belgium) (Belgium, 2000) — GI 75±7; #694 Rice, parboiled, NS (Canada, 2010) — GI 51±4; #695 Parboiled rice, NS (Riso Blond Risotti, Riso Gallo, Italy) (Italy, 2009) — GI 53±6; #696 Parboiled rice, NS (Uncle Ben's, Masterfoods Australia New Zealand, NSW, Australia) (Australia, 2013) — GI 57±3; #697 Parboiled rice, NS (Riso Blond Veloce e Versatile, Riso Gallo, Italy) (Italy, 2009) — GI 61±11"
+        }
+      }
+    },
+    {
+      "id": "B0074",
+      "status": "active",
+      "category": "grains",
+      "family": "rice",
+      "variant": "jasmine",
+      "state": "dry",
+      "nameUk": "Рис жасмин, сухий",
+      "nameEn": "Rice, jasmine, white, dry",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 365.0,
+          "carbsG": 79.95,
+          "fiberG": 1.3,
+          "sugarsG": 0.12,
+          "proteinG": 7.13,
+          "fatG": 0.66,
+          "sodiumMg": 5.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "168877",
+          "description": "Rice, white, long-grain, regular, raw, enriched"
+        },
+        "reliability": "medium",
+        "reason": {
+          "uk": "Найближчий запис USDA — див. примітку. USDA не має окремого запису для цього сорту; поживні речовини — звичайного довгозернистого білого рису, з яким він майже збігається.",
+          "en": "The closest USDA entry — see the note. USDA has no separate entry for this variety; nutrients are those of regular long-grain white rice, which it closely matches."
+        },
+        "verified": "2026-10-04"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 90,
+        "reliability": "medium",
+        "verified": "2026-10-04",
+        "reason": {
+          "uk": "Середнє 14 записів (Таблиця 1, метод ISO), діапазон 68–116. Жасмин має високий ГІ в усіх дослідженнях, але дуже різний (68–116); підгрупи одного дослідження — один раз. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
+          "en": "Mean of 14 entries (Table 1, ISO method), range 68–116. Jasmine is high in every study but varies widely (68–116); subgroups of one study counted once. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
+        },
+        "source": {
+          "dataset": "gi-2021-st1",
+          "entryId": "#599, #600, #601, #602, #603, #605, #606, #608, #609, #612, #613, #614, #615, #616",
+          "description": "#599 Jasmine rice, white Thai (Double FP brand, NTUC Fairprice Co-operative Ltd., Singapore), chewed 15 times (Singapore, 2014) — GI 68±3; #600 Jasmine rice, cooked in rice cooker (SunRice; Ricegrowers Ltd., NSW, Australia) (Australia, 2013) — GI 68±4; #601 Jasmine rice, steamed for 30 min, 31.6 g rice cooked with 35 mL water (COFCO China) (Thailand, 2016) — GI 76±5; #602 Jasmine Fragrant rice, white (SunRice brand, Ricegrowers Limited, Australia) (Australia, 2008) — GI 79±5; #603 Jasmine Fragrant rice (SunRice, Ricegrowers Limited, NSW) (Australia, 2011) — GI 80±3; #605 Jasmine long grain rice (Canada, 2010) — GI 82±8; #606 Jasmine white rice (Uncle Ben's Jasmine Rice, Mars Canada, Bolton, Ontario, Canada) (Canada, 2010) — GI 84±4; #608 Jasmine Fragrant rice, white (SunRice brand, Ricegrowers Limited, Australia) (Australia, 2006) — GI 89±4; #609 Jasmine rice (Double FP Thai Hom Mali premium quality fragrant rice, Thailand)  (Thailand, 2015) — GI 90±5; #612 Rice, white, Thai Hom Mali fragrant rice, cooked in rice cooker (NTUC Fairprice, Singapore) (Singapore, 2013) — GI 96±6; #613 Jasmine rice, Jazzmen, cooked in rice cooker (Jazzmen Rice, Inc., USA)  (USA, 2014) — GI 106±13; #614 Jasmine rice, white, cooked in rice cooker (Golden World Foods, Bangkok, Thailand) (Thailand, 2000) — GI 109±10; #615 Jasmine rice, Mahatma, cooked in rice cooker (Riviana Foods Inc., Thailand)  (Thailand, 2014) — GI 115±7; #616 Jasmine rice, Reindeer, cooked in rice cooker (Oriental Jasmine Rice Co., Thailand)  (Thailand, 2014) — GI 116±11"
+        }
+      }
+    },
+    {
+      "id": "B0075",
+      "status": "active",
+      "category": "grains",
+      "family": "rice",
+      "variant": "jasmine",
+      "state": "boiled",
+      "nameUk": "Рис жасмин, варений, без солі",
+      "nameEn": "Rice, jasmine, white, cooked, without salt",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 130.0,
+          "carbsG": 28.17,
+          "fiberG": 0.4,
+          "sugarsG": 0.05,
+          "proteinG": 2.69,
+          "fatG": 0.28,
+          "sodiumMg": 1.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "168878",
+          "description": "Rice, white, long-grain, regular, enriched, cooked"
+        },
+        "reliability": "medium",
+        "reason": {
+          "uk": "Найближчий запис USDA — див. примітку. USDA не має окремого запису для цього сорту; поживні речовини — звичайного довгозернистого білого рису, з яким він майже збігається.",
+          "en": "The closest USDA entry — see the note. USDA has no separate entry for this variety; nutrients are those of regular long-grain white rice, which it closely matches."
+        },
+        "verified": "2026-10-04"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 90,
+        "reliability": "medium",
+        "verified": "2026-10-04",
+        "reason": {
+          "uk": "Середнє 14 записів (Таблиця 1, метод ISO), діапазон 68–116. Жасмин має високий ГІ в усіх дослідженнях, але дуже різний (68–116); підгрупи одного дослідження — один раз.",
+          "en": "Mean of 14 entries (Table 1, ISO method), range 68–116. Jasmine is high in every study but varies widely (68–116); subgroups of one study counted once."
+        },
+        "source": {
+          "dataset": "gi-2021-st1",
+          "entryId": "#599, #600, #601, #602, #603, #605, #606, #608, #609, #612, #613, #614, #615, #616",
+          "description": "#599 Jasmine rice, white Thai (Double FP brand, NTUC Fairprice Co-operative Ltd., Singapore), chewed 15 times (Singapore, 2014) — GI 68±3; #600 Jasmine rice, cooked in rice cooker (SunRice; Ricegrowers Ltd., NSW, Australia) (Australia, 2013) — GI 68±4; #601 Jasmine rice, steamed for 30 min, 31.6 g rice cooked with 35 mL water (COFCO China) (Thailand, 2016) — GI 76±5; #602 Jasmine Fragrant rice, white (SunRice brand, Ricegrowers Limited, Australia) (Australia, 2008) — GI 79±5; #603 Jasmine Fragrant rice (SunRice, Ricegrowers Limited, NSW) (Australia, 2011) — GI 80±3; #605 Jasmine long grain rice (Canada, 2010) — GI 82±8; #606 Jasmine white rice (Uncle Ben's Jasmine Rice, Mars Canada, Bolton, Ontario, Canada) (Canada, 2010) — GI 84±4; #608 Jasmine Fragrant rice, white (SunRice brand, Ricegrowers Limited, Australia) (Australia, 2006) — GI 89±4; #609 Jasmine rice (Double FP Thai Hom Mali premium quality fragrant rice, Thailand)  (Thailand, 2015) — GI 90±5; #612 Rice, white, Thai Hom Mali fragrant rice, cooked in rice cooker (NTUC Fairprice, Singapore) (Singapore, 2013) — GI 96±6; #613 Jasmine rice, Jazzmen, cooked in rice cooker (Jazzmen Rice, Inc., USA)  (USA, 2014) — GI 106±13; #614 Jasmine rice, white, cooked in rice cooker (Golden World Foods, Bangkok, Thailand) (Thailand, 2000) — GI 109±10; #615 Jasmine rice, Mahatma, cooked in rice cooker (Riviana Foods Inc., Thailand)  (Thailand, 2014) — GI 115±7; #616 Jasmine rice, Reindeer, cooked in rice cooker (Oriental Jasmine Rice Co., Thailand)  (Thailand, 2014) — GI 116±11"
+        }
+      }
+    },
+    {
+      "id": "B0076",
+      "status": "active",
+      "category": "grains",
+      "family": "rice",
+      "variant": "round-grain",
+      "state": "dry",
+      "nameUk": "Рис круглозерний, сухий",
+      "nameEn": "Rice, white, medium-grain, dry",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 360.0,
+          "carbsG": 79.34,
+          "fiberG": 1.4,
+          "sugarsG": 0,
+          "proteinG": 6.61,
+          "fatG": 0.58,
+          "sodiumMg": 1.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "168879",
+          "description": "Rice, white, medium-grain, raw, enriched"
+        },
+        "reliability": "medium",
+        "reason": {
+          "uk": "Найближчий запис USDA — див. примітку. Український круглозерний рис найближчий до середньо- й короткозернистого в USDA (поживні речовини в них майже однакові).",
+          "en": "The closest USDA entry — see the note. Ukrainian round-grain rice is closest to USDA's medium- and short-grain rice (their nutrients are almost the same)."
+        },
+        "verified": "2026-10-04",
+        "unknown": [
+          "sugarsG"
+        ]
+      },
+      "gi": {
+        "status": "measured",
+        "value": 72,
+        "reliability": "medium",
+        "verified": "2026-10-04",
+        "reason": {
+          "uk": "Середнє 2 записів (Таблиця 1, метод ISO), діапазон 69–75. Середньозернистий рис і арборіо; круглозернистий Calrose у Таблиці 2 — 83. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
+          "en": "Mean of 2 entries (Table 1, ISO method), range 69–75. Medium-grain rice and arborio; round-grain Calrose in Table 2 is 83. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
+        },
+        "source": {
+          "dataset": "gi-2021-st1",
+          "entryId": "#648, #649",
+          "description": "#648 Arborio, risotto rice, boiled (SunRice brand, Rice Growers Co-Op., Australia) (Australia, 2005) — GI 69±7; #649 Medium grain white rice, boiled 12 min (Sun Rice brand, Rice Growers Co-Op., Australia) (Australia, 2005) — GI 75±8"
+        }
+      }
+    },
+    {
+      "id": "B0077",
+      "status": "active",
+      "category": "grains",
+      "family": "rice",
+      "variant": "round-grain",
+      "state": "boiled",
+      "nameUk": "Рис круглозерний, варений, без солі",
+      "nameEn": "Rice, white, medium-grain, cooked, without salt",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 130.0,
+          "carbsG": 28.59,
+          "fiberG": 0.3,
+          "sugarsG": 0,
+          "proteinG": 2.38,
+          "fatG": 0.21,
+          "sodiumMg": 0.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "168880",
+          "description": "Rice, white, medium-grain, enriched, cooked"
+        },
+        "reliability": "medium",
+        "reason": {
+          "uk": "Найближчий запис USDA — див. примітку. Український круглозерний рис найближчий до середньо- й короткозернистого в USDA (поживні речовини в них майже однакові).",
+          "en": "The closest USDA entry — see the note. Ukrainian round-grain rice is closest to USDA's medium- and short-grain rice (their nutrients are almost the same)."
+        },
+        "verified": "2026-10-04",
+        "unknown": [
+          "sugarsG"
+        ]
+      },
+      "gi": {
+        "status": "measured",
+        "value": 72,
+        "reliability": "medium",
+        "verified": "2026-10-04",
+        "reason": {
+          "uk": "Середнє 2 записів (Таблиця 1, метод ISO), діапазон 69–75. Середньозернистий рис і арборіо; круглозернистий Calrose у Таблиці 2 — 83.",
+          "en": "Mean of 2 entries (Table 1, ISO method), range 69–75. Medium-grain rice and arborio; round-grain Calrose in Table 2 is 83."
+        },
+        "source": {
+          "dataset": "gi-2021-st1",
+          "entryId": "#648, #649",
+          "description": "#648 Arborio, risotto rice, boiled (SunRice brand, Rice Growers Co-Op., Australia) (Australia, 2005) — GI 69±7; #649 Medium grain white rice, boiled 12 min (Sun Rice brand, Rice Growers Co-Op., Australia) (Australia, 2005) — GI 75±8"
+        }
+      }
+    },
+    {
+      "id": "B0078",
+      "status": "active",
+      "category": "grains",
+      "family": "wild-rice",
+      "state": "dry",
+      "nameUk": "Рис дикий, сухий",
+      "nameEn": "Wild rice, dry",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 357.0,
+          "carbsG": 74.9,
+          "fiberG": 6.2,
+          "sugarsG": 2.5,
+          "proteinG": 14.73,
+          "fatG": 1.08,
+          "sodiumMg": 7.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "169726",
+          "description": "Wild rice, raw"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-04"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 58,
+        "reliability": "low",
+        "verified": "2026-10-04",
+        "reason": {
+          "uk": "Значення запису (Таблиця 2, менш надійні методи). Одне дослідження у людей з діабетом, менш надійний метод. Дикий рис — інша рослина (цицанія), не сорт звичайного рису. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
+          "en": "The entry's value (Table 2, less robust methods). A single study in people with diabetes, less robust method. Wild rice is a different plant (Zizania), not a variety of common rice. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
+        },
+        "source": {
+          "dataset": "gi-2021-st2",
+          "entryId": "#2742",
+          "description": "#2742 Saskatchewan wild rice Canada 1984- 1992 58±6 26 Type 1 & 2, 9 50 79.0 Bread, 3h Yes 0,30, — GI 58±6"
+        }
+      }
+    },
+    {
+      "id": "B0079",
+      "status": "active",
+      "category": "grains",
+      "family": "wild-rice",
+      "state": "boiled",
+      "nameUk": "Рис дикий, варений, без солі",
+      "nameEn": "Wild rice, cooked, without salt",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 101.0,
+          "carbsG": 21.34,
+          "fiberG": 1.8,
+          "sugarsG": 0.73,
+          "proteinG": 3.99,
+          "fatG": 0.34,
+          "sodiumMg": 3.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "168897",
+          "description": "Wild rice, cooked"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-04"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 58,
+        "reliability": "low",
+        "verified": "2026-10-04",
+        "reason": {
+          "uk": "Значення запису (Таблиця 2, менш надійні методи). Одне дослідження у людей з діабетом, менш надійний метод. Дикий рис — інша рослина (цицанія), не сорт звичайного рису.",
+          "en": "The entry's value (Table 2, less robust methods). A single study in people with diabetes, less robust method. Wild rice is a different plant (Zizania), not a variety of common rice."
+        },
+        "source": {
+          "dataset": "gi-2021-st2",
+          "entryId": "#2742",
+          "description": "#2742 Saskatchewan wild rice Canada 1984- 1992 58±6 26 Type 1 & 2, 9 50 79.0 Bread, 3h Yes 0,30, — GI 58±6"
         }
       }
     }

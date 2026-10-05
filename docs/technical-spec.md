@@ -494,6 +494,7 @@ Deferred by the developer; the decisions are already made:
 - `entries` — one per food in one state:
   - `id` — the permanent `B` ID (never changed or reused; a replaced entry stays as `status: "retired"` with `replacedBy`).
   - `family` + `state` — what the food is across states (`buckwheat`: `dry` and `boiled`); states: raw, dry, boiled, baked, fried, steamed, canned, dried, fermented, processed.
+  - `variant` (optional) — a type within the family **whose GI differs** (developer, 2026-10-05, from the rice review: one entry per type, e.g. family `rice`: long-grain white, basmati, parboiled, jasmine, round-grain, brown). When USDA has no entry for the type, its nutrients come from the closest one (medium reliability, reason stated) — the GI is still worth having.
   - `nameUk`, `nameEn` — proper names, stating what the values assume (fat %, cooked without salt…).
   - **`nutrients`** — values per 100 g (kcal, carbs, fibre, sugars, protein, fat, sodium), `unknown` for fields the source lacks (held as 0, excluded from totals), `source` (dataset + entry ID + the dataset's own description), `reliability`, `reason` (Ukrainian + English), `verified` date.
   - **`gi`** — `status`: `measured` (a GI table value, with its source), `conventional` (no measurable GI — too little carbohydrate to test — a conventional value labelled «умовне» so the carbs still count in GL), or `unknown` (value null, GL not counted, «немає даних»); plus its own `reliability`, `reason`, `verified`.

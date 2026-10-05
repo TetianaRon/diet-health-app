@@ -71,6 +71,13 @@ export interface VerifiedFoodEntry {
   category: string;
   /** What the food is, across states — e.g. "buckwheat" for dry and boiled. */
   family: string;
+  /**
+   * A type within the family whose GI differs (developer, 2026-10-05: «different
+   * entries with different types of rice… where GI has a ranged value depending
+   * on subtype») — e.g. family "rice", variant "basmati". When USDA has no entry
+   * for the type, its nutrients come from the closest one, with the reason.
+   */
+  variant?: string;
   state: FoodState;
   nameUk: string;
   nameEn: string;
@@ -155,6 +162,7 @@ export function validateVerifiedFoods(file: VerifiedFoodsFile, today: string): s
     }
     if (!categoryIds.has(e.category)) problems.push(`${at}: unknown category "${e.category}"`);
     if (!filled(e.family)) problems.push(`${at}: family is required`);
+    if (e.variant !== undefined && !filled(e.variant)) problems.push(`${at}: variant, when given, must not be empty`);
     if (!(FOOD_STATES as readonly string[]).includes(e.state)) problems.push(`${at}: unknown state "${e.state}"`);
     if (!filled(e.nameUk) || !filled(e.nameEn)) problems.push(`${at}: Ukrainian and English names are required`);
 
