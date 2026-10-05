@@ -1,3 +1,5 @@
+import { verifiedEntry } from "../data/builtInFoods";
+import { searchFoods } from "../lib/foodSearch";
 import { formatDecimal } from "../lib/numberFormat";
 import VerifiedInfoDialog from "./VerifiedInfoDialog";
 import { builtInMatch } from "../lib/builtInStatus";
@@ -295,7 +297,7 @@ function AddFoodForm({
   const suggestions =
     lookupAttempted || !search.trim()
       ? []
-      : availableFoods.filter((food) => food.nameUk.toLowerCase().includes(search.toLowerCase()));
+      : searchFoods(search, availableFoods, (food) => verifiedEntry(food.basedOn || food.id));
 
   const nameMatch = findNameMatch(saveNameUk, existingItems);
 
@@ -762,7 +764,7 @@ function ComposeDishForm({
         const suggestions =
           resolvedIngredient && row.nameUk.trim() === resolvedIngredient.nameUk
             ? []
-            : sortedIngredients.filter((i) => i.nameUk.toLowerCase().includes(row.nameUk.trim().toLowerCase()));
+            : searchFoods(row.nameUk, sortedIngredients, (i) => verifiedEntry(i.basedOn || i.id));
 
         return (
           <div key={index} className="compose-row">
@@ -1004,10 +1006,11 @@ export default function FoodsScreen() {
   const availableIngredients = mergeWithBuiltInFoods(ingredients ?? []);
   const availableDishes = dishes ?? [];
 
-  const filteredIngredients = sortFavoritesFirst(
-    availableIngredients.filter((i) => i.nameUk.toLowerCase().includes(search.toLowerCase())),
-  );
-  const filteredDishes = availableDishes.filter((d) => d.nameUk.toLowerCase().includes(search.toLowerCase()));
+  // Favourites first while browsing; best match first while searching (1.9, see foodSearch.ts).
+  const filteredIngredients = search.trim()
+    ? searchFoods(search, availableIngredients, (i) => verifiedEntry(i.basedOn || i.id))
+    : sortFavoritesFirst(availableIngredients);
+  const filteredDishes = searchFoods(search, availableDishes, () => null);
 
   // Live cross-reference for the derived "contains a flagged ingredient"
   // hint — see dishContainsFlaggedIngredient in lib/dishes.ts.

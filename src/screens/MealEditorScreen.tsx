@@ -1,3 +1,5 @@
+import { verifiedEntry } from "../data/builtInFoods";
+import { searchFoods } from "../lib/foodSearch";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { App as CapacitorApp } from "@capacitor/app";
 import { uk } from "../i18n/uk";
@@ -128,7 +130,7 @@ function AddDishToMealForm({
 
   const matches =
     !selected || search !== selected.nameUk
-      ? foods.filter((f) => f.nameUk.toLowerCase().includes(search.toLowerCase()))
+      ? searchFoods(search, foods, (f) => verifiedEntry(f.id))
       : [];
 
   const handlePick = (food: PickableFood) => {
