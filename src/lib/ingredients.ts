@@ -3,7 +3,7 @@
 // read/written by column HEADER NAME (see sheetRow.ts), not fixed position,
 // so a reordered sheet — deliberately or by someone dragging a column in the
 // Sheets UI — still parses correctly.
-import { batchUpdateRanges, readRange, writeRange } from "./sheets";
+import { batchUpdateRanges, deleteSheetRow, readRange, writeRange } from "./sheets";
 import { buildColumnIndex, buildRow, cell, columnLetter, parseTab, SCAN_LAST_COLUMN, type ColumnIndex, type ParsedTab } from "./sheetRow";
 import { BUILT_IN_ALIASES, BUILT_IN_FOODS } from "../data/builtInFoods";
 import { toGlycemicFlag, type GlycemicFlag } from "./glycemicFlag";
@@ -256,4 +256,10 @@ export async function updateIngredient(ingredient: Ingredient): Promise<void> {
   await batchUpdateRanges([
     { range: `Ingredients!A${rowNumber}:${lastCol}${rowNumber}`, values: [ingredientToRow(ingredient, columnIndex)] },
   ]);
+}
+
+/** Removes her saved product's row from the sheet (by ID). Final — the app can't bring it back. */
+export async function deleteIngredient(id: string): Promise<void> {
+  const { rowNumber } = await findIngredientRow(id);
+  await deleteSheetRow("Ingredients", rowNumber);
 }

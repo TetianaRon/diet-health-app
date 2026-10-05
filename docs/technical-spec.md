@@ -535,6 +535,8 @@ Only what works the same wherever her data lives — the database is bundled in 
 - **Display:** her product keeps «неперевірено» for its nutrients, and gets **ⓘ for the GI** («ГІ з бази: …» — the entry's GI part: value, reliability, reason, source, date). A dish made from it gets its GI from the ingredients as before (carb-weighted).
 - Not a medical claim: the suggestion is "the database's GI for a similar food", with its reliability and the database entry's own note (e.g. «після варіння» for dry products).
 
+**Deleting her products and dishes** (developer, 2026-10-05 — there was no way to delete at all): «Видалити продукт» / «Видалити страву» under the edit form of her saved items (built-in products can't be deleted; deleting her copy of one brings the database version back). The row is **removed** from the sheet (`deleteSheetRow`, a `deleteDimension` request) — the confirmation says the app can't bring it back, only Google Sheets' version history. Past meals keep their own values. **A product used in her dishes isn't deleted:** the app lists those dishes with a «Редагувати «…»» button each, which opens that dish's editor (`dishesUsingIngredient`; a recipe line pointing at a built-in ID doesn't count for her copy of it).
+
 ## Daily records and the new Today (release 1.7, designed 2026-10-04)
 
 > **Status:** 📝 Designed with the developer, not built. Mom asked for medicine and weight logging as soon as possible; the developer added the UX update (one daily surface). Supersedes "Planned: medication log" (2026-09-29), whose decisions are kept below.

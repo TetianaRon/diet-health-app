@@ -106,6 +106,7 @@ Simplify the spreadsheet part of Settings and detect the user's sheet. Design: s
 Only what works the same wherever her data lives (the database is bundled in the app); everything tied to storage — sets, a clean start, database updates from a server — moved to the local-first design (2.x), so it's built once (developer, 2026-10-05).
 - **Search: our database first (in Ukrainian, no translation needed), then USDA.** Fewer paid translations; works for a free version. Types grouped by family in results (rice → basmati, parboiled…).
 - **Suggest the GI for the user's own items** (developer, 2026-10-05): packaged foods come with nutrients on the pack, but no GI. When she adds or edits an item (e.g. pasta with the values from its pack), the app recognises the matching database entry (e.g. «Макарони з твердої пшениці») and offers its GI, with ⓘ (source, reliability, range), for her item. Her dishes made from it then get a GI by themselves. Uses the same matching as the search.
+- **Deleting her products and dishes** (developer, 2026-10-05, found while testing — there was no delete at all): removes the row, warns it can't be undone from the app; a product used in dishes points her to edit those dishes first.
 - **Database additions shipped with the app:** coffee (see Intake), Ukrainian breads (батон, бородинський…) if wanted — same sources and review as 1.8.
 
 ### 2.0 — Mom's data, verified · 📝 planned (after 1.9)

@@ -1,3 +1,6 @@
+import DeleteItem from "./DeleteItem";
+import { deleteIngredient } from "../lib/ingredients";
+import { deleteDish, dishesUsingIngredient } from "../lib/dishes";
 import GiSuggestions from "./GiSuggestions";
 import { verifiedEntry } from "../data/builtInFoods";
 import { searchFoods } from "../lib/foodSearch";
@@ -1166,6 +1169,24 @@ export default function FoodsScreen() {
           onCancel={() => setEditingIngredient(null)}
         />
       )}
+      {editingIngredient && !isBuiltInId(editingIngredient.id) && (
+        <DeleteItem
+          kind="ingredient"
+          name={editingIngredient.nameUk}
+          isCopy={editingIngredient.basedOn !== ""}
+          usedIn={dishesUsingIngredient(editingIngredient, availableDishes)}
+          onConfirm={async () => {
+            await deleteIngredient(editingIngredient.id);
+            setIngredients((prev) => (prev ?? []).filter((i) => i.id !== editingIngredient.id));
+            setEditingIngredient(null);
+          }}
+          onEditDish={(dish) => {
+            setEditingIngredient(null);
+            setSubTab("dishes");
+            setEditingDish(dish);
+          }}
+        />
+      )}
 
       {editingDish && (
         <ComposeDishForm
@@ -1177,6 +1198,17 @@ export default function FoodsScreen() {
             setEditingDish(null);
           }}
           onCancel={() => setEditingDish(null)}
+        />
+      )}
+      {editingDish && !isBuiltInId(editingDish.id) && (
+        <DeleteItem
+          kind="dish"
+          name={editingDish.nameUk}
+          onConfirm={async () => {
+            await deleteDish(editingDish.id);
+            setDishes((prev) => (prev ?? []).filter((d) => d.id !== editingDish.id));
+            setEditingDish(null);
+          }}
         />
       )}
 

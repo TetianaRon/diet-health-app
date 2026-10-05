@@ -784,6 +784,20 @@ select {
   gap: 4px 8px;
 }
 
+/* Deleting her product or dish: below the edit form, a calm danger button; the confirmation says it's final. */
+.delete-item {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #e2e6e2;
+}
+
+.delete-item-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
 .copy-update-list {
   list-style: none;
   margin: 0;
