@@ -180,6 +180,10 @@ This plan works no issues-log entries. The roadmap's open Intake items stay wher
 | `tools/verified-db/` (8 scripts + `README.md`) | ✅ Applied | Phase 1; output byte-identical to the committed JSON |
 | `CLAUDE.md` (v2.0) | ✅ Applied | Phase 2 |
 | `docs/tasks/dha-task-interview.md` | ✅ Applied | Phase 2; adds one line: a follow-up interview starts from the open items |
+| `docs/tasks/dha-task-release.md` | 🔄 Drafted | Phase 3 |
+| `docs/tasks/dha-task-device-testing.md` | 🔄 Drafted | Phase 3 |
+| `docs/tasks/dha-task-verified-db-change.md` | 🔄 Drafted | Phase 3; absorbs the not-a-medical-app memory |
+| `docs/tasks/dha-task-user-data-import.md` | 🔄 Drafted | Phase 3; absorbs the reconciliation memory |
 | Memory (`MEMORY.md` + 4 files) | ✅ Applied | Phase 2; 8 files deleted, 2 kept for Phase 3, 2 kept for good |
 
 ---
@@ -223,3 +227,5 @@ This plan works no issues-log entries. The roadmap's open Intake items stay wher
   - Memory: 8 files deleted; `MEMORY.md` now lists 4 (two marked to move to Phase 3 task files).
   - The checkpoint passed with the text approval, so the phase is complete. Phase 3 is next.
 - **Phase 3 started** ("Yes, start Phase 3"): drafting the four task files; routing rows are added after review.
+- **Phase 3 drafts written** (not yet in the routing table): release, device testing, verified-db change, user-data import.
+  - Found while drafting: the spec's sheet roles say structure changes go to the **dev** sheet, but this session's 1.9 checks used the test sheet, so the `GiFrom` column reached it before release. It's harmless (an additive column, and 1.9 has now shipped), but the device-testing task file states the rule.
