@@ -85,7 +85,7 @@ export interface VerifiedFoodEntry {
   gi: GiPart;
 }
 
-export const FOOD_STATES = ["raw", "dry", "boiled", "baked", "fried", "steamed", "canned", "dried", "fermented", "processed"] as const;
+export const FOOD_STATES = ["raw", "dry", "boiled", "baked", "fried", "steamed", "canned", "dried", "fermented", "processed", "brewed"] as const;
 export type FoodState = (typeof FOOD_STATES)[number];
 
 export interface DatasetInfo {
@@ -193,7 +193,10 @@ export function validateVerifiedFoods(file: VerifiedFoodsFile, today: string): s
         if (typeof gi.value !== "number" || gi.value < 1 || gi.value > 120) problems.push(`${at} gi: a conventional value must be a number from 1 to 120`);
       } else if (gi.status === "unknown" || gi.status === "notApplicable") {
         if (gi.value !== null) problems.push(`${at} gi: an ${gi.status} GI must have value null`);
-        if (gi.status === "notApplicable" && n && n.per100g.carbsG > 1) problems.push(`${at} gi: notApplicable is only for foods with at most 1 g carbohydrate per 100 g`);
+        // ≤ 1 g carbohydrate; or, like black coffee, up to 2 g with no sugars at all — USDA's
+        // "carbohydrate by difference" there isn't sugar or starch (developer, 2026-10-05).
+        const noCarbs = n && (n.per100g.carbsG <= 1 || (n.per100g.carbsG <= 2 && n.per100g.sugarsG === 0));
+        if (gi.status === "notApplicable" && n && !noCarbs) problems.push(`${at} gi: notApplicable is only for foods with at most 1 g carbohydrate per 100 g (2 g with no sugars)`);
       } else {
         problems.push(`${at} gi: status must be measured, conventional, unknown or notApplicable`);
       }

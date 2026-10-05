@@ -80,8 +80,13 @@ describe("validateVerifiedFoods", () => {
       "B0001 gi: an unknown GI must have value null",
     ]);
     expect(validateVerifiedFoods(withEntries({ ...e, gi: { ...e.gi, status: "notApplicable", value: null, source: null } }), TODAY)).toEqual([
-      "B0001 gi: notApplicable is only for foods with at most 1 g carbohydrate per 100 g",
+      "B0001 gi: notApplicable is only for foods with at most 1 g carbohydrate per 100 g (2 g with no sugars)",
     ]);
+    // Black coffee: 1.67 g "by difference", 0 g sugars — accepted; with any sugar it isn't.
+    const coffee = (sugarsG: number) =>
+      withEntries({ ...e, nutrients: { ...e.nutrients, per100g: { ...e.nutrients.per100g, carbsG: 1.67, sugarsG } }, gi: { ...e.gi, status: "notApplicable", value: null, source: null } });
+    expect(validateVerifiedFoods(coffee(0), TODAY)).toEqual([]);
+    expect(validateVerifiedFoods(coffee(0.5), TODAY)).toHaveLength(1);
   });
 
   it("keeps unknown nutrient fields at 0 and refuses negative values", () => {

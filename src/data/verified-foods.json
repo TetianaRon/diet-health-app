@@ -92,6 +92,11 @@
       "id": "fats",
       "nameUk": "Олії та жири",
       "nameEn": "Oils and fats"
+    },
+    {
+      "id": "drinks",
+      "nameUk": "Напої",
+      "nameEn": "Drinks"
     }
   ],
   "entries": [
@@ -4461,6 +4466,92 @@
           "dataset": "gi-2021-st1",
           "entryId": "#933",
           "description": "#933 Kefir, low-fat, plain (Lifeway Foods, Chicago, USA) (USA, 2012) — GI 36±9"
+        }
+      }
+    },
+    {
+      "id": "B0097",
+      "status": "active",
+      "category": "drinks",
+      "family": "coffee",
+      "variant": "brewed",
+      "state": "brewed",
+      "nameUk": "Кава чорна зварена (джезва, турка, фільтр), без цукру",
+      "nameEn": "Coffee, brewed, black, without sugar",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 1.0,
+          "carbsG": 0.0,
+          "fiberG": 0.0,
+          "sugarsG": 0.0,
+          "proteinG": 0.12,
+          "fatG": 0.02,
+          "sodiumMg": 2.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "171890",
+          "description": "Beverages, coffee, brewed, prepared with tap water"
+        },
+        "reliability": "medium",
+        "reason": {
+          "uk": "Найближчий запис USDA — див. примітку. Запис USDA — звичайна заварна кава. Кава, зварена в джезві, міцніша й нефільтрована, але гуща осідає і її не п'ють; окремого запису для неї в USDA немає (запис FNDDS #2710377 «Coffee, Turkish» уже містить цукор). Значення на 100 г дуже малі в будь-якому разі. Без цукру й молока — якщо їх додаєте, внесіть їх окремо.",
+          "en": "The closest USDA entry — see the note. The USDA entry is regular brewed coffee. Coffee made in a small pot (джезва) is stronger and unfiltered, but the grounds settle and aren't drunk; USDA has no entry for it (FNDDS #2710377 \"Coffee, Turkish\" already includes sugar). The values per 100 g are tiny either way. Without sugar or milk — if you add them, log them separately."
+        },
+        "verified": "2026-10-05"
+      },
+      "gi": {
+        "status": "notApplicable",
+        "value": null,
+        "source": null,
+        "reliability": "high",
+        "verified": "2026-10-05",
+        "reason": {
+          "uk": "Вуглеводів практично немає: ГІ не визначається, ГН дорівнює 0.",
+          "en": "Practically no carbohydrate: GI isn't defined and GL is 0."
+        }
+      }
+    },
+    {
+      "id": "B0098",
+      "status": "active",
+      "category": "drinks",
+      "family": "coffee",
+      "variant": "espresso",
+      "state": "brewed",
+      "nameUk": "Кава еспресо, без цукру",
+      "nameEn": "Coffee, espresso, without sugar",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 9.0,
+          "carbsG": 1.67,
+          "fiberG": 0.0,
+          "sugarsG": 0.0,
+          "proteinG": 0.12,
+          "fatG": 0.18,
+          "sodiumMg": 14.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "171891",
+          "description": "Beverages, coffee, brewed, espresso, restaurant-prepared"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані. Без цукру й молока — якщо їх додаєте, внесіть їх окремо.",
+          "en": "The USDA entry describes exactly this food in this state. Without sugar or milk — if you add them, log them separately."
+        },
+        "verified": "2026-10-05"
+      },
+      "gi": {
+        "status": "notApplicable",
+        "value": null,
+        "source": null,
+        "reliability": "high",
+        "verified": "2026-10-05",
+        "reason": {
+          "uk": "ГІ для чорної кави не вимірюють: у ній немає цукрів (0 г) і крохмалю. 1,67 г «вуглеводів» у записі USDA — це розрахунок «за різницею» (усе, що не вода, білок, жир і зола), а не цукор чи крохмаль. ГН дорівнює 0.",
+          "en": "GI isn't measured for black coffee: it has no sugars (0 g) and no starch. USDA's 1.67 g of \"carbohydrate\" is calculated \"by difference\" (everything that isn't water, protein, fat or ash), not sugar or starch. GL is 0."
         }
       }
     }

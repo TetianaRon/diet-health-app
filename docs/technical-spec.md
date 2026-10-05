@@ -490,14 +490,14 @@ Deferred by the developer; the decisions are already made:
 
 **File structure:**
 - `sources` — registry of datasets (name, edition/version, full citation, URL). Entries refer to a key here, so a citation is written once. Today: `usda-sr-legacy`, `gi-2021-st1`, `gi-2021-st2`, `gi-2008`, `calculation` (our own arithmetic; its description says what was computed from which entries).
-- `categories` — every entry belongs to one (Крупи та макарони, Хліб, Молочні продукти, М'ясо і птиця, Риба, Яйця, Бобові, Овочі, Гриби, Фрукти та ягоди, Горіхи, Олії та жири), so the database can be offered as **sets** (local-first design, 2.x).
+- `categories` — every entry belongs to one (Крупи та макарони, Хліб, Молочні продукти, М'ясо і птиця, Риба, Яйця, Бобові, Овочі, Гриби, Фрукти та ягоди, Горіхи, Олії та жири, Напої), so the database can be offered as **sets** (local-first design, 2.x).
 - `entries` — one per food in one state:
   - `id` — the permanent `B` ID (never changed or reused; a replaced entry stays as `status: "retired"` with `replacedBy`).
-  - `family` + `state` — what the food is across states (`buckwheat`: `dry` and `boiled`); states: raw, dry, boiled, baked, fried, steamed, canned, dried, fermented, processed.
+  - `family` + `state` — what the food is across states (`buckwheat`: `dry` and `boiled`); states: raw, dry, boiled, baked, fried, steamed, canned, dried, fermented, processed, brewed (coffee).
   - `variant` (optional) — a type within the family **whose GI differs** (developer, 2026-10-05, from the rice review: one entry per type, e.g. family `rice`: long-grain white, basmati, parboiled, jasmine, round-grain, brown). When USDA has no entry for the type, its nutrients come from the closest one (medium reliability, reason stated) — the GI is still worth having.
   - `nameUk`, `nameEn` — proper names, stating what the values assume (fat %, cooked without salt…).
   - **`nutrients`** — values per 100 g (kcal, carbs, fibre, sugars, protein, fat, sodium), `unknown` for fields the source lacks (held as 0, excluded from totals), `source` (dataset + entry ID + the dataset's own description), `reliability`, `reason` (Ukrainian + English), `verified` date.
-  - **`gi`** — `status`: `measured` (a GI table value, with its source), `conventional` (no measurable GI — too little carbohydrate to test — a conventional value labelled «умовне» so the carbs still count in GL), or `unknown` (value null, GL not counted, «немає даних»); plus its own `reliability`, `reason`, `verified`.
+  - **`gi`** — `status`: `measured` (a GI table value, with its source), `conventional` (no measurable GI — too little carbohydrate to test — a conventional value labelled «умовне» so the carbs still count in GL), `notApplicable` (value null, «не застосовується», GL 0 — at most 1 g carbohydrate per 100 g: meat, fish, oils, butter; or, like black coffee, up to 2 g with no sugars at all, where USDA's carbohydrate "by difference" isn't sugar or starch), or `unknown` (value null, GL not counted, «немає даних»); plus its own `reliability`, `reason`, `verified`.
 
 **Verification is per part:** nutrients and GI each carry their own source, reliability and date; nothing is called "verified" as a whole, and an entry may be incomplete (GI unknown).
 
