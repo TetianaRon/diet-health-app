@@ -102,6 +102,7 @@ Simplify the spreadsheet part of Settings and detect the user's sheet. Design: s
 - ✅ *Decided 2026-10-04:* low-carb vegetables get a conventional GI 15 labelled «умовне»; cooked forms use USDA's unsalted entries; GI from the **2021** tables (2008 only as a fallback).
 
 ### 1.9 — Database sets and search · 📝 planned (after 1.8) — direction decided 2026-10-04
+- **Suggest the GI for the user's own items** (developer, 2026-10-05): packaged foods come with nutrients on the pack, but no GI. When she adds or edits an item (e.g. pasta with the values from its pack), the app recognises the matching database entry (e.g. «Макарони з твердої пшениці») and offers its GI, with ⓘ (source, reliability, range), for her item. Uses the same matching as the search.
 Built-in items stop being "invisible": today they live only inside the app and appear in her lists without being in her sheet, while users (mom included) expect to see them in the spreadsheet.
 - **Sets on our server:** the verified database as a static file on the existing Vercel site (practically free, served from Vercel's network), split by category; updates without an app release; the roncreator.com public pages built from the same file.
 - **Clean start:** a new sheet starts empty; on creating it, the app offers sets («Додати набори: Крупи, Овочі, Молочні продукти…»), also available later from Продукти.

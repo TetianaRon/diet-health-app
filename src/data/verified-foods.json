@@ -130,12 +130,12 @@
       },
       "gi": {
         "status": "measured",
-        "value": 49,
+        "value": 50,
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Середнє 2 записів (Таблиця 2, менш надійні методи), діапазон 46–51. Обидва записи — варена гречана крупа у здорових дорослих; у Таблиці 1 (ISO) гречки немає. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
-          "en": "Mean of 2 entries (Table 2, less robust methods), range 46–51. Both entries are boiled buckwheat groats in healthy adults; buckwheat isn't in Table 1 (ISO). Value for the cooked food; GL from the dry weight counts the same carbohydrate."
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (2 записів, Таблиця 2, менш надійні методи; діапазон 46–51, середнє 48). Обидва записи — варена гречана крупа у здорових дорослих; у Таблиці 1 (ISO) гречки немає. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (2 entries, Table 2, less robust methods; range 46–51, mean 48). Both entries are boiled buckwheat groats in healthy adults; buckwheat isn't in Table 1 (ISO). Value for the cooked food; GL from the dry weight counts the same carbohydrate."
         },
         "source": {
           "dataset": "gi-2021-st2",
@@ -177,17 +177,17 @@
       },
       "gi": {
         "status": "measured",
-        "value": 62,
+        "value": 68,
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Зведене значення таблиці: «Rice long grain, mean of six foods» (6). Середнє, яке наводять самі автори таблиці. Цей запис — для білого довгозернистого рису без назви сорту (не басмати, не жасмин, не пропарений). Якщо сорт відомий, оберіть його запис. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
-          "en": "The table's summary row: 'Rice long grain, mean of six foods' (6). The mean given by the table's authors themselves. This entry is for long-grain white rice without a named type (not basmati, jasmine or parboiled). If the type is known, pick its own entry. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (6 записів, які підсумовує рядок таблиці «Rice long grain, mean of six foods»; середнє авторів — 62, діапазон 47–76). Цей запис — для білого довгозернистого рису без назви сорту (не басмати, не жасмин, не пропарений). Якщо сорт відомий, оберіть його запис. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (6 entries covered by the table's row 'Rice long grain, mean of six foods'; the authors' mean is 62, range 47–76). This entry is for long-grain white rice without a named type (not basmati, jasmine or parboiled). If the type is known, pick its own entry. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
         },
         "source": {
           "dataset": "gi-2021-st1",
-          "entryId": "summary row",
-          "description": "Rice long grain, mean of six foods — GI 62 (summary row of the table)"
+          "entryId": "summary row; #629–#634",
+          "description": "Rice long grain, mean of six foods — GI 62 (summary row). Entries used: #629 56, #630 59, #631 64, #632 69, #633 76, #634 47"
         }
       }
     },
@@ -224,12 +224,12 @@
       },
       "gi": {
         "status": "measured",
-        "value": 63,
+        "value": 65,
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Середнє 3 записів (Таблиця 1, метод ISO), діапазон 58–72. Три дослідження бурого рису різних сортів (Австралія, Тайвань, Індія); розкид — через сорт і спосіб варіння. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
-          "en": "Mean of 3 entries (Table 1, ISO method), range 58–72. Three studies of brown rice of different varieties (Australia, Taiwan, India); the spread comes from the variety and the cooking method. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (3 записів, Таблиця 1, метод ISO; діапазон 58–72, середнє 63). Три дослідження бурого рису різних сортів (Австралія, Тайвань, Індія); розкид — через сорт і спосіб варіння. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (3 entries, Table 1, ISO method; range 58–72, mean 63). Three studies of brown rice of different varieties (Australia, Taiwan, India); the spread comes from the variety and the cooking method. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
         },
         "source": {
           "dataset": "gi-2021-st1",
@@ -270,17 +270,17 @@
       },
       "gi": {
         "status": "measured",
-        "value": 58,
+        "value": 59,
         "reliability": "high",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Зведене значення таблиці: «Porridge made from rolled oats, mean of eight foods» (8). Середнє, яке наводять самі автори таблиці. Каша з вівсяних пластівців на воді. Каша з різаного вівса (steel-cut) — 52, з пластівців миттєвого приготування — 82. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
-          "en": "The table's summary row: 'Porridge made from rolled oats, mean of eight foods' (8). The mean given by the table's authors themselves. Rolled-oat porridge made with water. Steel-cut oat porridge is 52, instant oat porridge 82. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (8 записів, які підсумовує рядок таблиці «Porridge made from rolled oats, mean of eight foods»; середнє авторів — 58, діапазон 50–76). Каша з вівсяних пластівців на воді. Каша з різаного вівса (steel-cut) — 52, з пластівців миттєвого приготування — 82. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (8 entries covered by the table's row 'Porridge made from rolled oats, mean of eight foods'; the authors' mean is 58, range 50–76). Rolled-oat porridge made with water. Steel-cut oat porridge is 52, instant oat porridge 82. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
         },
         "source": {
           "dataset": "gi-2021-st1",
-          "entryId": "summary row",
-          "description": "Porridge made from rolled oats, mean of eight foods — GI 58 (summary row of the table)"
+          "entryId": "summary row; #430–#437",
+          "description": "Porridge made from rolled oats, mean of eight foods — GI 58 (summary row). Entries used: #430 50, #431 51, #432 55, #433 57, #434 58, #435 63, #436 76, #437 55"
         }
       }
     },
@@ -365,12 +365,12 @@
       },
       "gi": {
         "status": "measured",
-        "value": 35,
+        "value": 39,
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Середнє 6 записів (Таблиця 1, метод ISO), діапазон 22–58. Записи — різні сорти ячменю (22–58). Українські упаковки вказують номер крупи (№1–5, розмір зерна), а не сорт ячменю, тому взято середнє для перлової крупи. Зведене значення таблиці «Barley, mean of 20 foods» — 30 — включає й цільнозерновий ячмінь. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
-          "en": "Mean of 6 entries (Table 1, ISO method), range 22–58. The entries are different barley cultivars (22–58). Ukrainian packs state the grade number (№1–5, grain size), not the barley cultivar, so the pearled-barley mean is used. The table's summary 'Barley, mean of 20 foods' — 30 — also includes whole-grain barley. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (6 записів, Таблиця 1, метод ISO; діапазон 22–58, середнє 35). Записи — різні сорти ячменю (22–58). Українські упаковки вказують номер крупи (№1–5, розмір зерна), а не сорт ячменю, тому взято верхню оцінку для перлової крупи. Зведене значення таблиці «Barley, mean of 20 foods» — 30 — включає й цільнозерновий ячмінь. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (6 entries, Table 1, ISO method; range 22–58, mean 35). The entries are different barley cultivars (22–58). Ukrainian packs state the grade number (№1–5, grain size), not the barley cultivar, so the upper estimate for pearled barley is used. The table's summary 'Barley, mean of 20 foods' — 30 — also includes whole-grain barley. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
         },
         "source": {
           "dataset": "gi-2021-st1",
@@ -506,17 +506,17 @@
       },
       "gi": {
         "status": "measured",
-        "value": 47,
+        "value": 51,
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Зведене значення таблиці: «White spaghetti, boiled, mean of 11 foods» (11). Середнє, яке наводять самі автори таблиці. Дослідження — білі макарони з твердої пшениці (дурум); макарони з м'якої пшениці (групи Б, В) у таблицях не вимірювали, їхній ГІ може відрізнятися. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
-          "en": "The table's summary row: 'White spaghetti, boiled, mean of 11 foods' (11). The mean given by the table's authors themselves. The studies are of white durum-wheat pasta; pasta from soft wheat (groups Б, В) wasn't measured in the tables, and its GI may differ. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (11 записів, які підсумовує рядок таблиці «White spaghetti, boiled, mean of 11 foods»; середнє авторів — 47, діапазон 33–56). Макарони без зазначеного виду пшениці; дослідження — білі макарони з твердої пшениці (для них є окремий запис), макарони з м'якої пшениці (групи Б, В) не вимірювали, їхній ГІ може відрізнятися. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (11 entries covered by the table's row 'White spaghetti, boiled, mean of 11 foods'; the authors' mean is 47, range 33–56). Pasta without a stated wheat type; the studies are of white durum-wheat pasta (which has its own entry), pasta from soft wheat (groups Б, В) wasn't measured and its GI may differ. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
         },
         "source": {
           "dataset": "gi-2021-st1",
-          "entryId": "summary row",
-          "description": "White spaghetti, boiled, mean of 11 foods — GI 47 (summary row of the table)"
+          "entryId": "summary row; #1465–#1475",
+          "description": "White spaghetti, boiled, mean of 11 foods — GI 47 (summary row). Entries used: #1465 33, #1466 44, #1467 45, #1468 46, #1469 48, #1470 48, #1471 49, #1472 50, #1473 51, #1474 52, #1475 56"
         }
       }
     },
@@ -552,17 +552,17 @@
       },
       "gi": {
         "status": "measured",
-        "value": 60,
+        "value": 65,
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Зведене значення таблиці: «Rye breads, mean of 13 foods» (13). Середнє, яке наводять самі автори таблиці. Різні житні хліби; цільнозерновий житній і пумперні́кель нижчі (41–58), житньо-пшеничні — близько 60.",
-          "en": "The table's summary row: 'Rye breads, mean of 13 foods' (13). The mean given by the table's authors themselves. Various rye breads; wholegrain rye and pumpernickel are lower (41–58), rye-wheat breads about 60."
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (13 записів, які підсумовує рядок таблиці «Rye breads, mean of 13 foods»; середнє авторів — 60, діапазон 48–82). Різні житні хліби; цільнозерновий житній і пумперні́кель нижчі (41–58), житньо-пшеничні — близько 60.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (13 entries covered by the table's row 'Rye breads, mean of 13 foods'; the authors' mean is 60, range 48–82). Various rye breads; wholegrain rye and pumpernickel are lower (41–58), rye-wheat breads about 60."
         },
         "source": {
           "dataset": "gi-2021-st1",
-          "entryId": "summary row",
-          "description": "Rye breads, mean of 13 foods — GI 60 (summary row of the table)"
+          "entryId": "summary row; #212–#224",
+          "description": "Rye breads, mean of 13 foods — GI 60 (summary row). Entries used: #212 76, #213 82, #214 51, #215 53, #216 49, #217 55, #218 62, #219 48, #220 67, #221 65, #222 61, #223 60, #224 55"
         }
       }
     },
@@ -598,17 +598,17 @@
       },
       "gi": {
         "status": "measured",
-        "value": 73,
+        "value": 76,
         "reliability": "high",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Зведене значення таблиці: «White wheat flour bread, mean of 35 foods» (35). Середнє, яке наводять самі автори таблиці. Звичайний білий пшеничний хліб.",
-          "en": "The table's summary row: 'White wheat flour bread, mean of 35 foods' (35). The mean given by the table's authors themselves. Plain white wheat bread."
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (35 записів, які підсумовує рядок таблиці «White wheat flour bread, mean of 35 foods»; середнє авторів — 73, діапазон 59–88). Звичайний білий пшеничний хліб.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (35 entries covered by the table's row 'White wheat flour bread, mean of 35 foods'; the authors' mean is 73, range 59–88). Plain white wheat bread."
         },
         "source": {
           "dataset": "gi-2021-st1",
-          "entryId": "summary row",
-          "description": "White wheat flour bread, mean of 35 foods — GI 73 (summary row of the table)"
+          "entryId": "summary row; #234–#268",
+          "description": "White wheat flour bread, mean of 35 foods — GI 73 (summary row). Entries used: #234 59, #235 59, #236 60, #237 62, #238 63, #239 65, #240 66, #241 68, #242 69, #243 70, #244 70, #245 70, #246 71, #247 71, #248 71, #249 71, #250 71, #251 72, #252 72, #253 74, #254 75, #255 75, #256 75, #257 76, #258 76, #259 76, #260 76, #261 76, #262 78, #263 81, #264 83, #265 83, #266 84, #267 87, #268 88"
         }
       }
     },
@@ -690,17 +690,17 @@
       },
       "gi": {
         "status": "measured",
-        "value": 27,
+        "value": 30,
         "reliability": "high",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Зведене значення таблиці: «Reduced-fat or low-fat milk, mean of six studies» (6). Середнє, яке наводять самі автори таблиці. Молоко зниженої жирності, без смакових добавок; для незбираного молока таблиця дає 37 (три дослідження).",
-          "en": "The table's summary row: 'Reduced-fat or low-fat milk, mean of six studies' (6). The mean given by the table's authors themselves. Reduced-fat milk, unflavoured; for full-fat milk the table gives 37 (three studies)."
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (6 записів, які підсумовує рядок таблиці «Reduced-fat or low-fat milk, mean of six studies»; середнє авторів — 27, діапазон 20–34). Молоко зниженої жирності, без смакових добавок; для незбираного молока таблиця дає 37 (три дослідження).",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (6 entries covered by the table's row 'Reduced-fat or low-fat milk, mean of six studies'; the authors' mean is 27, range 20–34). Reduced-fat milk, unflavoured; for full-fat milk the table gives 37 (three studies)."
         },
         "source": {
           "dataset": "gi-2021-st1",
-          "entryId": "summary row",
-          "description": "Reduced-fat or low-fat milk, mean of six studies — GI 27 (summary row of the table)"
+          "entryId": "summary row; #942–#947",
+          "description": "Reduced-fat or low-fat milk, mean of six studies — GI 27 (summary row). Entries used: #942 26, #943 34, #944 20, #945 20, #946 30, #947 30"
         }
       }
     },
@@ -1202,12 +1202,12 @@
       },
       "gi": {
         "status": "measured",
-        "value": 35,
+        "value": 37,
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Середнє 4 записів (Таблиця 2, менш надійні методи), діапазон 26–51. Квасоля, зварена із сухої, у здорових дорослих; у Таблиці 1 є лише консервована (36–43). Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
-          "en": "Mean of 4 entries (Table 2, less robust methods), range 26–51. Kidney beans boiled from dry, in healthy adults; Table 1 has only canned (36–43). Value for the cooked food; GL from the dry weight counts the same carbohydrate."
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (4 записів, Таблиця 2, менш надійні методи; діапазон 26–51, середнє 34). Квасоля, зварена із сухої, у здорових дорослих; у Таблиці 1 є лише консервована (36–43). Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (4 entries, Table 2, less robust methods; range 26–51, mean 34). Kidney beans boiled from dry, in healthy adults; Table 1 has only canned (36–43). Value for the cooked food; GL from the dry weight counts the same carbohydrate."
         },
         "source": {
           "dataset": "gi-2021-st2",
@@ -1248,17 +1248,17 @@
       },
       "gi": {
         "status": "measured",
-        "value": 16,
+        "value": 18,
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Зведене значення таблиці: «Lentils, boiled, mean of eight foods» (8). Середнє, яке наводять самі автори таблиці. Вісім сортів сочевиці з одного дослідження; старіші дослідження (Таблиця 2) — 18–37. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
-          "en": "The table's summary row: 'Lentils, boiled, mean of eight foods' (8). The mean given by the table's authors themselves. Eight lentil cultivars from one study; older studies (Table 2) give 18–37. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (8 записів, які підсумовує рядок таблиці «Lentils, boiled, mean of eight foods»; середнє авторів — 16, діапазон 10–23). Вісім сортів сочевиці з одного дослідження; старіші дослідження (Таблиця 2) — 18–37. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (8 entries covered by the table's row 'Lentils, boiled, mean of eight foods'; the authors' mean is 16, range 10–23). Eight lentil cultivars from one study; older studies (Table 2) give 18–37. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
         },
         "source": {
           "dataset": "gi-2021-st1",
-          "entryId": "summary row",
-          "description": "Lentils, boiled, mean of eight foods — GI 16 (summary row of the table)"
+          "entryId": "summary row; #1291–#1298",
+          "description": "Lentils, boiled, mean of eight foods — GI 16 (summary row). Entries used: #1291 10, #1292 23, #1293 14, #1294 17, #1295 15, #1296 13, #1297 18, #1298 18"
         }
       }
     },
@@ -1298,8 +1298,8 @@
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Середнє 2 записів (Таблиця 1, метод ISO), діапазон 35–38. Два дослідження консервованого нуту; варений із сухого у Таблиці 2 — 36 (#3108, #3109). Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
-          "en": "Mean of 2 entries (Table 1, ISO method), range 35–38. Two studies of canned chickpeas; boiled from dry in Table 2 is 36 (#3108, #3109). Value for the cooked food; GL from the dry weight counts the same carbohydrate."
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (2 записів, Таблиця 1, метод ISO; діапазон 35–38, середнє 36). Два дослідження консервованого нуту; варений із сухого у Таблиці 2 — 36 (#3108, #3109). Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (2 entries, Table 1, ISO method; range 35–38, mean 36). Two studies of canned chickpeas; boiled from dry in Table 2 is 36 (#3108, #3109). Value for the cooked food; GL from the dry weight counts the same carbohydrate."
         },
         "source": {
           "dataset": "gi-2021-st1",
@@ -1340,17 +1340,17 @@
       },
       "gi": {
         "status": "measured",
-        "value": 36,
+        "value": 39,
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Зведене значення таблиці: «Peas, mean of two studies» (2). Середнє, яке наводять самі автори таблиці. Заморожений зелений горошок.",
-          "en": "The table's summary row: 'Peas, mean of two studies' (2). The mean given by the table's authors themselves. Frozen green peas."
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (2 записів, які підсумовує рядок таблиці «Peas, mean of two studies»; середнє авторів — 36, діапазон 29–42). Заморожений зелений горошок.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (2 entries covered by the table's row 'Peas, mean of two studies'; the authors' mean is 36, range 29–42). Frozen green peas."
         },
         "source": {
           "dataset": "gi-2021-st1",
-          "entryId": "summary row",
-          "description": "Peas, mean of two studies — GI 36 (summary row of the table)"
+          "entryId": "summary row; #1797–#1798",
+          "description": "Peas, mean of two studies — GI 36 (summary row). Entries used: #1797 29, #1798 42"
         }
       }
     },
@@ -1428,12 +1428,12 @@
       },
       "gi": {
         "status": "measured",
-        "value": 37,
+        "value": 38,
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Середнє 2 записів (Таблиця 2, менш надійні методи), діапазон 35–39. Два вимірювання сирої моркви (1982), менш надійний метод.",
-          "en": "Mean of 2 entries (Table 2, less robust methods), range 35–39. Two measurements of raw carrot (1982), less robust method."
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (2 записів, Таблиця 2, менш надійні методи; діапазон 35–39, середнє 37). Два вимірювання сирої моркви (1982), менш надійний метод.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (2 entries, Table 2, less robust methods; range 35–39, mean 37). Two measurements of raw carrot (1982), less robust method."
         },
         "source": {
           "dataset": "gi-2021-st2",
@@ -1478,13 +1478,13 @@
         "reliability": "high",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Зведене значення таблиці: «Carrots, mean of two foods» (2). Середнє, яке наводять самі автори таблиці. Варена морква, два узгоджені дослідження.",
-          "en": "The table's summary row: 'Carrots, mean of two foods' (2). The mean given by the table's authors themselves. Boiled carrot, two consistent studies."
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (2 записів, які підсумовує рядок таблиці «Carrots, mean of two foods»; середнє авторів — 32, діапазон 31–32). Варена морква, два узгоджені дослідження.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (2 entries covered by the table's row 'Carrots, mean of two foods'; the authors' mean is 32, range 31–32). Boiled carrot, two consistent studies."
         },
         "source": {
           "dataset": "gi-2021-st1",
-          "entryId": "summary row",
-          "description": "Carrots, mean of two foods — GI 32 (summary row of the table)"
+          "entryId": "summary row; #1804–#1805",
+          "description": "Carrots, mean of two foods — GI 32 (summary row). Entries used: #1804 32, #1805 31"
         }
       }
     },
@@ -1567,17 +1567,17 @@
       },
       "gi": {
         "status": "measured",
-        "value": 73,
+        "value": 82,
         "reliability": "high",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Зведене значення таблиці: «Boiled potato, mean of 29 studies» (29). Середнє, яке наводять самі автори таблиці. Свіжозварена гаряча картопля; ГІ залежить і від сорту (у записах 58–82). Охолоджена, а потім розігріта картопля знову має високий ГІ (58–79).",
-          "en": "The table's summary row: 'Boiled potato, mean of 29 studies' (29). The mean given by the table's authors themselves. Freshly boiled, hot potato; GI also depends on the variety (58–82 in the entries). Cooled and then reheated potato is high again (58–79)."
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (29 записів, які підсумовує рядок таблиці «Boiled potato, mean of 29 studies»; середнє авторів — 73, діапазон 38–103). Свіжозварена гаряча картопля; ГІ залежить і від сорту (у записах 58–82). Охолоджена, а потім розігріта картопля знову має високий ГІ (58–79).",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (29 entries covered by the table's row 'Boiled potato, mean of 29 studies'; the authors' mean is 73, range 38–103). Freshly boiled, hot potato; GI also depends on the variety (58–82 in the entries). Cooled and then reheated potato is high again (58–79)."
         },
         "source": {
           "dataset": "gi-2021-st1",
-          "entryId": "summary row",
-          "description": "Boiled potato, mean of 29 studies — GI 73 (summary row of the table)"
+          "entryId": "summary row; #1810–#1838",
+          "description": "Boiled potato, mean of 29 studies — GI 73 (summary row). Entries used: #1810 94, #1811 53, #1812 57, #1813 66, #1814 68, #1815 101, #1816 74, #1817 79, #1818 66, #1819 75, #1820 103, #1821 56, #1822 85, #1823 59, #1824 58, #1825 69, #1826 88, #1827 82, #1828 87, #1829 93, #1830 60, #1831 75, #1832 82, #1833 38, #1834 79, #1835 79, #1836 73, #1837 72, #1838 58"
         }
       }
     },
@@ -2121,17 +2121,17 @@
       },
       "gi": {
         "status": "measured",
-        "value": 53,
+        "value": 54,
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Зведене значення таблиці: «Sweet corn, mean of two foods» (2). Середнє, яке наводять самі автори таблиці. Цукрова кукурудза, два дослідження.",
-          "en": "The table's summary row: 'Sweet corn, mean of two foods' (2). The mean given by the table's authors themselves. Sweet corn, two studies."
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (2 записів, які підсумовує рядок таблиці «Sweet corn, mean of two foods»; середнє авторів — 53, діапазон 51–55). Цукрова кукурудза, два дослідження.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (2 entries covered by the table's row 'Sweet corn, mean of two foods'; the authors' mean is 53, range 51–55). Sweet corn, two studies."
         },
         "source": {
           "dataset": "gi-2021-st1",
-          "entryId": "summary row",
-          "description": "Sweet corn, mean of two foods — GI 53 (summary row of the table)"
+          "entryId": "summary row; #1801–#1802",
+          "description": "Sweet corn, mean of two foods — GI 53 (summary row). Entries used: #1801 51, #1802 55"
         }
       }
     },
@@ -2213,12 +2213,12 @@
       },
       "gi": {
         "status": "measured",
-        "value": 29,
+        "value": 31,
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Середнє 2 записів (Таблиця 1, метод ISO), діапазон 24–33. Те саме дослідження: недостигла груша 24, стигла 33.",
-          "en": "Mean of 2 entries (Table 1, ISO method), range 24–33. The same study: under-ripe pear 24, ripe 33."
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (2 записів, Таблиця 1, метод ISO; діапазон 24–33, середнє 28). Те саме дослідження: недостигла груша 24, стигла 33.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (2 entries, Table 1, ISO method; range 24–33, mean 28). The same study: under-ripe pear 24, ripe 33."
         },
         "source": {
           "dataset": "gi-2021-st1",
@@ -2259,17 +2259,17 @@
       },
       "gi": {
         "status": "measured",
-        "value": 50,
+        "value": 54,
         "reliability": "high",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Середнє 3 записів (Таблиця 1, метод ISO), діапазон 47–53. Три узгоджені дослідження; перестиглий банан вищий (#1091 — 57).",
-          "en": "Mean of 3 entries (Table 1, ISO method), range 47–53. Three consistent studies; overripe banana is higher (#1091 — 57)."
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (4 записів, Таблиця 1, метод ISO; діапазон 47–57, середнє 52). Стиглість змінює ГІ: перестиглий банан — 57 (#1091), недостиглий нижчий.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (4 entries, Table 1, ISO method; range 47–57, mean 52). Ripeness changes GI: overripe banana is 57 (#1091), under-ripe is lower."
         },
         "source": {
           "dataset": "gi-2021-st1",
-          "entryId": "#1088, #1089, #1090",
-          "description": "#1088 Banana, raw (Australia, 2008) — GI 47±5; #1089 Banana, lady finger (Moraitis, Australia) (Australia, 2014) — GI 49±5; #1090 Banana, lady finger (Moraitis, Australia) (Australia, 2014) — GI 53±4"
+          "entryId": "#1088, #1089, #1090, #1091",
+          "description": "#1088 Banana, raw (Australia, 2008) — GI 47±5; #1089 Banana, lady finger (Moraitis, Australia) (Australia, 2014) — GI 49±5; #1090 Banana, lady finger (Moraitis, Australia) (Australia, 2014) — GI 53±4; #1091 Banana, raw, overripe (Australia, 2008) — GI 57±8"
         }
       }
     },
@@ -2397,12 +2397,12 @@
       },
       "gi": {
         "status": "measured",
-        "value": 39,
+        "value": 46,
         "reliability": "low",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Середнє 2 записів (Таблиця 2, менш надійні методи), діапазон 24–53. Лише два старі дослідження, які дуже розходяться (24 і 53), менш надійний метод.",
-          "en": "Mean of 2 entries (Table 2, less robust methods), range 24–53. Only two old studies that disagree widely (24 and 53), less robust method."
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (2 записів, Таблиця 2, менш надійні методи; діапазон 24–53, середнє 38). Лише два старі дослідження, які дуже розходяться (24 і 53), менш надійний метод.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (2 entries, Table 2, less robust methods; range 24–53, mean 38). Only two old studies that disagree widely (24 and 53), less robust method."
         },
         "source": {
           "dataset": "gi-2021-st2",
@@ -2443,12 +2443,12 @@
       },
       "gi": {
         "status": "measured",
-        "value": 54,
+        "value": 57,
         "reliability": "high",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Середнє 3 записів (Таблиця 1, метод ISO), діапазон 50–59. Три узгоджені дослідження різних сортів.",
-          "en": "Mean of 3 entries (Table 1, ISO method), range 50–59. Three consistent studies of different varieties."
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (3 записів, Таблиця 1, метод ISO; діапазон 50–59, середнє 54). Три узгоджені дослідження різних сортів.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (3 entries, Table 1, ISO method; range 50–59, mean 54). Three consistent studies of different varieties."
         },
         "source": {
           "dataset": "gi-2021-st1",
@@ -2665,12 +2665,12 @@
       },
       "gi": {
         "status": "measured",
-        "value": 49,
+        "value": 50,
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Середнє 2 записів (Таблиця 2, менш надійні методи), діапазон 46–51. Обидва записи — варена гречана крупа у здорових дорослих; у Таблиці 1 (ISO) гречки немає.",
-          "en": "Mean of 2 entries (Table 2, less robust methods), range 46–51. Both entries are boiled buckwheat groats in healthy adults; buckwheat isn't in Table 1 (ISO)."
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (2 записів, Таблиця 2, менш надійні методи; діапазон 46–51, середнє 48). Обидва записи — варена гречана крупа у здорових дорослих; у Таблиці 1 (ISO) гречки немає.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (2 entries, Table 2, less robust methods; range 46–51, mean 48). Both entries are boiled buckwheat groats in healthy adults; buckwheat isn't in Table 1 (ISO)."
         },
         "source": {
           "dataset": "gi-2021-st2",
@@ -2712,17 +2712,17 @@
       },
       "gi": {
         "status": "measured",
-        "value": 62,
+        "value": 68,
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Зведене значення таблиці: «Rice long grain, mean of six foods» (6). Середнє, яке наводять самі автори таблиці. Цей запис — для білого довгозернистого рису без назви сорту (не басмати, не жасмин, не пропарений). Якщо сорт відомий, оберіть його запис.",
-          "en": "The table's summary row: 'Rice long grain, mean of six foods' (6). The mean given by the table's authors themselves. This entry is for long-grain white rice without a named type (not basmati, jasmine or parboiled). If the type is known, pick its own entry."
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (6 записів, які підсумовує рядок таблиці «Rice long grain, mean of six foods»; середнє авторів — 62, діапазон 47–76). Цей запис — для білого довгозернистого рису без назви сорту (не басмати, не жасмин, не пропарений). Якщо сорт відомий, оберіть його запис.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (6 entries covered by the table's row 'Rice long grain, mean of six foods'; the authors' mean is 62, range 47–76). This entry is for long-grain white rice without a named type (not basmati, jasmine or parboiled). If the type is known, pick its own entry."
         },
         "source": {
           "dataset": "gi-2021-st1",
-          "entryId": "summary row",
-          "description": "Rice long grain, mean of six foods — GI 62 (summary row of the table)"
+          "entryId": "summary row; #629–#634",
+          "description": "Rice long grain, mean of six foods — GI 62 (summary row). Entries used: #629 56, #630 59, #631 64, #632 69, #633 76, #634 47"
         }
       }
     },
@@ -2759,12 +2759,12 @@
       },
       "gi": {
         "status": "measured",
-        "value": 63,
+        "value": 65,
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Середнє 3 записів (Таблиця 1, метод ISO), діапазон 58–72. Три дослідження бурого рису різних сортів (Австралія, Тайвань, Індія); розкид — через сорт і спосіб варіння.",
-          "en": "Mean of 3 entries (Table 1, ISO method), range 58–72. Three studies of brown rice of different varieties (Australia, Taiwan, India); the spread comes from the variety and the cooking method."
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (3 записів, Таблиця 1, метод ISO; діапазон 58–72, середнє 63). Три дослідження бурого рису різних сортів (Австралія, Тайвань, Індія); розкид — через сорт і спосіб варіння.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (3 entries, Table 1, ISO method; range 58–72, mean 63). Three studies of brown rice of different varieties (Australia, Taiwan, India); the spread comes from the variety and the cooking method."
         },
         "source": {
           "dataset": "gi-2021-st1",
@@ -2805,17 +2805,17 @@
       },
       "gi": {
         "status": "measured",
-        "value": 58,
+        "value": 59,
         "reliability": "high",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Зведене значення таблиці: «Porridge made from rolled oats, mean of eight foods» (8). Середнє, яке наводять самі автори таблиці. Каша з вівсяних пластівців на воді. Каша з різаного вівса (steel-cut) — 52, з пластівців миттєвого приготування — 82.",
-          "en": "The table's summary row: 'Porridge made from rolled oats, mean of eight foods' (8). The mean given by the table's authors themselves. Rolled-oat porridge made with water. Steel-cut oat porridge is 52, instant oat porridge 82."
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (8 записів, які підсумовує рядок таблиці «Porridge made from rolled oats, mean of eight foods»; середнє авторів — 58, діапазон 50–76). Каша з вівсяних пластівців на воді. Каша з різаного вівса (steel-cut) — 52, з пластівців миттєвого приготування — 82.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (8 entries covered by the table's row 'Porridge made from rolled oats, mean of eight foods'; the authors' mean is 58, range 50–76). Rolled-oat porridge made with water. Steel-cut oat porridge is 52, instant oat porridge 82."
         },
         "source": {
           "dataset": "gi-2021-st1",
-          "entryId": "summary row",
-          "description": "Porridge made from rolled oats, mean of eight foods — GI 58 (summary row of the table)"
+          "entryId": "summary row; #430–#437",
+          "description": "Porridge made from rolled oats, mean of eight foods — GI 58 (summary row). Entries used: #430 50, #431 51, #432 55, #433 57, #434 58, #435 63, #436 76, #437 55"
         }
       }
     },
@@ -2897,12 +2897,12 @@
       },
       "gi": {
         "status": "measured",
-        "value": 35,
+        "value": 39,
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Середнє 6 записів (Таблиця 1, метод ISO), діапазон 22–58. Записи — різні сорти ячменю (22–58). Українські упаковки вказують номер крупи (№1–5, розмір зерна), а не сорт ячменю, тому взято середнє для перлової крупи. Зведене значення таблиці «Barley, mean of 20 foods» — 30 — включає й цільнозерновий ячмінь.",
-          "en": "Mean of 6 entries (Table 1, ISO method), range 22–58. The entries are different barley cultivars (22–58). Ukrainian packs state the grade number (№1–5, grain size), not the barley cultivar, so the pearled-barley mean is used. The table's summary 'Barley, mean of 20 foods' — 30 — also includes whole-grain barley."
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (6 записів, Таблиця 1, метод ISO; діапазон 22–58, середнє 35). Записи — різні сорти ячменю (22–58). Українські упаковки вказують номер крупи (№1–5, розмір зерна), а не сорт ячменю, тому взято верхню оцінку для перлової крупи. Зведене значення таблиці «Barley, mean of 20 foods» — 30 — включає й цільнозерновий ячмінь.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (6 entries, Table 1, ISO method; range 22–58, mean 35). The entries are different barley cultivars (22–58). Ukrainian packs state the grade number (№1–5, grain size), not the barley cultivar, so the upper estimate for pearled barley is used. The table's summary 'Barley, mean of 20 foods' — 30 — also includes whole-grain barley."
         },
         "source": {
           "dataset": "gi-2021-st1",
@@ -3035,17 +3035,17 @@
       },
       "gi": {
         "status": "measured",
-        "value": 47,
+        "value": 51,
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Зведене значення таблиці: «White spaghetti, boiled, mean of 11 foods» (11). Середнє, яке наводять самі автори таблиці. Дослідження — білі макарони з твердої пшениці (дурум); макарони з м'якої пшениці (групи Б, В) у таблицях не вимірювали, їхній ГІ може відрізнятися.",
-          "en": "The table's summary row: 'White spaghetti, boiled, mean of 11 foods' (11). The mean given by the table's authors themselves. The studies are of white durum-wheat pasta; pasta from soft wheat (groups Б, В) wasn't measured in the tables, and its GI may differ."
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (11 записів, які підсумовує рядок таблиці «White spaghetti, boiled, mean of 11 foods»; середнє авторів — 47, діапазон 33–56). Макарони без зазначеного виду пшениці; дослідження — білі макарони з твердої пшениці (для них є окремий запис), макарони з м'якої пшениці (групи Б, В) не вимірювали, їхній ГІ може відрізнятися.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (11 entries covered by the table's row 'White spaghetti, boiled, mean of 11 foods'; the authors' mean is 47, range 33–56). Pasta without a stated wheat type; the studies are of white durum-wheat pasta (which has its own entry), pasta from soft wheat (groups Б, В) wasn't measured and its GI may differ."
         },
         "source": {
           "dataset": "gi-2021-st1",
-          "entryId": "summary row",
-          "description": "White spaghetti, boiled, mean of 11 foods — GI 47 (summary row of the table)"
+          "entryId": "summary row; #1465–#1475",
+          "description": "White spaghetti, boiled, mean of 11 foods — GI 47 (summary row). Entries used: #1465 33, #1466 44, #1467 45, #1468 46, #1469 48, #1470 48, #1471 49, #1472 50, #1473 51, #1474 52, #1475 56"
         }
       }
     },
@@ -3081,12 +3081,12 @@
       },
       "gi": {
         "status": "measured",
-        "value": 35,
+        "value": 37,
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Середнє 4 записів (Таблиця 2, менш надійні методи), діапазон 26–51. Квасоля, зварена із сухої, у здорових дорослих; у Таблиці 1 є лише консервована (36–43).",
-          "en": "Mean of 4 entries (Table 2, less robust methods), range 26–51. Kidney beans boiled from dry, in healthy adults; Table 1 has only canned (36–43)."
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (4 записів, Таблиця 2, менш надійні методи; діапазон 26–51, середнє 34). Квасоля, зварена із сухої, у здорових дорослих; у Таблиці 1 є лише консервована (36–43).",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (4 entries, Table 2, less robust methods; range 26–51, mean 34). Kidney beans boiled from dry, in healthy adults; Table 1 has only canned (36–43)."
         },
         "source": {
           "dataset": "gi-2021-st2",
@@ -3127,17 +3127,17 @@
       },
       "gi": {
         "status": "measured",
-        "value": 16,
+        "value": 18,
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Зведене значення таблиці: «Lentils, boiled, mean of eight foods» (8). Середнє, яке наводять самі автори таблиці. Вісім сортів сочевиці з одного дослідження; старіші дослідження (Таблиця 2) — 18–37.",
-          "en": "The table's summary row: 'Lentils, boiled, mean of eight foods' (8). The mean given by the table's authors themselves. Eight lentil cultivars from one study; older studies (Table 2) give 18–37."
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (8 записів, які підсумовує рядок таблиці «Lentils, boiled, mean of eight foods»; середнє авторів — 16, діапазон 10–23). Вісім сортів сочевиці з одного дослідження; старіші дослідження (Таблиця 2) — 18–37.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (8 entries covered by the table's row 'Lentils, boiled, mean of eight foods'; the authors' mean is 16, range 10–23). Eight lentil cultivars from one study; older studies (Table 2) give 18–37."
         },
         "source": {
           "dataset": "gi-2021-st1",
-          "entryId": "summary row",
-          "description": "Lentils, boiled, mean of eight foods — GI 16 (summary row of the table)"
+          "entryId": "summary row; #1291–#1298",
+          "description": "Lentils, boiled, mean of eight foods — GI 16 (summary row). Entries used: #1291 10, #1292 23, #1293 14, #1294 17, #1295 15, #1296 13, #1297 18, #1298 18"
         }
       }
     },
@@ -3177,8 +3177,8 @@
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Середнє 2 записів (Таблиця 1, метод ISO), діапазон 35–38. Два дослідження консервованого нуту; варений із сухого у Таблиці 2 — 36 (#3108, #3109).",
-          "en": "Mean of 2 entries (Table 1, ISO method), range 35–38. Two studies of canned chickpeas; boiled from dry in Table 2 is 36 (#3108, #3109)."
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (2 записів, Таблиця 1, метод ISO; діапазон 35–38, середнє 36). Два дослідження консервованого нуту; варений із сухого у Таблиці 2 — 36 (#3108, #3109).",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (2 entries, Table 1, ISO method; range 35–38, mean 36). Two studies of canned chickpeas; boiled from dry in Table 2 is 36 (#3108, #3109)."
         },
         "source": {
           "dataset": "gi-2021-st1",
@@ -3220,17 +3220,17 @@
       },
       "gi": {
         "status": "measured",
-        "value": 60,
+        "value": 65,
         "reliability": "high",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Зведене значення таблиці: «Basmati rice, white, mean of 10 studies» (10). Середнє, яке наводять самі автори таблиці. Білий басмати. Розкид у межах басмати — через марку, час варіння й групу людей у дослідженні; басмати швидкого приготування вищий (65). Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
-          "en": "The table's summary row: 'Basmati rice, white, mean of 10 studies' (10). The mean given by the table's authors themselves. White basmati. The spread within basmati comes from the brand, cooking time and the people tested; quick-cooking basmati is higher (65). Value for the cooked food; GL from the dry weight counts the same carbohydrate."
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (10 записів, які підсумовує рядок таблиці «Basmati rice, white, mean of 10 studies»; середнє авторів — 60, діапазон 50–67). Білий басмати. Розкид у межах басмати — через марку, час варіння й групу людей у дослідженні; басмати швидкого приготування вищий (65). Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (10 entries covered by the table's row 'Basmati rice, white, mean of 10 studies'; the authors' mean is 60, range 50–67). White basmati. The spread within basmati comes from the brand, cooking time and the people tested; quick-cooking basmati is higher (65). Value for the cooked food; GL from the dry weight counts the same carbohydrate."
         },
         "source": {
           "dataset": "gi-2021-st1",
-          "entryId": "summary row",
-          "description": "Basmati rice, white, mean of 10 studies — GI 60 (summary row of the table)"
+          "entryId": "summary row; #574–#583",
+          "description": "Basmati rice, white, mean of 10 studies — GI 60 (summary row). Entries used: #574 50, #575 56, #576 57, #577 58, #578 59, #579 60, #580 63, #581 65, #582 66, #583 67"
         }
       }
     },
@@ -3267,17 +3267,17 @@
       },
       "gi": {
         "status": "measured",
-        "value": 60,
+        "value": 65,
         "reliability": "high",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Зведене значення таблиці: «Basmati rice, white, mean of 10 studies» (10). Середнє, яке наводять самі автори таблиці. Білий басмати. Розкид у межах басмати — через марку, час варіння й групу людей у дослідженні; басмати швидкого приготування вищий (65).",
-          "en": "The table's summary row: 'Basmati rice, white, mean of 10 studies' (10). The mean given by the table's authors themselves. White basmati. The spread within basmati comes from the brand, cooking time and the people tested; quick-cooking basmati is higher (65)."
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (10 записів, які підсумовує рядок таблиці «Basmati rice, white, mean of 10 studies»; середнє авторів — 60, діапазон 50–67). Білий басмати. Розкид у межах басмати — через марку, час варіння й групу людей у дослідженні; басмати швидкого приготування вищий (65).",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (10 entries covered by the table's row 'Basmati rice, white, mean of 10 studies'; the authors' mean is 60, range 50–67). White basmati. The spread within basmati comes from the brand, cooking time and the people tested; quick-cooking basmati is higher (65)."
         },
         "source": {
           "dataset": "gi-2021-st1",
-          "entryId": "summary row",
-          "description": "Basmati rice, white, mean of 10 studies — GI 60 (summary row of the table)"
+          "entryId": "summary row; #574–#583",
+          "description": "Basmati rice, white, mean of 10 studies — GI 60 (summary row). Entries used: #574 50, #575 56, #576 57, #577 58, #578 59, #579 60, #580 63, #581 65, #582 66, #583 67"
         }
       }
     },
@@ -3314,17 +3314,17 @@
       },
       "gi": {
         "status": "measured",
-        "value": 64,
+        "value": 70,
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Зведене значення таблиці: «Parboiled rice, mean of 10 studies» (10). Середнє, яке наводять самі автори таблиці. Розкид у межах пропареного рису — переважно через час варіння: той самий рис — 68 після 10 хв і 75 після 20 хв (#692, #693); решта — марка. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
-          "en": "The table's summary row: 'Parboiled rice, mean of 10 studies' (10). The mean given by the table's authors themselves. The spread within parboiled rice comes mostly from cooking time: the same rice is 68 after 10 min and 75 after 20 min (#692, #693); the rest is the brand. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (11 записів, які підсумовує рядок таблиці «Parboiled rice, mean of 10 studies»; середнє авторів — 64, діапазон 51–75). Рядок таблиці охоплює й бурий та цільнозерновий пропарений рис, тому взято лише білий пропарений (#689–#699). Розкид — переважно час варіння: той самий рис — 68 після 10 хв і 75 після 20 хв (#692, #693). Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (11 entries covered by the table's row 'Parboiled rice, mean of 10 studies'; the authors' mean is 64, range 51–75). The table's row also covers brown and wholemeal parboiled rice, so only white parboiled rice is used (#689–#699). The spread is mostly cooking time: the same rice is 68 after 10 min and 75 after 20 min (#692, #693). Value for the cooked food; GL from the dry weight counts the same carbohydrate."
         },
         "source": {
           "dataset": "gi-2021-st1",
-          "entryId": "summary row",
-          "description": "Parboiled rice, mean of 10 studies — GI 64 (summary row of the table)"
+          "entryId": "summary row; #689–#699",
+          "description": "Parboiled rice, mean of 10 studies — GI 64 (summary row). Entries used: #689 64, #690 54, #691 57, #692 68, #693 75, #694 51, #695 53, #696 57, #697 61, #698 72, #699 74"
         }
       }
     },
@@ -3361,17 +3361,17 @@
       },
       "gi": {
         "status": "measured",
-        "value": 64,
+        "value": 70,
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Зведене значення таблиці: «Parboiled rice, mean of 10 studies» (10). Середнє, яке наводять самі автори таблиці. Розкид у межах пропареного рису — переважно через час варіння: той самий рис — 68 після 10 хв і 75 після 20 хв (#692, #693); решта — марка.",
-          "en": "The table's summary row: 'Parboiled rice, mean of 10 studies' (10). The mean given by the table's authors themselves. The spread within parboiled rice comes mostly from cooking time: the same rice is 68 after 10 min and 75 after 20 min (#692, #693); the rest is the brand."
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (11 записів, які підсумовує рядок таблиці «Parboiled rice, mean of 10 studies»; середнє авторів — 64, діапазон 51–75). Рядок таблиці охоплює й бурий та цільнозерновий пропарений рис, тому взято лише білий пропарений (#689–#699). Розкид — переважно час варіння: той самий рис — 68 після 10 хв і 75 після 20 хв (#692, #693).",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (11 entries covered by the table's row 'Parboiled rice, mean of 10 studies'; the authors' mean is 64, range 51–75). The table's row also covers brown and wholemeal parboiled rice, so only white parboiled rice is used (#689–#699). The spread is mostly cooking time: the same rice is 68 after 10 min and 75 after 20 min (#692, #693)."
         },
         "source": {
           "dataset": "gi-2021-st1",
-          "entryId": "summary row",
-          "description": "Parboiled rice, mean of 10 studies — GI 64 (summary row of the table)"
+          "entryId": "summary row; #689–#699",
+          "description": "Parboiled rice, mean of 10 studies — GI 64 (summary row). Entries used: #689 64, #690 54, #691 57, #692 68, #693 75, #694 51, #695 53, #696 57, #697 61, #698 72, #699 74"
         }
       }
     },
@@ -3408,17 +3408,17 @@
       },
       "gi": {
         "status": "measured",
-        "value": 89,
+        "value": 95,
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Зведене значення таблиці: «Jasmine rice, white, mean of 18 studies» (18). Середнє, яке наводять самі автори таблиці. Жасмин високий в усіх дослідженнях; розкид — через марку й походження (тайські Hom Mali найвищі, 90–116), спосіб варіння й групу людей. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
-          "en": "The table's summary row: 'Jasmine rice, white, mean of 18 studies' (18). The mean given by the table's authors themselves. Jasmine is high in every study; the spread comes from the brand and origin (Thai Hom Mali highest, 90–116), the cooking method and the people tested. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (18 записів, які підсумовує рядок таблиці «Jasmine rice, white, mean of 18 studies»; середнє авторів — 89, діапазон 68–116). Жасмин високий в усіх дослідженнях; розкид — через марку й походження (тайські Hom Mali найвищі, 90–116), спосіб варіння й групу людей. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (18 entries covered by the table's row 'Jasmine rice, white, mean of 18 studies'; the authors' mean is 89, range 68–116). Jasmine is high in every study; the spread comes from the brand and origin (Thai Hom Mali highest, 90–116), the cooking method and the people tested. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
         },
         "source": {
           "dataset": "gi-2021-st1",
-          "entryId": "summary row",
-          "description": "Jasmine rice, white, mean of 18 studies — GI 89 (summary row of the table)"
+          "entryId": "summary row; #599–#616",
+          "description": "Jasmine rice, white, mean of 18 studies — GI 89 (summary row). Entries used: #599 68, #600 68, #601 76, #602 79, #603 80, #604 80, #605 82, #606 84, #607 88, #608 89, #609 90, #610 91, #611 92, #612 96, #613 106, #614 109, #615 115, #616 116"
         }
       }
     },
@@ -3455,17 +3455,17 @@
       },
       "gi": {
         "status": "measured",
-        "value": 89,
+        "value": 95,
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Зведене значення таблиці: «Jasmine rice, white, mean of 18 studies» (18). Середнє, яке наводять самі автори таблиці. Жасмин високий в усіх дослідженнях; розкид — через марку й походження (тайські Hom Mali найвищі, 90–116), спосіб варіння й групу людей.",
-          "en": "The table's summary row: 'Jasmine rice, white, mean of 18 studies' (18). The mean given by the table's authors themselves. Jasmine is high in every study; the spread comes from the brand and origin (Thai Hom Mali highest, 90–116), the cooking method and the people tested."
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (18 записів, які підсумовує рядок таблиці «Jasmine rice, white, mean of 18 studies»; середнє авторів — 89, діапазон 68–116). Жасмин високий в усіх дослідженнях; розкид — через марку й походження (тайські Hom Mali найвищі, 90–116), спосіб варіння й групу людей.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (18 entries covered by the table's row 'Jasmine rice, white, mean of 18 studies'; the authors' mean is 89, range 68–116). Jasmine is high in every study; the spread comes from the brand and origin (Thai Hom Mali highest, 90–116), the cooking method and the people tested."
         },
         "source": {
           "dataset": "gi-2021-st1",
-          "entryId": "summary row",
-          "description": "Jasmine rice, white, mean of 18 studies — GI 89 (summary row of the table)"
+          "entryId": "summary row; #599–#616",
+          "description": "Jasmine rice, white, mean of 18 studies — GI 89 (summary row). Entries used: #599 68, #600 68, #601 76, #602 79, #603 80, #604 80, #605 82, #606 84, #607 88, #608 89, #609 90, #610 91, #611 92, #612 96, #613 106, #614 109, #615 115, #616 116"
         }
       }
     },
@@ -3505,12 +3505,12 @@
       },
       "gi": {
         "status": "measured",
-        "value": 72,
+        "value": 74,
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Середнє 2 записів (Таблиця 1, метод ISO), діапазон 69–75. Середньозернистий рис і арборіо; круглозернистий Calrose у Таблиці 2 — 83. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
-          "en": "Mean of 2 entries (Table 1, ISO method), range 69–75. Medium-grain rice and arborio; round-grain Calrose in Table 2 is 83. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (2 записів, Таблиця 1, метод ISO; діапазон 69–75, середнє 72). Середньозернистий рис і арборіо; круглозернистий Calrose у Таблиці 2 — 83. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (2 entries, Table 1, ISO method; range 69–75, mean 72). Medium-grain rice and arborio; round-grain Calrose in Table 2 is 83. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
         },
         "source": {
           "dataset": "gi-2021-st1",
@@ -3555,12 +3555,12 @@
       },
       "gi": {
         "status": "measured",
-        "value": 72,
+        "value": 74,
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Середнє 2 записів (Таблиця 1, метод ISO), діапазон 69–75. Середньозернистий рис і арборіо; круглозернистий Calrose у Таблиці 2 — 83.",
-          "en": "Mean of 2 entries (Table 1, ISO method), range 69–75. Medium-grain rice and arborio; round-grain Calrose in Table 2 is 83."
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (2 записів, Таблиця 1, метод ISO; діапазон 69–75, середнє 72). Середньозернистий рис і арборіо; круглозернистий Calrose у Таблиці 2 — 83.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (2 entries, Table 1, ISO method; range 69–75, mean 72). Medium-grain rice and arborio; round-grain Calrose in Table 2 is 83."
         },
         "source": {
           "dataset": "gi-2021-st1",
@@ -3694,17 +3694,111 @@
       },
       "gi": {
         "status": "measured",
-        "value": 49,
+        "value": 55,
         "reliability": "high",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Зведене значення таблиці: «Potato cooked then cooled, mean of eight foods» (8). Середнє, яке наводять самі автори таблиці. Зварена, охолоджена в холодильнику (16–28 год) і з'їдена холодною. Якщо розігріти, ГІ знову зростає (58–79).",
-          "en": "The table's summary row: 'Potato cooked then cooled, mean of eight foods' (8). The mean given by the table's authors themselves. Boiled, cooled in the fridge (16–28 h) and eaten cold. Reheating raises it again (58–79)."
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (8 записів, які підсумовує рядок таблиці «Potato cooked then cooled, mean of eight foods»; середнє авторів — 49, діапазон 40–56). Зварена, охолоджена в холодильнику (16–28 год) і з'їдена холодною. Якщо розігріти, ГІ знову зростає (58–79).",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (8 entries covered by the table's row 'Potato cooked then cooled, mean of eight foods'; the authors' mean is 49, range 40–56). Boiled, cooled in the fridge (16–28 h) and eaten cold. Reheating raises it again (58–79)."
         },
         "source": {
           "dataset": "gi-2021-st1",
-          "entryId": "summary row",
-          "description": "Potato cooked then cooled, mean of eight foods — GI 49 (summary row of the table)"
+          "entryId": "summary row; #1845–#1852",
+          "description": "Potato cooked then cooled, mean of eight foods — GI 49 (summary row). Entries used: #1845 55, #1846 48, #1847 55, #1848 41, #1849 40, #1850 49, #1851 44, #1852 56"
+        }
+      }
+    },
+    {
+      "id": "B0081",
+      "status": "active",
+      "category": "grains",
+      "family": "pasta",
+      "variant": "durum",
+      "state": "dry",
+      "nameUk": "Макарони з твердої пшениці, сухі",
+      "nameEn": "Pasta, durum wheat, dry",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 371.0,
+          "carbsG": 74.67,
+          "fiberG": 3.2,
+          "sugarsG": 2.67,
+          "proteinG": 13.04,
+          "fatG": 1.51,
+          "sodiumMg": 6.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "169736",
+          "description": "Pasta, dry, enriched"
+        },
+        "reliability": "low",
+        "reason": {
+          "uk": "Наближена відповідність — див. примітку. ГІ точно відповідає макаронам з твердої пшениці, а поживні речовини — із загального запису USDA для макаронів (вид пшениці не вказано). Значення з упаковки ваших макаронів точніші.",
+          "en": "An approximate match — see the note. The GI matches durum-wheat pasta exactly; the nutrients come from USDA's general pasta entry (wheat type not stated). The values on your pack are more accurate."
+        },
+        "verified": "2026-10-04"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 51,
+        "reliability": "high",
+        "verified": "2026-10-04",
+        "reason": {
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (11 записів, які підсумовує рядок таблиці «White spaghetti, boiled, mean of 11 foods»; середнє авторів — 47, діапазон 33–56). Білі макарони з твердої пшениці, варені. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (11 entries covered by the table's row 'White spaghetti, boiled, mean of 11 foods'; the authors' mean is 47, range 33–56). White durum-wheat pasta, boiled. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
+        },
+        "source": {
+          "dataset": "gi-2021-st1",
+          "entryId": "summary row; #1465–#1475",
+          "description": "White spaghetti, boiled, mean of 11 foods — GI 47 (summary row). Entries used: #1465 33, #1466 44, #1467 45, #1468 46, #1469 48, #1470 48, #1471 49, #1472 50, #1473 51, #1474 52, #1475 56"
+        }
+      }
+    },
+    {
+      "id": "B0082",
+      "status": "active",
+      "category": "grains",
+      "family": "pasta",
+      "variant": "durum",
+      "state": "boiled",
+      "nameUk": "Макарони з твердої пшениці, варені, без солі",
+      "nameEn": "Pasta, durum wheat, cooked, without salt",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 158.0,
+          "carbsG": 30.86,
+          "fiberG": 1.8,
+          "sugarsG": 0.56,
+          "proteinG": 5.8,
+          "fatG": 0.93,
+          "sodiumMg": 1.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "169737",
+          "description": "Pasta, cooked, enriched, without added salt"
+        },
+        "reliability": "low",
+        "reason": {
+          "uk": "Наближена відповідність — див. примітку. ГІ точно відповідає макаронам з твердої пшениці, а поживні речовини — із загального запису USDA для макаронів (вид пшениці не вказано). Значення з упаковки ваших макаронів точніші.",
+          "en": "An approximate match — see the note. The GI matches durum-wheat pasta exactly; the nutrients come from USDA's general pasta entry (wheat type not stated). The values on your pack are more accurate."
+        },
+        "verified": "2026-10-04"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 51,
+        "reliability": "high",
+        "verified": "2026-10-04",
+        "reason": {
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (11 записів, які підсумовує рядок таблиці «White spaghetti, boiled, mean of 11 foods»; середнє авторів — 47, діапазон 33–56). Білі макарони з твердої пшениці, варені.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (11 entries covered by the table's row 'White spaghetti, boiled, mean of 11 foods'; the authors' mean is 47, range 33–56). White durum-wheat pasta, boiled."
+        },
+        "source": {
+          "dataset": "gi-2021-st1",
+          "entryId": "summary row; #1465–#1475",
+          "description": "White spaghetti, boiled, mean of 11 foods — GI 47 (summary row). Entries used: #1465 33, #1466 44, #1467 45, #1468 46, #1469 48, #1470 48, #1471 49, #1472 50, #1473 51, #1474 52, #1475 56"
         }
       }
     }
