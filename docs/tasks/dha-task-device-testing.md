@@ -20,6 +20,7 @@ Mom's phone is never part of testing. Her setup is reproduced instead: a Ukraini
 - Name test data so it's obviously temporary, e.g. «Хліб житній (тест 1.9)», and delete it at the end of the check through the app's own delete flows.
 - To confirm what reached the sheet, read it back through the app's own modules in the page, e.g. `await (await import("/src/lib/ingredients.ts")).listIngredients()`.
 - Never type into the sheet itself (standing rule 6).
+- The dev server answers only on IPv6 (`[::1]:5173`). To open it from the phone over USB, start a second one on IPv4, `npx vite --host 127.0.0.1 --port 5174 --strictPort`, then `adb reverse tcp:5174 tcp:5174` and open `http://localhost:5174/` on the phone. Stop it afterwards.
 
 ## Android
 
