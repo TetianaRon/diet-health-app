@@ -64,6 +64,11 @@ describe("suggestGi", () => {
     expect(suggestGi("Спагетті з твердих сортів пшениці", ENTRIES).some((e) => e.variant === "durum")).toBe(true);
   });
 
+  it("ignores numbers and brands that match nothing: «(тест 1.9)» must not bring «Кефір 1%»", () => {
+    const offered = suggestGi("Гречка ядриця Хуторок (тест 1.9)", ENTRIES);
+    expect(offered.map((e) => e.family)).toEqual(["buckwheat"]);
+  });
+
   it("never offers a GI that doesn't apply or isn't known", () => {
     expect(suggestGi("олія соняшникова", ENTRIES)).toEqual([]);
     expect(suggestGi("часник", ENTRIES)).toEqual([]);

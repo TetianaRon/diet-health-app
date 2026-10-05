@@ -401,8 +401,8 @@ function AddFoodForm({
             {suggestions.map((food) => (
               <li key={food.id} className="food-list-item-with-action">
                 <span>
-                  <strong>{food.nameUk}</strong> <span className="food-name-en">({food.nameEn})</span> —{" "}
-                  {foodMetaText({ ...food, giVerified: true })}
+                  <strong>{food.nameUk}</strong> {food.nameEn && <span className="food-name-en">({food.nameEn})</span>} —{" "}
+                  {foodMetaText({ ...food, giVerified: true }, builtInMatch(food))}
                 </span>
                 <button type="button" onClick={() => handlePickSuggestion(food)}>
                   {uk.foods.form.pickButton}
@@ -431,7 +431,7 @@ function AddFoodForm({
                 <span>
                   {nameUk ? (
                     <>
-                      <strong>{nameUk}</strong> <span className="food-name-en">({candidate.nameEn})</span>
+                      <strong>{nameUk}</strong> {candidate.nameEn && <span className="food-name-en">({candidate.nameEn})</span>}
                     </>
                   ) : (
                     <strong>{candidate.nameEn}</strong>
@@ -507,19 +507,21 @@ function AddFoodForm({
               if (field === "gi") setGiFrom(""); // a GI typed by hand has no database source
             }}
           />
+          {field === "gi" && (
+            <GiSuggestions
+              name={saveNameUk || search}
+              giValue={values.gi}
+              giFrom={giFrom}
+              onTake={(entry) => {
+                setValues({ ...values, gi: String(entry.gi.value) });
+                setGiFrom(entry.id);
+                setGiVerified(false);
+              }}
+            />
+          )}
         </label>
       ))}
 
-      <GiSuggestions
-        name={saveNameUk || search}
-        giValue={values.gi}
-        giFrom={giFrom}
-        onTake={(entry) => {
-          setValues({ ...values, gi: String(entry.gi.value) });
-          setGiFrom(entry.id);
-          setGiVerified(false);
-        }}
-      />
 
       <label className="settings-checkbox">
         <input
@@ -644,21 +646,21 @@ function EditIngredientForm({
               }
             }}
           />
+          {field === "gi" && !isDatabaseValues && (
+            <GiSuggestions
+              name={nameUk}
+              giValue={values.gi}
+              giFrom={giFrom}
+              onTake={(entry) => {
+                setValues({ ...values, gi: String(entry.gi.value) });
+                setGiFrom(entry.id);
+                setGiVerified(false);
+              }}
+            />
+          )}
         </label>
       ))}
 
-      {!isDatabaseValues && (
-        <GiSuggestions
-          name={nameUk}
-          giValue={values.gi}
-          giFrom={giFrom}
-          onTake={(entry) => {
-            setValues({ ...values, gi: String(entry.gi.value) });
-            setGiFrom(entry.id);
-            setGiVerified(false);
-          }}
-        />
-      )}
 
       <label className="settings-checkbox">
         <input
@@ -861,7 +863,7 @@ function ComposeDishForm({
                         </span>
                       )}
                       <strong>{ingredient.nameUk}</strong>{" "}
-                      <span className="food-name-en">({ingredient.nameEn})</span>
+                      {ingredient.nameEn && <span className="food-name-en">({ingredient.nameEn})</span>}
                     </span>
                     <button type="button" onClick={() => updateRow(index, { id: ingredient.id, nameUk: ingredient.nameUk })}>
                       {uk.foods.form.pickButton}
@@ -1232,7 +1234,7 @@ export default function FoodsScreen() {
               return (
               <li key={ingredient.id} className="food-list-item-with-action">
                 <span>
-                  <strong>{ingredient.nameUk}</strong> <span className="food-name-en">({ingredient.nameEn})</span> —{" "}
+                  <strong>{ingredient.nameUk}</strong> {ingredient.nameEn && <span className="food-name-en">({ingredient.nameEn})</span>} —{" "}
                   {foodMetaText(ingredient, entry ?? giEntry)} <SourceBadge entry={entry} giEntry={giEntry} name={ingredient.nameUk} onOpen={openInfo} />
                 </span>
                 <div className="food-list-actions">
@@ -1295,7 +1297,7 @@ export default function FoodsScreen() {
                 <li key={dish.id}>
                   <div className="food-list-item-with-action">
                     <span>
-                      <strong>{dish.nameUk}</strong> <span className="food-name-en">({dish.nameEn})</span> —{" "}
+                      <strong>{dish.nameUk}</strong> {dish.nameEn && <span className="food-name-en">({dish.nameEn})</span>} —{" "}
                       {foodMetaText(dish)} (на 100г)
                     </span>
                     <div className="food-list-actions">

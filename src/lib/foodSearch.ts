@@ -70,6 +70,9 @@ export const FAMILY_SYNONYMS: Readonly<Record<string, readonly string[]>> = {
   "olive-oil": ["олія", "оливкова"],
 };
 
+/** Numbers («1», «2,5%», «1.9») never match on their own — packs are full of them, and «1» must not find «Кефір 1%». */
+const isNumberWord = (word: string) => /^[\d%.,]+$/.test(word);
+
 /** Words that only say how a food is — they help rank, never make a match on their own. */
 const STATE_WORDS = new Set([
   "сирий", "сира", "сире", "сирі", "сухий", "суха", "сухе", "сухі", "варений", "варена", "варене", "варені",
@@ -122,8 +125,9 @@ interface Scored<T> {
 export function searchFoods<T extends Searchable>(query: string, items: readonly T[], entryOf: (item: T) => VerifiedFoodEntry | null): T[] {
   const queryWords = normalizeWords(query);
   if (queryWords.length === 0) return [...items];
-  const meaningful = queryWords.filter((w) => !STATE_WORDS.has(w));
-  const words = meaningful.length > 0 ? meaningful : queryWords;
+  const meaningful = queryWords.filter((w) => !STATE_WORDS.has(w) && !isNumberWord(w));
+  if (meaningful.length === 0 && queryWords.every(isNumberWord)) return [];
+  const words = meaningful.length > 0 ? meaningful : queryWords.filter((w) => !isNumberWord(w));
 
   const scored: Scored<T>[] = [];
   items.forEach((item, index) => {
