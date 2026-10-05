@@ -602,11 +602,13 @@ Every screen reads its tabs from Sheets (Today and History read them in one `bat
   - `id`: permanent; new prefixes for records that lack one, e.g. `L…` log row, `S…` sugar, `T…` medicine taken, `W…` weight;
   - `updatedAt`: an ISO timestamp from the device that made the change;
   - `deleted`: a deletion marker.
-- **Storage [decide]:**
-  - **(A) IndexedDB, through the small Dexie library** — recommended. One code path for web and Android. In the Android app the data lives in the app's own storage and survives updates (only "Clear data" or uninstalling removes it). On the web the app asks the browser for persistent storage.
-  - **(B) Native SQLite on Android** (Capacitor plugin). Sturdier, but the web needs a second implementation.
+- **Storage: SQLite on every platform** (developer, 2026-10-05), chosen as the most long-term option. Real SQL suits multi-year charts and reports, it's robust and transactional, and the database is one portable file. One SQL schema serves both platforms:
+  - native SQLite on Android (Capacitor SQLite plugin);
+  - SQLite compiled to WebAssembly in the browser, persisted in the browser's private file storage (OPFS) or IndexedDB.
 
-  The data is small either way (mom's sheet: about 3,000 rows a year).
+  **A proof comes first:** a small spike showing the web build works reliably in the browsers users have (Chrome on Android and desktop, plus Edge and Firefox), with persistence across reloads, before anything else depends on it. If it fails, the fallback is IndexedDB behind the same modules.
+
+  Screens never touch the database directly; they go through the per-tab modules, so the engine stays replaceable.
 - **Screens only read and write the local database.** A sync module is the only code that talks to Sheets.
 
 ### Sync with the Google Sheet
