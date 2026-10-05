@@ -181,8 +181,8 @@
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Середнє 9 записів (Таблиця 1, метод ISO), діапазон 47–83. ГІ рису дуже залежить від сорту; для басмати, пропареного, жасмину й круглозерного — окремі записи. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
-          "en": "Mean of 9 entries (Table 1, ISO method), range 47–83. Rice GI depends strongly on the variety; basmati, parboiled, jasmine and round-grain have their own entries. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
+          "uk": "Середнє 9 записів (Таблиця 1, метод ISO), діапазон 47–83. Цей запис — для білого довгозернистого рису, сорт якого невідомий: середнє багатьох різних сортів, тому діапазон широкий. Якщо сорт відомий, оберіть його запис (басмати, пропарений, жасмин, круглозерний). Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
+          "en": "Mean of 9 entries (Table 1, ISO method), range 47–83. This entry is for long-grain white rice of unknown type: an average of many different varieties, hence the wide range. If the type is known, pick its own entry (basmati, parboiled, jasmine, round-grain). Value for the cooked food; GL from the dry weight counts the same carbohydrate."
         },
         "source": {
           "dataset": "gi-2021-st1",
@@ -228,8 +228,8 @@
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Середнє 3 записів (Таблиця 1, метод ISO), діапазон 58–72. ГІ рису дуже залежить від сорту. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
-          "en": "Mean of 3 entries (Table 1, ISO method), range 58–72. Rice GI depends strongly on the variety. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
+          "uk": "Середнє 3 записів (Таблиця 1, метод ISO), діапазон 58–72. Три дослідження бурого рису різних сортів (Австралія, Тайвань, Індія); розкид — через сорт і спосіб варіння. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
+          "en": "Mean of 3 entries (Table 1, ISO method), range 58–72. Three studies of brown rice of different varieties (Australia, Taiwan, India); the spread comes from the variety and the cooking method. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
         },
         "source": {
           "dataset": "gi-2021-st1",
@@ -2715,8 +2715,8 @@
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Середнє 9 записів (Таблиця 1, метод ISO), діапазон 47–83. ГІ рису дуже залежить від сорту; для басмати, пропареного, жасмину й круглозерного — окремі записи.",
-          "en": "Mean of 9 entries (Table 1, ISO method), range 47–83. Rice GI depends strongly on the variety; basmati, parboiled, jasmine and round-grain have their own entries."
+          "uk": "Середнє 9 записів (Таблиця 1, метод ISO), діапазон 47–83. Цей запис — для білого довгозернистого рису, сорт якого невідомий: середнє багатьох різних сортів, тому діапазон широкий. Якщо сорт відомий, оберіть його запис (басмати, пропарений, жасмин, круглозерний).",
+          "en": "Mean of 9 entries (Table 1, ISO method), range 47–83. This entry is for long-grain white rice of unknown type: an average of many different varieties, hence the wide range. If the type is known, pick its own entry (basmati, parboiled, jasmine, round-grain)."
         },
         "source": {
           "dataset": "gi-2021-st1",
@@ -2762,8 +2762,8 @@
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Середнє 3 записів (Таблиця 1, метод ISO), діапазон 58–72. ГІ рису дуже залежить від сорту.",
-          "en": "Mean of 3 entries (Table 1, ISO method), range 58–72. Rice GI depends strongly on the variety."
+          "uk": "Середнє 3 записів (Таблиця 1, метод ISO), діапазон 58–72. Три дослідження бурого рису різних сортів (Австралія, Тайвань, Індія); розкид — через сорт і спосіб варіння.",
+          "en": "Mean of 3 entries (Table 1, ISO method), range 58–72. Three studies of brown rice of different varieties (Australia, Taiwan, India); the spread comes from the variety and the cooking method."
         },
         "source": {
           "dataset": "gi-2021-st1",
@@ -3223,8 +3223,8 @@
         "reliability": "high",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Середнє 7 записів (Таблиця 1, метод ISO), діапазон 50–66. Білий басмати, варений; експрес-, пропарений і бурий басмати не враховано, підгрупи одного дослідження — один раз. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
-          "en": "Mean of 7 entries (Table 1, ISO method), range 50–66. White basmati, boiled; express, easy-cook and brown basmati excluded, subgroups of one study counted once. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
+          "uk": "Середнє 7 записів (Таблиця 1, метод ISO), діапазон 50–66. Лише білий басмати, варений. Розкид у межах басмати — через марку, час варіння й групу людей у дослідженні; експрес-, пропарений і бурий басмати не враховано, підгрупи одного дослідження — один раз. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
+          "en": "Mean of 7 entries (Table 1, ISO method), range 50–66. White basmati, boiled, only. The spread within basmati comes from the brand, cooking time and the people tested; express, easy-cook and brown basmati excluded, subgroups of one study counted once. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
         },
         "source": {
           "dataset": "gi-2021-st1",
@@ -3270,8 +3270,8 @@
         "reliability": "high",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Середнє 7 записів (Таблиця 1, метод ISO), діапазон 50–66. Білий басмати, варений; експрес-, пропарений і бурий басмати не враховано, підгрупи одного дослідження — один раз.",
-          "en": "Mean of 7 entries (Table 1, ISO method), range 50–66. White basmati, boiled; express, easy-cook and brown basmati excluded, subgroups of one study counted once."
+          "uk": "Середнє 7 записів (Таблиця 1, метод ISO), діапазон 50–66. Лише білий басмати, варений. Розкид у межах басмати — через марку, час варіння й групу людей у дослідженні; експрес-, пропарений і бурий басмати не враховано, підгрупи одного дослідження — один раз.",
+          "en": "Mean of 7 entries (Table 1, ISO method), range 50–66. White basmati, boiled, only. The spread within basmati comes from the brand, cooking time and the people tested; express, easy-cook and brown basmati excluded, subgroups of one study counted once."
         },
         "source": {
           "dataset": "gi-2021-st1",
@@ -3317,8 +3317,8 @@
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Середнє 9 записів (Таблиця 1, метод ISO), діапазон 51–75. Довше варіння підвищує ГІ: той самий рис — 68 після 10 хв і 75 після 20 хв (#692, #693). Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
-          "en": "Mean of 9 entries (Table 1, ISO method), range 51–75. Longer cooking raises GI: the same rice is 68 after 10 min and 75 after 20 min (#692, #693). Value for the cooked food; GL from the dry weight counts the same carbohydrate."
+          "uk": "Середнє 9 записів (Таблиця 1, метод ISO), діапазон 51–75. Розкид у межах пропареного рису — переважно через час варіння: той самий рис — 68 після 10 хв і 75 після 20 хв (#692, #693); решта — марка. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
+          "en": "Mean of 9 entries (Table 1, ISO method), range 51–75. The spread within parboiled rice comes mostly from cooking time: the same rice is 68 after 10 min and 75 after 20 min (#692, #693); the rest is the brand. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
         },
         "source": {
           "dataset": "gi-2021-st1",
@@ -3364,8 +3364,8 @@
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Середнє 9 записів (Таблиця 1, метод ISO), діапазон 51–75. Довше варіння підвищує ГІ: той самий рис — 68 після 10 хв і 75 після 20 хв (#692, #693).",
-          "en": "Mean of 9 entries (Table 1, ISO method), range 51–75. Longer cooking raises GI: the same rice is 68 after 10 min and 75 after 20 min (#692, #693)."
+          "uk": "Середнє 9 записів (Таблиця 1, метод ISO), діапазон 51–75. Розкид у межах пропареного рису — переважно через час варіння: той самий рис — 68 після 10 хв і 75 після 20 хв (#692, #693); решта — марка.",
+          "en": "Mean of 9 entries (Table 1, ISO method), range 51–75. The spread within parboiled rice comes mostly from cooking time: the same rice is 68 after 10 min and 75 after 20 min (#692, #693); the rest is the brand."
         },
         "source": {
           "dataset": "gi-2021-st1",
@@ -3411,8 +3411,8 @@
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Середнє 14 записів (Таблиця 1, метод ISO), діапазон 68–116. Жасмин має високий ГІ в усіх дослідженнях, але дуже різний (68–116); підгрупи одного дослідження — один раз. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
-          "en": "Mean of 14 entries (Table 1, ISO method), range 68–116. Jasmine is high in every study but varies widely (68–116); subgroups of one study counted once. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
+          "uk": "Середнє 14 записів (Таблиця 1, метод ISO), діапазон 68–116. Жасмин високий в усіх дослідженнях; розкид — через марку й походження (тайські Hom Mali найвищі, 90–116), спосіб варіння й групу людей; підгрупи одного дослідження — один раз. Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
+          "en": "Mean of 14 entries (Table 1, ISO method), range 68–116. Jasmine is high in every study; the spread comes from the brand and origin (Thai Hom Mali highest, 90–116), the cooking method and the people tested; subgroups of one study counted once. Value for the cooked food; GL from the dry weight counts the same carbohydrate."
         },
         "source": {
           "dataset": "gi-2021-st1",
@@ -3458,8 +3458,8 @@
         "reliability": "medium",
         "verified": "2026-10-04",
         "reason": {
-          "uk": "Середнє 14 записів (Таблиця 1, метод ISO), діапазон 68–116. Жасмин має високий ГІ в усіх дослідженнях, але дуже різний (68–116); підгрупи одного дослідження — один раз.",
-          "en": "Mean of 14 entries (Table 1, ISO method), range 68–116. Jasmine is high in every study but varies widely (68–116); subgroups of one study counted once."
+          "uk": "Середнє 14 записів (Таблиця 1, метод ISO), діапазон 68–116. Жасмин високий в усіх дослідженнях; розкид — через марку й походження (тайські Hom Mali найвищі, 90–116), спосіб варіння й групу людей; підгрупи одного дослідження — один раз.",
+          "en": "Mean of 14 entries (Table 1, ISO method), range 68–116. Jasmine is high in every study; the spread comes from the brand and origin (Thai Hom Mali highest, 90–116), the cooking method and the people tested; subgroups of one study counted once."
         },
         "source": {
           "dataset": "gi-2021-st1",
