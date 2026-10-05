@@ -228,6 +228,20 @@ export async function setIngredientGlycemicFlag(id: string, glycemicFlag: Glycem
  * Rewrites every known column, so a rename is just part of the same write
  * (safe since 1.6: nothing refers to an ingredient by name any more).
  */
+/** Rewrites several saved rows in one read and one write (stays clear of Google's per-minute read limit). */
+export async function updateIngredients(items: readonly Ingredient[]): Promise<void> {
+  if (items.length === 0) return;
+  const { columnIndex, dataRows, firstDataRow } = await readIngredientsSheet();
+  const lastCol = columnLetter(Math.max(...columnIndex.values()));
+  const updates = items.map((item) => {
+    const i = dataRows.findIndex((row) => String(cell(row, columnIndex, "Id") ?? "").trim() === item.id);
+    if (i < 0) throw new Error(`Ingredient ${item.id} not found`);
+    const rowNumber = firstDataRow + i;
+    return { range: `Ingredients!A${rowNumber}:${lastCol}${rowNumber}`, values: [ingredientToRow(item, columnIndex)] };
+  });
+  await batchUpdateRanges(updates);
+}
+
 export async function updateIngredient(ingredient: Ingredient): Promise<void> {
   const { rowNumber, columnIndex } = await findIngredientRow(ingredient.id);
   const lastCol = columnLetter(Math.max(...columnIndex.values()));

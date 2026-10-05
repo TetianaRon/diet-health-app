@@ -1,3 +1,6 @@
+import VerifiedInfoDialog from "./VerifiedInfoDialog";
+import { builtInMatch } from "../lib/builtInStatus";
+import type { VerifiedFoodEntry } from "../data/verifiedFoods";
 import { useEffect, useState } from "react";
 import { uk } from "../i18n/uk";
 import { useAuth } from "../context/AuthContext";
@@ -83,14 +86,39 @@ function formValuesFromItem(item: { unknownFields: NutritionKey[] } & Record<Num
 
 // One-line "carbs, GI" summary for a list row — "невідомо" (never a
 // misleading 0) for a field the person left blank.
-function foodMetaText(item: { carbsG: number; gi: number; giVerified: boolean; unknownFields: NutritionKey[] }): string {
+function foodMetaText(
+  item: { carbsG: number; gi: number; giVerified: boolean; unknownFields: NutritionKey[] },
+  entry: VerifiedFoodEntry | null = null,
+): string {
   const carbs = item.unknownFields.includes("carbsG")
     ? `вуглеводи ${uk.today.unknownValueLabel}`
     : `${item.carbsG} г вуглеводів`;
-  const gi = item.unknownFields.includes("gi")
-    ? `ГІ ${uk.today.unknownValueLabel}`
-    : `${item.giVerified ? "" : "≈"}ГІ ${item.gi} (${uk.health.gi[classifyGi(item.gi)]})`;
+  // A database product says what kind of GI it has (since 1.8): «умовне» or «не застосовується».
+  const gi =
+    entry?.gi.status === "notApplicable"
+      ? uk.verified.giNotApplicable
+      : item.unknownFields.includes("gi")
+        ? `ГІ ${uk.today.unknownValueLabel}`
+        : entry?.gi.status === "conventional"
+          ? `ГІ ${item.gi} (${uk.verified.giStatus.conventional})`
+          : `${item.giVerified ? "" : "≈"}ГІ ${item.gi} (${uk.health.gi[classifyGi(item.gi)]})`;
   return `${carbs}, ${gi}`;
+}
+
+// ⓘ for a product whose values come unchanged from the verified database, «неперевірено» for everything else.
+function SourceBadge({ entry, name, onOpen }: { entry: VerifiedFoodEntry | null; name: string; onOpen: (entry: VerifiedFoodEntry) => void }) {
+  if (!entry) {
+    return (
+      <span className="unverified-tag" title={uk.verified.unverifiedHint}>
+        {uk.verified.unverified}
+      </span>
+    );
+  }
+  return (
+    <button type="button" className="info-button" aria-label={uk.verified.infoLabel(name)} title={uk.verified.infoLabel(name)} onClick={() => onOpen(entry)}>
+      ⓘ
+    </button>
+  );
 }
 
 // Saving a built-in item (favouriting, flagging or editing it) stores her own
@@ -849,6 +877,7 @@ export default function FoodsScreen() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingIngredient, setEditingIngredient] = useState<Ingredient | null>(null);
   const [editingDish, setEditingDish] = useState<Dish | null>(null);
+  const [infoEntry, setInfoEntry] = useState<VerifiedFoodEntry | null>(null);
 
   useEffect(() => {
     // Also after a renewed sign-in (sessionExpired true -> false): reload,
@@ -1113,11 +1142,13 @@ export default function FoodsScreen() {
           {filteredIngredients.length === 0 && <p>{uk.foods.noResults}</p>}
 
           <ul className="food-list">
-            {filteredIngredients.map((ingredient) => (
+            {filteredIngredients.map((ingredient) => {
+              const entry = builtInMatch(ingredient);
+              return (
               <li key={ingredient.id} className="food-list-item-with-action">
                 <span>
                   <strong>{ingredient.nameUk}</strong> <span className="food-name-en">({ingredient.nameEn})</span> —{" "}
-                  {foodMetaText(ingredient)}
+                  {foodMetaText(ingredient, entry)} <SourceBadge entry={entry} name={ingredient.nameUk} onOpen={setInfoEntry} />
                 </span>
                 <div className="food-list-actions">
                   <button
@@ -1149,7 +1180,8 @@ export default function FoodsScreen() {
                   </button>
                 </div>
               </li>
-            ))}
+              );
+            })}
           </ul>
         </>
       )}
@@ -1236,6 +1268,7 @@ export default function FoodsScreen() {
           </ul>
         </>
       )}
+      {infoEntry && <VerifiedInfoDialog entry={infoEntry} onClose={() => setInfoEntry(null)} />}
     </section>
   );
 }

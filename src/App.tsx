@@ -10,6 +10,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { SheetHealthProvider, useSheetHealth } from "./context/SheetHealthContext";
 import SheetHealthDialog from "./screens/SheetHealthDialog";
 import ConnectSheetDialog from "./screens/ConnectSheetDialog";
+import CopyUpdateOffer from "./screens/CopyUpdateOffer";
 import { initMealReminders } from "./lib/reminderScheduler";
 import TodayScreen from "./screens/TodayScreen";
 import FoodsScreen from "./screens/FoodsScreen";
@@ -101,6 +102,7 @@ export default function App() {
 
         <SheetHealthDialog onOpenSettings={() => setActiveTab("settings")} />
         <ConnectSheetDialog />
+        <CopyUpdateOffer />
         <Toaster />
 
         {!editorOpen && (
