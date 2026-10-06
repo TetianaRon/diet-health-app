@@ -580,7 +580,7 @@ async function readTabs(tabs: readonly string[], fresh = false): Promise<Map<str
   }
   if (missing.length === 0) {
     lastReadWasFromCache = false;
-    return result;
+    return withPendingChanges(result);
   }
   try {
     const fetched = await fetchAndStoreTabs(spreadsheetId, missing);
@@ -598,12 +598,16 @@ async function readTabs(tabs: readonly string[], fresh = false): Promise<Map<str
     }
     lastReadWasFromCache = true;
   }
-  // Saves not yet synced are shown on top of the sheet's copy (release 2.0).
+  return withPendingChanges(result);
+}
+
+/** Saves not yet synced, shown on top of the sheet's copy (release 2.0) — every read goes through this. */
+async function withPendingChanges(grids: Map<string, unknown[][]>): Promise<Map<string, unknown[][]>> {
   const pending = (await listLocalChanges()) as RecordChange[];
   if (pending.length > 0) {
-    for (const [tab, rows] of result) result.set(tab, applyChanges(tab, rows, pending));
+    for (const [tab, rows] of grids) grids.set(tab, applyChanges(tab, rows, pending));
   }
-  return result;
+  return grids;
 }
 
 /**
