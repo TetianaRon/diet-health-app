@@ -5,6 +5,7 @@
 // read-only list). An on-screen order toggle decides newest/oldest first;
 // yesterday's records sit at the end of their block (or the start, oldest
 // first). Everything is read in one batch request (loadDayData).
+import { canOfferLocalMode } from "../lib/localMode";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { syncIfStale } from "../lib/sync";
 import { App as CapacitorApp } from "@capacitor/app";
@@ -95,7 +96,7 @@ export default function TodayScreen({
   // so it behaves as its own screen and a stray tab tap can't discard a draft.
   onEditorOpenChange?: (open: boolean) => void;
 } = {}) {
-  const { signedIn, initializing, signIn, sessionExpired } = useAuth();
+  const { signedIn, initializing, signIn, sessionExpired, startWithoutGoogle } = useAuth();
   const [data, setData] = useState<DayData | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   // null = closed; { meal: null } = composing a new meal; { meal } = editing that one.
@@ -180,6 +181,11 @@ export default function TodayScreen({
         <button type="button" onClick={() => void signIn()}>
           {uk.today.signIn.button}
         </button>
+        {canOfferLocalMode() && (
+          <button type="button" className="button-secondary" onClick={() => void startWithoutGoogle()}>
+            {uk.localMode.startButton}
+          </button>
+        )}
       </section>
     );
   }

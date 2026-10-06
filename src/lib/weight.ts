@@ -30,7 +30,8 @@ function toNumber(value: unknown): number {
  * sheet — so that form is understood too.
  */
 export function normalizeDateCell(value: unknown): string {
-  const text = String(value ?? "").trim();
+  // A leading apostrophe (the "keep as text" mark Sheets drops) stays in data kept only on the phone.
+  const text = String(value ?? "").trim().replace(/^'/, "");
   const iso = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
   if (iso) return `${iso[1]}-${iso[2].padStart(2, "0")}-${iso[3].padStart(2, "0")}`;
   const dotted = text.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);

@@ -4,7 +4,7 @@
 // is BACKUP_KEEP_DAYS old and syncing works, the app moves it to Drive's trash
 // itself (recoverable there for 30 days), so the person never has to tidy up.
 // Any future update that needs a safety copy uses makeBackupCopy the same way.
-import { createBackupSpreadsheet, trashDriveFile } from "./sheets";
+import { createSpreadsheetFromGrids, trashDriveFile } from "./sheets";
 import { getLocalMeta, setLocalMeta } from "./localDb";
 
 export const BACKUP_KEEP_DAYS = 14;
@@ -32,7 +32,7 @@ async function writeRegistry(records: BackupRecord[]): Promise<void> {
 
 /** Saves a snapshot of the given tabs as a new file and registers it for automatic clean-up. */
 export async function makeBackupCopy(reason: string, title: string, grids: ReadonlyMap<string, unknown[][]>): Promise<BackupRecord> {
-  const record: BackupRecord = { fileId: await createBackupSpreadsheet(title, grids), reason, createdAt: new Date().toISOString() };
+  const record: BackupRecord = { fileId: await createSpreadsheetFromGrids(title, grids), reason, createdAt: new Date().toISOString() };
   await writeRegistry([...(await readRegistry()), record]);
   return record;
 }

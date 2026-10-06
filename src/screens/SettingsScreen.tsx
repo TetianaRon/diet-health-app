@@ -1,3 +1,4 @@
+import LocalDataSection from "./LocalDataSection";
 import { useEffect, useState } from "react";
 import { Browser } from "@capacitor/browser";
 import { uk } from "../i18n/uk";
@@ -229,7 +230,7 @@ function SnackShareHint({ values }: { values: Record<string, string> }) {
 }
 
 export default function SettingsScreen() {
-  const { signedIn, initializing, signIn, signOut, sessionExpired } = useAuth();
+  const { signedIn, initializing, signIn, signOut, sessionExpired, localMode } = useAuth();
   const [values, setValues] = useState<Record<string, string>>({});
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
@@ -309,6 +310,10 @@ export default function SettingsScreen() {
     <section className="screen">
       <h1>{uk.settings.title}</h1>
 
+      {localMode ? (
+        <LocalDataSection />
+      ) : (
+      <>
       <div className="settings-account">
         <h2>{uk.settings.account.title}</h2>
         {initializing ? (
@@ -331,6 +336,8 @@ export default function SettingsScreen() {
       </div>
 
       <SpreadsheetSection signedIn={signedIn} />
+      </>
+      )}
 
       {signedIn && (
         <div className="settings-targets">

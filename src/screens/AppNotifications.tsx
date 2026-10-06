@@ -7,6 +7,7 @@
 //   • silent sheet upgrade     → info: what changed + how to undo, closes itself
 //   • no spreadsheet connected → action: «Підключити» opens the connect window
 //   • backup copy trashed      → info: where it went and that it can be restored
+//   • no phone backup 30 days  → action: «Зберегти копію» (working without Google)
 // Renders nothing itself.
 import { useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
@@ -16,11 +17,40 @@ import { uk } from "../i18n/uk";
 import { summarizeIssues } from "./SheetHealthIssues";
 import { upgradeNoticeLines } from "./SheetUpgradeNotice";
 import { onBackupsTrashed } from "../lib/backups";
+import { backupReminderDue, getLastLocalBackupAt, saveLocalBackup } from "../lib/localBackup";
+import { getLocalMeta, openLocalDb } from "../lib/localDb";
+import { LOCAL_SHEET_ID } from "../lib/localModeId";
 
 export default function AppNotifications() {
-  const { signedIn, sessionExpired, signIn } = useAuth();
+  const { signedIn, sessionExpired, signIn, localMode } = useAuth();
   const { show, remove } = useNotifications();
   const health = useSheetHealth();
+
+  // Working without Google: remind to keep a copy after 30 days without one (release 2.0).
+  useEffect(() => {
+    if (!localMode) {
+      remove("local-backup-reminder");
+      return;
+    }
+    void (async () => {
+      await openLocalDb(LOCAL_SHEET_ID);
+      if (!backupReminderDue(await getLastLocalBackupAt(), await getLocalMeta("localSince"), new Date())) return;
+      show({
+        key: "local-backup-reminder",
+        kind: "action",
+        title: uk.localMode.reminder.title,
+        actions: [
+          {
+            label: uk.localMode.reminder.button,
+            onClick: () => {
+              remove("local-backup-reminder");
+              void saveLocalBackup();
+            },
+          },
+        ],
+      });
+    })();
+  }, [localMode, show, remove]);
 
   // A backup copy past its keeping time went to Drive's trash (release 2.0).
   useEffect(() => onBackupsTrashed((n) => show({ key: "backups-trashed", kind: "info", title: uk.backups.trashed(n) })), [show]);

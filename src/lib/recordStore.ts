@@ -5,8 +5,10 @@
 //
 // Records are identified by their Id (Settings rows by Key). Saving works the
 // same with or without a connection.
-import { addLocalChange } from "./localDb";
-import { openDeviceDatabase, readRange } from "./sheets";
+import { addLocalChange, getLocalTab, putLocalTabs } from "./localDb";
+import { getSpreadsheetId, openDeviceDatabase, readRange } from "./sheets";
+import { isLocalSheetId } from "./localModeId";
+import { applyChanges, type RecordChange } from "./sync/merge";
 import { SCAN_LAST_COLUMN } from "./sheetRow";
 import { idColumnFor, layoutOf, sameCell } from "./sync/merge";
 import { scheduleSync } from "./sync";
@@ -19,6 +21,21 @@ async function currentRow(tab: string, id: string): Promise<{ row: unknown[] | n
     if (String(grid[i]?.[layout.idCol] ?? "").trim() === id) return { row: grid[i], columnIndex: layout.columnIndex };
   }
   return { row: null, columnIndex: layout.columnIndex };
+}
+
+/**
+ * Records a change: queued for the next sync, or — working without Google —
+ * applied straight to the device's data (there is no sheet to sync with).
+ */
+async function record(change: Omit<RecordChange, "seq">): Promise<void> {
+  if (isLocalSheetId(getSpreadsheetId())) {
+    const tab = await getLocalTab(change.tab);
+    const rows = applyChanges(change.tab, tab?.rows ?? [], [{ ...change, seq: 0 }]);
+    await putLocalTabs([{ tab: change.tab, rows, pulledAt: tab?.pulledAt ?? new Date().toISOString() }]);
+    return;
+  }
+  await addLocalChange(change);
+  scheduleSync();
 }
 
 /**
@@ -48,8 +65,7 @@ export async function upsertRecord(tab: string, id: string, fields: Record<strin
     changed.UpdatedAt = changedAt;
     if (row) base.UpdatedAt = row[updatedCol] ?? "";
   }
-  await addLocalChange({ tab, id, op: "upsert", fields: changed, base, changedAt });
-  scheduleSync();
+  await record({ tab, id, op: "upsert", fields: changed, base, changedAt });
 }
 
 /** Deletes a record (the row disappears from the sheet at the next sync, and is logged in Deleted). */
@@ -60,6 +76,5 @@ export async function deleteRecord(tab: string, id: string): Promise<void> {
   if (!row) return;
   const updatedCol = columnIndex.get("UpdatedAt");
   const base: Record<string, unknown> = updatedCol !== undefined ? { UpdatedAt: row[updatedCol] ?? "" } : { [idColumnFor(tab)]: id };
-  await addLocalChange({ tab, id, op: "delete", fields: {}, base, changedAt: new Date().toISOString() });
-  scheduleSync();
+  await record({ tab, id, op: "delete", fields: {}, base, changedAt: new Date().toISOString() });
 }

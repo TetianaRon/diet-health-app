@@ -26,6 +26,7 @@ import { uk } from "../i18n/uk";
 import { getLocalMeta, getLocalTab, getOpenSpreadsheetId, listLocalChanges, openLocalDb, putLocalTabs, setLocalMeta } from "./localDb";
 import { applyChanges, type RecordChange } from "./sync/merge";
 import { sliceGrid, tabsOfRanges } from "./localDb/a1";
+import { isLocalSheetId } from "./localModeId";
 
 const SHEETS_API_BASE = "https://sheets.googleapis.com/v4/spreadsheets";
 const DRIVE_API_BASE = "https://www.googleapis.com/drive/v3/files";
@@ -499,6 +500,8 @@ async function authorizedFetchUrl(url: string, init?: RequestInit): Promise<Resp
 }
 
 async function authorizedFetch(path: string, init?: RequestInit): Promise<Response> {
+  // Working without Google: there is no spreadsheet to reach (release 2.0).
+  if (isLocalSheetId(path.split(/[/:?]/)[0])) throw new Error(uk.localMode.noSheet);
   return authorizedFetchUrl(`${SHEETS_API_BASE}/${path}`, init);
 }
 
@@ -572,6 +575,12 @@ async function readTabs(tabs: readonly string[], fresh = false): Promise<Map<str
   await ensureLocalDb(spreadsheetId);
   const unique = [...new Set(tabs)];
   const result = new Map<string, unknown[][]>();
+  if (isLocalSheetId(spreadsheetId)) {
+    // Without Google the device database is the data: nothing to fetch.
+    for (const tab of unique) result.set(tab, (await getLocalTab(tab))?.rows ?? []);
+    lastReadWasFromCache = false;
+    return result;
+  }
   const missing: string[] = [];
   for (const tab of unique) {
     const local = !fresh && currentTabs.has(tab) ? await getLocalTab(tab) : null;
@@ -652,6 +661,7 @@ export async function openDeviceDatabase(): Promise<void> {
 /** Refreshes every given tab on the device in ONE request and records the sync time. */
 export async function pullAllTabs(tabs: readonly string[]): Promise<void> {
   const spreadsheetId = requireSpreadsheetId();
+  if (isLocalSheetId(spreadsheetId)) return;
   await ensureLocalDb(spreadsheetId);
   await fetchAndStoreTabs(spreadsheetId, tabs);
   await setLocalMeta("lastPullAt", new Date().toISOString());
@@ -819,10 +829,11 @@ export async function deleteSheetRows(tab: string, rowNumbers: readonly number[]
 }
 
 /**
- * Saves a full copy of the given tabs as a new spreadsheet in the app's Drive
- * folder (the safeguard before a sheet's first sync — release 2.0). Returns its ID.
+ * Creates a new spreadsheet in the app's Drive folder holding the given tabs
+ * exactly (release 2.0: backup copies, and moving phone-only data to Google).
+ * Returns its ID. Values are written as they are (RAW).
  */
-export async function createBackupSpreadsheet(name: string, grids: ReadonlyMap<string, unknown[][]>): Promise<string> {
+export async function createSpreadsheetFromGrids(name: string, grids: ReadonlyMap<string, unknown[][]>): Promise<string> {
   const id = await createSpreadsheetInAppFolder(name);
   const tabs = [...grids.keys()];
   await authorizedFetch(`${id}:batchUpdate`, {

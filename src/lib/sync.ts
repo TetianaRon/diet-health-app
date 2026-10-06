@@ -26,6 +26,7 @@ import { planRecordIds } from "./recordIdPlan";
 import { newRecordId, type RecordKind } from "./itemIds";
 import { DELETED_TAB } from "./deletions";
 import { cleanUpBackups, makeBackupCopy } from "./backups";
+import { isLocalSheetId } from "./localModeId";
 
 /** A copy older than this is refreshed when the app comes back to the foreground. */
 export const STALE_AFTER_MS = 5 * 60 * 1000;
@@ -63,7 +64,8 @@ async function backupBeforeFirstPush(remote: Map<string, unknown[][]>): Promise<
 }
 
 async function runSync(): Promise<void> {
-  if (!getSpreadsheetId()) return;
+  // No spreadsheet, or working without Google: nothing to sync with.
+  if (!getSpreadsheetId() || isLocalSheetId(getSpreadsheetId())) return;
   const pending = (await listLocalChanges()) as RecordChange[];
   if (pending.length > 0) {
     const remote = await fetchTabsLive(REQUIRED_TABS);

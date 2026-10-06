@@ -2,9 +2,17 @@
 // fetch now; Settings will manage the account from here later).
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import * as sheets from "../lib/sheets";
+import { isLocalMode, startLocalMode } from "../lib/localMode";
 
 interface AuthContextValue {
+  /** Signed in to Google — or working without Google on the phone (release 2.0), where the data is on the device. */
   signedIn: boolean;
+  /** Working without Google: the data lives only on this phone. */
+  localMode: boolean;
+  /** «Почати без Google». */
+  startWithoutGoogle: () => Promise<void>;
+  /** Leaves local mode (after its data moved to a Google spreadsheet). */
+  endLocalMode: () => void;
   initializing: boolean;
   /**
    * The Google sign-in ran out (about an hour on the web) while the app was
@@ -23,6 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [signedIn, setSignedIn] = useState(false);
   const [initializing, setInitializing] = useState(true);
   const [sessionExpired, setSessionExpired] = useState(false);
+  const [localMode, setLocalMode] = useState(isLocalMode);
 
   useEffect(() => {
     sheets
@@ -69,8 +78,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSessionExpired(false);
   };
 
+  const startWithoutGoogle = async () => {
+    await startLocalMode();
+    setLocalMode(true);
+  };
+
+  const endLocalMode = () => setLocalMode(false);
+
   return (
-    <AuthContext.Provider value={{ signedIn, initializing, sessionExpired, signIn, signOut }}>{children}</AuthContext.Provider>
+    <AuthContext.Provider
+      value={{ signedIn: signedIn || localMode, localMode, startWithoutGoogle, endLocalMode, initializing, sessionExpired, signIn, signOut }}
+    >
+      {children}
+    </AuthContext.Provider>
   );
 }
 

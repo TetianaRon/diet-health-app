@@ -1495,3 +1495,10 @@ select {
 .sync-line p {
   margin: 0;
 }
+
+.local-data-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0;
+}

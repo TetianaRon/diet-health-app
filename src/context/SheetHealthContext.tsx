@@ -5,6 +5,7 @@
 // dialog (SheetHealthDialog), instead of only on the Settings screen.
 // Also owns which spreadsheet is connected (release 1.7.1): whether there is
 // one, the «Підключити таблицю» window (ConnectSheetDialog) and switching.
+import { isLocalSheetId } from "../lib/localModeId";
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { useAuth } from "./AuthContext";
 import { checkAndUpgradeSpreadsheet, repairSpreadsheet, type UpgradeSummary } from "../lib/spreadsheetInit";
@@ -80,8 +81,9 @@ export function SheetHealthProvider({ children }: { children: ReactNode }) {
     setCheckError(null);
     setDismissed(false);
     setDetailsOpen(false);
-    if (!getSpreadsheetId()) {
-      // Nothing to check yet — AppNotifications offers «Підключити».
+    if (!getSpreadsheetId() || isLocalSheetId(getSpreadsheetId())) {
+      // Nothing to check: no sheet yet (AppNotifications offers «Підключити»), or working without
+      // Google (the device data is created complete).
       setReports(null);
       setSpreadsheetName(null);
       setChecking(false);
