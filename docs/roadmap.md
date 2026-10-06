@@ -125,6 +125,7 @@ Spec: "Planned: food families with cooking states". Raw weight + state in the fi
   - Only grams-based figures stay unknown without a piece weight: the meal entry's weight, and logging the item in grams.
   - Named portion sizes (above) cover foods with no fixed piece weight, such as apples.
   - Use cases that shaped it: dumplings (pack values per 12 шт.); pancakes, вареники, сирники, pieces of a cake (a dish's yield as a count); nuts (values per 100 г, with 100 г = 20 шт. counted once at home, then a snack of 3 горіхи is logged by count with no weighing).
+- **Common nuts in the verified database** (2026-10-06, developer; mom eats nuts often, a few at a time): only walnuts are in it today (raw). Add almonds, pistachios, hazelnuts, cashews and peanuts, and maybe pecans, Brazil nuts, pine nuts, and sunflower and pumpkin seeds. Open: which preparations, since what's sold is often roasted and salted (salted pistachios carry far more sodium than raw). Proposed place: with named portion sizes, so each nut ships with the typical weight of one nut («1 мигдалина ≈ 1,2 г») and is logged by count.
 
 New items land here with a one-line note, then get placed above.
 
