@@ -54,13 +54,13 @@ export async function startLocalMode(): Promise<void> {
  * spreadsheet — merging into one that already holds data is not offered.
  * Needs Google sign-in first. Returns the new spreadsheet's ID.
  */
-export async function moveLocalDataToSheet(): Promise<string> {
+export async function moveLocalDataToSheet(name: string = uk.connectSheet.newNameDefault): Promise<string> {
   await openLocalDb(LOCAL_SHEET_ID);
   const grids = new Map<string, unknown[][]>();
   for (const tab of REQUIRED_TABS) grids.set(tab, (await getLocalTab(tab))?.rows ?? initialGrids().get(tab) ?? []);
   // Text marked with a leading apostrophe ("keep as text") is written as the text itself.
   for (const [tab, rows] of grids) grids.set(tab, rows.map((row) => row.map((v) => (typeof v === "string" && v.startsWith("'") ? v.slice(1) : v))));
-  const id = await createSpreadsheetFromGrids(uk.connectSheet.newNameDefault, grids);
+  const id = await createSpreadsheetFromGrids(name, grids);
   setSpreadsheetId(id);
   await openLocalDb(id);
   const pulledAt = new Date().toISOString();

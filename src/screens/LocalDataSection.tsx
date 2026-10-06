@@ -13,7 +13,7 @@ import * as sheets from "../lib/sheets";
 const t = uk.localMode.settings;
 
 export default function LocalDataSection() {
-  const { endLocalMode } = useAuth();
+  const { endLocalMode, signIn } = useAuth();
   const { reloadScreens } = useSheetHealth();
   const [lastBackupAt, setLastBackupAt] = useState<string | null>(null);
   const [busy, setBusy] = useState<"save" | "restore" | "move" | null>(null);
@@ -21,6 +21,7 @@ export default function LocalDataSection() {
   const [error, setError] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<"restore" | "move" | null>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [sheetName, setSheetName] = useState<string>(uk.connectSheet.newNameDefault);
   const fileInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -67,12 +68,18 @@ export default function LocalDataSection() {
   };
 
   const move = () => {
+    const name = sheetName.trim();
+    if (!name) {
+      setError(uk.connectSheet.newNameValidationError);
+      return;
+    }
     setConfirm(null);
     void run(
       "move",
       async () => {
-        if (!sheets.isSignedIn()) await sheets.signIn();
-        await moveLocalDataToSheet();
+        // The app's own sign-in, so the screens know she's signed in afterwards.
+        if (!sheets.isSignedIn()) await signIn();
+        await moveLocalDataToSheet(name);
         endLocalMode();
         reloadScreens();
       },
@@ -117,6 +124,15 @@ export default function LocalDataSection() {
         <div className="modal-backdrop">
           <div className="modal" role="alertdialog" aria-modal="true" aria-labelledby="local-confirm-text">
             <p id="local-confirm-text">{confirm === "restore" ? t.confirmRestore(pendingFile?.name ?? "") : t.confirmMove}</p>
+            {confirm === "move" && (
+              <>
+                <p>{uk.connectSheet.newHint}</p>
+                <label>
+                  {uk.connectSheet.newNameLabel}
+                  <input value={sheetName} onChange={(e) => setSheetName(e.target.value)} />
+                </label>
+              </>
+            )}
             <div className="modal-actions">
               <button type="button" className={confirm === "restore" ? "button-danger" : undefined} onClick={confirm === "restore" ? restore : move}>
                 {confirm === "restore" ? t.confirmRestoreYes : t.confirmMoveYes}

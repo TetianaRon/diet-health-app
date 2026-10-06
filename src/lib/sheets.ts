@@ -548,8 +548,21 @@ export function wasLastReadFromCache(): boolean {
   return lastReadWasFromCache;
 }
 
+let oldCacheCleared = false;
+/** The read cache before 2.0 kept tabs in localStorage ("trackmymeals.cache.…"); the device database replaced it. */
+function clearOldReadCache(): void {
+  if (oldCacheCleared) return;
+  oldCacheCleared = true;
+  try {
+    for (const key of Object.keys(localStorage)) if (key.startsWith("trackmymeals.cache.")) localStorage.removeItem(key);
+  } catch {
+    // storage unavailable — nothing to clear
+  }
+}
+
 /** Opens the connected spreadsheet's device database, and forgets "current" tabs when the sheet changed. */
 async function ensureLocalDb(spreadsheetId: string): Promise<void> {
+  clearOldReadCache();
   if (currentTabsSheet !== spreadsheetId) {
     currentTabs.clear();
     currentTabsSheet = spreadsheetId;
@@ -846,10 +859,11 @@ export async function deleteSheetRows(tab: string, rowNumbers: readonly number[]
 export async function createSpreadsheetFromGrids(name: string, grids: ReadonlyMap<string, unknown[][]>): Promise<string> {
   const id = await createSpreadsheetInAppFolder(name);
   const tabs = [...grids.keys()];
+  // Add the tabs, then remove the empty one Google creates with every new spreadsheet (sheetId 0).
   await authorizedFetch(`${id}:batchUpdate`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ requests: tabs.map((title) => ({ addSheet: { properties: { title } } })) }),
+    body: JSON.stringify({ requests: [...tabs.map((title) => ({ addSheet: { properties: { title } } })), { deleteSheet: { sheetId: 0 } }] }),
   });
   await authorizedFetch(`${id}/values:batchUpdate`, {
     method: "POST",
