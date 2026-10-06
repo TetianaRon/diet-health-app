@@ -6,6 +6,7 @@
 // yesterday's records sit at the end of their block (or the start, oldest
 // first). Everything is read in one batch request (loadDayData).
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { syncIfStale } from "../lib/sync";
 import { App as CapacitorApp } from "@capacitor/app";
 import { uk } from "../i18n/uk";
 import { useAuth } from "../context/AuthContext";
@@ -133,7 +134,9 @@ export default function TodayScreen({
     refresh();
     // Re-reads on foreground so records from another device (e.g. the
     // computer) show here and the reminder reschedules correctly.
-    const listenerPromise = CapacitorApp.addListener("resume", refresh);
+    // The device copy is refreshed first when it is more than 5 minutes old (release 2.0).
+    const onResume = () => void syncIfStale().catch(() => undefined).finally(refresh);
+    const listenerPromise = CapacitorApp.addListener("resume", onResume);
     return () => {
       void listenerPromise.then((listener) => listener.remove());
     };

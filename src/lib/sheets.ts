@@ -566,14 +566,14 @@ async function fetchAndStoreTabs(spreadsheetId: string, tabs: readonly string[])
 }
 
 /** Whole tabs, from the device where current, otherwise fetched (one request for all the missing ones). */
-async function readTabs(tabs: readonly string[]): Promise<Map<string, unknown[][]>> {
+async function readTabs(tabs: readonly string[], fresh = false): Promise<Map<string, unknown[][]>> {
   const spreadsheetId = requireSpreadsheetId();
   await ensureLocalDb(spreadsheetId);
   const unique = [...new Set(tabs)];
   const result = new Map<string, unknown[][]>();
   const missing: string[] = [];
   for (const tab of unique) {
-    const local = currentTabs.has(tab) ? await getLocalTab(tab) : null;
+    const local = !fresh && currentTabs.has(tab) ? await getLocalTab(tab) : null;
     if (local) result.set(tab, local.rows);
     else missing.push(tab);
   }
@@ -600,10 +600,13 @@ async function readTabs(tabs: readonly string[]): Promise<Map<string, unknown[][
   return result;
 }
 
-/** Reads several ranges, from the device where current, otherwise in ONE request. */
-export async function readRanges(requests: { tab: string; range: string }[]): Promise<unknown[][][]> {
+/**
+ * Reads several ranges, from the device where current, otherwise in ONE request.
+ * fresh: fetch every tab from the sheet regardless (the structure check must see the real sheet).
+ */
+export async function readRanges(requests: { tab: string; range: string }[], options: { fresh?: boolean } = {}): Promise<unknown[][][]> {
   if (requests.length === 0) return [];
-  const grids = await readTabs(requests.map((r) => r.tab));
+  const grids = await readTabs(requests.map((r) => r.tab), options.fresh);
   return requests.map(({ tab, range }) => sliceGrid(grids.get(tab) ?? [], range));
 }
 

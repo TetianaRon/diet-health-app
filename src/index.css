@@ -1483,3 +1483,15 @@ select {
     padding: 28px;
   }
 }
+
+.sync-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 8px 0 12px;
+}
+
+.sync-line p {
+  margin: 0;
+}

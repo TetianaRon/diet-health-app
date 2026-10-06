@@ -6,7 +6,9 @@ import { getSettings, updateSettings, type Settings, type TimeFormat } from "../
 import { TimeInput } from "./TimeInput";
 import { fullMealShareLeavesNoRoom, mealShares } from "../lib/mealRecommendation";
 import { setTimeFormat } from "../lib/dateFormat";
-import { getSpreadsheetId, getSpreadsheetUrl } from "../lib/sheets";
+import { getLastPullAt, getSpreadsheetId, getSpreadsheetUrl } from "../lib/sheets";
+import { syncNow } from "../lib/sync";
+import { formatDateTime } from "../lib/dateFormat";
 import { useSheetHealth } from "../context/SheetHealthContext";
 import { useNotifications } from "../context/NotificationsContext";
 import { SheetHealthIssueList, summarizeIssues } from "./SheetHealthIssues";
@@ -90,6 +92,43 @@ function CopyLinkButton({ url }: { url: string }) {
   );
 }
 
+/** When the device copy was last refreshed, and «Синхронізувати» (release 2.0). */
+function SyncLine() {
+  const { reloadScreens } = useSheetHealth();
+  const s = uk.settings.spreadsheet;
+  const [lastPullAt, setLastPullAt] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    void getLastPullAt().then(setLastPullAt).catch(() => setLastPullAt(null));
+  }, []);
+
+  const sync = async () => {
+    setSyncing(true);
+    setError(null);
+    try {
+      await syncNow();
+      setLastPullAt(await getLastPullAt());
+      reloadScreens();
+    } catch (err) {
+      setError(s.syncFailed(err instanceof Error ? err.message : String(err)));
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  return (
+    <div className="sync-line">
+      <p>{lastPullAt ? s.syncedAt(formatDateTime(lastPullAt)) : s.neverSynced}</p>
+      <button type="button" className="button-secondary" onClick={() => void sync()} disabled={syncing}>
+        {syncing ? s.syncing : s.syncButton}
+      </button>
+      {error && <p className="food-form-error">{error}</p>}
+    </div>
+  );
+}
+
 function SpreadsheetSection({ signedIn }: { signedIn: boolean }) {
   const health = useSheetHealth();
   const { hasSpreadsheet, spreadsheetName, openConnect } = health;
@@ -115,6 +154,7 @@ function SpreadsheetSection({ signedIn }: { signedIn: boolean }) {
             </p>
             <CopyLinkButton url={url} />
           </div>
+          <SyncLine />
           <button type="button" className="button-secondary" onClick={openConnect}>
             {s.connectOtherButton}
           </button>

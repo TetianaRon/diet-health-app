@@ -185,7 +185,7 @@ async function scanSpreadsheet(): Promise<HealthScan> {
 
   // Every existing tab in ONE read request (Google counts reads per minute).
   const present = REQUIRED_TABS.filter((tab) => existingTabs.has(tab));
-  const allRows = await readRanges(present.map((tab) => ({ tab, range: tab === "Settings" ? SETTINGS_TAB_RANGE : DATA_TAB_RANGE })));
+  const allRows = await readRanges(present.map((tab) => ({ tab, range: tab === "Settings" ? SETTINGS_TAB_RANGE : DATA_TAB_RANGE })), { fresh: true });
   present.forEach((tab, i) => rowsByTab.set(tab, allRows[i]));
 
   for (const tab of REQUIRED_TABS) {
