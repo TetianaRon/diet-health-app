@@ -112,11 +112,18 @@ Spec: "Planned: food families with cooking states". Raw weight + state in the fi
 - **Read a product's nutrition label from a photo** (2026-10-05, developer): instead of adding Ukrainian breads to the database one by one (too many, and mom doesn't stick to one brand — she picks the rye bread with the lowest sugar on the label), let her photograph the pack's nutrition table and fill the product form from it; the 1.9 GI suggestion then offers the rye GI (checked: «Хліб житній Дарницький», «Хліб бородинський» → B0010 rye-wheat 78 / B0090 wholegrain rye 54). Needs a design: on-device text recognition vs a paid service (the Claude lookup was dropped for cost, 2026-08-13), how values are confirmed before saving, the «неперевірено» label stays.
 
 - **Dev sign-in survives a page reload** (2026-10-05, from the governance review): every reload of the local dev server signs out, which cost about 8 extra sign-ins in one session. Idea: keep the token in `sessionStorage` in dev builds only. Needs a decision on the security trade-off; never in production builds.
-- **Food entry, four gaps** (2026-10-06, developer; the other three proposed as one release after 2.0.1, "Faster food entry"):
+- **Food entry gaps** (2026-10-06, developer; the three below 2.0.1 proposed as one release after 2.0.1, "Faster food entry"):
   - ➡️ *Placed in 2.0.1.* **Values per [n] g** in the product/dish form: packs often list nutrients per portion (e.g. per 30 g), not per 100 g. A «на … г» field next to the values; the app recalculates to per 100 g when saving, and the form shows what will be stored.
   - **Save a custom meal entry to «Страви»** for reuse: the meal editor's custom entry (restaurant food, a meal box) gets «Зберегти в мої страви». It's stored as a fixed-value dish (values per portion, weight optional), which the 2026-09-26 design already described.
   - **Maths in value fields:** e.g. `200*3/4` or «200 ккал * 3/4», to log part of a meal box. Numbers, `+ − * / ( )`, a decimal comma, unit words ignored. The field shows the result before saving, and the result is stored, not the formula.
-  - **Standard portion** per dish (and later per product): «1 порція (250 г)» as one tap in the meal editor. It was in the 2026-09-26 design notes but never placed on the roadmap.
+  - **Named portion sizes** (widened 2026-10-06 from "standard portion", which was in the 2026-09-26 design notes but never placed on the roadmap): up to 3 approximate sizes per product or dish, each a label and grams, e.g. «скибка ~45 г», «маленьке / середнє / велике яблуко», «чашка ~250 г». Default labels are маленька / середня / велика, and the person can rename them. The meal editor offers them as one tap, plus a count: 2 × середнє. The grams are shown as approximate («≈»). Open: whether the verified database ships typical sizes; they'd need a source, as every reference value does (rule 5). USDA FoodData Central lists portion weights, e.g. "1 medium apple".
+- **Values per [n] pieces** (2026-10-06, developer; placement open: 2.0.1 or the release after it): many packs list nutrients per piece, or per [n] pieces (dumplings per 12), sometimes with no weight given.
+  - Products and dishes are set either per 100 g or per piece. For a product, you enter the values as printed, per [n] pieces. A dish's yield is a weight or a count («Вийшло 10 млинців»).
+  - The weight of one piece is optional: it can be added to the item, to one meal entry, or never.
+  - Meals log a count, and decimals are allowed (7,5).
+  - Every nutrient, plus GI and GL, works without weight. GL needs only GI × grams of carbs eaten. A dish's GI is already weighted by carbs, and a dish needs only the ingredients' total nutrients and its yield.
+  - Only grams-based figures stay unknown without a piece weight: the meal entry's weight, and logging the item in grams.
+  - Named portion sizes (above) cover foods with no fixed piece weight, such as apples.
 
 New items land here with a one-line note, then get placed above.
 
