@@ -12,7 +12,7 @@
 // dropping fields (the 2026-09-26 bug: mom's bilingual-header sheet made
 // every save append a blank row while Google reported success). The fix for
 // such a tab is Settings → «Виправити таблицю» — see sheetSchema.ts.
-import { readRange } from "./sheets";
+import { readRangeLive } from "./sheets";
 import { uk } from "../i18n/uk";
 import { isLabelRow } from "./sheetLabels";
 
@@ -180,6 +180,6 @@ export function columnLetter(index: number): string {
 
 /** Reads just a tab's header row (row 1) and resolves its column index — a cheap call for write paths that don't need the rest of the tab. Throws SheetStructureError on an unsound header row. */
 export async function readColumnIndex(tab: string, canonicalHeaders: readonly string[]): Promise<ColumnIndex> {
-  const rows = await readRange(tab, `A1:${SCAN_LAST_COLUMN}1`);
+  const rows = await readRangeLive(tab, `A1:${SCAN_LAST_COLUMN}1`);
   return resolveColumnIndex(tab, rows[0] ?? [], canonicalHeaders);
 }

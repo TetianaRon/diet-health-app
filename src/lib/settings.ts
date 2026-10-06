@@ -2,7 +2,7 @@
 // docs/technical-spec.md -> "Google Sheets structure"). Unlike Ingredients
 // (append-only), Settings rows already exist from the starter template, so
 // updates target each key's existing row rather than appending.
-import { batchUpdateRanges, readRange } from "./sheets";
+import { batchUpdateRanges, readRange, readRangeLive } from "./sheets";
 import { setTimeFormat } from "./dateFormat";
 
 // How times are shown and picked. Ukrainian UI defaults to 24h; 12h (AM/PM) is
@@ -221,7 +221,7 @@ export async function getSettings(): Promise<Settings> {
 }
 
 export async function updateSettings(settings: Settings): Promise<void> {
-  const rows = await readRange("Settings", SETTINGS_RANGE);
+  const rows = await readRangeLive("Settings", SETTINGS_RANGE);
   const updates = computeSettingsUpdates(settings, rows);
   if (updates.length > 0) {
     await batchUpdateRanges(updates);

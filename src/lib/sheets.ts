@@ -23,6 +23,8 @@ import { Capacitor } from "@capacitor/core";
 import { App } from "@capacitor/app";
 import { Browser } from "@capacitor/browser";
 import { uk } from "../i18n/uk";
+import { getLocalMeta, getLocalTab, getOpenSpreadsheetId, openLocalDb, putLocalTabs, setLocalMeta } from "./localDb";
+import { sliceGrid, tabsOfRanges } from "./localDb/a1";
 
 const SHEETS_API_BASE = "https://sheets.googleapis.com/v4/spreadsheets";
 const DRIVE_API_BASE = "https://www.googleapis.com/drive/v3/files";
@@ -499,94 +501,139 @@ async function authorizedFetch(path: string, init?: RequestInit): Promise<Respon
   return authorizedFetchUrl(`${SHEETS_API_BASE}/${path}`, init);
 }
 
-// --- Offline read fallback ---
+// --- Reading: from the device first ---
 //
-// Writes deliberately still fail outright with no connection (queueing and
-// replaying writes safely — handling conflicts, retries, partial failures —
-// is a real sync-engine project of its own, not something to bolt on
-// quickly; a clear "try again" error beats a write that silently never
-// actually saved). Reads are different: falling back to whatever was last
-// successfully fetched is safe (nothing to lose) and means the app stays
-// usable — viewing today's log, targets, history — when the connection
-// drops, instead of going blank. Scoped per spreadsheet (via getSpreadsheetId())
-// so switching which sheet a device points at can't show stale data from
-// the wrong one.
-const READ_CACHE_PREFIX = "trackmymeals.cache.";
-let lastReadWasFromCache = false;
+// Every tab the app reads is kept on the device (localDb: SQLite, one database
+// per spreadsheet). A tab whose copy is current for this session is read from
+// the device with no request at all; otherwise the whole tab is fetched once,
+// stored, and served from there. pullAllTabs() refreshes every tab in ONE
+// request (values:batchGet) at start, on return to the app and from
+// «Синхронізувати». A write marks the tabs it touched as not current, so the
+// next read fetches them again. With no connection, reads fall back to the
+// stored copy, however old (wasLastReadFromCache() tells the screens).
+//
+// Lookups that decide WHICH row a write goes to use readRangeLive(): another
+// device may have changed the sheet since the last pull.
 
-function readCacheKey(tab: string, range: string): string {
-  return `${READ_CACHE_PREFIX}${getSpreadsheetId()}:${tab}:${range}`;
-}
-
-// Read the stored values, not their display text (2026-10-01). The default
-// (FORMATTED_VALUE) returns what the cell *shows*, which depends on the
-// spreadsheet's locale: in mom's Ukrainian-locale sheet a stored 6.2 comes
-// back as "6,2", Number("6,2") is NaN, and every decimal — blood sugar,
-// carbs, GL — read as 0 (TRUE/FALSE likewise show as ІСТИНА/ХИБНІСТЬ).
-// UNFORMATTED_VALUE returns real numbers and booleans in any locale.
-// Dates/times keep coming back as their displayed text (FORMATTED_STRING),
-// exactly as before, so DateAdded and time settings parse unchanged.
+// Read the stored values, not their display text. The default (FORMATTED_VALUE)
+// returns what the cell *shows*, which depends on the spreadsheet's locale: in
+// mom's Ukrainian-locale sheet a stored 6.2 comes back as "6,2", Number("6,2")
+// is NaN, and every decimal read as 0 (TRUE/FALSE likewise show as
+// ІСТИНА/ХИБНІСТЬ). UNFORMATTED_VALUE returns real numbers and booleans in any
+// locale. Dates/times come back as their displayed text (FORMATTED_STRING), so
+// DateAdded and time settings parse as they always have.
 const READ_OPTIONS = "valueRenderOption=UNFORMATTED_VALUE&dateTimeRenderOption=FORMATTED_STRING";
 
-/** True if the most recent readRange() call fell back to cached data instead of a live fetch — check after fetching to decide whether to show an "offline" hint. */
+let lastReadWasFromCache = false;
+/** Tabs whose device copy is current this session (cleared by writes and sheet switches). */
+const currentTabs = new Set<string>();
+let currentTabsSheet = "";
+
+/** True if the most recent read fell back to the stored copy because the sheet couldn't be reached — check after fetching to decide whether to show an "offline" hint. */
 export function wasLastReadFromCache(): boolean {
   return lastReadWasFromCache;
 }
 
-/**
- * Reads several ranges in ONE request (values:batchGet) — each counts once
- * against Google's per-minute read limit instead of once per tab. Same value
- * rendering and offline fallback as readRange, per range.
- */
-export async function readRanges(requests: { tab: string; range: string }[]): Promise<unknown[][][]> {
-  if (requests.length === 0) return [];
-  const spreadsheetId = requireSpreadsheetId();
-  const params = new URLSearchParams(READ_OPTIONS);
-  for (const { tab, range } of requests) params.append("ranges", `${tab}!${range}`);
-  try {
-    const response = await authorizedFetch(`${spreadsheetId}/values:batchGet?${params}`);
-    const data = await response.json();
-    const valueRanges = (data.valueRanges ?? []) as { values?: unknown[][] }[];
-    const results = requests.map((_, i) => valueRanges[i]?.values ?? []);
-    requests.forEach(({ tab, range }, i) => localStorage.setItem(readCacheKey(tab, range), JSON.stringify(results[i])));
-    lastReadWasFromCache = false;
-    return results;
-  } catch (err) {
-    if (!(err instanceof TypeError)) throw err;
-    const cached = requests.map(({ tab, range }) => localStorage.getItem(readCacheKey(tab, range)));
-    if (cached.some((c) => c === null)) throw err;
-    lastReadWasFromCache = true;
-    return cached.map((c) => JSON.parse(c as string) as unknown[][]);
+/** Opens the connected spreadsheet's device database, and forgets "current" tabs when the sheet changed. */
+async function ensureLocalDb(spreadsheetId: string): Promise<void> {
+  if (currentTabsSheet !== spreadsheetId) {
+    currentTabs.clear();
+    currentTabsSheet = spreadsheetId;
   }
+  if (getOpenSpreadsheetId() !== spreadsheetId) await openLocalDb(spreadsheetId);
 }
 
-/** Reads a range, e.g. readRange("Ingredients", "A1:L200"). Falls back to the last successful read for this exact tab/range if the network is unreachable — see the comment above. */
-export async function readRange(tab: string, range: string): Promise<unknown[][]> {
+function markTabsChanged(tabs: readonly string[]): void {
+  tabs.forEach((t) => currentTabs.delete(t));
+}
+
+function markAllTabsChanged(): void {
+  currentTabs.clear();
+}
+
+/** Fetches whole tabs in one request and stores them on the device. */
+async function fetchAndStoreTabs(spreadsheetId: string, tabs: readonly string[]): Promise<Map<string, unknown[][]>> {
+  const params = new URLSearchParams(READ_OPTIONS);
+  for (const tab of tabs) params.append("ranges", tab);
+  const response = await authorizedFetch(`${spreadsheetId}/values:batchGet?${params}`);
+  const data = await response.json();
+  const valueRanges = (data.valueRanges ?? []) as { values?: unknown[][] }[];
+  const pulledAt = new Date().toISOString();
+  const grids = new Map(tabs.map((tab, i) => [tab, valueRanges[i]?.values ?? []] as const));
+  await putLocalTabs(tabs.map((tab) => ({ tab, rows: grids.get(tab)!, pulledAt })));
+  tabs.forEach((t) => currentTabs.add(t));
+  return grids;
+}
+
+/** Whole tabs, from the device where current, otherwise fetched (one request for all the missing ones). */
+async function readTabs(tabs: readonly string[]): Promise<Map<string, unknown[][]>> {
   const spreadsheetId = requireSpreadsheetId();
-  const key = readCacheKey(tab, range);
-  try {
-    const response = await authorizedFetch(`${spreadsheetId}/values/${tab}!${range}?${READ_OPTIONS}`);
-    const data = await response.json();
-    const values = data.values ?? [];
-    localStorage.setItem(key, JSON.stringify(values));
-    lastReadWasFromCache = false;
-    return values;
-  } catch (err) {
-    // Only fall back for a genuine network failure — fetch() itself throws a
-    // TypeError when it can't reach the server at all (no connectivity, DNS
-    // failure, CORS block). An HTTP error status (bad permissions, a bad
-    // range, an expired session that couldn't be refreshed) resolves fine
-    // and is surfaced by authorizedFetch as a plain Error instead — that's a
-    // real problem a stale cache should never quietly paper over.
-    if (err instanceof TypeError) {
-      const cached = localStorage.getItem(key);
-      if (cached) {
-        lastReadWasFromCache = true;
-        return JSON.parse(cached);
-      }
-    }
-    throw err;
+  await ensureLocalDb(spreadsheetId);
+  const unique = [...new Set(tabs)];
+  const result = new Map<string, unknown[][]>();
+  const missing: string[] = [];
+  for (const tab of unique) {
+    const local = currentTabs.has(tab) ? await getLocalTab(tab) : null;
+    if (local) result.set(tab, local.rows);
+    else missing.push(tab);
   }
+  if (missing.length === 0) {
+    lastReadWasFromCache = false;
+    return result;
+  }
+  try {
+    const fetched = await fetchAndStoreTabs(spreadsheetId, missing);
+    fetched.forEach((rows, tab) => result.set(tab, rows));
+    lastReadWasFromCache = false;
+  } catch (err) {
+    // Only a genuine network failure falls back: fetch() throws a TypeError when
+    // it can't reach the server at all. An HTTP error (bad permissions, an
+    // expired session) is a real problem a stored copy must never paper over.
+    if (!(err instanceof TypeError)) throw err;
+    for (const tab of missing) {
+      const local = await getLocalTab(tab);
+      if (!local) throw err;
+      result.set(tab, local.rows);
+    }
+    lastReadWasFromCache = true;
+  }
+  return result;
+}
+
+/** Reads several ranges, from the device where current, otherwise in ONE request. */
+export async function readRanges(requests: { tab: string; range: string }[]): Promise<unknown[][][]> {
+  if (requests.length === 0) return [];
+  const grids = await readTabs(requests.map((r) => r.tab));
+  return requests.map(({ tab, range }) => sliceGrid(grids.get(tab) ?? [], range));
+}
+
+/** Reads a range, e.g. readRange("Ingredients", "A1:L200") — from the device when its copy is current. */
+export async function readRange(tab: string, range: string): Promise<unknown[][]> {
+  return (await readRanges([{ tab, range }]))[0];
+}
+
+/** Reads a range straight from the sheet, never from the device — for finding the row a write goes to. */
+export async function readRangeLive(tab: string, range: string): Promise<unknown[][]> {
+  const spreadsheetId = requireSpreadsheetId();
+  const response = await authorizedFetch(`${spreadsheetId}/values/${tab}!${range}?${READ_OPTIONS}`);
+  const data = await response.json();
+  return data.values ?? [];
+}
+
+/** Refreshes every given tab on the device in ONE request and records the sync time. */
+export async function pullAllTabs(tabs: readonly string[]): Promise<void> {
+  const spreadsheetId = requireSpreadsheetId();
+  await ensureLocalDb(spreadsheetId);
+  await fetchAndStoreTabs(spreadsheetId, tabs);
+  await setLocalMeta("lastPullAt", new Date().toISOString());
+}
+
+/** When the device copy was last refreshed from the sheet (ISO time), or null. */
+export async function getLastPullAt(): Promise<string | null> {
+  const spreadsheetId = getSpreadsheetId();
+  if (!spreadsheetId) return null;
+  await ensureLocalDb(spreadsheetId);
+  return getLocalMeta("lastPullAt");
 }
 
 function isBlankRow(row: unknown[]): boolean {
@@ -609,6 +656,7 @@ export async function writeRange(tab: string, range: string, values: unknown[][]
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ values }),
   });
+  markTabsChanged([tab]);
   const data = await response.json().catch(() => null);
   if (data?.updates?.updatedCells === 0) {
     throw new Error(`writeRange: Google reported no cells written to ${tab}`);
@@ -630,6 +678,7 @@ export async function batchUpdateRanges(updates: { range: string; values: unknow
       data: updates.map((u) => ({ range: u.range, values: u.values })),
     }),
   });
+  markTabsChanged(tabsOfRanges(updates.map((u) => u.range)));
 }
 
 // --- Blank-spreadsheet initialization ---
@@ -697,6 +746,7 @@ export async function structuralBatchUpdate(requests: object[]): Promise<void> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ requests }),
   });
+  markAllTabsChanged();
 }
 
 export interface TabGrid {

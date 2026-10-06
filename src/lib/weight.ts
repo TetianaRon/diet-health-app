@@ -1,7 +1,7 @@
 // Weight diary (release 1.7, spec → "Daily records and the new Today").
 // Weight tab: Date, WeightKg, Notes — ONE record per day, no time of day
 // (developer, 2026-10-05). The trend (weightTrend) is pure.
-import { batchUpdateRanges, readRange, writeRange } from "./sheets";
+import { batchUpdateRanges, readRangeLive, writeRange } from "./sheets";
 import { buildColumnIndex, buildRow, cell, columnLetter, parseTab, SCAN_LAST_COLUMN, type ColumnIndex } from "./sheetRow";
 
 export interface WeightEntry {
@@ -84,7 +84,7 @@ export function planWeightSave(
  * the old day's row is overwritten with the new day — so it never duplicates.
  */
 export async function saveWeightEntry(entry: WeightEntry, previousDate?: string): Promise<WeightEntry> {
-  const { columnIndex, dataRows, firstDataRow } = parseTab("Weight", await readRange("Weight", WEIGHT_RANGE), WEIGHT_HEADERS);
+  const { columnIndex, dataRows, firstDataRow } = parseTab("Weight", await readRangeLive("Weight", WEIGHT_RANGE), WEIGHT_HEADERS);
   const sameDay = planWeightSave(entry, dataRows, columnIndex, firstDataRow);
   const movedFrom =
     previousDate && previousDate !== entry.date ? planWeightSave({ ...entry, date: previousDate }, dataRows, columnIndex, firstDataRow) : null;

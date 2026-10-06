@@ -2,7 +2,7 @@
 // her medicines, entered once (Medications tab), and each intake
 // (MedicationLog tab). A plain diary — no dose suggestions, no warnings
 // (not a medical app). Same header-name row mapping as the other tabs.
-import { batchUpdateRanges, readRange, writeRange } from "./sheets";
+import { batchUpdateRanges, readRangeLive, writeRange } from "./sheets";
 import { buildColumnIndex, buildRow, cell, columnLetter, parseTab, SCAN_LAST_COLUMN, type ColumnIndex } from "./sheetRow";
 import { reserveItemId } from "./itemIdStore";
 
@@ -109,7 +109,7 @@ export function parseIntakes(rows: unknown[][]): MedicationIntake[] {
 
 /** Adds a medicine to her list with the next free `M…` ID and returns it as saved. */
 export async function addMedication(m: Omit<Medication, "id" | "dateAdded" | "active">): Promise<Medication> {
-  const { columnIndex, dataRows } = parseTab("Medications", await readRange("Medications", MEDICATIONS_RANGE), MEDICATIONS_HEADERS);
+  const { columnIndex, dataRows } = parseTab("Medications", await readRangeLive("Medications", MEDICATIONS_RANGE), MEDICATIONS_HEADERS);
   const id = await reserveItemId("medication", dataRows.map((r) => cell(r, columnIndex, "Id")));
   const saved: Medication = { ...m, id, active: true, dateAdded: new Date().toISOString().slice(0, 10) };
   await writeRange("Medications", APPEND_RANGE, [medicationToRow(saved, columnIndex)]);
@@ -117,7 +117,7 @@ export async function addMedication(m: Omit<Medication, "id" | "dateAdded" | "ac
 }
 
 export async function addIntake(intake: MedicationIntake): Promise<MedicationIntake> {
-  const { columnIndex } = parseTab("MedicationLog", await readRange("MedicationLog", MEDICATION_LOG_RANGE), MEDICATION_LOG_HEADERS);
+  const { columnIndex } = parseTab("MedicationLog", await readRangeLive("MedicationLog", MEDICATION_LOG_RANGE), MEDICATION_LOG_HEADERS);
   await writeRange("MedicationLog", APPEND_RANGE, [intakeToRow(intake, columnIndex)]);
   return intake;
 }
@@ -148,7 +148,7 @@ export function planIntakeUpdate(
 export async function updateIntake(original: MedicationIntake, updated: MedicationIntake): Promise<void> {
   const { columnIndex, dataRows, firstDataRow } = parseTab(
     "MedicationLog",
-    await readRange("MedicationLog", MEDICATION_LOG_RANGE),
+    await readRangeLive("MedicationLog", MEDICATION_LOG_RANGE),
     MEDICATION_LOG_HEADERS,
   );
   const update = planIntakeUpdate(original, updated, dataRows, columnIndex, firstDataRow);

@@ -7,7 +7,7 @@
 // Schema is deliberately kept consistent with Ingredient: NameUk/NameEn
 // first, Source/DateAdded last, same nutrient column names in between —
 // only IngredientsJson/YieldGrams are Dish-specific, inserted in the middle.
-import { batchUpdateRanges, deleteSheetRow, readRange, writeRange } from "./sheets";
+import { batchUpdateRanges, deleteSheetRow, readRange, readRangeLive, writeRange } from "./sheets";
 import { buildColumnIndex, buildRow, cell, columnLetter, parseTab, SCAN_LAST_COLUMN, type ColumnIndex, type ParsedTab } from "./sheetRow";
 import { toGlycemicFlag, type GlycemicFlag } from "./glycemicFlag";
 import { reserveItemId } from "./itemIdStore";
@@ -365,8 +365,9 @@ export function dishToRow(dish: Dish, columnIndex: ColumnIndex = DEFAULT_COLUMN_
   );
 }
 
-async function readDishesSheet(): Promise<ParsedTab> {
-  return parseTab("Dishes", await readRange("Dishes", DISHES_RANGE), DISHES_HEADERS);
+/** live: read the sheet itself (before a write decides which row to change). */
+async function readDishesSheet(live = false): Promise<ParsedTab> {
+  return parseTab("Dishes", await (live ? readRangeLive : readRange)("Dishes", DISHES_RANGE), DISHES_HEADERS);
 }
 
 export async function listDishes(): Promise<Dish[]> {
@@ -379,7 +380,7 @@ export async function addDish(
   dish: Omit<Dish, "dateAdded" | "glycemicFlag" | "id" | "basedOn"> & { basedOn?: string },
   glycemicFlag: GlycemicFlag = "none",
 ): Promise<Dish> {
-  const { columnIndex, dataRows } = await readDishesSheet();
+  const { columnIndex, dataRows } = await readDishesSheet(true);
   const id = await reserveItemId("dish", dataRows.map((row) => cell(row, columnIndex, "Id")));
   const saved: Dish = { ...dish, id, basedOn: dish.basedOn ?? "", dateAdded: new Date().toISOString().slice(0, 10), glycemicFlag };
   await writeRange("Dishes", DISHES_APPEND_RANGE, [dishToRow(saved, columnIndex)]);
@@ -387,7 +388,7 @@ export async function addDish(
 }
 
 async function findDishRow(id: string): Promise<{ rowNumber: number; columnIndex: ColumnIndex }> {
-  const { columnIndex, dataRows, firstDataRow } = await readDishesSheet();
+  const { columnIndex, dataRows, firstDataRow } = await readDishesSheet(true);
   const rowIndex = dataRows.findIndex((row) => String(cell(row, columnIndex, "Id") ?? "").trim() === id);
   if (rowIndex === -1) {
     throw new Error(`Dish ${id} not found in Dishes`);
@@ -411,7 +412,7 @@ export async function setDishGlycemicFlag(id: string, glycemicFlag: GlycemicFlag
 /** Rewrites several saved dishes in one read and one write. */
 export async function updateDishes(dishes: readonly Dish[]): Promise<void> {
   if (dishes.length === 0) return;
-  const { columnIndex, dataRows, firstDataRow } = await readDishesSheet();
+  const { columnIndex, dataRows, firstDataRow } = await readDishesSheet(true);
   const lastCol = columnLetter(Math.max(...columnIndex.values()));
   await batchUpdateRanges(
     dishes.map((dish) => {

@@ -4,7 +4,7 @@
 // HEADER NAME (see sheetRow.ts), not fixed position, so a reordered sheet —
 // deliberately or by someone dragging a column in the Sheets UI — still
 // parses correctly.
-import { batchUpdateRanges, readRange, writeRange } from "./sheets";
+import { batchUpdateRanges, readRange, readRangeLive, writeRange } from "./sheets";
 import { buildColumnIndex, buildRow, cell, columnLetter, parseTab, readColumnIndex, SCAN_LAST_COLUMN, type ColumnIndex } from "./sheetRow";
 import { localDateKey } from "./dailyLog";
 
@@ -98,7 +98,7 @@ export function planBloodSugarUpdate(
 
 /** Rewrites one reading in place. Throws if it can't be found (e.g. changed on another device meanwhile). */
 export async function updateBloodSugarEntry(original: BloodSugarEntry, updated: BloodSugarEntry): Promise<void> {
-  const { columnIndex, dataRows, firstDataRow } = parseTab("BloodSugar", await readRange("BloodSugar", RANGE), BLOOD_SUGAR_HEADERS);
+  const { columnIndex, dataRows, firstDataRow } = parseTab("BloodSugar", await readRangeLive("BloodSugar", RANGE), BLOOD_SUGAR_HEADERS);
   const update = planBloodSugarUpdate(original, updated, dataRows, columnIndex, firstDataRow);
   if (!update) throw new Error("BloodSugar entry not found");
   await batchUpdateRanges([update]);

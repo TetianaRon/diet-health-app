@@ -3,7 +3,7 @@
 // read/written by column HEADER NAME (see sheetRow.ts), not fixed position,
 // so a reordered sheet — deliberately or by someone dragging a column in the
 // Sheets UI — still parses correctly.
-import { batchUpdateRanges, deleteSheetRow, readRange, writeRange } from "./sheets";
+import { batchUpdateRanges, deleteSheetRow, readRange, readRangeLive, writeRange } from "./sheets";
 import { buildColumnIndex, buildRow, cell, columnLetter, parseTab, SCAN_LAST_COLUMN, type ColumnIndex, type ParsedTab } from "./sheetRow";
 import { BUILT_IN_ALIASES, BUILT_IN_FOODS } from "../data/builtInFoods";
 import { toGlycemicFlag, type GlycemicFlag } from "./glycemicFlag";
@@ -171,8 +171,9 @@ export function mergeWithBuiltInFoods(sheetIngredients: Ingredient[]): Ingredien
   return mergeBuiltInsById(BUILT_IN_FOODS, sheetIngredients, BUILT_IN_ALIASES);
 }
 
-async function readIngredientsSheet(): Promise<ParsedTab> {
-  return parseTab("Ingredients", await readRange("Ingredients", INGREDIENTS_RANGE), INGREDIENTS_HEADERS);
+/** live: read the sheet itself (before a write decides which row to change). */
+async function readIngredientsSheet(live = false): Promise<ParsedTab> {
+  return parseTab("Ingredients", await (live ? readRangeLive : readRange)("Ingredients", INGREDIENTS_RANGE), INGREDIENTS_HEADERS);
 }
 
 export async function listIngredients(): Promise<Ingredient[]> {
@@ -186,7 +187,7 @@ export async function addIngredient(
   favorite = false,
   glycemicFlag: GlycemicFlag = "none",
 ): Promise<Ingredient> {
-  const { columnIndex, dataRows } = await readIngredientsSheet();
+  const { columnIndex, dataRows } = await readIngredientsSheet(true);
   const id = await reserveItemId("ingredient", dataRows.map((row) => cell(row, columnIndex, "Id")));
   const saved: Ingredient = {
     ...ingredient,
@@ -202,7 +203,7 @@ export async function addIngredient(
 }
 
 async function findIngredientRow(id: string): Promise<{ rowNumber: number; columnIndex: ColumnIndex }> {
-  const { columnIndex, dataRows, firstDataRow } = await readIngredientsSheet();
+  const { columnIndex, dataRows, firstDataRow } = await readIngredientsSheet(true);
   const rowIndex = dataRows.findIndex((row) => String(cell(row, columnIndex, "Id") ?? "").trim() === id);
   if (rowIndex === -1) {
     throw new Error(`Ingredient ${id} not found in Ingredients`);
@@ -239,7 +240,7 @@ export async function setIngredientGlycemicFlag(id: string, glycemicFlag: Glycem
 /** Rewrites several saved rows in one read and one write (stays clear of Google's per-minute read limit). */
 export async function updateIngredients(items: readonly Ingredient[]): Promise<void> {
   if (items.length === 0) return;
-  const { columnIndex, dataRows, firstDataRow } = await readIngredientsSheet();
+  const { columnIndex, dataRows, firstDataRow } = await readIngredientsSheet(true);
   const lastCol = columnLetter(Math.max(...columnIndex.values()));
   const updates = items.map((item) => {
     const i = dataRows.findIndex((row) => String(cell(row, columnIndex, "Id") ?? "").trim() === item.id);

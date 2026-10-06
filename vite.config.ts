@@ -41,6 +41,10 @@ export default defineConfig(({ mode }) => {
   const usdaKey = env.USDA_API_KEY || env.VITE_USDA_API_KEY || "";
 
   return {
+  // The on-device database (src/lib/localDb): SQLite compiled to WebAssembly,
+  // loaded in a module worker. Vite must not pre-bundle it (it loads its own .wasm).
+  optimizeDeps: { exclude: ["@sqlite.org/sqlite-wasm"] },
+  worker: { format: "es" },
   server: {
     proxy: {
       "/api/usda": {

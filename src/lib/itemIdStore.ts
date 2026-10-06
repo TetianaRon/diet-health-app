@@ -3,13 +3,13 @@
 // but not a setting — parseSettingsRows ignores keys it doesn't know, and
 // the Settings screen never writes it). No unit tests by design, same as
 // the other Sheets IO; the numbering rule itself is tested in itemIds.ts.
-import { batchUpdateRanges, readRange, writeRange } from "./sheets";
+import { batchUpdateRanges, readRangeLive, writeRange } from "./sheets";
 import { formatItemId, ID_COUNTER_KEYS, nextItemNumber, type SheetItemKind } from "./itemIds";
 
 const SETTINGS_RANGE = "A1:C200";
 
 async function readCounterRow(kind: SheetItemKind): Promise<{ rowNumber: number | null; value: number }> {
-  const rows = await readRange("Settings", SETTINGS_RANGE);
+  const rows = await readRangeLive("Settings", SETTINGS_RANGE);
   const index = rows.findIndex((row) => String(row[0] ?? "").trim() === ID_COUNTER_KEYS[kind]);
   return index === -1 ? { rowNumber: null, value: 0 } : { rowNumber: index + 1, value: Number(rows[index][1]) || 0 };
 }

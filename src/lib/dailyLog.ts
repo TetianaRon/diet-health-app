@@ -4,7 +4,7 @@
 // (a later edit to the Ingredients/Dishes bundle shouldn't retroactively
 // change what was actually eaten) — or a custom/estimated entry (restaurant
 // food, etc.) with some values entered directly and possibly left unknown.
-import { batchUpdateRanges, readRange } from "./sheets";
+import { batchUpdateRanges, readRange, readRangeLive } from "./sheets";
 import { buildColumnIndex, buildRow, cell, columnLetter, parseTab, SCAN_LAST_COLUMN, type ColumnIndex, type ParsedTab } from "./sheetRow";
 import { calcGlycemicLoad } from "./health";
 import type { IngredientNutrition, NutritionKey } from "./dishes";
@@ -422,8 +422,9 @@ export function logEntryToRow(entry: DailyLogEntry, columnIndex: ColumnIndex = D
   );
 }
 
-async function readLogSheet(): Promise<ParsedTab> {
-  return parseTab("DailyLog", await readRange("DailyLog", LOG_RANGE), DAILY_LOG_HEADERS);
+/** live: read the sheet itself (before a write decides which rows to change). */
+async function readLogSheet(live = false): Promise<ParsedTab> {
+  return parseTab("DailyLog", await (live ? readRangeLive : readRange)("DailyLog", LOG_RANGE), DAILY_LOG_HEADERS);
 }
 
 export async function listLogEntries(): Promise<DailyLogEntry[]> {
@@ -511,7 +512,7 @@ export function planMealSave(
 
 /** Saves a whole meal in one batch — see planMealSave. `originals` is empty for a brand-new meal. */
 export async function saveMeal(originals: DailyLogEntry[], drafts: MealDraftItem[]): Promise<void> {
-  const { columnIndex, dataRows, firstDataRow } = await readLogSheet();
+  const { columnIndex, dataRows, firstDataRow } = await readLogSheet(true);
   const updates = planMealSave(originals, drafts, dataRows, columnIndex, firstDataRow);
   if (updates.length > 0) await batchUpdateRanges(updates);
 }
