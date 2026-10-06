@@ -1502,3 +1502,8 @@ select {
   gap: 8px;
   margin: 8px 0;
 }
+
+/* «Увійти через Google» and «Почати без Google» side by side */
+.screen > button + button {
+  margin-left: 8px;
+}
