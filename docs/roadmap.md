@@ -16,7 +16,7 @@ The workflow (intake → release branch → verify → release) and the standing
 
 ## Current and upcoming releases
 
-### 2.0 — Local-first: the device is the app · 🔨 in progress (checkpoints A, B done) — spec → "Local-first app"
+### 2.0 — Local-first: the device is the app · 🔨 in progress (checkpoints A, B, C done — release checks next) — spec → "Local-first app"
 One release (developer, 2026-10-05) combining what was planned as three: reading from the device, offline saving with full sync, and Android without Google. Built on `release/2.0` in three internal checkpoints, each tested before the next starts; nothing ships in between.
 
 **Checkpoint A — reading from the device** · ✅ built and checked on the dev sheet (2026-10-05; build log)
@@ -34,7 +34,7 @@ One release (developer, 2026-10-05) combining what was planned as three: reading
 - **Safeguard:** an automatic backup copy of the sheet («Трекер харчування — копія перед синхронізацією <date>») as a separate file in the app's Drive folder before a device's first sync; moved to Drive's trash automatically after 14 days of working sync, with a note.
 - Switching sheet or signing out syncs first, or warns if it can't.
 
-**Checkpoint C — Android without Google**
+**Checkpoint C — Android without Google** · ✅ built and checked in the web app (2026-10-06; build log) — the phone parts go to the release checks
 - «Почати без Google» on Android; connecting a sheet later (the first sync uploads everything).
 - .xlsx backup and restore, with a reminder after 30 days. The web stays sign-in only.
 

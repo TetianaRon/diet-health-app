@@ -645,6 +645,7 @@ Every screen reads its tabs from Sheets (Today and History read them in one `bat
 - **The web version requires Google sign-in.** Using the browser without Google isn't a real use case, and nobody restores a spreadsheet backup in a browser. On the web, the local database is a **fast copy of the user's sheet plus a queue of changes waiting to sync**. The sheet is the source of truth there.
   - If the browser clears its storage, the copy is downloaded again. Only changes not yet synced could be lost, and sync runs a few seconds after each change.
   - Before signing out, unsynced changes are synced first (or the user is warned if that fails).
+- **Moving to Google later:** «Перенести дані в Google Таблицю» creates a new spreadsheet in the «Track My Meals» Drive folder (the window names the folder and lets her edit the name, like creating a new sheet) with all the phone's data, then connects it. Only into a new spreadsheet.
 - **Backup (Android without Google): an .xlsx file in the same layout as the sheet** (developer, 2026-10-05). It's readable in any spreadsheet app, the same file can be restored, and it can be uploaded to Google later.
   - Saved from Settings («Зберегти копію даних») through Android's share/save sheet, or restored («Відновити з файлу»).
   - A reminder appears when the last backup is over 30 days old.

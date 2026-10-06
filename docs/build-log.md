@@ -185,3 +185,34 @@ Answering "did we review only products?": the 69 home dishes were on the page bu
 
   367 tests, `tsc`.
 - **Test data left on the dev sheet:** sugar 6,1 and 5,7, one meal «Тест-страва А (2.0)», 89,4 kg, and the 00:46 backup copy (registered, trashed automatically after 14 days).
+
+**Release 2.0 — checkpoint C, Android without Google (2026-10-06, branch `release/2.0`):**
+- **Phone-only mode** (`localMode.ts`, `localModeId.ts`): «Почати без Google» on the sign-in screens. It's shown in the Android app only (and on the local dev server for testing); the web always signs in.
+  - The data lives in the device database named "local". It starts with the same tabs a new spreadsheet gets (`initialGrids()` from `buildInitUpdates`).
+  - Saves apply straight to it (`recordStore` → `record()`), with no queue and no sync. The structure check is skipped, and network calls for "local" fail with a message.
+  - The auth context treats this mode as in (`signedIn || localMode`).
+- **Backup** (`localBackup.ts`, SheetJS 0.20.3 from the official CDN, loaded only when used): .xlsx with one sheet per tab in the spreadsheet's layout.
+  - Saved through Android's share sheet (`@capacitor/filesystem` + `@capacitor/share`), or downloaded in a browser.
+  - «Відновити з файлу» replaces the phone's data after a confirmation, and refuses a file that isn't the app's backup.
+  - A reminder (action note) after 30 days without a backup, counted from the mode's start if there was never one.
+- **Moving to Google** («Перенести дані в Google Таблицю»): signs in through the app, creates a new spreadsheet in the «Track My Meals» Drive folder with all the phone's data, connects it, and stores it as the device copy.
+  - Developer's request: the window says where the file goes and lets her edit the name, like «Створити нову таблицю».
+  - Text kept with a leading apostrophe on the phone is written as the text itself. Only into a new spreadsheet; merging into one that holds data isn't offered.
+- **Found and fixed while checking:**
+  - weight dates kept on the phone carry Sheets' "keep as text" apostrophe, so `normalizeDateCell` read them as no date: every phone-only weight would vanish (tested now);
+  - the move signed in through the low-level function, so the screens thought she was signed out;
+  - spreadsheets created from grids (moves, backup copies) kept Google's empty «Sheet1» (now removed);
+  - a blocked or closed Google sign-in window left the app waiting forever (GIS `error_callback` → «Вікно входу Google не відкрилося або було закрите…»);
+  - two parts of the page opening the device database at once raced for the lock, and the loser marked it «busy» — opens are now shared;
+  - a reload's leftover lock is waited for (~2 s) before «busy»;
+  - phone-only reads without the database say so instead of returning empty tabs;
+  - the pre-2.0 localStorage read cache is cleared once;
+  - Today's offline notice still said new records wouldn't save.
+- **Verified (local web app, phone-only mode enabled for testing):**
+  - «Почати без Google» opened Today with the default targets and no Google requests;
+  - a weight saved and showed;
+  - Settings shows «Дані на цьому телефоні» with the three actions and loads targets from the phone's data;
+  - backup round trip (build the .xlsx → delete the weight → restore → back, ID and time included);
+  - the move: the developer clicked and signed in (an automated click can't open Google's window); the new spreadsheet had every tab and the weight row as text with ID and time, and the app connected to it. The test spreadsheet was moved to Drive's trash afterwards, and the dev sheet reconnected.
+  - The new move window was checked by eye. 371 tests, `tsc`.
+- **Not checked yet (release checks):** the Android share sheet, the file picker for restoring, and the button in the Android app.
