@@ -55,7 +55,9 @@ export function onSynced(listener: () => void): () => void {
 
 async function backupBeforeFirstPush(remote: Map<string, unknown[][]>): Promise<void> {
   if (await getLocalMeta("backupDone")) return;
-  const stamp = new Date().toISOString().slice(0, 16).replace("T", " ");
+  const d = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const stamp = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`; // local time
   await createBackupSpreadsheet(`Трекер харчування — копія перед синхронізацією ${stamp}`, remote);
   await setLocalMeta("backupDone", new Date().toISOString());
 }
