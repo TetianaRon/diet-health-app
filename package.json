@@ -15,15 +15,12 @@
     "@capacitor/app": "^8.1.1",
     "@capacitor/browser": "^8.0.4",
     "@capacitor/core": "^8.5.1",
-    "@capacitor/filesystem": "^8.1.4",
     "@capacitor/local-notifications": "^8.3.1",
     "@capacitor/preferences": "^8.0.1",
-    "@capacitor/share": "^8.0.3",
     "@capacitor/status-bar": "^8.0.3",
     "@sqlite.org/sqlite-wasm": "3.53.4-build2",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@capacitor/android": "^8.5.1",

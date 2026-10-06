@@ -131,7 +131,7 @@ export default function ConnectSheetDialog() {
         setSpreadsheetId(previous); // stay on the old sheet if the new one couldn't be set up
         throw err;
       }
-      await connectSpreadsheet({ id, title: name });
+      await connectSpreadsheet({ id, title: name }, { isNew: true });
     });
 
   const connectLink = () =>
