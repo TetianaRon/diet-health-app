@@ -160,8 +160,23 @@ async function openWorkerStore(spreadsheetId: string): Promise<void> {
   setStatus("ready");
 }
 
-/** Opens this spreadsheet's database on the device (or the in-memory stand-in). Status "busy" means another tab holds it. */
-export async function openLocalDb(spreadsheetId: string): Promise<LocalDbStatus> {
+let opening: { spreadsheetId: string; promise: Promise<LocalDbStatus> } | null = null;
+
+/**
+ * Opens this spreadsheet's database on the device (or the in-memory stand-in).
+ * Status "busy" means another tab holds it. Concurrent calls share one open —
+ * two parts of the page opening at once must not compete for the lock.
+ */
+export function openLocalDb(spreadsheetId: string): Promise<LocalDbStatus> {
+  if (opening && opening.spreadsheetId === spreadsheetId) return opening.promise;
+  const promise = openLocalDbNow(spreadsheetId).finally(() => {
+    if (opening?.promise === promise) opening = null;
+  });
+  opening = { spreadsheetId, promise };
+  return promise;
+}
+
+async function openLocalDbNow(spreadsheetId: string): Promise<LocalDbStatus> {
   if (openSheetId === spreadsheetId && (status === "ready" || status === "memory")) return status;
   if (status === "ready") await workerStore.close().catch(() => undefined);
   openSheetId = null;
