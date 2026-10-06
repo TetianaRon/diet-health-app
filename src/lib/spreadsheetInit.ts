@@ -15,7 +15,9 @@ import { addSheetTabs, batchUpdateRanges, getTabGrids, listSheetTitles, readRang
 import { columnLetter, SCAN_LAST_COLUMN } from "./sheetRow";
 import { labelFor } from "./sheetLabels";
 import { analyzeDataTab, isBlocking, isTabRepairable, planLabelRepair, planTabRepair, type TabIssue, type TabReport } from "./sheetSchema";
-import { planItemIdUpgrade, planRecordIds } from "./sheetUpgrade";
+import { planItemIdUpgrade } from "./sheetUpgrade";
+import { planRecordIds } from "./recordIdPlan";
+import { REQUIRED_TABS } from "./tabs";
 import { planColumnMigrations } from "./columnMigrations";
 import { ID_COUNTER_KEYS, type SheetItemKind } from "./itemIds";
 import { writeItemCounter } from "./itemIdStore";
@@ -32,10 +34,7 @@ import { DELETED_HEADERS, DELETED_TAB } from "./deletions";
 import { newRecordId, type RecordKind } from "./itemIds";
 import { uk } from "../i18n/uk";
 
-// Medications, MedicationLog and Weight since 1.7 — on an existing sheet
-// they're created silently by the upgrade (a missing tab is additive).
-// Deleted since 2.0 (deletions synced across devices; deletions.ts).
-export const REQUIRED_TABS = ["Ingredients", "Dishes", "DailyLog", "BloodSugar", "Medications", "MedicationLog", "Weight", "Deleted", "Settings"] as const;
+export { REQUIRED_TABS };
 
 const DATA_TAB_HEADERS: Record<string, readonly string[]> = {
   Ingredients: INGREDIENTS_HEADERS,

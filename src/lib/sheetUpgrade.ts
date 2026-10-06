@@ -164,23 +164,3 @@ export function planItemIdUpgrade(input: {
   return plan;
 }
 
-/**
- * Release 2.0: gives every non-blank row of a record tab (DailyLog, BloodSugar,
- * MedicationLog, Weight) an ID where its Id cell is blank. Only blank cells are
- * written. `makeId` is newRecordId for the tab's kind (injected for tests).
- */
-export function planRecordIds(
-  tab: string,
-  rows: readonly (readonly unknown[])[],
-  makeId: () => string,
-): { valueUpdates: { range: string; values: unknown[][] }[]; filled: number } {
-  const view = viewOf(rows);
-  const idCol = view.columnIndex.get("Id");
-  if (idCol === undefined) return { valueUpdates: [], filled: 0 }; // column not added yet
-  const valueUpdates: { range: string; values: unknown[][] }[] = [];
-  view.dataRows.forEach((row, i) => {
-    if (isBlankRow(row) || text(row[idCol]) !== "") return;
-    valueUpdates.push({ range: `${tab}!${columnLetter(idCol)}${view.firstDataRow + i}`, values: [[makeId()]] });
-  });
-  return { valueUpdates, filled: valueUpdates.length };
-}

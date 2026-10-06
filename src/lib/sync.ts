@@ -19,11 +19,11 @@ import {
   pullAllTabs,
   writeRange,
 } from "./sheets";
-import { REQUIRED_TABS } from "./spreadsheetInit";
+import { REQUIRED_TABS } from "./tabs";
 import { getLocalMeta, listLocalChanges, removeLocalChanges, setLocalMeta } from "./localDb";
 import { layoutOf, planPush, type RecordChange } from "./sync/merge";
 import { columnLetter } from "./sheetRow";
-import { planRecordIds } from "./sheetUpgrade";
+import { planRecordIds } from "./recordIdPlan";
 import { newRecordId, type RecordKind } from "./itemIds";
 import { DELETED_TAB } from "./deletions";
 

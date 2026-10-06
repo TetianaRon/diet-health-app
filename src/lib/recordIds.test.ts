@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { newRecordId } from "./itemIds";
-import { planRecordIds } from "./sheetUpgrade";
+import { planRecordIds } from "./recordIdPlan";
 
 describe("newRecordId", () => {
   it("is the kind's prefix, the time in base 36 and five random characters", () => {
