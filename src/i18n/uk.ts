@@ -492,6 +492,7 @@ export const uk = {
       connectOtherButton: "Підключити іншу таблицю",
       syncedAt: (when: string) => `Синхронізовано: ${when}`,
       neverSynced: "Ще не синхронізовано.",
+      pending: (n: number) => `Очікують синхронізації: ${n}`,
       syncButton: "Синхронізувати",
       syncing: "Синхронізація...",
       syncFailed: (reason: string) => `Не вдалося синхронізувати: ${reason}`,

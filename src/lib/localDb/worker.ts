@@ -14,7 +14,7 @@ type Db = {
   close: () => void;
 };
 
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 let pool: Awaited<ReturnType<Awaited<ReturnType<typeof sqlite3InitModule>>["installOpfsSAHPoolVfs"]>> | null = null;
 let db: Db | null = null;
 
@@ -29,6 +29,7 @@ async function open(spreadsheetId: string): Promise<void> {
     create table if not exists meta (key text primary key, value text);
     create table if not exists tabs (tab text primary key, pulled_at text not null);
     create table if not exists tab_rows (tab text not null, row_index integer not null, cells text not null, primary key (tab, row_index));
+    create table if not exists changes (seq integer primary key autoincrement, tab text not null, record_id text not null, op text not null, fields text not null, base text not null, changed_at text not null);
   `);
   db.exec({ sql: "insert into meta(key, value) values ('schema_version', ?) on conflict(key) do update set value = excluded.value", bind: [String(SCHEMA_VERSION)] });
 }
@@ -68,6 +69,35 @@ function setMeta(key: string, value: string): void {
   db!.exec({ sql: "insert into meta(key, value) values (?, ?) on conflict(key) do update set value = excluded.value", bind: [key, value] });
 }
 
+function addChange(c: { tab: string; id: string; op: string; fields: unknown; base: unknown; changedAt: string }): number {
+  db!.exec({ sql: "insert into changes (tab, record_id, op, fields, base, changed_at) values (?, ?, ?, ?, ?, ?)", bind: [c.tab, c.id, c.op, JSON.stringify(c.fields), JSON.stringify(c.base), c.changedAt] });
+  return Number(rowsOf("select last_insert_rowid()")[0][0]);
+}
+
+function listChanges() {
+  return rowsOf("select seq, tab, record_id, op, fields, base, changed_at from changes order by seq").map((r) => ({
+    seq: Number(r[0]),
+    tab: String(r[1]),
+    id: String(r[2]),
+    op: String(r[3]),
+    fields: JSON.parse(String(r[4])),
+    base: JSON.parse(String(r[5])),
+    changedAt: String(r[6]),
+  }));
+}
+
+function removeChanges(seqs: number[]): void {
+  if (seqs.length === 0) return;
+  db!.exec("begin");
+  try {
+    for (const seq of seqs) db!.exec({ sql: "delete from changes where seq = ?", bind: [seq] });
+    db!.exec("commit");
+  } catch (err) {
+    db!.exec("rollback");
+    throw err;
+  }
+}
+
 function close(): void {
   db?.close();
   db = null;
@@ -90,6 +120,13 @@ self.onmessage = async (e: MessageEvent<WorkerRequest>) => {
         return reply({ ok: true, value: getMeta(req.key) });
       case "setMeta":
         setMeta(req.key, req.value);
+        return reply({ ok: true });
+      case "addChange":
+        return reply({ ok: true, value: addChange(req.change) });
+      case "listChanges":
+        return reply({ ok: true, value: listChanges() });
+      case "removeChanges":
+        removeChanges(req.seqs);
         return reply({ ok: true });
       case "close":
         close();

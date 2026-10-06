@@ -23,7 +23,8 @@ import { Capacitor } from "@capacitor/core";
 import { App } from "@capacitor/app";
 import { Browser } from "@capacitor/browser";
 import { uk } from "../i18n/uk";
-import { getLocalMeta, getLocalTab, getOpenSpreadsheetId, openLocalDb, putLocalTabs, setLocalMeta } from "./localDb";
+import { getLocalMeta, getLocalTab, getOpenSpreadsheetId, listLocalChanges, openLocalDb, putLocalTabs, setLocalMeta } from "./localDb";
+import { applyChanges, type RecordChange } from "./sync/merge";
 import { sliceGrid, tabsOfRanges } from "./localDb/a1";
 
 const SHEETS_API_BASE = "https://sheets.googleapis.com/v4/spreadsheets";
@@ -597,6 +598,11 @@ async function readTabs(tabs: readonly string[], fresh = false): Promise<Map<str
     }
     lastReadWasFromCache = true;
   }
+  // Saves not yet synced are shown on top of the sheet's copy (release 2.0).
+  const pending = (await listLocalChanges()) as RecordChange[];
+  if (pending.length > 0) {
+    for (const [tab, rows] of result) result.set(tab, applyChanges(tab, rows, pending));
+  }
   return result;
 }
 
@@ -621,6 +627,22 @@ export async function readRangeLive(tab: string, range: string): Promise<unknown
   const response = await authorizedFetch(`${spreadsheetId}/values/${tab}!${range}?${READ_OPTIONS}`);
   const data = await response.json();
   return data.values ?? [];
+}
+
+/** Whole tabs straight from the sheet in ONE request, without storing them (sync decides against these). */
+export async function fetchTabsLive(tabs: readonly string[]): Promise<Map<string, unknown[][]>> {
+  const spreadsheetId = requireSpreadsheetId();
+  const params = new URLSearchParams(READ_OPTIONS);
+  for (const tab of tabs) params.append("ranges", tab);
+  const response = await authorizedFetch(`${spreadsheetId}/values:batchGet?${params}`);
+  const data = await response.json();
+  const valueRanges = (data.valueRanges ?? []) as { values?: unknown[][] }[];
+  return new Map(tabs.map((tab, i) => [tab, valueRanges[i]?.values ?? []] as const));
+}
+
+/** Opens the connected spreadsheet's device database (for modules that record saves). */
+export async function openDeviceDatabase(): Promise<void> {
+  await ensureLocalDb(requireSpreadsheetId());
 }
 
 /** Refreshes every given tab on the device in ONE request and records the sync time. */
@@ -779,6 +801,40 @@ export async function deleteSheetRow(tab: string, rowNumber: number): Promise<vo
   await structuralBatchUpdate([
     { deleteDimension: { range: { sheetId: grid.sheetId, dimension: "ROWS", startIndex: rowNumber - 1, endIndex: rowNumber } } },
   ]);
+}
+
+/** Removes several rows of one tab in one request; `rowNumbers` are 1-based, handled bottom-up so they stay valid. */
+export async function deleteSheetRows(tab: string, rowNumbers: readonly number[]): Promise<void> {
+  if (rowNumbers.length === 0) return;
+  const grid = (await getTabGrids()).get(tab);
+  if (!grid) throw new Error(`Tab ${tab} not found`);
+  const sorted = [...new Set(rowNumbers)].sort((a, b) => b - a);
+  await structuralBatchUpdate(
+    sorted.map((n) => ({ deleteDimension: { range: { sheetId: grid.sheetId, dimension: "ROWS", startIndex: n - 1, endIndex: n } } })),
+  );
+}
+
+/**
+ * Saves a full copy of the given tabs as a new spreadsheet in the app's Drive
+ * folder (the safeguard before a sheet's first sync — release 2.0). Returns its ID.
+ */
+export async function createBackupSpreadsheet(name: string, grids: ReadonlyMap<string, unknown[][]>): Promise<string> {
+  const id = await createSpreadsheetInAppFolder(name);
+  const tabs = [...grids.keys()];
+  await authorizedFetch(`${id}:batchUpdate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ requests: tabs.map((title) => ({ addSheet: { properties: { title } } })) }),
+  });
+  await authorizedFetch(`${id}/values:batchUpdate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      valueInputOption: "RAW",
+      data: tabs.filter((t) => (grids.get(t) ?? []).length > 0).map((t) => ({ range: `${t}!A1`, values: grids.get(t) })),
+    }),
+  });
+  return id;
 }
 
 // --- Creating a brand-new spreadsheet from the app ---

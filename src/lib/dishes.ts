@@ -7,10 +7,11 @@
 // Schema is deliberately kept consistent with Ingredient: NameUk/NameEn
 // first, Source/DateAdded last, same nutrient column names in between —
 // only IngredientsJson/YieldGrams are Dish-specific, inserted in the middle.
-import { batchUpdateRanges, deleteSheetRow, readRange, readRangeLive, writeRange } from "./sheets";
-import { buildColumnIndex, buildRow, cell, columnLetter, parseTab, SCAN_LAST_COLUMN, type ColumnIndex, type ParsedTab } from "./sheetRow";
+import { readRange } from "./sheets";
+import { deleteRecord, upsertRecord } from "./recordStore";
+import { newRecordId } from "./itemIds";
+import { buildColumnIndex, buildRow, cell, parseTab, SCAN_LAST_COLUMN, type ColumnIndex, type ParsedTab } from "./sheetRow";
 import { toGlycemicFlag, type GlycemicFlag } from "./glycemicFlag";
-import { reserveItemId } from "./itemIdStore";
 
 export type DishSource = "starter" | "manual";
 
@@ -313,7 +314,6 @@ export const DISHES_HEADERS = [
 const DEFAULT_COLUMN_INDEX = buildColumnIndex(DISHES_HEADERS);
 
 const DISHES_RANGE = `A1:${SCAN_LAST_COLUMN}1000`; // includes the header row (row 1), needed to resolve columns by name
-const DISHES_APPEND_RANGE = `A:${SCAN_LAST_COLUMN}`;
 
 export function rowToDish(row: unknown[], columnIndex: ColumnIndex = DEFAULT_COLUMN_INDEX): Dish {
   return {
@@ -339,9 +339,9 @@ export function rowToDish(row: unknown[], columnIndex: ColumnIndex = DEFAULT_COL
   };
 }
 
-export function dishToRow(dish: Dish, columnIndex: ColumnIndex = DEFAULT_COLUMN_INDEX): unknown[] {
-  return buildRow(
-    {
+/** The tab's fields for a dish (header → value) — what a save writes. */
+export function dishFields(dish: Dish): Record<string, unknown> {
+  return {
       NameUk: dish.nameUk,
       NameEn: dish.nameEn,
       IngredientsJson: serializeIngredientsJson(dish.ingredients),
@@ -361,14 +361,15 @@ export function dishToRow(dish: Dish, columnIndex: ColumnIndex = DEFAULT_COLUMN_
       UnknownFields: dish.unknownFields.join(","),
       Id: dish.id,
       BasedOn: dish.basedOn,
-    },
-    columnIndex,
-  );
+  };
 }
 
-/** live: read the sheet itself (before a write decides which row to change). */
-async function readDishesSheet(live = false): Promise<ParsedTab> {
-  return parseTab("Dishes", await (live ? readRangeLive : readRange)("Dishes", DISHES_RANGE), DISHES_HEADERS);
+export function dishToRow(dish: Dish, columnIndex: ColumnIndex = DEFAULT_COLUMN_INDEX): unknown[] {
+  return buildRow(dishFields(dish), columnIndex);
+}
+
+async function readDishesSheet(): Promise<ParsedTab> {
+  return parseTab("Dishes", await readRange("Dishes", DISHES_RANGE), DISHES_HEADERS);
 }
 
 export async function listDishes(): Promise<Dish[]> {
@@ -376,65 +377,37 @@ export async function listDishes(): Promise<Dish[]> {
   return dataRows.filter((row) => row.length > 0).map((row) => rowToDish(row, columnIndex));
 }
 
-/** Appends a new dish with the next free `D…` ID and returns it as saved. */
+// Saves go to the device first and reach the sheet with the next sync
+// (recordStore.ts, release 2.0) — they work the same offline.
+
+/** Adds a new dish with a new `D…` ID and returns it as saved. */
 export async function addDish(
   dish: Omit<Dish, "dateAdded" | "glycemicFlag" | "id" | "basedOn"> & { basedOn?: string },
   glycemicFlag: GlycemicFlag = "none",
 ): Promise<Dish> {
-  const { columnIndex, dataRows } = await readDishesSheet(true);
-  const id = await reserveItemId("dish", dataRows.map((row) => cell(row, columnIndex, "Id")));
-  const saved: Dish = { ...dish, id, basedOn: dish.basedOn ?? "", dateAdded: new Date().toISOString().slice(0, 10), glycemicFlag };
-  await writeRange("Dishes", DISHES_APPEND_RANGE, [dishToRow(saved, columnIndex)]);
+  const saved: Dish = { ...dish, id: newRecordId("dish"), basedOn: dish.basedOn ?? "", dateAdded: new Date().toISOString().slice(0, 10), glycemicFlag };
+  await upsertRecord("Dishes", saved.id, dishFields(saved));
   return saved;
 }
 
-async function findDishRow(id: string): Promise<{ rowNumber: number; columnIndex: ColumnIndex }> {
-  const { columnIndex, dataRows, firstDataRow } = await readDishesSheet(true);
-  const rowIndex = dataRows.findIndex((row) => String(cell(row, columnIndex, "Id") ?? "").trim() === id);
-  if (rowIndex === -1) {
-    throw new Error(`Dish ${id} not found in Dishes`);
-  }
-  return { rowNumber: rowIndex + firstDataRow, columnIndex };
-}
-
-/** Sets the GlycemicFlag column for an existing Dishes row, found by its ID. */
+/** Sets a dish's GlycemicFlag. */
 export async function setDishGlycemicFlag(id: string, glycemicFlag: GlycemicFlag): Promise<void> {
-  const { rowNumber, columnIndex } = await findDishRow(id);
-  const col = columnIndex.get("GlycemicFlag");
-  if (col === undefined) throw new Error('Dishes sheet has no "GlycemicFlag" column');
-  await batchUpdateRanges([{ range: `Dishes!${columnLetter(col)}${rowNumber}`, values: [[glycemicFlag]] }]);
+  await upsertRecord("Dishes", id, { GlycemicFlag: glycemicFlag });
 }
 
-/**
- * Overwrites an existing Dishes row in place, found by its ID — the edit
- * flow's counterpart to addDish's always-append behavior. A rename is just
- * part of the same write: nothing refers to a dish by name any more (1.6).
- */
-/** Rewrites several saved dishes in one read and one write. */
+/** Saves several edited dishes. */
 export async function updateDishes(dishes: readonly Dish[]): Promise<void> {
-  if (dishes.length === 0) return;
-  const { columnIndex, dataRows, firstDataRow } = await readDishesSheet(true);
-  const lastCol = columnLetter(Math.max(...columnIndex.values()));
-  await batchUpdateRanges(
-    dishes.map((dish) => {
-      const i = dataRows.findIndex((row) => String(cell(row, columnIndex, "Id") ?? "").trim() === dish.id);
-      if (i < 0) throw new Error(`Dish ${dish.id} not found in Dishes`);
-      const rowNumber = firstDataRow + i;
-      return { range: `Dishes!A${rowNumber}:${lastCol}${rowNumber}`, values: [dishToRow(dish, columnIndex)] };
-    }),
-  );
+  for (const dish of dishes) await upsertRecord("Dishes", dish.id, dishFields(dish));
 }
 
+/** Saves an edited dish (a rename is part of the same save: nothing refers to a dish by name since 1.6). */
 export async function updateDish(dish: Dish): Promise<void> {
-  const { rowNumber, columnIndex } = await findDishRow(dish.id);
-  const lastCol = columnLetter(Math.max(...columnIndex.values()));
-  await batchUpdateRanges([{ range: `Dishes!A${rowNumber}:${lastCol}${rowNumber}`, values: [dishToRow(dish, columnIndex)] }]);
+  await upsertRecord("Dishes", dish.id, dishFields(dish));
 }
 
-/** Removes her saved dish's row from the sheet (by ID). Past meals keep their own values. */
+/** Deletes her saved dish (its row leaves the sheet at the next sync). Past meals keep their own values. */
 export async function deleteDish(id: string): Promise<void> {
-  const { rowNumber } = await findDishRow(id);
-  await deleteSheetRow("Dishes", rowNumber);
+  await deleteRecord("Dishes", id);
 }
 
 /**

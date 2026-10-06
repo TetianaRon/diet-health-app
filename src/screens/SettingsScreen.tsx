@@ -7,7 +7,7 @@ import { TimeInput } from "./TimeInput";
 import { fullMealShareLeavesNoRoom, mealShares } from "../lib/mealRecommendation";
 import { setTimeFormat } from "../lib/dateFormat";
 import { getLastPullAt, getSpreadsheetId, getSpreadsheetUrl } from "../lib/sheets";
-import { syncNow } from "../lib/sync";
+import { onSynced, pendingCount, syncNow } from "../lib/sync";
 import { formatDateTime } from "../lib/dateFormat";
 import { useSheetHealth } from "../context/SheetHealthContext";
 import { useNotifications } from "../context/NotificationsContext";
@@ -99,9 +99,15 @@ function SyncLine() {
   const [lastPullAt, setLastPullAt] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(0);
 
   useEffect(() => {
-    void getLastPullAt().then(setLastPullAt).catch(() => setLastPullAt(null));
+    const load = () => {
+      void getLastPullAt().then(setLastPullAt).catch(() => setLastPullAt(null));
+      void pendingCount().then(setPending).catch(() => setPending(0));
+    };
+    load();
+    return onSynced(load);
   }, []);
 
   const sync = async () => {
@@ -110,6 +116,7 @@ function SyncLine() {
     try {
       await syncNow();
       setLastPullAt(await getLastPullAt());
+      setPending(await pendingCount());
       reloadScreens();
     } catch (err) {
       setError(s.syncFailed(err instanceof Error ? err.message : String(err)));
@@ -120,7 +127,10 @@ function SyncLine() {
 
   return (
     <div className="sync-line">
-      <p>{lastPullAt ? s.syncedAt(formatDateTime(lastPullAt)) : s.neverSynced}</p>
+      <p>
+        {lastPullAt ? s.syncedAt(formatDateTime(lastPullAt)) : s.neverSynced}
+        {pending > 0 && <> · {s.pending(pending)}</>}
+      </p>
       <button type="button" className="button-secondary" onClick={() => void sync()} disabled={syncing}>
         {syncing ? s.syncing : s.syncButton}
       </button>

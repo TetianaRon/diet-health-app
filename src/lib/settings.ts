@@ -2,7 +2,8 @@
 // docs/technical-spec.md -> "Google Sheets structure"). Unlike Ingredients
 // (append-only), Settings rows already exist from the starter template, so
 // updates target each key's existing row rather than appending.
-import { batchUpdateRanges, readRange, readRangeLive } from "./sheets";
+import { readRange } from "./sheets";
+import { upsertRecord } from "./recordStore";
 import { setTimeFormat } from "./dateFormat";
 
 // How times are shown and picked. Ukrainian UI defaults to 24h; 12h (AM/PM) is
@@ -220,10 +221,8 @@ export async function getSettings(): Promise<Settings> {
   return settings;
 }
 
+// Saves go to the device first and reach the sheet with the next sync (recordStore.ts, release 2.0).
 export async function updateSettings(settings: Settings): Promise<void> {
-  const rows = await readRangeLive("Settings", SETTINGS_RANGE);
-  const updates = computeSettingsUpdates(settings, rows);
-  if (updates.length > 0) {
-    await batchUpdateRanges(updates);
-  }
+  // One record per key; only values that changed are recorded.
+  for (const [key, value] of settingsToRows(settings)) await upsertRecord("Settings", String(key), { Value: value });
 }

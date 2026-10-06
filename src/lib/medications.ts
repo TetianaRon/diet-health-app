@@ -3,9 +3,8 @@
 // (MedicationLog tab). A plain diary — no dose suggestions, no warnings
 // (not a medical app). Same header-name row mapping as the other tabs.
 import { newRecordId } from "./itemIds";
-import { batchUpdateRanges, readRangeLive, writeRange } from "./sheets";
+import { upsertRecord } from "./recordStore";
 import { buildColumnIndex, buildRow, cell, columnLetter, parseTab, SCAN_LAST_COLUMN, type ColumnIndex } from "./sheetRow";
-import { reserveItemId } from "./itemIdStore";
 
 export interface Medication {
   id: string; // M1, M2… (see itemIds.ts)
@@ -34,7 +33,6 @@ const MEDS_INDEX = buildColumnIndex(MEDICATIONS_HEADERS);
 const LOG_INDEX = buildColumnIndex(MEDICATION_LOG_HEADERS);
 export const MEDICATIONS_RANGE = `A1:${SCAN_LAST_COLUMN}500`;
 export const MEDICATION_LOG_RANGE = `A1:${SCAN_LAST_COLUMN}5000`;
-const APPEND_RANGE = `A:${SCAN_LAST_COLUMN}`;
 
 /** A dose typed or stored with either decimal separator; blank → null. */
 export function parseDose(value: unknown): number | null {
@@ -79,19 +77,21 @@ export function rowToIntake(row: unknown[], columnIndex: ColumnIndex = LOG_INDEX
   };
 }
 
-export function intakeToRow(i: MedicationIntake, columnIndex: ColumnIndex = LOG_INDEX): unknown[] {
-  return buildRow(
-    {
+/** The MedicationLog fields of an intake (header → value). */
+export function intakeFields(i: MedicationIntake): Record<string, unknown> {
+  return {
       Timestamp: i.timestamp,
       MedicationId: i.medicationId,
       Medication: i.medicationName,
       Dose: i.dose ?? "",
       Unit: i.unit,
       Notes: i.notes,
-      Id: i.id || null, // missing id → nothing written, so a rewrite keeps the row's ID
-    },
-    columnIndex,
-  );
+    Id: i.id || null, // missing id → nothing written, so a rewrite keeps the row's ID
+  };
+}
+
+export function intakeToRow(i: MedicationIntake, columnIndex: ColumnIndex = LOG_INDEX): unknown[] {
+  return buildRow(intakeFields(i), columnIndex);
 }
 
 /** Her medicine list from the tab as read (header row first). */
@@ -113,18 +113,16 @@ export function parseIntakes(rows: unknown[][]): MedicationIntake[] {
 }
 
 /** Adds a medicine to her list with the next free `M…` ID and returns it as saved. */
+// Saves go to the device first and reach the sheet with the next sync (recordStore.ts, release 2.0).
 export async function addMedication(m: Omit<Medication, "id" | "dateAdded" | "active">): Promise<Medication> {
-  const { columnIndex, dataRows } = parseTab("Medications", await readRangeLive("Medications", MEDICATIONS_RANGE), MEDICATIONS_HEADERS);
-  const id = await reserveItemId("medication", dataRows.map((r) => cell(r, columnIndex, "Id")));
-  const saved: Medication = { ...m, id, active: true, dateAdded: new Date().toISOString().slice(0, 10) };
-  await writeRange("Medications", APPEND_RANGE, [medicationToRow(saved, columnIndex)]);
+  const saved: Medication = { ...m, id: newRecordId("medication"), active: true, dateAdded: new Date().toISOString().slice(0, 10) };
+  await upsertRecord("Medications", saved.id, { Name: saved.name, Dose: saved.dose ?? "", Unit: saved.unit, Notes: saved.notes, Active: saved.active, DateAdded: saved.dateAdded });
   return saved;
 }
 
 export async function addIntake(intake: MedicationIntake): Promise<MedicationIntake> {
-  const { columnIndex } = parseTab("MedicationLog", await readRangeLive("MedicationLog", MEDICATION_LOG_RANGE), MEDICATION_LOG_HEADERS);
   const saved: MedicationIntake = { ...intake, id: intake.id ?? newRecordId("intake") };
-  await writeRange("MedicationLog", APPEND_RANGE, [intakeToRow(saved, columnIndex)]);
+  await upsertRecord("MedicationLog", saved.id!, intakeFields(saved));
   return saved;
 }
 
@@ -152,14 +150,8 @@ export function planIntakeUpdate(
 
 /** Rewrites one intake in place. Throws if it can't be found (e.g. changed on another device meanwhile). */
 export async function updateIntake(original: MedicationIntake, updated: MedicationIntake): Promise<void> {
-  const { columnIndex, dataRows, firstDataRow } = parseTab(
-    "MedicationLog",
-    await readRangeLive("MedicationLog", MEDICATION_LOG_RANGE),
-    MEDICATION_LOG_HEADERS,
-  );
-  const update = planIntakeUpdate(original, updated, dataRows, columnIndex, firstDataRow);
-  if (!update) throw new Error("MedicationLog entry not found");
-  await batchUpdateRanges([update]);
+  if (!original.id) throw new Error("MedicationLog entry has no ID yet — sync first");
+  await upsertRecord("MedicationLog", original.id, intakeFields({ ...updated, id: original.id }));
 }
 
 /** "Форксига 10 мг" — the name, with dose and unit when there is a dose. */

@@ -3,13 +3,13 @@
 // read/written by column HEADER NAME (see sheetRow.ts), not fixed position,
 // so a reordered sheet — deliberately or by someone dragging a column in the
 // Sheets UI — still parses correctly.
-import { batchUpdateRanges, deleteSheetRow, readRange, readRangeLive, writeRange } from "./sheets";
-import { buildColumnIndex, buildRow, cell, columnLetter, parseTab, SCAN_LAST_COLUMN, type ColumnIndex, type ParsedTab } from "./sheetRow";
+import { readRange } from "./sheets";
+import { deleteRecord, upsertRecord } from "./recordStore";
+import { buildColumnIndex, buildRow, cell, parseTab, SCAN_LAST_COLUMN, type ColumnIndex, type ParsedTab } from "./sheetRow";
 import { BUILT_IN_ALIASES, BUILT_IN_FOODS } from "../data/builtInFoods";
 import { toGlycemicFlag, type GlycemicFlag } from "./glycemicFlag";
 import { parseUnknownNutritionFields, type NutritionKey } from "./dishes";
-import { mergeBuiltInsById } from "./itemIds";
-import { reserveItemId } from "./itemIdStore";
+import { mergeBuiltInsById, newRecordId } from "./itemIds";
 
 export type IngredientSource = "starter" | "usda" | "manual";
 
@@ -83,7 +83,6 @@ export const INGREDIENTS_HEADERS = [
 const DEFAULT_COLUMN_INDEX = buildColumnIndex(INGREDIENTS_HEADERS);
 
 const INGREDIENTS_RANGE = `A1:${SCAN_LAST_COLUMN}1000`; // includes the header row (row 1), needed to resolve columns by name
-const INGREDIENTS_APPEND_RANGE = `A:${SCAN_LAST_COLUMN}`;
 
 function toNumber(value: unknown): number {
   const n = Number(value);
@@ -124,9 +123,9 @@ export function rowToIngredient(row: unknown[], columnIndex: ColumnIndex = DEFAU
 }
 
 /** Maps a typed Ingredient back to a raw Sheets row, placing each field at its header's actual column position. */
-export function ingredientToRow(ingredient: Ingredient, columnIndex: ColumnIndex = DEFAULT_COLUMN_INDEX): unknown[] {
-  return buildRow(
-    {
+/** The tab's fields for a ingredient (header → value) — what a save writes. */
+export function ingredientFields(ingredient: Ingredient): Record<string, unknown> {
+  return {
       NameUk: ingredient.nameUk,
       NameEn: ingredient.nameEn,
       Carbs_g: ingredient.carbsG,
@@ -146,9 +145,11 @@ export function ingredientToRow(ingredient: Ingredient, columnIndex: ColumnIndex
       Id: ingredient.id,
       BasedOn: ingredient.basedOn,
       GiFrom: ingredient.giFrom,
-    },
-    columnIndex,
-  );
+  };
+}
+
+export function ingredientToRow(ingredient: Ingredient, columnIndex: ColumnIndex = DEFAULT_COLUMN_INDEX): unknown[] {
+  return buildRow(ingredientFields(ingredient), columnIndex);
 }
 
 /** Stable sort, favorites first — used wherever ingredients are browsed or picked from. */
@@ -172,9 +173,8 @@ export function mergeWithBuiltInFoods(sheetIngredients: Ingredient[]): Ingredien
   return mergeBuiltInsById(BUILT_IN_FOODS, sheetIngredients, BUILT_IN_ALIASES);
 }
 
-/** live: read the sheet itself (before a write decides which row to change). */
-async function readIngredientsSheet(live = false): Promise<ParsedTab> {
-  return parseTab("Ingredients", await (live ? readRangeLive : readRange)("Ingredients", INGREDIENTS_RANGE), INGREDIENTS_HEADERS);
+async function readIngredientsSheet(): Promise<ParsedTab> {
+  return parseTab("Ingredients", await readRange("Ingredients", INGREDIENTS_RANGE), INGREDIENTS_HEADERS);
 }
 
 export async function listIngredients(): Promise<Ingredient[]> {
@@ -182,86 +182,49 @@ export async function listIngredients(): Promise<Ingredient[]> {
   return dataRows.filter((row) => row.length > 0).map((row) => rowToIngredient(row, columnIndex));
 }
 
-/** Appends a new ingredient with the next free `I…` ID and returns it as saved. */
+// Saves go to the device first and reach the sheet with the next sync
+// (recordStore.ts, release 2.0) — they work the same offline.
+
+/** Adds a new ingredient with a new `I…` ID and returns it as saved. */
 export async function addIngredient(
   ingredient: Omit<Ingredient, "dateAdded" | "favorite" | "glycemicFlag" | "id" | "basedOn" | "giFrom"> & { basedOn?: string; giFrom?: string },
   favorite = false,
   glycemicFlag: GlycemicFlag = "none",
 ): Promise<Ingredient> {
-  const { columnIndex, dataRows } = await readIngredientsSheet(true);
-  const id = await reserveItemId("ingredient", dataRows.map((row) => cell(row, columnIndex, "Id")));
   const saved: Ingredient = {
     ...ingredient,
-    id,
+    id: newRecordId("ingredient"),
     basedOn: ingredient.basedOn ?? "",
     giFrom: ingredient.giFrom ?? "",
     dateAdded: new Date().toISOString().slice(0, 10),
     favorite,
     glycemicFlag,
   };
-  await writeRange("Ingredients", INGREDIENTS_APPEND_RANGE, [ingredientToRow(saved, columnIndex)]);
+  await upsertRecord("Ingredients", saved.id, ingredientFields(saved));
   return saved;
 }
 
-async function findIngredientRow(id: string): Promise<{ rowNumber: number; columnIndex: ColumnIndex }> {
-  const { columnIndex, dataRows, firstDataRow } = await readIngredientsSheet(true);
-  const rowIndex = dataRows.findIndex((row) => String(cell(row, columnIndex, "Id") ?? "").trim() === id);
-  if (rowIndex === -1) {
-    throw new Error(`Ingredient ${id} not found in Ingredients`);
-  }
-  return { rowNumber: rowIndex + firstDataRow, columnIndex };
-}
-
-function requireColumn(columnIndex: ColumnIndex, headerName: string, tab: string): number {
-  const i = columnIndex.get(headerName);
-  if (i === undefined) throw new Error(`${tab} sheet has no "${headerName}" column`);
-  return i;
-}
-
-/** Toggles the Favorite column for an existing Ingredients row, found by its ID. */
+/** Sets an ingredient's Favorite mark. */
 export async function setIngredientFavorite(id: string, favorite: boolean): Promise<void> {
-  const { rowNumber, columnIndex } = await findIngredientRow(id);
-  const col = requireColumn(columnIndex, "Favorite", "Ingredients");
-  await batchUpdateRanges([{ range: `Ingredients!${columnLetter(col)}${rowNumber}`, values: [[favorite]] }]);
+  await upsertRecord("Ingredients", id, { Favorite: favorite });
 }
 
-/** Sets the GlycemicFlag column for an existing Ingredients row, found by its ID. */
+/** Sets an ingredient's GlycemicFlag. */
 export async function setIngredientGlycemicFlag(id: string, glycemicFlag: GlycemicFlag): Promise<void> {
-  const { rowNumber, columnIndex } = await findIngredientRow(id);
-  const col = requireColumn(columnIndex, "GlycemicFlag", "Ingredients");
-  await batchUpdateRanges([{ range: `Ingredients!${columnLetter(col)}${rowNumber}`, values: [[glycemicFlag]] }]);
+  await upsertRecord("Ingredients", id, { GlycemicFlag: glycemicFlag });
 }
 
-/**
- * Overwrites an existing Ingredients row in place, found by its ID — the
- * edit flow's counterpart to addIngredient's always-append behavior.
- * Rewrites every known column, so a rename is just part of the same write
- * (safe since 1.6: nothing refers to an ingredient by name any more).
- */
-/** Rewrites several saved rows in one read and one write (stays clear of Google's per-minute read limit). */
+/** Saves several edited ingredients. */
 export async function updateIngredients(items: readonly Ingredient[]): Promise<void> {
-  if (items.length === 0) return;
-  const { columnIndex, dataRows, firstDataRow } = await readIngredientsSheet(true);
-  const lastCol = columnLetter(Math.max(...columnIndex.values()));
-  const updates = items.map((item) => {
-    const i = dataRows.findIndex((row) => String(cell(row, columnIndex, "Id") ?? "").trim() === item.id);
-    if (i < 0) throw new Error(`Ingredient ${item.id} not found`);
-    const rowNumber = firstDataRow + i;
-    return { range: `Ingredients!A${rowNumber}:${lastCol}${rowNumber}`, values: [ingredientToRow(item, columnIndex)] };
-  });
-  await batchUpdateRanges(updates);
+  for (const item of items) await upsertRecord("Ingredients", item.id, ingredientFields(item));
 }
 
+/** Saves an edited ingredient (a rename is part of the same save: links go by ID since 1.6). */
 export async function updateIngredient(ingredient: Ingredient): Promise<void> {
-  const { rowNumber, columnIndex } = await findIngredientRow(ingredient.id);
-  const lastCol = columnLetter(Math.max(...columnIndex.values()));
-  await batchUpdateRanges([
-    { range: `Ingredients!A${rowNumber}:${lastCol}${rowNumber}`, values: [ingredientToRow(ingredient, columnIndex)] },
-  ]);
+  await upsertRecord("Ingredients", ingredient.id, ingredientFields(ingredient));
 }
 
-/** Removes her saved product's row from the sheet (by ID). Final — the app can't bring it back. */
+/** Deletes her saved product (its row leaves the sheet at the next sync). Final — the app can't bring it back. */
 export async function deleteIngredient(id: string): Promise<void> {
-  const { rowNumber } = await findIngredientRow(id);
-  await deleteSheetRow("Ingredients", rowNumber);
+  await deleteRecord("Ingredients", id);
 }

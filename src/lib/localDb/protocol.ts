@@ -8,12 +8,26 @@ export interface TabSnapshot {
   pulledAt: string;
 }
 
+/** A save waiting to reach the sheet (see sync/merge.ts → RecordChange). */
+export interface StoredChange {
+  seq: number;
+  tab: string;
+  id: string;
+  op: "upsert" | "delete";
+  fields: Record<string, unknown>;
+  base: Record<string, unknown>;
+  changedAt: string;
+}
+
 export type WorkerRequest =
   | { id: number; op: "open"; spreadsheetId: string }
   | { id: number; op: "getTab"; tab: string }
   | { id: number; op: "putTabs"; snapshots: TabSnapshot[] }
   | { id: number; op: "getMeta"; key: string }
   | { id: number; op: "setMeta"; key: string; value: string }
+  | { id: number; op: "addChange"; change: Omit<StoredChange, "seq"> }
+  | { id: number; op: "listChanges" }
+  | { id: number; op: "removeChanges"; seqs: number[] }
   | { id: number; op: "close" };
 
 export type WorkerResponse = { id: number; ok: true; value?: unknown } | { id: number; ok: false; error: string };

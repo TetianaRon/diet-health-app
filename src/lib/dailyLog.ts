@@ -5,7 +5,8 @@
 // change what was actually eaten) — or a custom/estimated entry (restaurant
 // food, etc.) with some values entered directly and possibly left unknown.
 import { newRecordId } from "./itemIds";
-import { batchUpdateRanges, readRange, readRangeLive } from "./sheets";
+import { readRange } from "./sheets";
+import { deleteRecord, upsertRecord } from "./recordStore";
 import { buildColumnIndex, buildRow, cell, columnLetter, parseTab, SCAN_LAST_COLUMN, type ColumnIndex, type ParsedTab } from "./sheetRow";
 import { calcGlycemicLoad } from "./health";
 import type { IngredientNutrition, NutritionKey } from "./dishes";
@@ -403,9 +404,9 @@ export function rowToLogEntry(row: unknown[], columnIndex: ColumnIndex = DEFAULT
   };
 }
 
-export function logEntryToRow(entry: DailyLogEntry, columnIndex: ColumnIndex = DEFAULT_COLUMN_INDEX): unknown[] {
-  return buildRow(
-    {
+/** The DailyLog fields of an entry (header → value). */
+export function logEntryFields(entry: DailyLogEntry): Record<string, unknown> {
+  return {
       Timestamp: entry.timestamp,
       MealType: entry.mealType,
       ItemName: entry.itemName,
@@ -423,15 +424,16 @@ export function logEntryToRow(entry: DailyLogEntry, columnIndex: ColumnIndex = D
       MealId: entry.mealId,
       UnknownFields: entry.unknownFields.join(","),
       ItemId: entry.itemId,
-      Id: entry.id || null, // missing id → nothing written, so a rewrite keeps the row's ID
-    },
-    columnIndex,
-  );
+    Id: entry.id || null, // missing id → nothing written, so a rewrite keeps the row's ID
+  };
 }
 
-/** live: read the sheet itself (before a write decides which rows to change). */
-async function readLogSheet(live = false): Promise<ParsedTab> {
-  return parseTab("DailyLog", await (live ? readRangeLive : readRange)("DailyLog", LOG_RANGE), DAILY_LOG_HEADERS);
+export function logEntryToRow(entry: DailyLogEntry, columnIndex: ColumnIndex = DEFAULT_COLUMN_INDEX): unknown[] {
+  return buildRow(logEntryFields(entry), columnIndex);
+}
+
+async function readLogSheet(): Promise<ParsedTab> {
+  return parseTab("DailyLog", await readRange("DailyLog", LOG_RANGE), DAILY_LOG_HEADERS);
 }
 
 export async function listLogEntries(): Promise<DailyLogEntry[]> {
@@ -521,9 +523,18 @@ export function planMealSave(
 
 /** Saves a whole meal in one batch — see planMealSave. `originals` is empty for a brand-new meal. */
 export async function saveMeal(originals: DailyLogEntry[], drafts: MealDraftItem[]): Promise<void> {
-  const { columnIndex, dataRows, firstDataRow } = await readLogSheet(true);
-  const updates = planMealSave(originals, drafts, dataRows, columnIndex, firstDataRow);
-  if (updates.length > 0) await batchUpdateRanges(updates);
+  // Release 2.0: each dish is its own record — edited dishes keep their ID,
+  // new ones get one, and removed dishes are deleted (no more blanked rows).
+  if (originals.some((o) => !o.id)) throw new Error("Meal rows have no ID yet — sync first");
+  const kept = new Set<string>();
+  for (const draft of drafts) {
+    const id = draft.original?.id || draft.entry.id || newRecordId("log");
+    kept.add(id);
+    await upsertRecord("DailyLog", id, logEntryFields({ ...draft.entry, id }));
+  }
+  for (const original of originals) {
+    if (!kept.has(original.id!)) await deleteRecord("DailyLog", original.id!);
+  }
 }
 
 /** Deletes every row of a meal in one batch. Irreversible; callers must confirm with the user first. */

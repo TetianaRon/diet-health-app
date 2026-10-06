@@ -4,9 +4,9 @@
 // Where the worker can't run (tests, browsers without OPFS) an in-memory
 // store stands in, so the app behaves as before: read from the sheet,
 // nothing kept between visits.
-import type { TabSnapshot, WithoutId, WorkerRequest, WorkerResponse } from "./protocol";
+import type { StoredChange, TabSnapshot, WithoutId, WorkerRequest, WorkerResponse } from "./protocol";
 
-export type { TabSnapshot } from "./protocol";
+export type { StoredChange, TabSnapshot } from "./protocol";
 
 /** none: nothing open · ready: SQLite on the device · memory: in-memory stand-in · busy: another tab holds the database. */
 export type LocalDbStatus = "none" | "ready" | "memory" | "busy";
@@ -16,17 +16,32 @@ interface Store {
   putTabs(snapshots: TabSnapshot[]): Promise<void>;
   getMeta(key: string): Promise<string | null>;
   setMeta(key: string, value: string): Promise<void>;
+  addChange(change: Omit<StoredChange, "seq">): Promise<number>;
+  listChanges(): Promise<StoredChange[]>;
+  removeChanges(seqs: number[]): Promise<void>;
   close(): Promise<void>;
 }
 
 export function createMemoryStore(): Store {
   const tabs = new Map<string, TabSnapshot>();
   const meta = new Map<string, string>();
+  let changes: StoredChange[] = [];
+  let nextSeq = 1;
   return {
     getTab: async (tab) => tabs.get(tab) ?? null,
     putTabs: async (snapshots) => snapshots.forEach((s) => tabs.set(s.tab, { ...s, rows: s.rows.map((r) => [...r]) })),
     getMeta: async (key) => meta.get(key) ?? null,
     setMeta: async (key, value) => void meta.set(key, value),
+    addChange: async (change) => {
+      const seq = nextSeq++;
+      changes.push({ ...change, seq });
+      return seq;
+    },
+    listChanges: async () => changes.map((c) => ({ ...c })),
+    removeChanges: async (seqs) => {
+      const drop = new Set(seqs);
+      changes = changes.filter((c) => !drop.has(c.seq));
+    },
     close: async () => undefined,
   };
 }
@@ -66,6 +81,9 @@ const workerStore: Store = {
   putTabs: async (snapshots) => void (await workerCall({ op: "putTabs", snapshots })),
   getMeta: async (key) => (await workerCall({ op: "getMeta", key })) as string | null,
   setMeta: async (key, value) => void (await workerCall({ op: "setMeta", key, value })),
+  addChange: async (change) => (await workerCall({ op: "addChange", change })) as number,
+  listChanges: async () => (await workerCall({ op: "listChanges" })) as StoredChange[],
+  removeChanges: async (seqs) => void (await workerCall({ op: "removeChanges", seqs })),
   close: async () => void (await workerCall({ op: "close" })),
 };
 
@@ -204,6 +222,21 @@ export async function getLocalMeta(key: string): Promise<string | null> {
 
 export async function setLocalMeta(key: string, value: string): Promise<void> {
   if (store) await store.setMeta(key, value);
+}
+
+/** Records a save that hasn't reached the sheet yet; returns its sequence number. Throws when no database is open. */
+export async function addLocalChange(change: Omit<StoredChange, "seq">): Promise<number> {
+  if (!store) throw new Error("No device database open");
+  return store.addChange(change);
+}
+
+/** Saves not yet synced, oldest first. */
+export async function listLocalChanges(): Promise<StoredChange[]> {
+  return store ? store.listChanges() : [];
+}
+
+export async function removeLocalChanges(seqs: number[]): Promise<void> {
+  if (store) await store.removeChanges(seqs);
 }
 
 /** Which spreadsheet's database is open (null when none, or when another tab holds it). */

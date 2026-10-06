@@ -161,9 +161,11 @@ export function findNameMatch<T extends { id: string; nameUk: string }>(
 // Unlike item IDs these need no counter: a time code plus a random part is
 // unique even when two devices add rows offline at the same moment.
 
-export type RecordKind = "log" | "sugar" | "intake" | "weight";
+// New products, dishes and medicines get the same kind of ID (I…, D…, M… + time
+// code) since 2.0: counters collide when two devices add items offline.
+export type RecordKind = "log" | "sugar" | "intake" | "weight" | "ingredient" | "dish" | "medication";
 
-export const RECORD_PREFIX: Record<RecordKind, string> = { log: "L", sugar: "S", intake: "T", weight: "W" };
+export const RECORD_PREFIX: Record<RecordKind, string> = { log: "L", sugar: "S", intake: "T", weight: "W", ingredient: "I", dish: "D", medication: "M" };
 
 /** A new record ID, e.g. "Lmgd3k2q8x7f1": prefix + base-36 milliseconds + 5 random base-36 characters. */
 export function newRecordId(kind: RecordKind, now: number = Date.now(), random: () => number = Math.random): string {
