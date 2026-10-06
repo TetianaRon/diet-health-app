@@ -109,6 +109,11 @@ Spec: "Planned: food families with cooking states". Raw weight + state in the fi
 - **Read a product's nutrition label from a photo** (2026-10-05, developer): instead of adding Ukrainian breads to the database one by one (too many, and mom doesn't stick to one brand — she picks the rye bread with the lowest sugar on the label), let her photograph the pack's nutrition table and fill the product form from it; the 1.9 GI suggestion then offers the rye GI (checked: «Хліб житній Дарницький», «Хліб бородинський» → B0010 rye-wheat 78 / B0090 wholegrain rye 54). Needs a design: on-device text recognition vs a paid service (the Claude lookup was dropped for cost, 2026-08-13), how values are confirmed before saving, the «неперевірено» label stays.
 
 - **Dev sign-in survives a page reload** (2026-10-05, from the governance review): every reload of the local dev server signs out, which cost about 8 extra sign-ins in one session. Idea: keep the token in `sessionStorage` in dev builds only. Needs a decision on the security trade-off; never in production builds.
+- **Food entry, four gaps** (2026-10-06, developer; proposed as one release right after 2.0, "Faster food entry"):
+  - **Values per [n] g** in the product/dish form: packs often list nutrients per portion (e.g. per 30 g), not per 100 g. A «на … г» field next to the values; the app recalculates to per 100 g when saving, and the form shows what will be stored.
+  - **Save a custom meal entry to «Страви»** for reuse: the meal editor's custom entry (restaurant food, a meal box) gets «Зберегти в мої страви». It's stored as a fixed-value dish (values per portion, weight optional), which the 2026-09-26 design already described.
+  - **Maths in value fields:** e.g. `200*3/4` or «200 ккал * 3/4», to log part of a meal box. Numbers, `+ − * / ( )`, a decimal comma, unit words ignored. The field shows the result before saving, and the result is stored, not the formula.
+  - **Standard portion** per dish (and later per product): «1 порція (250 г)» as one tap in the meal editor. It was in the 2026-09-26 design notes but never placed on the roadmap.
 
 New items land here with a one-line note, then get placed above.
 
