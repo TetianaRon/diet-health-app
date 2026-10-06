@@ -124,6 +124,7 @@ Spec: "Planned: food families with cooking states". Raw weight + state in the fi
   - Every nutrient, plus GI and GL, works without weight. GL needs only GI × grams of carbs eaten. A dish's GI is already weighted by carbs, and a dish needs only the ingredients' total nutrients and its yield.
   - Only grams-based figures stay unknown without a piece weight: the meal entry's weight, and logging the item in grams.
   - Named portion sizes (above) cover foods with no fixed piece weight, such as apples.
+  - Use cases that shaped it: dumplings (pack values per 12 шт.); pancakes, вареники, сирники, pieces of a cake (a dish's yield as a count); nuts (values per 100 г, with 100 г = 20 шт. counted once at home, then a snack of 3 горіхи is logged by count with no weighing).
 
 New items land here with a one-line note, then get placed above.
 
