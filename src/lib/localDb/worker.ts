@@ -17,14 +17,25 @@ type Db = {
 const SCHEMA_VERSION = 2;
 let pool: Awaited<ReturnType<Awaited<ReturnType<typeof sqlite3InitModule>>["installOpfsSAHPoolVfs"]>> | null = null;
 let db: Db | null = null;
+let dbName: string | null = null;
 
-async function open(spreadsheetId: string): Promise<void> {
-  if (db) db.close();
+function fileName(spreadsheetId: string): string {
+  return `/tmm-${spreadsheetId.replace(/[^A-Za-z0-9_-]/g, "")}.sqlite3`;
+}
+
+async function ensurePool() {
   if (!pool) {
     const sqlite3 = await sqlite3InitModule();
     pool = await sqlite3.installOpfsSAHPoolVfs({ name: "trackmymeals", initialCapacity: 12 });
   }
-  db = new pool.OpfsSAHPoolDb(`/tmm-${spreadsheetId.replace(/[^A-Za-z0-9_-]/g, "")}.sqlite3`) as unknown as Db;
+  return pool;
+}
+
+async function open(spreadsheetId: string): Promise<void> {
+  if (db) db.close();
+  const p = await ensurePool();
+  dbName = fileName(spreadsheetId);
+  db = new p.OpfsSAHPoolDb(dbName) as unknown as Db;
   db.exec(`
     create table if not exists meta (key text primary key, value text);
     create table if not exists tabs (tab text primary key, pulled_at text not null);
@@ -98,9 +109,32 @@ function removeChanges(seqs: number[]): void {
   }
 }
 
+/**
+ * The web's privacy rule (release 2.0): every database file except the kept
+ * ones loses its copy of the sheet. Saves that haven't reached the sheet stay,
+ * unless older than `changesSince`; so do small markers such as backupDone.
+ */
+async function forgetCopies(keepSpreadsheetIds: string[], changesSince: string): Promise<void> {
+  const p = await ensurePool();
+  const keep = new Set(keepSpreadsheetIds.map(fileName));
+  for (const name of p.getFileNames()) {
+    if (!name.startsWith("/tmm-") || keep.has(name)) continue;
+    const target = name === dbName && db ? db : (new p.OpfsSAHPoolDb(name) as unknown as Db);
+    try {
+      target.exec("delete from tab_rows; delete from tabs; delete from meta where key = 'lastPullAt'");
+      target.exec({ sql: "delete from changes where changed_at < ?", bind: [changesSince] });
+    } catch (err) {
+      console.warn("[localDb] couldn't clear", name, err);
+    } finally {
+      if (target !== db) target.close();
+    }
+  }
+}
+
 function close(): void {
   db?.close();
   db = null;
+  dbName = null;
 }
 
 self.onmessage = async (e: MessageEvent<WorkerRequest>) => {
@@ -127,6 +161,9 @@ self.onmessage = async (e: MessageEvent<WorkerRequest>) => {
         return reply({ ok: true, value: listChanges() });
       case "removeChanges":
         removeChanges(req.seqs);
+        return reply({ ok: true });
+      case "forgetCopies":
+        await forgetCopies(req.keepSpreadsheetIds, req.changesSince);
         return reply({ ok: true });
       case "close":
         close();

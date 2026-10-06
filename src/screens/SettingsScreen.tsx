@@ -321,7 +321,7 @@ export default function SettingsScreen() {
         ) : signedIn ? (
           <>
             <p>{uk.settings.account.signedIn}</p>
-            <button type="button" onClick={signOut}>
+            <button type="button" onClick={() => void signOut()}>
               {uk.settings.account.signOutButton}
             </button>
           </>

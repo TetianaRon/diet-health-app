@@ -681,7 +681,7 @@ export const uk = {
     noSpreadsheetNotice: "Таблицю ще не підключено — без неї записи не зберігаються.",
     noSpreadsheetError: "Таблицю не підключено. Підключіть її в Налаштуваннях.",
     foundTitle: "Знайдено на вашому Google Диску",
-    searching: "Пошук...",
+    searching: "Шукаємо ваші таблиці...",
     foundNone: "Таблиць, створених цим застосунком, не знайдено.",
     foundError: "Не вдалося переглянути Google Диск. Спробуйте пізніше.",
     newTitle: "Нова таблиця",
@@ -694,7 +694,6 @@ export const uk = {
     recentTitle: "Раніше підключені на цьому пристрої",
     forgetLabel: (title: string) => `Прибрати «${title}» зі списку (таблиця не видаляється)`,
     knownTitle: "Інші доступні вам таблиці",
-    checkingAccess: "Перевірка доступу...",
     linkTitle: "За посиланням",
     linkLabel: "Посилання або ID таблиці",
     linkPlaceholder: "https://docs.google.com/spreadsheets/d/...",
@@ -705,6 +704,7 @@ export const uk = {
   },
   auth: {
     signInWindowFailed: "Вікно входу Google не відкрилося або було закрите. Спробуйте ще раз.",
+    accountCheckFailed: "Не вдалося перевірити обліковий запис Google. Спробуйте увійти ще раз.",
     sessionExpiredBanner:
       "Вхід у Google завершився (так буває приблизно через годину). Увійдіть знову, щоб продовжити — введене на екрані не зникне.",
     signInAgainButton: "Увійти знову",

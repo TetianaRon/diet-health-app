@@ -28,6 +28,7 @@ export type WorkerRequest =
   | { id: number; op: "addChange"; change: Omit<StoredChange, "seq"> }
   | { id: number; op: "listChanges" }
   | { id: number; op: "removeChanges"; seqs: number[] }
+  | { id: number; op: "forgetCopies"; keepSpreadsheetIds: string[]; changesSince: string }
   | { id: number; op: "close" };
 
 export type WorkerResponse = { id: number; ok: true; value?: unknown } | { id: number; ok: false; error: string };

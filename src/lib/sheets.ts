@@ -23,7 +23,7 @@ import { Capacitor } from "@capacitor/core";
 import { App } from "@capacitor/app";
 import { Browser } from "@capacitor/browser";
 import { uk } from "../i18n/uk";
-import { getLocalMeta, getLocalTab, getOpenSpreadsheetId, listLocalChanges, openLocalDb, putLocalTabs, setLocalMeta } from "./localDb";
+import { forgetDeviceCopies, getLocalMeta, getLocalTab, getOpenSpreadsheetId, listLocalChanges, openLocalDb, putLocalTabs, setLocalMeta } from "./localDb";
 import { applyChanges, type RecordChange } from "./sync/merge";
 import { sliceGrid, tabsOfRanges } from "./localDb/a1";
 import { isLocalSheetId } from "./localModeId";
@@ -372,10 +372,35 @@ export function signIn(): Promise<void> {
         return;
       }
       startSession(response.access_token, response.expires_in);
-      resolve();
+      bindWebAccount().then(resolve, (err) => {
+        signOut();
+        reject(err);
+      });
     };
     tokenClient.requestAccessToken(options);
   });
+}
+
+const WEB_ACCOUNT_STORAGE_KEY = "trackmymeals.webAccount";
+
+/**
+ * The web remembers its connected sheet for one Google account only (release
+ * 2.0): someone else may use the same browser. When a different account signs
+ * in, the previous person's sheet and recent-sheets list are forgotten before
+ * any screen shows them. The account is Drive's opaque permission ID — no
+ * email or name is stored.
+ */
+async function bindWebAccount(): Promise<void> {
+  const response = await authorizedFetchUrl("https://www.googleapis.com/drive/v3/about?fields=user(permissionId)");
+  const data = (await response.json()) as { user?: { permissionId?: string } };
+  const account = data.user?.permissionId;
+  if (!account) throw new Error(uk.auth.accountCheckFailed);
+  const previous = localStorage.getItem(WEB_ACCOUNT_STORAGE_KEY);
+  if (previous && previous !== account) {
+    if (!isLocalSheetId(getSpreadsheetId())) localStorage.removeItem(SPREADSHEET_ID_STORAGE_KEY);
+    localStorage.removeItem(RECENT_SHEETS_STORAGE_KEY);
+  }
+  localStorage.setItem(WEB_ACCOUNT_STORAGE_KEY, account);
 }
 
 export function signOut(): void {
@@ -398,6 +423,8 @@ export function isSignedIn(): boolean {
 // that never connected one has none («Підключити таблицю»), instead of
 // quietly landing in the testers' shared sheet.
 const SPREADSHEET_ID_STORAGE_KEY = "trackmymeals.spreadsheetId";
+/** sheetConnections.ts keeps the recent-sheets list under this key. */
+const RECENT_SHEETS_STORAGE_KEY = "trackmymeals.recentSheets";
 
 /** Pulls the spreadsheet ID out of a pasted Google Sheets URL, or returns the input as-is if it's already a bare ID. */
 export function parseSpreadsheetId(input: string): string {
@@ -690,6 +717,12 @@ export async function pullAllTabs(tabs: readonly string[]): Promise<void> {
   await ensureLocalDb(spreadsheetId);
   await fetchAndStoreTabs(spreadsheetId, tabs);
   await setLocalMeta("lastPullAt", new Date().toISOString());
+}
+
+/** «Вийти» on the web: no copy of the sheet stays on this device (saves not yet in the sheet stay). */
+export async function forgetSheetCopies(): Promise<void> {
+  markAllTabsChanged();
+  await forgetDeviceCopies();
 }
 
 /** When the device copy was last refreshed from the sheet (ISO time), or null. */

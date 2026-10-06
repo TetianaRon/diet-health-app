@@ -27,6 +27,7 @@ import { newRecordId, type RecordKind } from "./itemIds";
 import { DELETED_TAB } from "./deletions";
 import { cleanUpBackups, makeBackupCopy } from "./backups";
 import { isLocalSheetId } from "./localModeId";
+import { Capacitor } from "@capacitor/core";
 
 /** A copy older than this is refreshed when the app comes back to the foreground. */
 export const STALE_AFTER_MS = 5 * 60 * 1000;
@@ -45,6 +46,8 @@ const ID_KINDS: Record<string, RecordKind> = {
 };
 
 let inFlight: Promise<void> | null = null;
+/** Saves recorded this page session that may not have reached the sheet yet (for the closing warning). */
+let unsynced = false;
 let timer: ReturnType<typeof setTimeout> | null = null;
 const listeners = new Set<() => void>();
 
@@ -122,6 +125,7 @@ async function runSync(): Promise<void> {
     await removeLocalChanges(done);
   }
   await pullAllTabs(REQUIRED_TABS);
+  unsynced = (await listLocalChanges()).length > 0;
   listeners.forEach((l) => l());
   // Syncing works: backup copies past their keeping time go to the trash.
   await cleanUpBackups().catch((err) => console.warn("[backups] clean-up failed:", err));
@@ -139,6 +143,7 @@ export function syncNow(): Promise<void> {
 
 /** Syncs a few seconds from now; a failure (e.g. offline) leaves the saves for the next try. */
 export function scheduleSync(delayMs = SYNC_DELAY_MS): void {
+  unsynced = true;
   if (timer) clearTimeout(timer);
   timer = setTimeout(() => {
     timer = null;
@@ -168,4 +173,12 @@ export async function syncIfStale(now = new Date()): Promise<boolean> {
 // The connection coming back pushes whatever was saved offline.
 if (typeof window !== "undefined") {
   window.addEventListener("online", () => scheduleSync(500));
+  // Web: closing the tab with saves not yet in the sheet asks first (the browser's
+  // own "leave site?" message — its text can't be changed). Android keeps them.
+  window.addEventListener("beforeunload", (e) => {
+    if (Capacitor.isNativePlatform() || isLocalSheetId(getSpreadsheetId())) return;
+    if (!unsynced && !inFlight) return;
+    e.preventDefault();
+    e.returnValue = "";
+  });
 }

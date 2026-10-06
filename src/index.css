@@ -1537,3 +1537,8 @@ select {
   gap: 8px;
   margin-top: 8px;
 }
+
+/* Settings, working without Google: room between the sync button and its hint */
+.settings-account > button + .food-form-hint {
+  margin-top: 8px;
+}

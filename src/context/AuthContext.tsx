@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import * as sheets from "../lib/sheets";
 import { isLocalMode, startLocalMode } from "../lib/localMode";
+import { syncNow } from "../lib/sync";
 
 interface AuthContextValue {
   /** Signed in to Google — or working without Google on the phone (release 2.0), where the data is on the device. */
@@ -22,7 +23,7 @@ interface AuthContextValue {
    */
   sessionExpired: boolean;
   signIn: () => Promise<void>;
-  signOut: () => void;
+  signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -72,7 +73,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSessionExpired(false);
   };
 
-  const signOut = () => {
+  const signOut = async () => {
+    // Saves still waiting go to the sheet first; whatever fails stays for the next sign-in.
+    await syncNow().catch((err) => console.warn("[sync] before sign-out:", err));
+    await sheets.forgetSheetCopies().catch((err) => console.warn("[localDb] forgetting copies:", err));
     sheets.signOut();
     setSignedIn(false);
     setSessionExpired(false);

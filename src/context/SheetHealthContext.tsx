@@ -14,6 +14,7 @@ import { addRecentSheet, loadRecentSheets, renameRecentSheet, saveRecentSheets, 
 import { onSheetStructureError } from "../lib/sheetRow";
 import { attachLocalData, prepareAttach, type AttachPreparation } from "../lib/localMode";
 import { LOCAL_SHEET_ID } from "../lib/localModeId";
+import { syncIfStale } from "../lib/sync";
 import type { Decision } from "../lib/localAttach";
 import type { TabReport } from "../lib/sheetSchema";
 
@@ -129,7 +130,10 @@ export function SheetHealthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (signedIn) {
-      void check();
+      // Signing in on the web can forget another account's sheet (sheets.ts → bindWebAccount).
+      setHasSpreadsheet(getSpreadsheetId() !== "");
+      // A new web session starts without a device copy: one sync loads every tab at once.
+      void check().then(() => syncIfStale().catch((err) => console.warn("[sync] after sign-in:", err)));
     } else {
       latestCheck.current++;
       setReports(null);

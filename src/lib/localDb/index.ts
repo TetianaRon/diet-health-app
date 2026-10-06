@@ -4,6 +4,16 @@
 // Where the worker can't run (tests, browsers without OPFS) an in-memory
 // store stands in, so the app behaves as before: read from the sheet,
 // nothing kept between visits.
+//
+// On the web the device keeps no copy of a sheet between sessions (release
+// 2.0): someone else may open the same browser. Each page load, before its
+// first database opens, every stored sheet copy is cleared; only saves that
+// never reached the sheet stay, for up to WEB_PENDING_KEEP_DAYS, and they're
+// read only after sign-in. Android keeps its copy: the phone is personal.
+// A page load is a new session because the sign-in lives in memory only; if
+// sign-in ever survives a reload, clear at the start of a session instead.
+import { Capacitor } from "@capacitor/core";
+import { LOCAL_SHEET_ID } from "../localModeId";
 import type { StoredChange, TabSnapshot, WithoutId, WorkerRequest, WorkerResponse } from "./protocol";
 
 export type { StoredChange, TabSnapshot } from "./protocol";
@@ -153,7 +163,21 @@ async function acquireLockSoon(): Promise<boolean> {
   return false;
 }
 
+/** How long the web keeps saves that never reached the sheet (the tab was closed offline). */
+export const WEB_PENDING_KEEP_DAYS = 14;
+let copiesClearedThisPage = false;
+
+function forgetCopiesRequest(): WithoutId<WorkerRequest> {
+  const since = new Date(Date.now() - WEB_PENDING_KEEP_DAYS * 24 * 60 * 60 * 1000).toISOString();
+  // The data of someone working without Google (dev builds on the web) is the data itself.
+  return { op: "forgetCopies", keepSpreadsheetIds: [LOCAL_SHEET_ID], changesSince: since };
+}
+
 async function openWorkerStore(spreadsheetId: string): Promise<void> {
+  if (!Capacitor.isNativePlatform() && !copiesClearedThisPage) {
+    await workerCall(forgetCopiesRequest());
+    copiesClearedThisPage = true;
+  }
   await workerCall({ op: "open", spreadsheetId });
   store = workerStore;
   openSheetId = spreadsheetId;
@@ -203,6 +227,12 @@ async function openLocalDbNow(spreadsheetId: string): Promise<LocalDbStatus> {
     setStatus("memory");
   }
   return status;
+}
+
+/** «Вийти» on the web: clears every stored sheet copy now (saves not yet in the sheet stay). */
+export async function forgetDeviceCopies(): Promise<void> {
+  if (Capacitor.isNativePlatform() || status !== "ready") return;
+  await workerCall(forgetCopiesRequest());
 }
 
 /** «Відкрити тут»: asks the tab holding the database to let go, then opens it here. */
