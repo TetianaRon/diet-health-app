@@ -1,16 +1,19 @@
 // Weight diary (release 1.7, spec → "Daily records and the new Today").
 // Weight tab: Date, WeightKg, Notes — ONE record per day, no time of day
 // (developer, 2026-10-05). The trend (weightTrend) is pure.
+import { newRecordId } from "./itemIds";
 import { batchUpdateRanges, readRangeLive, writeRange } from "./sheets";
 import { buildColumnIndex, buildRow, cell, columnLetter, parseTab, SCAN_LAST_COLUMN, type ColumnIndex } from "./sheetRow";
 
 export interface WeightEntry {
+  /** Row ID (release 2.0), shared across devices; absent only on a row not yet given one. */
+  id?: string;
   date: string; // local "YYYY-MM-DD"
   weightKg: number;
   notes: string;
 }
 
-export const WEIGHT_HEADERS = ["Date", "WeightKg", "Notes"] as const;
+export const WEIGHT_HEADERS = ["Date", "WeightKg", "Notes", "Id", "UpdatedAt"] as const;
 const DEFAULT_INDEX = buildColumnIndex(WEIGHT_HEADERS);
 export const WEIGHT_RANGE = `A1:${SCAN_LAST_COLUMN}5000`;
 const APPEND_RANGE = `A:${SCAN_LAST_COLUMN}`;
@@ -40,13 +43,15 @@ export function rowToWeightEntry(row: unknown[], columnIndex: ColumnIndex = DEFA
     date: normalizeDateCell(cell(row, columnIndex, "Date")),
     weightKg: toNumber(cell(row, columnIndex, "WeightKg")),
     notes: String(cell(row, columnIndex, "Notes") ?? ""),
+    id: String(cell(row, columnIndex, "Id") ?? "").trim() || undefined,
   };
 }
 
 export function weightEntryToRow(e: WeightEntry, columnIndex: ColumnIndex = DEFAULT_INDEX): unknown[] {
   // The leading apostrophe keeps "2026-10-05" as text: otherwise Sheets turns
   // it into a date shown in the sheet's own locale format.
-  return buildRow({ Date: `'${e.date}`, WeightKg: e.weightKg, Notes: e.notes }, columnIndex);
+  // A missing id writes nothing (null), so overwriting a day's row keeps its ID.
+  return buildRow({ Date: `'${e.date}`, WeightKg: e.weightKg, Notes: e.notes, Id: e.id || null }, columnIndex);
 }
 
 /** Weight entries from the tab as read (header row first); one per day — a later row for the same day wins. */
@@ -93,7 +98,7 @@ export async function saveWeightEntry(entry: WeightEntry, previousDate?: string)
   } else if (movedFrom) {
     await batchUpdateRanges([{ range: movedFrom.range, values: [weightEntryToRow(entry, columnIndex)] }]);
   } else {
-    await writeRange("Weight", APPEND_RANGE, [weightEntryToRow(entry, columnIndex)]);
+    await writeRange("Weight", APPEND_RANGE, [weightEntryToRow({ ...entry, id: entry.id ?? newRecordId("weight") }, columnIndex)]);
   }
   return entry;
 }

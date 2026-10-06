@@ -308,6 +308,7 @@ export const DISHES_HEADERS = [
   "UnknownFields",
   "Id",
   "BasedOn",
+  "UpdatedAt",
 ] as const;
 const DEFAULT_COLUMN_INDEX = buildColumnIndex(DISHES_HEADERS);
 

@@ -151,3 +151,23 @@ export function findNameMatch<T extends { id: string; nameUk: string }>(
   if (!key) return null;
   return items.find((item) => item.id !== excludeId && normalizeItemName(item.nameUk) === key) ?? null;
 }
+
+// --- Row IDs for records (release 2.0) ---
+//
+// Meals, blood sugar, medicine taken and weight rows get an ID each, so a row
+// can be matched across devices when syncing:
+//   L…  a DailyLog row       S…  a BloodSugar row
+//   T…  a MedicationLog row  W…  a Weight row
+// Unlike item IDs these need no counter: a time code plus a random part is
+// unique even when two devices add rows offline at the same moment.
+
+export type RecordKind = "log" | "sugar" | "intake" | "weight";
+
+export const RECORD_PREFIX: Record<RecordKind, string> = { log: "L", sugar: "S", intake: "T", weight: "W" };
+
+/** A new record ID, e.g. "Lmgd3k2q8x7f1": prefix + base-36 milliseconds + 5 random base-36 characters. */
+export function newRecordId(kind: RecordKind, now: number = Date.now(), random: () => number = Math.random): string {
+  let suffix = "";
+  for (let i = 0; i < 5; i++) suffix += Math.floor(random() * 36).toString(36);
+  return `${RECORD_PREFIX[kind]}${now.toString(36)}${suffix}`;
+}

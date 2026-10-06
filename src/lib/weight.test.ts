@@ -48,7 +48,7 @@ describe("weight rows", () => {
   });
 
   it("keeps one entry per day (the later row wins) and skips blank rows", () => {
-    const rows = [["Date", "WeightKg", "Notes"], ["Дата", "Вага, кг", "Примітки"], [day(5), 72.4, ""], ["", "", ""], [day(5), 72.1, "ввечері"], [day(6), 0, ""]];
+    const rows = [["Date", "WeightKg", "Notes", "Id", "UpdatedAt"], ["Дата", "Вага, кг", "Примітки", "Ідентифікатор", "Змінено"], [day(5), 72.4, ""], ["", "", ""], [day(5), 72.1, "ввечері"], [day(6), 0, ""]];
     expect(parseWeightEntries(rows)).toEqual([{ date: day(5), weightKg: 72.1, notes: "ввечері" }]);
   });
 

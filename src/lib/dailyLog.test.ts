@@ -405,12 +405,12 @@ describe("planMealSave", () => {
       rowsOf(...existing),
       columnIndex,
     );
-    expect(updates.map((u) => u.range)).toEqual(["DailyLog!A3:Q3", "DailyLog!A4:Q4"]);
+    expect(updates.map((u) => u.range)).toEqual(["DailyLog!A3:S3", "DailyLog!A4:S4"]);
   });
 
   it("overwrites an edited dish in place and leaves untouched rows alone", () => {
     const a = entry("A");
-    const b = entry("B", "2026-08-13T12:01:00.000Z");
+    const b = { ...entry("B", "2026-08-13T12:01:00.000Z"), id: "Lkeepthisid01" };
     const edited = { ...b, portionGrams: 250 };
     const updates = planMealSave(
       [a, b],
@@ -421,16 +421,17 @@ describe("planMealSave", () => {
       rowsOf(a, b),
       columnIndex,
     );
-    expect(updates.map((u) => u.range)).toEqual(["DailyLog!A2:Q2", "DailyLog!A3:Q3"]);
+    expect(updates.map((u) => u.range)).toEqual(["DailyLog!A2:S2", "DailyLog!A3:S3"]);
     expect(rowToLogEntry(updates[1].values[0], columnIndex).portionGrams).toBe(250);
+    expect(rowToLogEntry(updates[1].values[0], columnIndex).id).toBe(b.id);
   });
 
   it("blanks the row of a dish that was removed", () => {
     const a = entry("A");
     const b = entry("B", "2026-08-13T12:01:00.000Z");
     const updates = planMealSave([a, b], [{ entry: a, original: a }], rowsOf(a, b), columnIndex);
-    const blanked = updates.find((u) => u.range === "DailyLog!A3:Q3");
-    expect(blanked?.values[0]).toEqual(new Array(17).fill(""));
+    const blanked = updates.find((u) => u.range === "DailyLog!A3:S3");
+    expect(blanked?.values[0]).toEqual(new Array(19).fill(""));
   });
 
   it("reuses a freed row for a new dish before appending", () => {
@@ -446,8 +447,9 @@ describe("planMealSave", () => {
       rowsOf(a, b),
       columnIndex,
     );
-    expect(updates.map((u) => u.range)).toEqual(["DailyLog!A2:Q2", "DailyLog!A3:Q3"]);
+    expect(updates.map((u) => u.range)).toEqual(["DailyLog!A2:S2", "DailyLog!A3:S3"]);
     expect(rowToLogEntry(updates[1].values[0], columnIndex).itemName).toBe("C");
+    expect(rowToLogEntry(updates[1].values[0], columnIndex).id).toMatch(/^L[0-9a-z]{13}$/);
   });
 
   it("deletes a whole meal by blanking every one of its rows", () => {
@@ -470,7 +472,7 @@ describe("planMealSave", () => {
       rowsOf(a1, a2),
       columnIndex,
     );
-    expect(updates.map((u) => u.range)).toEqual(["DailyLog!A2:Q2", "DailyLog!A3:Q3"]);
+    expect(updates.map((u) => u.range)).toEqual(["DailyLog!A2:S2", "DailyLog!A3:S3"]);
   });
 
   it("throws rather than guess when an original row is gone", () => {

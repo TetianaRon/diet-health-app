@@ -15,7 +15,7 @@ import { addSheetTabs, batchUpdateRanges, getTabGrids, listSheetTitles, readRang
 import { columnLetter, SCAN_LAST_COLUMN } from "./sheetRow";
 import { labelFor } from "./sheetLabels";
 import { analyzeDataTab, isBlocking, isTabRepairable, planLabelRepair, planTabRepair, type TabIssue, type TabReport } from "./sheetSchema";
-import { planItemIdUpgrade } from "./sheetUpgrade";
+import { planItemIdUpgrade, planRecordIds } from "./sheetUpgrade";
 import { planColumnMigrations } from "./columnMigrations";
 import { ID_COUNTER_KEYS, type SheetItemKind } from "./itemIds";
 import { writeItemCounter } from "./itemIdStore";
@@ -28,11 +28,14 @@ import { DAILY_LOG_HEADERS } from "./dailyLog";
 import { BLOOD_SUGAR_HEADERS } from "./bloodSugar";
 import { MEDICATIONS_HEADERS, MEDICATION_LOG_HEADERS } from "./medications";
 import { WEIGHT_HEADERS } from "./weight";
+import { DELETED_HEADERS, DELETED_TAB } from "./deletions";
+import { newRecordId, type RecordKind } from "./itemIds";
 import { uk } from "../i18n/uk";
 
 // Medications, MedicationLog and Weight since 1.7 — on an existing sheet
 // they're created silently by the upgrade (a missing tab is additive).
-export const REQUIRED_TABS = ["Ingredients", "Dishes", "DailyLog", "BloodSugar", "Medications", "MedicationLog", "Weight", "Settings"] as const;
+// Deleted since 2.0 (deletions synced across devices; deletions.ts).
+export const REQUIRED_TABS = ["Ingredients", "Dishes", "DailyLog", "BloodSugar", "Medications", "MedicationLog", "Weight", "Deleted", "Settings"] as const;
 
 const DATA_TAB_HEADERS: Record<string, readonly string[]> = {
   Ingredients: INGREDIENTS_HEADERS,
@@ -41,6 +44,7 @@ const DATA_TAB_HEADERS: Record<string, readonly string[]> = {
   BloodSugar: BLOOD_SUGAR_HEADERS,
   Medications: MEDICATIONS_HEADERS,
   MedicationLog: MEDICATION_LOG_HEADERS,
+  [DELETED_TAB]: DELETED_HEADERS,
   Weight: WEIGHT_HEADERS,
 };
 
@@ -435,6 +439,23 @@ async function applyItemIdUpgrade({ rowsByTab }: HealthScan, summary: UpgradeSum
   return plan.valueUpdates.length > 0;
 }
 
+const RECORD_TABS: Record<string, RecordKind> = { DailyLog: "log", BloodSugar: "sugar", MedicationLog: "intake", Weight: "weight" };
+
+/** Release 2.0: gives existing meal, sugar, medicine-taken and weight rows an ID (blank Id cells only). */
+async function applyRecordIdUpgrade({ rowsByTab }: HealthScan, summary: UpgradeSummary): Promise<boolean> {
+  const valueUpdates: { range: string; values: unknown[][] }[] = [];
+  for (const [tab, kind] of Object.entries(RECORD_TABS)) {
+    const rows = rowsByTab.get(tab);
+    if (!rows) continue;
+    const plan = planRecordIds(tab, rows, () => newRecordId(kind));
+    valueUpdates.push(...plan.valueUpdates);
+    summary.idsFilled += plan.filled;
+  }
+  if (valueUpdates.length === 0) return false;
+  await batchUpdateRanges(valueUpdates);
+  return true;
+}
+
 /** Fills new columns from old ones where a release changed a column's meaning (columnMigrations.ts). */
 async function applyColumnMigrations({ rowsByTab }: HealthScan, summary: UpgradeSummary): Promise<boolean> {
   const plan = planColumnMigrations(rowsByTab);
@@ -462,6 +483,10 @@ export async function checkAndUpgradeSpreadsheet(): Promise<{ reports: TabReport
     scan = await scanSpreadsheet();
   }
   if (await applyItemIdUpgrade(scan, summary)) {
+    changed = true;
+    scan = await scanSpreadsheet();
+  }
+  if (await applyRecordIdUpgrade(scan, summary)) {
     changed = true;
     scan = await scanSpreadsheet();
   }

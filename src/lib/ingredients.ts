@@ -78,6 +78,7 @@ export const INGREDIENTS_HEADERS = [
   "Id",
   "BasedOn",
   "GiFrom",
+  "UpdatedAt",
 ] as const;
 const DEFAULT_COLUMN_INDEX = buildColumnIndex(INGREDIENTS_HEADERS);
 

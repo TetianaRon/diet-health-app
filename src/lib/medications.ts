@@ -2,6 +2,7 @@
 // her medicines, entered once (Medications tab), and each intake
 // (MedicationLog tab). A plain diary — no dose suggestions, no warnings
 // (not a medical app). Same header-name row mapping as the other tabs.
+import { newRecordId } from "./itemIds";
 import { batchUpdateRanges, readRangeLive, writeRange } from "./sheets";
 import { buildColumnIndex, buildRow, cell, columnLetter, parseTab, SCAN_LAST_COLUMN, type ColumnIndex } from "./sheetRow";
 import { reserveItemId } from "./itemIdStore";
@@ -17,6 +18,8 @@ export interface Medication {
 }
 
 export interface MedicationIntake {
+  /** Row ID (release 2.0), shared across devices; absent only on a row not yet given one. */
+  id?: string;
   timestamp: string; // ISO — when it was taken (editable)
   medicationId: string;
   medicationName: string; // readable snapshot
@@ -25,8 +28,8 @@ export interface MedicationIntake {
   notes: string;
 }
 
-export const MEDICATIONS_HEADERS = ["Id", "Name", "Dose", "Unit", "Notes", "Active", "DateAdded"] as const;
-export const MEDICATION_LOG_HEADERS = ["Timestamp", "MedicationId", "Medication", "Dose", "Unit", "Notes"] as const;
+export const MEDICATIONS_HEADERS = ["Id", "Name", "Dose", "Unit", "Notes", "Active", "DateAdded", "UpdatedAt"] as const;
+export const MEDICATION_LOG_HEADERS = ["Timestamp", "MedicationId", "Medication", "Dose", "Unit", "Notes", "Id", "UpdatedAt"] as const;
 const MEDS_INDEX = buildColumnIndex(MEDICATIONS_HEADERS);
 const LOG_INDEX = buildColumnIndex(MEDICATION_LOG_HEADERS);
 export const MEDICATIONS_RANGE = `A1:${SCAN_LAST_COLUMN}500`;
@@ -72,6 +75,7 @@ export function rowToIntake(row: unknown[], columnIndex: ColumnIndex = LOG_INDEX
     dose: parseDose(cell(row, columnIndex, "Dose")),
     unit: String(cell(row, columnIndex, "Unit") ?? "").trim(),
     notes: String(cell(row, columnIndex, "Notes") ?? ""),
+    id: String(cell(row, columnIndex, "Id") ?? "").trim() || undefined,
   };
 }
 
@@ -84,6 +88,7 @@ export function intakeToRow(i: MedicationIntake, columnIndex: ColumnIndex = LOG_
       Dose: i.dose ?? "",
       Unit: i.unit,
       Notes: i.notes,
+      Id: i.id || null, // missing id → nothing written, so a rewrite keeps the row's ID
     },
     columnIndex,
   );
@@ -118,8 +123,9 @@ export async function addMedication(m: Omit<Medication, "id" | "dateAdded" | "ac
 
 export async function addIntake(intake: MedicationIntake): Promise<MedicationIntake> {
   const { columnIndex } = parseTab("MedicationLog", await readRangeLive("MedicationLog", MEDICATION_LOG_RANGE), MEDICATION_LOG_HEADERS);
-  await writeRange("MedicationLog", APPEND_RANGE, [intakeToRow(intake, columnIndex)]);
-  return intake;
+  const saved: MedicationIntake = { ...intake, id: intake.id ?? newRecordId("intake") };
+  await writeRange("MedicationLog", APPEND_RANGE, [intakeToRow(saved, columnIndex)]);
+  return saved;
 }
 
 /**

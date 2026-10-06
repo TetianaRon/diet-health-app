@@ -4,6 +4,7 @@
 // (a later edit to the Ingredients/Dishes bundle shouldn't retroactively
 // change what was actually eaten) — or a custom/estimated entry (restaurant
 // food, etc.) with some values entered directly and possibly left unknown.
+import { newRecordId } from "./itemIds";
 import { batchUpdateRanges, readRange, readRangeLive } from "./sheets";
 import { buildColumnIndex, buildRow, cell, columnLetter, parseTab, SCAN_LAST_COLUMN, type ColumnIndex, type ParsedTab } from "./sheetRow";
 import { calcGlycemicLoad } from "./health";
@@ -19,6 +20,8 @@ export type MealType = (typeof MEAL_TYPES)[number];
 export type NutritionField = keyof IngredientNutrition | "gl";
 
 export interface DailyLogEntry extends IngredientNutrition {
+  /** Row ID (release 2.0), shared across devices; absent only on a row not yet given one. */
+  id?: string;
   timestamp: string; // ISO
   mealType: MealType;
   // Which item this row was logged from (`B…`, `I…` or `D…`, since 1.6);
@@ -71,6 +74,8 @@ export const DAILY_LOG_HEADERS = [
   "MealId",
   "UnknownFields",
   "ItemId",
+  "Id",
+  "UpdatedAt",
 ] as const;
 const DEFAULT_COLUMN_INDEX = buildColumnIndex(DAILY_LOG_HEADERS);
 
@@ -394,6 +399,7 @@ export function rowToLogEntry(row: unknown[], columnIndex: ColumnIndex = DEFAULT
     notes: String(cell(row, columnIndex, "Notes") ?? ""),
     mealId: toMealId(cell(row, columnIndex, "MealId"), timestamp),
     unknownFields: toUnknownFields(cell(row, columnIndex, "UnknownFields")),
+    id: String(cell(row, columnIndex, "Id") ?? "").trim() || undefined,
   };
 }
 
@@ -417,6 +423,7 @@ export function logEntryToRow(entry: DailyLogEntry, columnIndex: ColumnIndex = D
       MealId: entry.mealId,
       UnknownFields: entry.unknownFields.join(","),
       ItemId: entry.itemId,
+      Id: entry.id || null, // missing id → nothing written, so a rewrite keeps the row's ID
     },
     columnIndex,
   );
@@ -496,7 +503,9 @@ export function planMealSave(
 
   let nextFreshRow = dataRows.length + firstDataRow;
   for (const draft of drafts) {
-    const row = logEntryToRow(draft.entry, columnIndex);
+    // An edited dish keeps its row's ID; a new one gets its own (release 2.0).
+    const id = draft.original?.id || draft.entry.id || newRecordId("log");
+    const row = logEntryToRow({ ...draft.entry, id }, columnIndex);
     if (draft.original) {
       updates.push({ range: rangeFor(rowNumberFor.get(draft.original)!), values: [row] });
     } else {

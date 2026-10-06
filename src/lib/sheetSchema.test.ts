@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { analyzeDataTab, isBlocking, isTabRepairable, lastUsedColumn, planLabelRepair, planTabRepair, type TabReport } from "./sheetSchema";
-import { BLOOD_SUGAR_HEADERS } from "./bloodSugar";
+// The structure rules are tested on a fixed four-column layout (BloodSugar as of 1.7), independent of later added columns.
+const BLOOD_SUGAR_HEADERS = ["Timestamp", "ValueMmolL", "Context", "Notes"] as const;
 import { DAILY_LOG_HEADERS } from "./dailyLog";
 import { INGREDIENTS_HEADERS } from "./ingredients";
 
