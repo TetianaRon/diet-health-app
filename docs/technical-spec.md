@@ -633,6 +633,9 @@ Every screen reads its tabs from Sheets (Today and History read them in one `bat
   - in both → the newer `updatedAt` wins (last writer wins, per row).
 
   This suits mostly-append data: meals, readings, weight. Settings merge per key.
+- **Saving (checkpoint B):** every save is a change on the device: the fields written (only those that differ), their previous values, and the time. Screens see the device copy with pending changes on top. New products, dishes and medicines get counter-free IDs (`I…`/`D…`/`M…` + time code) like the log rows.
+- **The decision per field at sync:** written unless the field also changed elsewhere since the save's previous value; a newer UpdatedAt elsewhere (another device, later) wins; a change without an UpdatedAt change (a hand edit) wins.
+- **Backup copies** (`backups.ts`): registered on the device, and moved to Drive's trash after 14 days of working sync, with a note. The same mechanism serves any future safety copy.
 - **Edits made by hand in the sheet are supported** (developer, 2026-10-05). The app remembers a fingerprint of each row as last synced. A row whose content changed in the sheet without a new `UpdatedAt` counts as an edit made at sync time. Rows typed in by hand without an `Id` get one.
 - **Deletions** (developer, 2026-10-05): the row is removed from the sheet, and its ID goes to a small «Видалені» tab (id, tab, time) so other devices delete it too. The sheet stays clean to read.
 - **Clock differences between devices** only matter when the same row is edited on two devices between syncs. For a single person's data that's rare, so it's accepted.

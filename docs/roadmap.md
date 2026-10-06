@@ -16,7 +16,7 @@ The workflow (intake → release branch → verify → release) and the standing
 
 ## Current and upcoming releases
 
-### 2.0 — Local-first: the device is the app · 🔨 in progress (checkpoint A done) — spec → "Local-first app"
+### 2.0 — Local-first: the device is the app · 🔨 in progress (checkpoints A, B done) — spec → "Local-first app"
 One release (developer, 2026-10-05) combining what was planned as three: reading from the device, offline saving with full sync, and Android without Google. Built on `release/2.0` in three internal checkpoints, each tested before the next starts; nothing ships in between.
 
 **Checkpoint A — reading from the device** · ✅ built and checked on the dev sheet (2026-10-05; build log)
@@ -26,12 +26,12 @@ One release (developer, 2026-10-05) combining what was planned as three: reading
 - **The per-tab modules read the local database;** screens don't change. The old offline read cache in `sheets.ts` goes.
 - **Web:** sign-in required. A second tab shows «Застосунок відкрито в іншій вкладці» with «Відкрити тут», which takes the database over.
 
-**Checkpoint B — offline saving and full sync**
+**Checkpoint B — offline saving and full sync** · ✅ built and checked on the dev sheet (2026-10-06; build log)
 - **Every change is written to the device first,** then queued for the sheet.
 - **Sync** runs at start, on return after more than 5 minutes, a few seconds after changes, and from «Синхронізувати» (with the last sync time). It's one `batchGet`, then a merge by row (the newer `UpdatedAt` wins), then one `batchUpdate` plus appends.
 - **Deletions** go through the «Видалені» tab.
 - **Edits made by hand in the sheet** are noticed (row fingerprints).
-- **Safeguard:** an automatic copy of the sheet («… — копія перед синхронізацією <date>») before the first sync on each sheet.
+- **Safeguard:** an automatic backup copy of the sheet («Трекер харчування — копія перед синхронізацією <date>») as a separate file in the app's Drive folder before a device's first sync; moved to Drive's trash automatically after 14 days of working sync, with a note.
 - Switching sheet or signing out syncs first, or warns if it can't.
 
 **Checkpoint C — Android without Google**

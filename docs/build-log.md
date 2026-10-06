@@ -158,3 +158,30 @@ Answering "did we review only products?": the 69 home dishes were on the page bu
   - a second tab was refused, showed the notice, and «Відкрити тут» moved the database over, with the first tab showing the notice; taken back again.
   - 352 tests, `tsc`, production build (SQLite WASM 0.87 MB in the bundle).
 - **Not checked yet:** reading in airplane mode on the phone, and the Android build of 2.0. Both are part of the release checks.
+
+**Release 2.0 — checkpoint B, offline saving and full sync (2026-10-05/06, branch `release/2.0`):**
+- **Saves go to the device first** (`recordStore.ts`: `upsertRecord` / `deleteRecord`). A save is a change row in the device database: tab, record ID, the fields written (only those that differ), their previous values (`base`), the time. Every read lays pending changes over the device copy (`applyChanges`), so a save shows at once, offline too.
+  - **Modules converted to record saves:** Ingredients, Dishes, DailyLog (`saveMeal` deletes removed dishes instead of blanking rows), BloodSugar, Medications/MedicationLog, Weight (one per day kept), Settings (one record per Key).
+  - **IDs:** new products, dishes and medicines get counter-free IDs (`I…`/`D…`/`M…` + time code), like the log rows; counters collide when two devices add offline.
+- **Sync** (`sync.ts` + `sync/merge.ts`, 16 merge tests):
+  1. download all tabs;
+  2. IDs for hand-typed rows;
+  3. a field-by-field decision for each pending change: written unless the field also changed elsewhere; a newer UpdatedAt elsewhere wins; a hand edit (no UpdatedAt change) wins;
+  4. writes in the order row rewrites → appends → Deleted log → row deletions (bottom-up);
+  5. download again.
+
+  Triggers: 3 s after a save, the `online` event, returning to the app (stale or pending), «Синхронізувати» (with «Очікують синхронізації: N»).
+- **Backup copies** (`backups.ts`): before a device's first sync that writes, a full copy goes to the app's Drive folder (local time in the name). It's registered on the device and moved to Drive's trash after 14 days of working sync, with a note (developer: removes the responsibility from the user and keeps Drive tidy; reusable for future safety copies).
+- **Found and fixed while checking:**
+  - an import cycle (data modules → recordStore → sync → spreadsheetInit → data modules) gave «Cannot access 'INGREDIENTS_HEADERS' before initialization»; fixed by moving `REQUIRED_TABS` to `tabs.ts` and `planRecordIds` to `recordIdPlan.ts`, and checked with an import-graph scan;
+  - reads served fully from the device skipped the pending-change overlay (an offline save didn't show until synced);
+  - creating `records.ts` overwrote the existing 1.7 module of that name; restored from git at once, and the new module is `recordStore.ts`.
+- **Verified (dev sheet, local web app):**
+  1. a sugar reading saved through the screen reached the sheet within seconds, with ID and UpdatedAt, and the backup copy appeared in Drive;
+  2. offline (googleapis requests failing as without a connection) a 5,5 reading was saved, survived a page remount and sign-in in the device database, showed on Today, and reached the sheet when the connection was back, with its original save time;
+  3. a note typed into the sheet plus a phone change of value and note: the value 5,7 written, the hand-typed note kept;
+  4. a deletion showed at once, the row left the sheet, and `Deleted` logged it;
+  5. a two-dish meal saved with `L…` IDs; removing one dish deleted its row (logged), and the kept dish kept its ID with the new portion.
+
+  367 tests, `tsc`.
+- **Test data left on the dev sheet:** sugar 6,1 and 5,7, one meal «Тест-страва А (2.0)», 89,4 kg, and the 00:46 backup copy (registered, trashed automatically after 14 days).
