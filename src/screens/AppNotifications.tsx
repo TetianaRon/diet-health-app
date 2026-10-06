@@ -6,6 +6,7 @@
 //                                next check (sign-in, sheet switch, app start)
 //   • silent sheet upgrade     → info: what changed + how to undo, closes itself
 //   • no spreadsheet connected → action: «Підключити» opens the connect window
+//   • backup copy trashed      → info: where it went and that it can be restored
 // Renders nothing itself.
 import { useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
@@ -14,11 +15,15 @@ import { useSheetHealth } from "../context/SheetHealthContext";
 import { uk } from "../i18n/uk";
 import { summarizeIssues } from "./SheetHealthIssues";
 import { upgradeNoticeLines } from "./SheetUpgradeNotice";
+import { onBackupsTrashed } from "../lib/backups";
 
 export default function AppNotifications() {
   const { signedIn, sessionExpired, signIn } = useAuth();
   const { show, remove } = useNotifications();
   const health = useSheetHealth();
+
+  // A backup copy past its keeping time went to Drive's trash (release 2.0).
+  useEffect(() => onBackupsTrashed((n) => show({ key: "backups-trashed", kind: "info", title: uk.backups.trashed(n) })), [show]);
 
   useEffect(() => {
     if (!sessionExpired) {

@@ -841,6 +841,15 @@ export async function createBackupSpreadsheet(name: string, grids: ReadonlyMap<s
   return id;
 }
 
+/** Moves a file the app created to Drive's trash (recoverable there for 30 days). */
+export async function trashDriveFile(fileId: string): Promise<void> {
+  await authorizedFetchUrl(`${DRIVE_API_BASE}/${encodeURIComponent(fileId)}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ trashed: true }),
+  });
+}
+
 // --- Creating a brand-new spreadsheet from the app ---
 //
 // Lets someone start using this app without first building a spreadsheet by

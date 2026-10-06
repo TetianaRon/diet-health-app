@@ -11,7 +11,6 @@
 // the connection comes back, and from «Синхронізувати».
 import {
   batchUpdateRanges,
-  createBackupSpreadsheet,
   deleteSheetRows,
   fetchTabsLive,
   getLastPullAt,
@@ -26,6 +25,7 @@ import { columnLetter } from "./sheetRow";
 import { planRecordIds } from "./recordIdPlan";
 import { newRecordId, type RecordKind } from "./itemIds";
 import { DELETED_TAB } from "./deletions";
+import { cleanUpBackups, makeBackupCopy } from "./backups";
 
 /** A copy older than this is refreshed when the app comes back to the foreground. */
 export const STALE_AFTER_MS = 5 * 60 * 1000;
@@ -58,7 +58,7 @@ async function backupBeforeFirstPush(remote: Map<string, unknown[][]>): Promise<
   const d = new Date();
   const pad = (n: number) => String(n).padStart(2, "0");
   const stamp = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`; // local time
-  await createBackupSpreadsheet(`Трекер харчування — копія перед синхронізацією ${stamp}`, remote);
+  await makeBackupCopy("first-sync", `Трекер харчування — копія перед синхронізацією ${stamp}`, remote);
   await setLocalMeta("backupDone", new Date().toISOString());
 }
 
@@ -121,6 +121,8 @@ async function runSync(): Promise<void> {
   }
   await pullAllTabs(REQUIRED_TABS);
   listeners.forEach((l) => l());
+  // Syncing works: backup copies past their keeping time go to the trash.
+  await cleanUpBackups().catch((err) => console.warn("[backups] clean-up failed:", err));
 }
 
 /** Syncs now. Concurrent calls share one run; saves made during a run go in the next one. */
