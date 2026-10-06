@@ -144,6 +144,15 @@ function acquireLock(wait: boolean): Promise<boolean> {
   });
 }
 
+/** A page being reloaded can still hold the lock for a moment: try for about two seconds before calling it "busy". */
+async function acquireLockSoon(): Promise<boolean> {
+  for (let attempt = 0; attempt < 8; attempt++) {
+    if (await acquireLock(false)) return true;
+    await new Promise((r) => setTimeout(r, 250));
+  }
+  return false;
+}
+
 async function openWorkerStore(spreadsheetId: string): Promise<void> {
   await workerCall({ op: "open", spreadsheetId });
   store = workerStore;
@@ -163,7 +172,7 @@ export async function openLocalDb(spreadsheetId: string): Promise<LocalDbStatus>
     return status;
   }
   listenForTakeover();
-  if (!releaseLock && !(await acquireLock(false))) {
+  if (!releaseLock && !(await acquireLockSoon())) {
     store = null;
     setStatus("busy");
     return status;

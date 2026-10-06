@@ -599,7 +599,9 @@ async function readTabs(tabs: readonly string[], fresh = false): Promise<Map<str
   const unique = [...new Set(tabs)];
   const result = new Map<string, unknown[][]>();
   if (isLocalSheetId(spreadsheetId)) {
-    // Without Google the device database is the data: nothing to fetch.
+    // Without Google the device database is the data: nothing to fetch — and
+    // without it (another tab holds it) there is nothing to read.
+    if (getOpenSpreadsheetId() !== spreadsheetId) throw new Error(uk.otherTab.title);
     for (const tab of unique) result.set(tab, (await getLocalTab(tab))?.rows ?? []);
     lastReadWasFromCache = false;
     return result;
