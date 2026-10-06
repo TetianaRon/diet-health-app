@@ -16,10 +16,10 @@ The workflow (intake → release branch → verify → release) and the standing
 
 ## Current and upcoming releases
 
-### 2.0 — Local-first: the device is the app · 📝 planned (next) — spec → "Local-first app"
+### 2.0 — Local-first: the device is the app · 🔨 in progress (checkpoint A done) — spec → "Local-first app"
 One release (developer, 2026-10-05) combining what was planned as three: reading from the device, offline saving with full sync, and Android without Google. Built on `release/2.0` in three internal checkpoints, each tested before the next starts; nothing ships in between.
 
-**Checkpoint A — reading from the device**
+**Checkpoint A — reading from the device** · ✅ built and checked on the dev sheet (2026-10-05; build log)
 - **Local database:** `@sqlite.org/sqlite-wasm` with the OPFS SAH-pool storage in a worker (the proven spike set-up), on the web and inside the Android app. One table per sheet tab, same fields, plus the bookkeeping fields. One database file per connected spreadsheet.
 - **Row IDs for every tab:** new `Id` columns on DailyLog (`L…`), BloodSugar (`S…`), MedicationLog (`T…`) and Weight (`W…`).
 - **One sheet upgrade** adds everything 2.0 needs at once: `Id`, `UpdatedAt` on every tab, and the «Видалені» tab. Existing rows get IDs once. Structure changes are tried on the **dev** sheet first.

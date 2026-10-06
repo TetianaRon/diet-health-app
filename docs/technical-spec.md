@@ -598,7 +598,7 @@ Every screen reads its tabs from Sheets (Today and History read them in one `bat
 - **No row ID:** DailyLog rows (`MealId` groups a meal; there's no ID per row), BloodSugar, MedicationLog and Weight (one per date).
 
 ### Architecture
-- **A local database on each device is the source of truth for the screens.** It has one table per sheet tab, with the same fields, plus three bookkeeping fields per record:
+- **A local database on each device is the source of truth for the screens.** Since checkpoint A it holds a copy of each tab (rows as the sheet has them), read through the existing per-tab modules. Checkpoint B adds record-level bookkeeping, using these fields per record:
   - `id`: permanent; new prefixes for records that lack one, e.g. `L…` log row, `S…` sugar, `T…` medicine taken, `W…` weight;
   - `updatedAt`: an ISO timestamp from the device that made the change;
   - `deleted`: a deletion marker.

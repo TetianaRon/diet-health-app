@@ -135,3 +135,26 @@ Answering "did we review only products?": the 69 home dishes were on the page bu
     - the first spike version waited on Firefox's persistence prompt (fixed);
     - the local dev server answers only on IPv6, so testing phone Chrome over `adb reverse` used a second dev server on `127.0.0.1:5174`.
   - The developer's Play install was replaced by the debug build for the WebView test, then uninstalled; the Play version gets reinstalled from the store.
+
+**Release 2.0 in progress — checkpoint A, reading from the device (2026-10-05, branch `release/2.0`):**
+- **Local database** (`src/lib/localDb/`): `@sqlite.org/sqlite-wasm` with the OPFS SAH-pool storage in a module worker; one database file per spreadsheet; an in-memory stand-in where the worker can't run (tests).
+  - **Stored as whole-tab copies** (`tab_rows`: tab, row index, cells), not one table per tab with typed fields. The per-tab modules keep reading through `readRange`/`parseTab` unchanged, and checkpoint B adds record-level bookkeeping on top. The spec's "one table per tab" became this.
+  - **One tab holds the database** (Web Lock). Another tab gets «Застосунок відкрито в іншій вкладці» / «Відкрити тут»; handing over ends the worker, which is the only way to free SQLite's storage handles.
+- **Reading** (`sheets.ts`): a tab whose copy is current this session is served from the device with no request; otherwise the whole tab is fetched, stored and sliced to the asked range (`localDb/a1.ts`, unit-tested). Writes mark the tabs they touch as not current. The old localStorage read cache is gone; the offline fallback now uses the device copy.
+  - Lookups that pick a write's row (find row, header check before an append, Settings counters) use `readRangeLive`.
+  - The structure check reads with `{ fresh: true }`.
+- **Sync** (`sync.ts`): `syncNow` pulls all 9 tabs in one `batchGet`. Today's resume handler pulls first when the copy is more than 5 minutes old. Settings shows «Синхронізовано: …» and «Синхронізувати».
+- **Sheet upgrade** (silent, one pass):
+  - `Id` on DailyLog/BloodSugar/MedicationLog/Weight, filled for existing rows with counter-free record IDs (`L`/`S`/`T`/`W` + base-36 time + 5 random characters, `newRecordId`);
+  - `UpdatedAt` («Змінено») on every data tab, blank until checkpoint B stamps it;
+  - a `Deleted` tab («Видалені»: Id, Tab, DeletedAt).
+
+  New rows get IDs; rewrites keep them (a missing id writes `null`, which the Sheets API skips).
+- **Verified (dev sheet, local web app):**
+  - the upgrade added every column with Ukrainian labels, filled IDs on all 8 meal and 3 sugar rows (none left blank), created `Deleted`, and kept the Weight tab's old migrated «Час» column;
+  - going through Today → History → Страви → Продукти → Today made **0 requests** to Sheets;
+  - «Синхронізувати» made **1 request** for all 9 tabs and showed the time;
+  - adding a weight saved it with a `W…` ID and re-read only the Weight tab;
+  - a second tab was refused, showed the notice, and «Відкрити тут» moved the database over, with the first tab showing the notice; taken back again.
+  - 352 tests, `tsc`, production build (SQLite WASM 0.87 MB in the bundle).
+- **Not checked yet:** reading in airplane mode on the phone, and the Android build of 2.0. Both are part of the release checks.
