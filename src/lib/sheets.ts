@@ -71,6 +71,8 @@ declare global {
             client_id: string;
             scope: string;
             callback: (response: TokenResponse) => void;
+            /** The sign-in window failed to open (blocked) or was closed without signing in. */
+            error_callback?: (error: { type: string }) => void;
           }) => TokenClient;
         };
       };
@@ -79,6 +81,8 @@ declare global {
 }
 
 let tokenClient: TokenClient | null = null;
+/** Rejects the sign-in in progress when Google's window can't open or is closed (else it would wait forever). */
+let rejectPendingSignIn: ((err: Error) => void) | null = null;
 let accessToken: string | null = null;
 
 // --- Session expiry (1.5.4, 2026-10-02) ---
@@ -342,6 +346,10 @@ export async function initGoogleAuth(): Promise<void> {
     client_id: clientId,
     scope: SHEETS_SCOPE,
     callback: () => {}, // overridden per-call in signIn()
+    error_callback: () => {
+      rejectPendingSignIn?.(new Error(uk.auth.signInWindowFailed));
+      rejectPendingSignIn = null;
+    },
   });
 }
 
@@ -356,7 +364,9 @@ export function signIn(): Promise<void> {
       return;
     }
 
+    rejectPendingSignIn = reject;
     tokenClient.callback = (response) => {
+      rejectPendingSignIn = null;
       if (response.error || !response.access_token) {
         reject(new Error(response.error ?? "signIn: no access token returned"));
         return;
