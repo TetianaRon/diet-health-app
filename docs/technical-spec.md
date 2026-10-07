@@ -670,3 +670,29 @@ Every screen reads its tabs from Sheets (Today and History read them in one `bat
 2. **2.1 — Sets + clean start + moving mom over.** Then 2.2 (mom's data, verified) as sets plus her own rows.
 
 **Free/paid** is decided separately, before the public launch. Nothing above depends on it: sync, USDA search and label reading are separable features that can be switched on or off later.
+
+## Pack values: per [n] g and per [n] pieces (2.0.1, designed 2026-10-06)
+
+Packs print nutrients per portion (per 30 g) or per piece (dumplings per 12), not always per 100 g. Values are entered exactly as printed. The use cases that shaped it: dumplings (pack per 12 шт.), pancakes and вареники (a dish's yield as a count), nuts (per 100 г, with 100 г = 20 шт. counted once at home), a 30 г portion pack.
+
+### The item editor (products and dishes)
+- Two amount fields side by side: «на … г» and «на … шт.», with a radio button marking the **main** one (the amount the values are entered for, required). The other is optional and states the **same amount** the other way: values per 12 шт. with 200 г means 12 шт. = 200 г.
+- **Products:** the values are typed for the main amount. Default: «на 100 г», as today.
+- **Dishes:** the yield is a weight («Вага готової страви, г»), a count («Вийшло, шт.»), or both. The main one decides how the dish is measured.
+- The form shows what will be stored («Буде збережено на 100 г: …» or «на 1 шт.: …»).
+
+### Stored (new columns, added by the silent upgrade)
+- **Ingredients and Dishes:** `Basis` (`100g` or `piece`; blank reads as `100g`, so every existing row stays as it is) and `PieceGrams` (the weight of one piece; blank = unknown). Dishes also get `YieldPieces` (blank = none).
+- **Grams-main:** every value except GI is recalculated to per 100 g, as today. Pieces-main: values per 1 piece. Either can carry `PieceGrams`.
+- **A dish's ingredient** (`IngredientsJson`) can be given as `pieces` instead of `grams` for a pieces-main product: its contribution is values per piece × pieces.
+- **DailyLog:** `PortionPieces` (blank = logged by weight). When the weight isn't known, `PortionGrams` is 0 and `UnknownFields` lists `portionGrams`, so a meal's total weight never counts it as 0.
+- The verified database and copies of built-in items stay per 100 g.
+
+### The meal editor
+- Grams and pieces are linked when the item has a piece weight: typing one fills in the other (210 г → 210 ÷ 16,7 = 12,6 шт.). Counts allow decimals (7,5).
+- Without a piece weight, only the main field shows. A pieces-main entry's weight is unknown, never 0.
+
+### Maths
+- Every nutrient, GI and GL work without weight: GL = GI × grams of carbs eaten ÷ 100; a dish's GI is already weighted by carbs; a dish needs only its ingredients' total nutrients and its yield.
+- A pieces-main dish: values per piece = the ingredients' totals ÷ `YieldPieces`. With a yield weight too, `PieceGrams` = yield weight ÷ pieces.
+- Lists show «на 1 шт.» instead of «на 100 г» for pieces-main items. The duplicates review («Знайдено однакові записи») says which basis each version uses.
