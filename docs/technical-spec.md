@@ -638,6 +638,7 @@ Every screen reads its tabs from Sheets (Today and History read them in one `bat
 - **Backup copies** (`backups.ts`): registered on the device, and moved to Drive's trash after 14 days of working sync, with a note. The same mechanism serves any future safety copy.
 - **Edits made by hand in the sheet are supported** (developer, 2026-10-05). The app remembers a fingerprint of each row as last synced. A row whose content changed in the sheet without a new `UpdatedAt` counts as an edit made at sync time. Rows typed in by hand without an `Id` get one.
 - **Deletions** (developer, 2026-10-05): the row is removed from the sheet, and its ID goes to a small «Видалені» tab (id, tab, time) so other devices delete it too. The sheet stays clean to read.
+- **The sheet update on first open** (build 20): one notice, «Оновлюємо таблицю для нової версії застосунку…», replaced by the result «Таблицю оновлено…» (or by «Таблицю потрібно виправити» if it can't run). Screens' ordinary reads wait for the check (`structureGate.ts`, at most 30 s), so they never show a structure error for something the check is fixing.
 - **Clock differences between devices** only matter when the same row is edited on two devices between syncs. For a single person's data that's rare, so it's accepted.
 
 ### Without Google: the Android app only (developer, 2026-10-05)
