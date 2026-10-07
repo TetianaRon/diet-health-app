@@ -1,6 +1,6 @@
 # Track My Meals — Project Instructions
 
-**Version:** v2.2
+**Version:** v2.3
 
 ## Issues log
 
@@ -9,15 +9,15 @@ Log: `docs/roadmap.md` → Intake
 
 ## Identity
 
-Track My Meals (Трекер харчування) is a Ukrainian-language meal and blood-sugar tracker. It runs as a web app and an Android app (Capacitor), with Google Sheets as each user's database. Its first user is the developer's mother: Type 2 diabetes, stage 2 gastritis, no gallbladder, fatty liver and elevated cholesterol. She doesn't read English and isn't technical, so every path she uses works in Ukrainian with no English input. She lives separately and reports bugs; she doesn't test. The developer, Tetiana, designs the app: its logic, architecture, features and look. Claude writes the code and keeps the docs current. Development discussion is in English; all UI text is Ukrainian.
+Track My Meals (Трекер харчування) is a Ukrainian-language meal and blood-sugar tracker. It runs as a web app and an Android app (Capacitor), with Google Sheets as each user's database. Nothing is public: the Android app is on Play's internal testing track only, and the web app's Google sign-in admits test users only. Its first user is the developer's mother: Type 2 diabetes, stage 2 gastritis, no gallbladder, fatty liver and elevated cholesterol. She doesn't read English and isn't technical, so every path she uses works in Ukrainian with no English input. She lives separately and reports bugs; she doesn't test. The developer, Tetiana, designs the app: its logic, architecture, features and look. Claude writes the code and keeps the docs current. Development discussion is in English; all UI text is Ukrainian.
 
 ## Production flow
 
 1. **Intake.** New feedback, ideas and bug reports go to `docs/roadmap.md` → Intake with a one-line note and a proposed place. Build only when the developer asks for it now, or when something live is broken.
 2. **Plan.** Work happens in small numbered releases in `docs/roadmap.md`. The design of each feature lives in `docs/technical-spec.md`.
 3. **Build.** One branch per release (`release/x.y`) or fix, cut from an up-to-date `main`. `main` is live: Vercel deploys it and Play builds come from it. Only finished, checked work is merged into `main`; docs-only changes may go straight to it.
-4. **Verify.** Unit tests and `tsc`, then the app itself on the test sheet (local dev server; the developer signs in) and on the developer's devices or the emulator. Never on mom's phone or her sheet.
-5. **Release.** The developer pushes `main` and uploads the Play bundle. Play release notes are in English only.
+4. **Verify.** Unit tests and `tsc`, then the app itself on the test sheet (local dev server; the developer signs in) and on the developer's devices or the emulator, all before the Play upload. Never on mom's phone or her sheet.
+5. **Release.** The developer pushes `main` and uploads the Play bundle to the internal testing track. Mom is a tester on that track, so the upload is the release to her. Play release notes are in English only.
 6. **Record.** `docs/build-log.md` gets the decisions and verification; the roadmap gets the release's status.
 
 ## Task routing

@@ -36,10 +36,11 @@
 ## Hand-off
 
 - **Release notes:** English only, short, user-facing, and with no medical claims.
-- **The developer pushes `main` (this deploys the web app) and uploads the bundle to Play.** Never push or upload yourself.
+- **The developer pushes `main` (this deploys the web app) and uploads the bundle to Play's internal testing track.** Never push or upload yourself.
+- **The upload reaches mom's phone:** she is a tester on the internal track, so every check in "Before merging" is complete before the bundle is handed over.
 
 ## After "pushed and released"
 
-1. Roadmap: "✅ released (date, Play + web)". Build log: "✅ **x.y released date:** main pushed (web) and Play bundle uploaded (versionCode N)." Commit on `main`.
+1. Roadmap: "✅ released (date, web + Play internal testing)". Build log: "✅ **x.y released date:** main pushed (web) and Play bundle uploaded (versionCode N)." Commit on `main`.
 2. Merge `main` into any open release branch.
 3. Update the roadmap's "Next session — start here" if the next step changed.
