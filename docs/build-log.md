@@ -274,3 +274,10 @@ Answering "did we review only products?": the 69 home dishes were on the page bu
 - Version 2.0, versionCode 22.
 
 ✅ **2.0 build 22 released 2026-10-06 to internal testing:** main pushed (web) and the bundle uploaded to the internal track (versionCode 22), replacing build 21. Developer's follow-up: back must go to the previous page (not up a level), and with no previous page minimise the app (not close it) — next build.
+
+**Release 2.0, build 23 — back goes to the previous page; minimise with none (2026-10-06, branch `release/2.0`):**
+- **Developer, on build 22:** back should go to whatever page was before (unless it can't be reopened), not up a level or straight to Today; with no previous page, minimise to the home screen instead of closing. Switching Страви/Продукти isn't a page change (developer).
+- **Now:** `App.tsx` remembers the pages opened (`goTo`, up to 30); back with nothing open reopens the previous one, and with none calls `minimizeApp()`. Forms still close first; a form already closed isn't reopened. The one place where "previous" isn't the breadcrumb's level above: a dish opened from a product's «used in» list (the delete check) goes back to that product.
+- **Verified (emulator):** Today → Foods → History → back → Foods → back → Today → back → home screen, with the app still running (reopened on Today); Today → History → Settings → back → History → back → Today → back → home screen. 382 tests, `tsc -b`, `npm run build`.
+- **Not checked:** the product → dish → back path on a device (needs a saved product used in a saved dish; the order of the two back handlers is the same mechanism as the dialogs).
+- Version 2.0, versionCode 23.
