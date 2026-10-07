@@ -254,3 +254,5 @@ Answering "did we review only products?": the 69 home dishes were on the page bu
 - **The screens wait for the check** (`structureGate.ts`): from the render that signs in, and during any later check, ordinary reads wait until the check is done (at most 30 s); the check's own reads are fresh and don't wait.
 - **Verified (local web app, the testers' sheet, still on the 1.9 layout; the developer signed in, with permission to use it):** the first open showed «Оновлюємо таблицю…» for about 4 s, then «Таблицю оновлено…», which closed by itself; no error in the page at any moment; Weight and DailyLog gained `Id` and `UpdatedAt`, and `Deleted` was added. The testers' sheet is now on the 2.0 layout. 377 tests (4 new for the gate), `tsc -b`, `npm run build`.
 - Version 2.0, versionCode 20 (build 19 never goes to production).
+
+✅ **2.0 build 20 released 2026-10-06 to internal testing:** main pushed (web) and the bundle uploaded to the internal track (versionCode 20), replacing build 19.

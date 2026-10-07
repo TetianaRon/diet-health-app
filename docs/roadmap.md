@@ -17,7 +17,7 @@ The workflow (intake → release branch → verify → release) and the standing
 
 ## Current and upcoming releases
 
-### 2.0 — Local-first: the device is the app · 👀 internal testing (released 2026-10-06: web + Play internal track; build 20 fixes the first-open notices) — production after a week — spec → "Local-first app"
+### 2.0 — Local-first: the device is the app · 👀 internal testing (released 2026-10-06: web + Play internal track; build 20, released the same day, fixes the first-open notices) — production after a week — spec → "Local-first app"
 One release (developer, 2026-10-05) combining what was planned as three: reading from the device, offline saving with full sync, and Android without Google. Built on `release/2.0` in three internal checkpoints, each tested before the next starts; nothing ships in between.
 
 **Checkpoint A — reading from the device** · ✅ built and checked on the dev sheet (2026-10-05; build log)
