@@ -2,8 +2,9 @@
 // screens itself (no browser history), so back did nothing at all. Now every
 // place that can be "left" registers what back does there; the newest
 // registration wins, so an open dialog answers before the screen under it:
-//   dialog → its close / cancel; sub-screen → its breadcrumb's parent;
-//   History, Foods, Settings → Today (App.tsx); Today → leaves the app.
+//   dialog → its close / cancel; a form → the page it was opened from (its
+//   breadcrumb's level above, or where it was opened from);
+//   nothing open → the previous page (App.tsx), or minimise with none.
 // No imports from the app, so it's unit-testable.
 
 type BackHandler = () => void;

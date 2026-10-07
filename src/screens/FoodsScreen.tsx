@@ -11,6 +11,7 @@ import { builtInMatch, giSourceEntry } from "../lib/builtInStatus";
 import type { VerifiedFoodEntry } from "../data/verifiedFoods";
 import { useEffect, useState } from "react";
 import { uk } from "../i18n/uk";
+import { useBackHandler } from "../lib/useBackHandler";
 import { useAuth } from "../context/AuthContext";
 import { classifyGi } from "../lib/health";
 import {
@@ -965,6 +966,17 @@ export default function FoodsScreen() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingIngredient, setEditingIngredient] = useState<Ingredient | null>(null);
   const [editingDish, setEditingDish] = useState<Dish | null>(null);
+  // A dish opened from a product's «used in» list: Android's back returns to that product.
+  const [dishOpenedFrom, setDishOpenedFrom] = useState<Ingredient | null>(null);
+  useEffect(() => {
+    if (!editingDish) setDishOpenedFrom(null);
+  }, [editingDish]);
+  useBackHandler(editingDish !== null && dishOpenedFrom !== null, () => {
+    const product = dishOpenedFrom;
+    setEditingDish(null);
+    setSubTab("ingredients");
+    setEditingIngredient(product);
+  });
   const [infoEntry, setInfoEntry] = useState<{ entry: VerifiedFoodEntry; giOnly: boolean } | null>(null);
   const openInfo = (entry: VerifiedFoodEntry, giOnly = false) => setInfoEntry({ entry, giOnly });
 
@@ -1187,6 +1199,7 @@ export default function FoodsScreen() {
             setEditingIngredient(null);
           }}
           onEditDish={(dish) => {
+            setDishOpenedFrom(editingIngredient);
             setEditingIngredient(null);
             setSubTab("dishes");
             setEditingDish(dish);
