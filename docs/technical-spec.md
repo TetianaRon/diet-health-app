@@ -666,7 +666,7 @@ Every screen reads its tabs from Sheets (Today and History read them in one `bat
 
 ### Releases
 0. ✅ **Proof: SQLite in the browser and the app's WebView** (2026-10-05, see Storage).
-1. **2.0, one release** (developer, 2026-10-05), built in three internal checkpoints: **A** reading from the device (row IDs, one sheet upgrade adding `Id`, `UpdatedAt` and «Видалені»); **B** offline saving and full sync; **C** Android without Google. **Safeguards:** an automatic sheet copy before the first sync, and a week on Play's internal testing track before production.
+1. **2.0, one release** (developer, 2026-10-05), built in three internal checkpoints: **A** reading from the device (row IDs, one sheet upgrade adding `Id`, `UpdatedAt` and «Видалені»); **B** offline saving and full sync; **C** Android without Google. **Safeguards:** an automatic sheet copy before the first sync. (A week on Play's internal testing track "before production and mom" was planned too, but there's no production track yet and mom is an internal tester, so uploads reach her directly — developer, 2026-10-06.)
 2. **2.1 — Sets + clean start + moving mom over.** Then 2.2 (mom's data, verified) as sets plus her own rows.
 
 **Free/paid** is decided separately, before the public launch. Nothing above depends on it: sync, USDA search and label reading are separable features that can be switched on or off later.

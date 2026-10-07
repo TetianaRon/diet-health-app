@@ -11,13 +11,15 @@ The workflow (intake → release branch → verify → release) and the standing
 ---
 
 ## Next session — start here (set 2026-10-06)
-1. **2.0 on internal testing** (released 2026-10-06: `main` pushed, which is the web, still limited to Google test users; bundle on Play's internal track, versionCode 19; build 20 the same day: one notice for the sheet update, screens wait for it). A week on the developer's devices and the emulator, checking what the build log lists as not checked (the `online` event on a real phone, two tabs, switching sheets). **Before production and mom:** update the privacy policy on roncreator.com (2.0 keeps a copy on the device, works without Google, makes backup copies in Drive, stores an anonymous account ID on the web).
-2. Next build: **2.0.1 — pack values per [n] g and per [n] pieces**.
+1. **2.0 released** (2026-10-06, builds 19–23): `main` pushed (the web, limited to Google test users) and the bundle on Play's internal testing track. **Nothing is public:** Play has only the internal testing track, and mom is one of its testers, so every upload reaches her phone (developer, 2026-10-06). The public launch is a separate, later step ("Public launch prep" below).
+   - Still worth checking on the developer's devices: what the build log lists as not checked (the `online` event on a real phone, two tabs, switching sheets).
+   - **Privacy policy on roncreator.com is out of date** for what the app now does (a copy on the device, working without Google, backup copies in Drive, an anonymous account ID on the web): update it soon, since mom's app already does this, and in any case before the public launch.
+2. **Now: 2.0.1 — pack values per [n] g and per [n] pieces**.
 3. Chromium issue 569300356: reply sent 2026-10-05 (repro APK, videos; Chrome itself now affected too) — check for answers now and then.
 
 ## Current and upcoming releases
 
-### 2.0 — Local-first: the device is the app · 👀 internal testing (released 2026-10-06: web + Play internal track; build 20, released the same day, fixes the first-open notices; build 21, released the same day, hides backup copies from the connect window; build 22, released the same day: Android's back button, and the alarm-settings screen no longer reopens; build 23, released the same day: back to the previous page, minimise with none — confirmed on her phone) — production after a week — spec → "Local-first app"
+### 2.0 — Local-first: the device is the app · ✅ released to the internal testing track (released 2026-10-06: web + Play internal track; build 20, released the same day, fixes the first-open notices; build 21, released the same day, hides backup copies from the connect window; build 22, released the same day: Android's back button, and the alarm-settings screen no longer reopens; build 23, released the same day: back to the previous page, minimise with none — confirmed on her phone). Internal testing is the only track, and mom is a tester, so this is the release she has — spec → "Local-first app"
 One release (developer, 2026-10-05) combining what was planned as three: reading from the device, offline saving with full sync, and Android without Google. Built on `release/2.0` in three internal checkpoints, each tested before the next starts; nothing ships in between.
 
 **Checkpoint A — reading from the device** · ✅ built and checked on the dev sheet (2026-10-05; build log)
@@ -44,7 +46,7 @@ One release (developer, 2026-10-05) combining what was planned as three: reading
 - Unit tests for the mapping, merge, deletions, hand-edit detection, backups and the duplicates plan (373).
 - In the app: one request per sync instead of one per screen; syncing the phone's data into the dev sheet with duplicates (web and emulator); the emulator offline (saves, a restart, then syncing); the upgrade on the dev sheet.
 - **Added during the checks** (developer, 2026-10-06): the web keeps no copy of a sheet between sessions, its connection belongs to one Google account, and closing the tab with saves not yet in the sheet asks first. Android opens signed in without a connection.
-- **Safeguard:** a week on Play's **internal testing** track on the developer's devices and the emulator before production. Mom gets it after that.
+- **Safeguard as planned:** a week on Play's internal testing track before production, and mom after that. **It didn't exist** (developer, 2026-10-06): there is no production track yet, and mom is an internal tester, so each upload reached her phone directly.
 
 ### 2.0.1 — Pack values: per [n] g and per [n] pieces · 📝 planned (right after 2.0; developer, 2026-10-06 — needed in her own use; pieces added the same day)
 Packs list nutrients per portion (per 30 g) or per piece (dumplings per 12), not always per 100 g. Values are entered exactly as printed.

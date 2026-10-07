@@ -283,3 +283,5 @@ Answering "did we review only products?": the 69 home dishes were on the page bu
 - Version 2.0, versionCode 23.
 
 ✅ **2.0 build 23 released 2026-10-06 to internal testing:** main pushed (web) and the bundle uploaded to the internal track (versionCode 23), replacing build 22. The developer confirmed back works on her phone.
+
+**2026-10-06 — Correction: nothing is public; mom is an internal tester.** The developer pointed out that every release so far, not only 2.0, has gone to Play's internal testing track only, and mom is one of its testers. So "a week on internal testing before production and mom" was never a real step: each 2.0 build (19–23) reached her phone as it was uploaded, and her sheet gets the 2.0 upgrade (and a backup copy in her Drive) on her app's first open. The roadmap, spec and these notes are corrected; the public launch stays a later step.
