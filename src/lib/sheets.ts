@@ -28,6 +28,7 @@ import { applyChanges, type RecordChange } from "./sync/merge";
 import { sliceGrid, tabsOfRanges } from "./localDb/a1";
 import { isLocalSheetId } from "./localModeId";
 import { structureReady } from "./structureGate";
+import { BACKUP_APP_PROPERTY, isBackupCopyName } from "./backupTag";
 
 const SHEETS_API_BASE = "https://sheets.googleapis.com/v4/spreadsheets";
 const DRIVE_API_BASE = "https://www.googleapis.com/drive/v3/files";
@@ -918,8 +919,12 @@ export async function deleteSheetRows(tab: string, rowNumbers: readonly number[]
  * exactly (release 2.0: backup copies, and moving phone-only data to Google).
  * Returns its ID. Values are written as they are (RAW).
  */
-export async function createSpreadsheetFromGrids(name: string, grids: ReadonlyMap<string, unknown[][]>): Promise<string> {
-  const id = await createSpreadsheetInAppFolder(name);
+export async function createSpreadsheetFromGrids(
+  name: string,
+  grids: ReadonlyMap<string, unknown[][]>,
+  appProperties?: Record<string, string>,
+): Promise<string> {
+  const id = await createSpreadsheetInAppFolder(name, appProperties);
   const tabs = [...grids.keys()];
   // Add the tabs, then remove the empty one Google creates with every new spreadsheet (sheetId 0).
   await authorizedFetch(`${id}:batchUpdate`, {
@@ -999,19 +1004,24 @@ async function findOrCreateAppFolder(): Promise<string> {
  * no wider Drive access is needed. Most recently changed first.
  */
 export async function listAppSpreadsheets(): Promise<{ id: string; title: string; modifiedTime: string }[]> {
-  const query = encodeURIComponent("mimeType='application/vnd.google-apps.spreadsheet' and trashed=false");
+  // Backup copies are never offered (backupTag.ts): tagged ones by the query, older ones by name.
+  const [key, value] = Object.entries(BACKUP_APP_PROPERTY)[0];
+  const query = encodeURIComponent(
+    `mimeType='application/vnd.google-apps.spreadsheet' and trashed=false and not appProperties has { key='${key}' and value='${value}' }`,
+  );
   const response = await authorizedFetchUrl(`${DRIVE_API_BASE}?q=${query}&orderBy=modifiedTime%20desc&pageSize=20&fields=files(id,name,modifiedTime)`);
   const data = await response.json();
   const files = (data.files ?? []) as { id: string; name?: string; modifiedTime?: string }[];
-  return files.map((f) => ({ id: f.id, title: f.name ?? "", modifiedTime: f.modifiedTime ?? "" }));
+  return files.filter((f) => !isBackupCopyName(f.name ?? "")).map((f) => ({ id: f.id, title: f.name ?? "", modifiedTime: f.modifiedTime ?? "" }));
 }
 
-export async function createSpreadsheetInAppFolder(name: string): Promise<string> {
+/** appProperties: hidden Drive labels (e.g. BACKUP_APP_PROPERTY on backup copies). */
+export async function createSpreadsheetInAppFolder(name: string, appProperties?: Record<string, string>): Promise<string> {
   const folderId = await findOrCreateAppFolder();
   const response = await authorizedFetchUrl(DRIVE_API_BASE, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name, mimeType: "application/vnd.google-apps.spreadsheet", parents: [folderId] }),
+    body: JSON.stringify({ name, mimeType: "application/vnd.google-apps.spreadsheet", parents: [folderId], ...(appProperties ? { appProperties } : {}) }),
   });
   const data = await response.json();
   return data.id as string;
