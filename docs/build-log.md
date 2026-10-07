@@ -245,3 +245,5 @@ Answering "did we review only products?": the 69 home dishes were on the page bu
 - **Test data:** the dev sheet is back to 89,4 kg on 2026-10-05; the test meals and products are deleted (logged in `Deleted`). Left: the backup copy made of the stray sheet («…копія перед синхронізацією 2026-10-06 19:05»), trashed automatically after 14 days.
 - **Not checked:** the WebView's `online` event on a real phone (the emulator never fired it, so syncing waited for the return to the app); a second real Google account on the web (simulated); two tabs and switching sheets since checkpoint A; the upgrade on a copy of mom's layout (checked on the dev sheet only). These go to the internal testing week.
 - 373 tests, `tsc -b`, `npm run build`. Version 2.0, versionCode 19.
+
+✅ **2.0 released 2026-10-06 to internal testing:** main pushed (web; Google sign-in still limited to test users) and Play bundle uploaded to the internal track (versionCode 19). Production after a week of testing and the privacy-policy update.

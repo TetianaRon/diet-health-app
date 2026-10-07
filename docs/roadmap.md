@@ -11,12 +11,13 @@ The workflow (intake → release branch → verify → release) and the standing
 ---
 
 ## Next session — start here (set 2026-10-06)
-1. **2.0 built** (2026-10-06): merged to `main`, Play bundle versionCode 19. Next: the developer pushes `main` and uploads the bundle to Play's **internal testing** track; a week on her devices and the emulator, then production and mom. Then **2.0.1 — pack values per [n] g and per [n] pieces**.
-2. Chromium issue 569300356: reply sent 2026-10-05 (repro APK, videos; Chrome itself now affected too) — check for answers now and then.
+1. **2.0 on internal testing** (released 2026-10-06: `main` pushed, which is the web, still limited to Google test users; bundle on Play's internal track, versionCode 19). A week on the developer's devices and the emulator, checking what the build log lists as not checked (the `online` event on a real phone, two tabs, switching sheets). **Before production and mom:** update the privacy policy on roncreator.com (2.0 keeps a copy on the device, works without Google, makes backup copies in Drive, stores an anonymous account ID on the web).
+2. Next build: **2.0.1 — pack values per [n] g and per [n] pieces**.
+3. Chromium issue 569300356: reply sent 2026-10-05 (repro APK, videos; Chrome itself now affected too) — check for answers now and then.
 
 ## Current and upcoming releases
 
-### 2.0 — Local-first: the device is the app · ✅ built (2026-10-06) — internal testing next — spec → "Local-first app"
+### 2.0 — Local-first: the device is the app · 👀 internal testing (released 2026-10-06: web + Play internal track, versionCode 19) — production after a week — spec → "Local-first app"
 One release (developer, 2026-10-05) combining what was planned as three: reading from the device, offline saving with full sync, and Android without Google. Built on `release/2.0` in three internal checkpoints, each tested before the next starts; nothing ships in between.
 
 **Checkpoint A — reading from the device** · ✅ built and checked on the dev sheet (2026-10-05; build log)
