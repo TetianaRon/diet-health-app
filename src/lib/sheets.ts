@@ -27,6 +27,7 @@ import { forgetDeviceCopies, getLocalMeta, getLocalTab, getOpenSpreadsheetId, li
 import { applyChanges, type RecordChange } from "./sync/merge";
 import { sliceGrid, tabsOfRanges } from "./localDb/a1";
 import { isLocalSheetId } from "./localModeId";
+import { structureReady } from "./structureGate";
 
 const SHEETS_API_BASE = "https://sheets.googleapis.com/v4/spreadsheets";
 const DRIVE_API_BASE = "https://www.googleapis.com/drive/v3/files";
@@ -645,6 +646,8 @@ async function fetchAndStoreTabs(spreadsheetId: string, tabs: readonly string[])
 
 /** Whole tabs, from the device where current, otherwise fetched (one request for all the missing ones). */
 async function readTabs(tabs: readonly string[], fresh = false): Promise<Map<string, unknown[][]>> {
+  // Ordinary reads wait for a running sheet check (structureGate.ts); the check's own reads are fresh.
+  if (!fresh) await structureReady();
   const spreadsheetId = requireSpreadsheetId();
   await ensureLocalDb(spreadsheetId);
   const unique = [...new Set(tabs)];

@@ -45,7 +45,7 @@ function Toast({ notice, onDismiss }: { notice: Notice; onDismiss: () => void })
           </div>
         )}
       </div>
-      {notice.dismissible !== false && (
+      {notice.dismissible !== false && notice.kind !== "progress" && (
         <button type="button" className="toast-close" onClick={onDismiss} aria-label={uk.notifications.close} title={uk.notifications.close}>
           ✕
         </button>

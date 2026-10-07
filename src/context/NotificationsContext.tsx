@@ -3,6 +3,8 @@
 // tab bar on a phone, at most 3 visible, the rest waiting their turn.
 //   info   — e.g. «Таблицю оновлено…»: closes by itself after a few seconds
 //            (or with ✕ earlier).
+//   progress — e.g. «Оновлюємо таблицю…»: work under way; no ✕, no timer. The
+//            same key is then shown again with the result (it replaces it).
 //   action — e.g. «Вхід завершився — Увійти знову»: stays until acted on or
 //            closed; if closed while the problem remains, it comes back at
 //            the next sign-in / app start (the owner decides — see
@@ -19,7 +21,7 @@ export interface NoticeAction {
 export interface Notice {
   /** One notice per key — showing a key again replaces it in place. */
   key: string;
-  kind: "info" | "action";
+  kind: "info" | "progress" | "action";
   title: string;
   /** Extra lines, shown behind «Детальніше». */
   details?: string[];

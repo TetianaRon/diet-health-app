@@ -247,3 +247,10 @@ Answering "did we review only products?": the 69 home dishes were on the page bu
 - 373 tests, `tsc -b`, `npm run build`. Version 2.0, versionCode 19.
 
 ✅ **2.0 released 2026-10-06 to internal testing:** main pushed (web; Google sign-in still limited to test users) and Play bundle uploaded to the internal track (versionCode 19). Production after a week of testing and the privacy-policy update.
+
+**Release 2.0, build 20 — one notice for the sheet update (2026-10-06, branch `release/2.0`):**
+- **Found by the developer on the internal-testing build:** the first open after the update showed, in the page body, «Вкладка … має неправильну структуру… натисніть «Виправити таблицю»», then the update popup. Two messages of one kind, styled differently, and the first was wrong advice: the screens' reads met the columns 2.0 needs before the check had added them. Mom's first open of 2.0 would have shown the same.
+- **Now** (developer's design): one notice in the queue. «Оновлюємо таблицю для нової версії застосунку…» (a new `progress` kind: no ✕, no timer) is replaced by the result «Таблицю оновлено…», or gives way to «Таблицю потрібно виправити» if the update can't run.
+- **The screens wait for the check** (`structureGate.ts`): from the render that signs in, and during any later check, ordinary reads wait until the check is done (at most 30 s); the check's own reads are fresh and don't wait.
+- **Verified (local web app, the testers' sheet, still on the 1.9 layout; the developer signed in, with permission to use it):** the first open showed «Оновлюємо таблицю…» for about 4 s, then «Таблицю оновлено…», which closed by itself; no error in the page at any moment; Weight and DailyLog gained `Id` and `UpdatedAt`, and `Deleted` was added. The testers' sheet is now on the 2.0 layout. 377 tests (4 new for the gate), `tsc -b`, `npm run build`.
+- Version 2.0, versionCode 20 (build 19 never goes to production).

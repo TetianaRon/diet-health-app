@@ -469,8 +469,12 @@ async function applyColumnMigrations({ rowsByTab }: HealthScan, summary: Upgrade
  * silent upgrade first, then reports only what's left for the structure
  * dialog (which still offers the full repair).
  */
-export async function checkAndUpgradeSpreadsheet(): Promise<{ reports: TabReport[]; upgrade: UpgradeSummary | null }> {
+export async function checkAndUpgradeSpreadsheet(
+  options: { onUpgradeStart?: () => void } = {},
+): Promise<{ reports: TabReport[]; upgrade: UpgradeSummary | null }> {
   let scan = await scanSpreadsheet();
+  // Something to bring up to date: say so before the writes («Оновлюємо таблицю…»).
+  if (scan.reports.some((report) => report.issues.length > 0)) options.onUpgradeStart?.();
   const summary = emptySummary();
   let changed = false;
   if (await applySilentRepairs(scan, summary)) {

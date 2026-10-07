@@ -15,6 +15,7 @@ import { onSheetStructureError } from "../lib/sheetRow";
 import { attachLocalData, prepareAttach, type AttachPreparation } from "../lib/localMode";
 import { LOCAL_SHEET_ID } from "../lib/localModeId";
 import { onSynced, syncIfStale } from "../lib/sync";
+import { holdReadsForCheck, releaseStructureGate } from "../lib/structureGate";
 import type { Decision } from "../lib/localAttach";
 import type { TabReport } from "../lib/sheetSchema";
 
@@ -44,6 +45,8 @@ interface SheetHealthContextValue {
   dismissDialog: () => void;
   /** What the last silent upgrade changed (null when nothing did, or once dismissed). */
   upgradeSummary: UpgradeSummary | null;
+  /** The check is bringing the sheet up to date right now («Оновлюємо таблицю…»). */
+  upgrading: boolean;
   dismissUpgradeSummary: () => void;
   /** This device has a connected spreadsheet (false until one is chosen — no build-time fallback since 1.7.1). */
   hasSpreadsheet: boolean;
@@ -88,10 +91,21 @@ export function SheetHealthProvider({ children }: { children: ReactNode }) {
   // overwrite a newer one (e.g. after switching spreadsheets).
   const latestCheck = useRef(0);
   const [hasSpreadsheet, setHasSpreadsheet] = useState(() => getSpreadsheetId() !== "");
+  /** The check found something to bring up to date and is writing it («Оновлюємо таблицю…»). */
+  const [upgrading, setUpgrading] = useState(false);
+  // Signing in starts a check: hold the screens' reads from this very render, before
+  // their effects run, so they don't meet a sheet the check is about to update.
+  const readsHeldForSignIn = useRef(false);
+  if (signedIn && !localMode && !readsHeldForSignIn.current) {
+    readsHeldForSignIn.current = true;
+    holdReadsForCheck();
+  }
+  if (!signedIn) readsHeldForSignIn.current = false;
   const [connectOpen, setConnectOpen] = useState(false);
 
   const check = useCallback(async () => {
     const id = ++latestCheck.current;
+    holdReadsForCheck();
     setChecking(true);
     setCheckError(null);
     setDismissed(false);
@@ -102,13 +116,17 @@ export function SheetHealthProvider({ children }: { children: ReactNode }) {
       setReports(null);
       setSpreadsheetName(null);
       setChecking(false);
+      releaseStructureGate();
       return;
     }
     try {
       // Silent, lossless upgrades (new columns, item IDs…) are applied here;
       // only what's left needs the dialog. If anything was written, screens
       // remount and re-read, so they don't keep rows loaded before the IDs.
-      const [result, name] = await Promise.all([checkAndUpgradeSpreadsheet(), getSpreadsheetName().catch(() => null)]);
+      const [result, name] = await Promise.all([
+        checkAndUpgradeSpreadsheet({ onUpgradeStart: () => id === latestCheck.current && setUpgrading(true) }),
+        getSpreadsheetName().catch(() => null),
+      ]);
       if (id === latestCheck.current) {
         setReports(result.reports);
         setSpreadsheetName(name);
@@ -125,7 +143,11 @@ export function SheetHealthProvider({ children }: { children: ReactNode }) {
         if (!(err instanceof TypeError)) setCheckError(err instanceof Error ? err.message : String(err));
       }
     } finally {
-      if (id === latestCheck.current) setChecking(false);
+      if (id === latestCheck.current) {
+        setChecking(false);
+        setUpgrading(false);
+        releaseStructureGate();
+      }
     }
   }, []);
 
@@ -265,6 +287,7 @@ export function SheetHealthProvider({ children }: { children: ReactNode }) {
         repair,
         dismissDialog,
         upgradeSummary,
+        upgrading,
         dismissUpgradeSummary,
         hasSpreadsheet,
         connectOpen,

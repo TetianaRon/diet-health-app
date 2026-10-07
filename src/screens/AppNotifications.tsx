@@ -4,7 +4,10 @@
 //   • sheet structure problem  → action: «Переглянути» opens the repair dialog;
 //                                closing it = "later", it returns at the
 //                                next check (sign-in, sheet switch, app start)
-//   • silent sheet upgrade     → info: what changed + how to undo, closes itself
+//   • silent sheet upgrade     → progress «Оновлюємо таблицю…» while it runs, then
+//                                the same notice becomes the result (info: what
+//                                changed + how to undo, closes itself) or gives
+//                                way to the structure notice above
 //   • no spreadsheet connected → action: «Підключити» opens the connect window
 //   • backup copy trashed      → info: where it went and that it can be restored
 // Renders nothing itself.
@@ -67,9 +70,17 @@ export default function AppNotifications() {
     });
   }, [needsAttention, reports, repairError, openDetails, dismissDialog, show, remove]);
 
-  const { upgradeSummary, dismissUpgradeSummary } = health;
+  const { upgrading, upgradeSummary, dismissUpgradeSummary } = health;
   useEffect(() => {
-    if (!upgradeSummary) return;
+    if (upgrading) {
+      show({ key: "sheet-upgrade", kind: "progress", title: uk.sheetUpgrade.working });
+      return;
+    }
+    if (!upgradeSummary) {
+      // Nothing was changed (or the update couldn't run — the structure notice says what to do).
+      remove("sheet-upgrade");
+      return;
+    }
     show({
       key: "sheet-upgrade",
       kind: "info",
@@ -77,7 +88,7 @@ export default function AppNotifications() {
       details: upgradeNoticeLines(upgradeSummary),
       onDismiss: dismissUpgradeSummary,
     });
-  }, [upgradeSummary, dismissUpgradeSummary, show]);
+  }, [upgrading, upgradeSummary, dismissUpgradeSummary, show, remove]);
 
   const { hasSpreadsheet, openConnect } = health;
   useEffect(() => {

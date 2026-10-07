@@ -651,6 +651,7 @@ export const uk = {
   },
   breadcrumb: { label: "Навігація" },
   sheetUpgrade: {
+    working: "Оновлюємо таблицю для нової версії застосунку…",
     title: "Таблицю оновлено для нової версії застосунку.",
     addedTabs: (names: string) => `Додано вкладки: ${names}.`,
     addedColumns: (names: string) => `Додано стовпці: ${names}.`,
