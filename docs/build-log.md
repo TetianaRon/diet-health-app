@@ -272,3 +272,5 @@ Answering "did we review only products?": the 69 home dishes were on the page bu
 - **Verified (emulator, debug build, exact alarms off):** after a fresh start the app stays on top; back from History and Settings → Today; Foods → «Додати продукт» → back → Продукти → back → Today; «+ Вага» → back → Today; meal editor → «Додати страву» → back → the meal → back → Today; a changed meal → back → «Відхилити внесені зміни?» → back closes it → back asks again; the ⓘ dialog → back closes it, the screen stays; Today → back → the launcher. 382 tests (3 new), `tsc -b`, `npm run build`.
 - **Not checked:** back on the Connect, duplicates, delete and copy-update dialogs on a device (same mechanism, wired the same way); the gesture form of back (the key event was used); a reminder's timing when inexact.
 - Version 2.0, versionCode 22.
+
+✅ **2.0 build 22 released 2026-10-06 to internal testing:** main pushed (web) and the bundle uploaded to the internal track (versionCode 22), replacing build 21. Developer's follow-up: back must go to the previous page (not up a level), and with no previous page minimise the app (not close it) — next build.
