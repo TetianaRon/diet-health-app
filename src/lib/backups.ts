@@ -5,6 +5,7 @@
 // itself (recoverable there for 30 days), so the person never has to tidy up.
 // Any future update that needs a safety copy uses makeBackupCopy the same way.
 import { createSpreadsheetFromGrids, trashDriveFile } from "./sheets";
+import { BACKUP_APP_PROPERTY } from "./backupTag";
 import { getLocalMeta, setLocalMeta } from "./localDb";
 
 export const BACKUP_KEEP_DAYS = 14;
@@ -32,7 +33,7 @@ async function writeRegistry(records: BackupRecord[]): Promise<void> {
 
 /** Saves a snapshot of the given tabs as a new file and registers it for automatic clean-up. */
 export async function makeBackupCopy(reason: string, title: string, grids: ReadonlyMap<string, unknown[][]>): Promise<BackupRecord> {
-  const record: BackupRecord = { fileId: await createSpreadsheetFromGrids(title, grids), reason, createdAt: new Date().toISOString() };
+  const record: BackupRecord = { fileId: await createSpreadsheetFromGrids(title, grids, BACKUP_APP_PROPERTY), reason, createdAt: new Date().toISOString() };
   await writeRegistry([...(await readRegistry()), record]);
   return record;
 }

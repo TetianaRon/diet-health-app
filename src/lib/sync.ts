@@ -26,6 +26,7 @@ import { planRecordIds } from "./recordIdPlan";
 import { newRecordId, type RecordKind } from "./itemIds";
 import { DELETED_TAB } from "./deletions";
 import { cleanUpBackups, makeBackupCopy } from "./backups";
+import { BACKUP_NAME_PREFIX } from "./backupTag";
 import { isLocalSheetId } from "./localModeId";
 import { Capacitor } from "@capacitor/core";
 
@@ -62,7 +63,7 @@ async function backupBeforeFirstPush(remote: Map<string, unknown[][]>): Promise<
   const d = new Date();
   const pad = (n: number) => String(n).padStart(2, "0");
   const stamp = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`; // local time
-  await makeBackupCopy("first-sync", `Трекер харчування — копія перед синхронізацією ${stamp}`, remote);
+  await makeBackupCopy("first-sync", `${BACKUP_NAME_PREFIX} ${stamp}`, remote);
   await setLocalMeta("backupDone", new Date().toISOString());
 }
 
