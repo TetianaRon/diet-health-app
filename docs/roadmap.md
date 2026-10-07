@@ -10,11 +10,11 @@ The workflow (intake → release branch → verify → release) and the standing
 
 ---
 
-## Next session — start here (set 2026-10-06)
+## Next session — start here (set 2026-10-07)
 1. **2.0 released** (2026-10-06, builds 19–23): `main` pushed (the web, limited to Google test users) and the bundle on Play's internal testing track. **Nothing is public:** Play has only the internal testing track, and mom is one of its testers, so every upload reaches her phone (developer, 2026-10-06). Moving her to a closed track needs the public-launch Dashboard steps first, so she stays on internal for now: **an upload is a release to her**. The public launch is a separate, later step ("Public launch prep" below).
    - Still worth checking on the developer's devices: what the build log lists as not checked (the `online` event on a real phone, two tabs, switching sheets).
    - **Privacy policy on roncreator.com is out of date** for what the app now does (a copy on the device, working without Google, backup copies in Drive, an anonymous account ID on the web): update it soon, since mom's app already does this, and in any case before the public launch.
-2. **Now: 2.0.1 — pack values per [n] g and per [n] pieces**.
+2. **Next: 2.0.1 — pack values per [n] g and per [n] pieces.** Branch `release/2.0.1` is cut; the design is in the spec ("Pack values: per [n] g and per [n] pieces"): new columns `Basis`, `PieceGrams`, `YieldPieces`, `PortionPieces`; an unknown weight stored as 0 and listed in `UnknownFields`; pieces in recipes. **Waiting for the developer's OK on that design before building.**
 3. Chromium issue 569300356: reply sent 2026-10-05 (repro APK, videos; Chrome itself now affected too) — check for answers now and then.
 
 ## Current and upcoming releases
