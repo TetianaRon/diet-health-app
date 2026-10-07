@@ -262,3 +262,5 @@ Answering "did we review only products?": the 69 home dishes were on the page bu
 - **Now** (`backupTag.ts`): every backup copy gets a hidden Drive label at creation (`appProperties` `trackmymealsBackup=1`), and the Drive list leaves labelled files out; copies made before the label are left out by their name.
 - **Verified (local web app; the developer signed in):** the list showed only «Мої дані — Трекер харчування» (the existing copies, including the one her phone just made, gone); a labelled test spreadsheet with an ordinary name was left out, and an unlabelled control spreadsheet was listed (so the label, not Drive's indexing delay, hid it); both test files moved to the trash. 379 tests (2 new), `tsc -b`, `npm run build`.
 - Version 2.0, versionCode 21.
+
+✅ **2.0 build 21 released 2026-10-06 to internal testing:** main pushed (web) and the bundle uploaded to the internal track (versionCode 21), replacing build 20.
