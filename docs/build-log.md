@@ -232,6 +232,7 @@ Answering "did we review only products?": the 69 home dishes were on the page bu
   - Opened offline, the sheet check had nothing to read, and the sheet's name showed as «відкрити»: the check runs again after the first sync that gets through.
   - «Знайдено однакові записи» showed an unknown carbs value as «0 г»: it now reads «невідомо» (text moved to `uk.ts`).
   - The hint under «Синхронізувати з Google Таблицею» had no gap.
+  - Wording (developer): the sync texts and «Знайдено однакові записи» said «телефон»; they say «цей пристрій» now («Залишити з цього пристрою: …», «Дані на цьому пристрої»).
 - **Verified (web, dev sheet; the developer signed in):**
   - the phone's data with a duplicate «Кабачки» and a weight on 2026-10-05: «Скасувати» returned to the phone's data with nothing uploaded; keep both (the phone's renamed «Кабачки (тест 2.0)», its meal pointing to it); keep the sheet's weight (89,4 stayed);
   - a page reload cleared the stored copy and kept the backup marker; «Вийти» cleared it; signing in after a faked different account forgot the connection and the recent list;
