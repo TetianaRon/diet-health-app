@@ -288,6 +288,10 @@ export const uk = {
       intro: "Ці записи є і на телефоні, і в таблиці. Оберіть для кожного, що залишити, — тоді дані з телефону буде додано до таблиці.",
       itemLine: (tab: string, name: string) => `${tab}: «${name}»`,
       weightLine: (date: string) => `Вага за ${date}`,
+      weightSummary: (kg: string) => `${kg} кг`,
+      /** null: the value was left unknown on purpose. */
+      itemSummary: (kcal: string | null, carbsG: string | null) =>
+        `${kcal === null ? "калорії невідомо" : `${kcal} ккал`}, ${carbsG === null ? "вуглеводи невідомо" : `${carbsG} г вуглеводів`} на 100 г`,
       keepSheet: (summary: string) => `Залишити з таблиці: ${summary}`,
       keepPhone: (summary: string) => `Залишити з телефону: ${summary}`,
       keepBoth: "Залишити обидва під різними назвами",

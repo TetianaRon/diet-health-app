@@ -151,8 +151,16 @@ export function checkTokenExpiry(): void {
   if (accessToken !== null && accessTokenExpiresAt !== null && Date.now() >= accessTokenExpiresAt) expireSession();
 }
 
+/**
+ * Android opened without a connection (release 2.0): the stored refresh token
+ * couldn't be exchanged, but the person is signed in — the app runs on the
+ * device copy, and the first request once online gets a fresh access token.
+ */
+let offlineSession = false;
+
 function startSession(token: string, expiresInSeconds?: number | string): void {
   accessToken = token;
+  offlineSession = false;
   const seconds = Number(expiresInSeconds);
   accessTokenExpiresAt = Number.isFinite(seconds) && seconds > 0 ? Date.now() + (seconds - 60) * 1000 : null;
   sessionExpired = false;
@@ -332,7 +340,13 @@ export async function initGoogleAuth(): Promise<void> {
       nativeRedirectListenerRegistered = true;
       App.addListener("appUrlOpen", (data) => void handleNativeRedirect(data.url));
     }
-    await refreshAccessToken();
+    try {
+      await refreshAccessToken();
+    } catch (err) {
+      // fetch() throws a TypeError only when it can't reach Google at all.
+      if (!(err instanceof TypeError) || !localStorage.getItem(REFRESH_TOKEN_STORAGE_KEY)) throw err;
+      offlineSession = true;
+    }
     return;
   }
 
@@ -405,6 +419,7 @@ async function bindWebAccount(): Promise<void> {
 
 export function signOut(): void {
   accessToken = null;
+  offlineSession = false;
   accessTokenExpiresAt = null;
   sessionExpired = false;
   // No-op if never set (e.g. on web) — removeItem on a missing key is safe.
@@ -412,7 +427,7 @@ export function signOut(): void {
 }
 
 export function isSignedIn(): boolean {
-  return accessToken !== null;
+  return accessToken !== null || offlineSession;
 }
 
 // --- Spreadsheet selection ---
@@ -484,6 +499,15 @@ export function getSpreadsheetUrl(id: string): string {
 /** Authorized fetch against an arbitrary absolute URL — the shared retry/error-handling logic behind both authorizedFetch (Sheets API) and the Drive API calls below. */
 async function authorizedFetchUrl(url: string, init?: RequestInit): Promise<Response> {
   checkTokenExpiry();
+  if (!accessToken && offlineSession) {
+    // Opened offline: still offline, this throws a TypeError (callers fall back
+    // to the device copy); a refresh token Google no longer accepts ends the session.
+    if (!(await refreshAccessToken())) {
+      offlineSession = false;
+      expireSession();
+      throw new SessionExpiredError();
+    }
+  }
   if (!accessToken) {
     if (sessionExpired) throw new SessionExpiredError();
     throw new Error("Not signed in — call signIn() first");

@@ -18,9 +18,11 @@ function num(v: unknown): string {
 
 /** The values that tell the two versions apart, in a few words. */
 function summary(d: Duplicate, fields: Record<string, unknown>): string {
-  if (d.kind === "weight") return `${num(fields.WeightKg)} кг`;
+  if (d.kind === "weight") return t.weightSummary(num(fields.WeightKg));
   if (d.tab === "Medications") return [fields.Dose, fields.Unit].filter((v) => v !== undefined && v !== "").map(String).join(" ") || String(fields.Name ?? "");
-  return `${num(fields.Calories_kcal)} ккал, ${num(fields.Carbs_g)} г вуглеводів на 100 г`;
+  // A blank-on-purpose value is stored as 0; it reads «невідомо», never as a real zero.
+  const unknown = new Set(String(fields.UnknownFields ?? "").split(",").map((f) => f.trim()));
+  return t.itemSummary(unknown.has("caloriesKcal") ? null : num(fields.Calories_kcal), unknown.has("carbsG") ? null : num(fields.Carbs_g));
 }
 
 export default function DuplicatesDialog() {

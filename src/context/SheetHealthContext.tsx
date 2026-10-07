@@ -14,7 +14,7 @@ import { addRecentSheet, loadRecentSheets, renameRecentSheet, saveRecentSheets, 
 import { onSheetStructureError } from "../lib/sheetRow";
 import { attachLocalData, prepareAttach, type AttachPreparation } from "../lib/localMode";
 import { LOCAL_SHEET_ID } from "../lib/localModeId";
-import { syncIfStale } from "../lib/sync";
+import { onSynced, syncIfStale } from "../lib/sync";
 import type { Decision } from "../lib/localAttach";
 import type { TabReport } from "../lib/sheetSchema";
 
@@ -121,7 +121,8 @@ export function SheetHealthProvider({ children }: { children: ReactNode }) {
     } catch (err) {
       if (id === latestCheck.current) {
         setReports(null);
-        setCheckError(err instanceof Error ? err.message : String(err));
+        // No connection (the phone works offline from its copy): nothing to report; the next check runs online.
+        if (!(err instanceof TypeError)) setCheckError(err instanceof Error ? err.message : String(err));
       }
     } finally {
       if (id === latestCheck.current) setChecking(false);
@@ -139,6 +140,15 @@ export function SheetHealthProvider({ children }: { children: ReactNode }) {
       setReports(null);
     }
   }, [signedIn, check]);
+
+  // Opened offline, the check found nothing to read: once a sync gets through, check for real.
+  useEffect(
+    () =>
+      onSynced(() => {
+        if (signedIn && checkError === null && reports === null && !checking && !isLocalSheetId(getSpreadsheetId())) void check();
+      }),
+    [signedIn, checkError, reports, checking, check],
+  );
 
   useEffect(
     () =>
