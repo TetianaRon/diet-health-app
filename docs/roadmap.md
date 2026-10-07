@@ -11,7 +11,7 @@ The workflow (intake → release branch → verify → release) and the standing
 ---
 
 ## Next session — start here (set 2026-10-06)
-1. **2.0 released** (2026-10-06, builds 19–23): `main` pushed (the web, limited to Google test users) and the bundle on Play's internal testing track. **Nothing is public:** Play has only the internal testing track, and mom is one of its testers, so every upload reaches her phone (developer, 2026-10-06). The public launch is a separate, later step ("Public launch prep" below).
+1. **2.0 released** (2026-10-06, builds 19–23): `main` pushed (the web, limited to Google test users) and the bundle on Play's internal testing track. **Nothing is public:** Play has only the internal testing track, and mom is one of its testers, so every upload reaches her phone (developer, 2026-10-06). Moving her to a closed track needs the public-launch Dashboard steps first, so she stays on internal for now: **an upload is a release to her**. The public launch is a separate, later step ("Public launch prep" below).
    - Still worth checking on the developer's devices: what the build log lists as not checked (the `online` event on a real phone, two tabs, switching sheets).
    - **Privacy policy on roncreator.com is out of date** for what the app now does (a copy on the device, working without Google, backup copies in Drive, an anonymous account ID on the web): update it soon, since mom's app already does this, and in any case before the public launch.
 2. **Now: 2.0.1 — pack values per [n] g and per [n] pieces**.
@@ -96,6 +96,7 @@ Spec: "Planned: food families with cooking states". Raw weight + state in the fi
   - *Reading the label:* Google Lens copy/paste, or **AI label reading** (Gemini paid / free on a separate project / on-device Nano, or Vision OCR) — options, costs, privacy and boundaries recorded in the spec (2026-10-02); decide when this work starts.
 - **English version** (spec: "Planned: English version")
 - **Public launch prep:** drop the broad `spreadsheets` scope (after Picker), Google OAuth verification, store listing (app-designer wording, no medical claims)
+- **Closed testing needs the same preparation** (found 2026-10-06): Play won't publish to a closed track until the Dashboard steps are done: full description and store listing, category and contact details, content rating, target audience, Data safety, financial features, the health declaration, the privacy policy, government apps. Until then mom stays on the internal testing track, so **uploading a bundle is releasing it to her** (developer, 2026-10-06); the developer checks each build before uploading. Moving her to a closed track (internal = developer only) comes with this preparation, when the developer has time.
 - **Persistent web sign-in** — only with real user volume
 
 ---
