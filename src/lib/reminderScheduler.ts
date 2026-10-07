@@ -44,6 +44,15 @@ export async function scheduleMealReminder(lastMealTime: Date, settings: Setting
 
   const fireTime = overdue ? new Date(now.getTime() + 5000) : dueTime;
 
+  // Exact only when «Будильники й нагадування» is already allowed. Asking for
+  // an exact alarm without it makes the plugin (8.3.1) open that settings
+  // screen on every schedule — each app open and meal save — and pressing
+  // back from it reopened it on the app's return (build 22). Asking is
+  // ReminderAccessNotice's job, on her tap.
+  const exact = await LocalNotifications.checkExactNotificationSetting()
+    .then((s) => s.exact_alarm === "granted")
+    .catch(() => false);
+
   await LocalNotifications.schedule({
     notifications: [
       {
@@ -55,6 +64,7 @@ export async function scheduleMealReminder(lastMealTime: Date, settings: Setting
         // phone sits idle with the screen off, so it only arrived once the app
         // was opened (and the overdue branch above re-fired it) — 2026-09-27.
         schedule: { at: fireTime, allowWhileIdle: true },
+        isExactNotification: exact,
         extra: { screen: "today", action: "addMeal" },
       },
     ],

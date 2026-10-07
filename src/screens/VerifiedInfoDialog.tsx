@@ -3,6 +3,7 @@
 // source (dataset + entry) and when it was last checked. Values are "from the
 // cited source", never advice (not-a-medical-app rule).
 import { uk } from "../i18n/uk";
+import { useBackHandler } from "../lib/useBackHandler";
 import { VERIFIED_SOURCES } from "../data/builtInFoods";
 import { formatDecimal } from "../lib/numberFormat";
 import type { VerifiedFoodEntry } from "../data/verifiedFoods";
@@ -27,6 +28,7 @@ function SourceLine({ source }: { source: VerifiedFoodEntry["nutrients"]["source
 
 /** `giOnly`: her own product whose GI came from this entry — only the GI part applies to it. */
 export default function VerifiedInfoDialog({ entry, giOnly = false, onClose }: { entry: VerifiedFoodEntry; giOnly?: boolean; onClose: () => void }) {
+  useBackHandler(true, onClose);
   const n = entry.nutrients;
   const gi = entry.gi;
   const giText =

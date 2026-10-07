@@ -1,6 +1,8 @@
 import DuplicatesDialog from "./screens/DuplicatesDialog";
 import OtherTabNotice from "./screens/OtherTabNotice";
-import { Fragment, useEffect, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
+import { App as CapacitorApp } from "@capacitor/app";
+import { handleBack } from "./lib/backStack";
 import { Capacitor } from "@capacitor/core";
 import { LocalNotifications } from "@capacitor/local-notifications";
 import { StatusBar, Style } from "@capacitor/status-bar";
@@ -37,6 +39,22 @@ export default function App() {
   // The meal editor is a dedicated screen: while it's open the tab bar and
   // settings gear are hidden, so a stray tap can't navigate away mid-draft.
   const [editorOpen, setEditorOpen] = useState(false);
+
+  // Android's back (backStack.ts): an open dialog or sub-screen answers first;
+  // otherwise another tab goes to Today, and Today leaves the app.
+  const activeTabRef = useRef(activeTab);
+  activeTabRef.current = activeTab;
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    const listenerPromise = CapacitorApp.addListener("backButton", () => {
+      if (handleBack()) return;
+      if (activeTabRef.current !== "today") setActiveTab("today");
+      else void CapacitorApp.exitApp();
+    });
+    return () => {
+      void listenerPromise.then((listener) => listener.remove());
+    };
+  }, []);
 
   useEffect(() => {
     // The app's background is white — Style.Light gives dark status bar

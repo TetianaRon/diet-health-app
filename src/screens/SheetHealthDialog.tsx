@@ -4,11 +4,15 @@
 // automatic repair when it can; otherwise, or when the repair fails, points
 // to a manual fix or a fresh spreadsheet in Settings.
 import { uk } from "../i18n/uk";
+import { useBackHandler } from "../lib/useBackHandler";
 import { useSheetHealth } from "../context/SheetHealthContext";
 import { SheetHealthIssueList, summarizeIssues } from "./SheetHealthIssues";
 
 export default function SheetHealthDialog({ onOpenSettings }: { onOpenSettings: () => void }) {
   const { reports, spreadsheetName, dialogOpen, repairing, repairError, repair, dismissDialog } = useSheetHealth();
+  useBackHandler(dialogOpen, () => {
+    if (!repairing) dismissDialog();
+  });
   if (!dialogOpen) return null;
 
   const t = uk.sheetStructure;
