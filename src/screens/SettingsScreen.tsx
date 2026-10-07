@@ -1,3 +1,4 @@
+import LocalDataSection from "./LocalDataSection";
 import { useEffect, useState } from "react";
 import { Browser } from "@capacitor/browser";
 import { uk } from "../i18n/uk";
@@ -6,7 +7,9 @@ import { getSettings, updateSettings, type Settings, type TimeFormat } from "../
 import { TimeInput } from "./TimeInput";
 import { fullMealShareLeavesNoRoom, mealShares } from "../lib/mealRecommendation";
 import { setTimeFormat } from "../lib/dateFormat";
-import { getSpreadsheetId, getSpreadsheetUrl } from "../lib/sheets";
+import { getLastPullAt, getSpreadsheetId, getSpreadsheetUrl } from "../lib/sheets";
+import { onSynced, pendingCount, syncNow } from "../lib/sync";
+import { formatDateTime } from "../lib/dateFormat";
 import { useSheetHealth } from "../context/SheetHealthContext";
 import { useNotifications } from "../context/NotificationsContext";
 import { SheetHealthIssueList, summarizeIssues } from "./SheetHealthIssues";
@@ -90,6 +93,53 @@ function CopyLinkButton({ url }: { url: string }) {
   );
 }
 
+/** When the device copy was last refreshed, and «Синхронізувати» (release 2.0). */
+function SyncLine() {
+  const { reloadScreens } = useSheetHealth();
+  const s = uk.settings.spreadsheet;
+  const [lastPullAt, setLastPullAt] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(0);
+
+  useEffect(() => {
+    const load = () => {
+      void getLastPullAt().then(setLastPullAt).catch(() => setLastPullAt(null));
+      void pendingCount().then(setPending).catch(() => setPending(0));
+    };
+    load();
+    return onSynced(load);
+  }, []);
+
+  const sync = async () => {
+    setSyncing(true);
+    setError(null);
+    try {
+      await syncNow();
+      setLastPullAt(await getLastPullAt());
+      setPending(await pendingCount());
+      reloadScreens();
+    } catch (err) {
+      setError(s.syncFailed(err instanceof Error ? err.message : String(err)));
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  return (
+    <div className="sync-line">
+      <p>
+        {lastPullAt ? s.syncedAt(formatDateTime(lastPullAt)) : s.neverSynced}
+        {pending > 0 && <> · {s.pending(pending)}</>}
+      </p>
+      <button type="button" className="button-secondary" onClick={() => void sync()} disabled={syncing}>
+        {syncing ? s.syncing : s.syncButton}
+      </button>
+      {error && <p className="food-form-error">{error}</p>}
+    </div>
+  );
+}
+
 function SpreadsheetSection({ signedIn }: { signedIn: boolean }) {
   const health = useSheetHealth();
   const { hasSpreadsheet, spreadsheetName, openConnect } = health;
@@ -115,6 +165,7 @@ function SpreadsheetSection({ signedIn }: { signedIn: boolean }) {
             </p>
             <CopyLinkButton url={url} />
           </div>
+          <SyncLine />
           <button type="button" className="button-secondary" onClick={openConnect}>
             {s.connectOtherButton}
           </button>
@@ -179,7 +230,7 @@ function SnackShareHint({ values }: { values: Record<string, string> }) {
 }
 
 export default function SettingsScreen() {
-  const { signedIn, initializing, signIn, signOut, sessionExpired } = useAuth();
+  const { signedIn, initializing, signIn, signOut, sessionExpired, localMode } = useAuth();
   const [values, setValues] = useState<Record<string, string>>({});
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
@@ -259,6 +310,10 @@ export default function SettingsScreen() {
     <section className="screen">
       <h1>{uk.settings.title}</h1>
 
+      {localMode ? (
+        <LocalDataSection />
+      ) : (
+      <>
       <div className="settings-account">
         <h2>{uk.settings.account.title}</h2>
         {initializing ? (
@@ -266,7 +321,7 @@ export default function SettingsScreen() {
         ) : signedIn ? (
           <>
             <p>{uk.settings.account.signedIn}</p>
-            <button type="button" onClick={signOut}>
+            <button type="button" onClick={() => void signOut()}>
               {uk.settings.account.signOutButton}
             </button>
           </>
@@ -281,6 +336,8 @@ export default function SettingsScreen() {
       </div>
 
       <SpreadsheetSection signedIn={signedIn} />
+      </>
+      )}
 
       {signedIn && (
         <div className="settings-targets">

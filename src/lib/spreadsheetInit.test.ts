@@ -20,11 +20,11 @@ describe("missingTabs", () => {
   });
 
   it("returns only the tabs actually missing on a partially-set-up sheet", () => {
-    expect(missingTabs(["Ingredients", "Dishes", "DailyLog", "Settings"])).toEqual(["BloodSugar", "Medications", "MedicationLog", "Weight"]);
+    expect(missingTabs(["Ingredients", "Dishes", "DailyLog", "Settings"])).toEqual(["BloodSugar", "Medications", "MedicationLog", "Weight", "Deleted"]);
   });
 
   it("finds just the 1.7 tabs missing on a sheet from 1.6 (created silently by the upgrade)", () => {
-    expect(missingTabs(["Ingredients", "Dishes", "DailyLog", "BloodSugar", "Settings"])).toEqual(["Medications", "MedicationLog", "Weight"]);
+    expect(missingTabs(["Ingredients", "Dishes", "DailyLog", "BloodSugar", "Settings"])).toEqual(["Medications", "MedicationLog", "Weight", "Deleted"]);
   });
 });
 
@@ -37,10 +37,10 @@ describe("buildInitUpdates", () => {
     const updates = buildInitUpdates(["BloodSugar"]);
     expect(updates).toEqual([
       {
-        range: "BloodSugar!A1:D2",
+        range: "BloodSugar!A1:F2",
         values: [
-          ["Timestamp", "ValueMmolL", "Context", "Notes"],
-          ["Час", "Цукор, ммоль/л", "Контекст", "Примітки"],
+          ["Timestamp", "ValueMmolL", "Context", "Notes", "Id", "UpdatedAt"],
+          ["Час", "Цукор, ммоль/л", "Контекст", "Примітки", "Ідентифікатор", "Змінено"],
         ],
       },
     ]);
@@ -59,8 +59,8 @@ describe("buildInitUpdates", () => {
 
   it("produces one update per non-Settings tab, plus two for Settings, when everything is missing", () => {
     const updates = buildInitUpdates([...REQUIRED_TABS]);
-    // 7 data tabs (1 each) + Settings (header + data)
-    expect(updates).toHaveLength(9);
+    // 8 data tabs (1 each, Deleted since 2.0) + Settings (header + data)
+    expect(updates).toHaveLength(10);
   });
 });
 

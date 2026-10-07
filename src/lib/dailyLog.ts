@@ -4,7 +4,9 @@
 // (a later edit to the Ingredients/Dishes bundle shouldn't retroactively
 // change what was actually eaten) — or a custom/estimated entry (restaurant
 // food, etc.) with some values entered directly and possibly left unknown.
-import { batchUpdateRanges, readRange } from "./sheets";
+import { newRecordId } from "./itemIds";
+import { readRange } from "./sheets";
+import { deleteRecord, upsertRecord } from "./recordStore";
 import { buildColumnIndex, buildRow, cell, columnLetter, parseTab, SCAN_LAST_COLUMN, type ColumnIndex, type ParsedTab } from "./sheetRow";
 import { calcGlycemicLoad } from "./health";
 import type { IngredientNutrition, NutritionKey } from "./dishes";
@@ -19,6 +21,8 @@ export type MealType = (typeof MEAL_TYPES)[number];
 export type NutritionField = keyof IngredientNutrition | "gl";
 
 export interface DailyLogEntry extends IngredientNutrition {
+  /** Row ID (release 2.0), shared across devices; absent only on a row not yet given one. */
+  id?: string;
   timestamp: string; // ISO
   mealType: MealType;
   // Which item this row was logged from (`B…`, `I…` or `D…`, since 1.6);
@@ -71,6 +75,8 @@ export const DAILY_LOG_HEADERS = [
   "MealId",
   "UnknownFields",
   "ItemId",
+  "Id",
+  "UpdatedAt",
 ] as const;
 const DEFAULT_COLUMN_INDEX = buildColumnIndex(DAILY_LOG_HEADERS);
 
@@ -394,12 +400,13 @@ export function rowToLogEntry(row: unknown[], columnIndex: ColumnIndex = DEFAULT
     notes: String(cell(row, columnIndex, "Notes") ?? ""),
     mealId: toMealId(cell(row, columnIndex, "MealId"), timestamp),
     unknownFields: toUnknownFields(cell(row, columnIndex, "UnknownFields")),
+    id: String(cell(row, columnIndex, "Id") ?? "").trim() || undefined,
   };
 }
 
-export function logEntryToRow(entry: DailyLogEntry, columnIndex: ColumnIndex = DEFAULT_COLUMN_INDEX): unknown[] {
-  return buildRow(
-    {
+/** The DailyLog fields of an entry (header → value). */
+export function logEntryFields(entry: DailyLogEntry): Record<string, unknown> {
+  return {
       Timestamp: entry.timestamp,
       MealType: entry.mealType,
       ItemName: entry.itemName,
@@ -417,9 +424,12 @@ export function logEntryToRow(entry: DailyLogEntry, columnIndex: ColumnIndex = D
       MealId: entry.mealId,
       UnknownFields: entry.unknownFields.join(","),
       ItemId: entry.itemId,
-    },
-    columnIndex,
-  );
+    Id: entry.id || null, // missing id → nothing written, so a rewrite keeps the row's ID
+  };
+}
+
+export function logEntryToRow(entry: DailyLogEntry, columnIndex: ColumnIndex = DEFAULT_COLUMN_INDEX): unknown[] {
+  return buildRow(logEntryFields(entry), columnIndex);
 }
 
 async function readLogSheet(): Promise<ParsedTab> {
@@ -495,7 +505,9 @@ export function planMealSave(
 
   let nextFreshRow = dataRows.length + firstDataRow;
   for (const draft of drafts) {
-    const row = logEntryToRow(draft.entry, columnIndex);
+    // An edited dish keeps its row's ID; a new one gets its own (release 2.0).
+    const id = draft.original?.id || draft.entry.id || newRecordId("log");
+    const row = logEntryToRow({ ...draft.entry, id }, columnIndex);
     if (draft.original) {
       updates.push({ range: rangeFor(rowNumberFor.get(draft.original)!), values: [row] });
     } else {
@@ -511,9 +523,18 @@ export function planMealSave(
 
 /** Saves a whole meal in one batch — see planMealSave. `originals` is empty for a brand-new meal. */
 export async function saveMeal(originals: DailyLogEntry[], drafts: MealDraftItem[]): Promise<void> {
-  const { columnIndex, dataRows, firstDataRow } = await readLogSheet();
-  const updates = planMealSave(originals, drafts, dataRows, columnIndex, firstDataRow);
-  if (updates.length > 0) await batchUpdateRanges(updates);
+  // Release 2.0: each dish is its own record — edited dishes keep their ID,
+  // new ones get one, and removed dishes are deleted (no more blanked rows).
+  if (originals.some((o) => !o.id)) throw new Error("Meal rows have no ID yet — sync first");
+  const kept = new Set<string>();
+  for (const draft of drafts) {
+    const id = draft.original?.id || draft.entry.id || newRecordId("log");
+    kept.add(id);
+    await upsertRecord("DailyLog", id, logEntryFields({ ...draft.entry, id }));
+  }
+  for (const original of originals) {
+    if (!kept.has(original.id!)) await deleteRecord("DailyLog", original.id!);
+  }
 }
 
 /** Deletes every row of a meal in one batch. Irreversible; callers must confirm with the user first. */

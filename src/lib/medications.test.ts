@@ -45,9 +45,9 @@ describe("rows", () => {
   });
 
   it("parse tabs with a readable-names row, skipping unnamed/blank rows", () => {
-    const medRows = [["Id", "Name", "Dose", "Unit", "Notes", "Active", "DateAdded"], ["Ідентифікатор", "Назва", "Доза", "Одиниця", "Примітки", "Приймаю зараз", "Дата додавання"], medicationToRow(med), ["M9", "", "", "", "", "", ""]];
+    const medRows = [["Id", "Name", "Dose", "Unit", "Notes", "Active", "DateAdded", "UpdatedAt"], ["Ідентифікатор", "Назва", "Доза", "Одиниця", "Примітки", "Приймаю зараз", "Дата додавання", "Змінено"], medicationToRow(med), ["M9", "", "", "", "", "", ""]];
     expect(parseMedications(medRows)).toEqual([med]);
-    const logRows = [["Timestamp", "MedicationId", "Medication", "Dose", "Unit", "Notes"], intakeToRow(intake), ["", "", "", "", "", ""]];
+    const logRows = [["Timestamp", "MedicationId", "Medication", "Dose", "Unit", "Notes", "Id", "UpdatedAt"], intakeToRow(intake), ["", "", "", "", "", ""]];
     expect(parseIntakes(logRows)).toEqual([intake]);
   });
 });

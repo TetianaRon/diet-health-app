@@ -2,9 +2,18 @@
 // fetch now; Settings will manage the account from here later).
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import * as sheets from "../lib/sheets";
+import { isLocalMode, startLocalMode } from "../lib/localMode";
+import { syncNow } from "../lib/sync";
 
 interface AuthContextValue {
+  /** Signed in to Google — or working without Google on the phone (release 2.0), where the data is on the device. */
   signedIn: boolean;
+  /** Working without Google: the data lives only on this phone. */
+  localMode: boolean;
+  /** «Почати без Google». */
+  startWithoutGoogle: () => Promise<void>;
+  /** Leaves local mode (after its data moved to a Google spreadsheet). */
+  endLocalMode: () => void;
   initializing: boolean;
   /**
    * The Google sign-in ran out (about an hour on the web) while the app was
@@ -14,7 +23,7 @@ interface AuthContextValue {
    */
   sessionExpired: boolean;
   signIn: () => Promise<void>;
-  signOut: () => void;
+  signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -23,6 +32,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [signedIn, setSignedIn] = useState(false);
   const [initializing, setInitializing] = useState(true);
   const [sessionExpired, setSessionExpired] = useState(false);
+  const [localMode, setLocalMode] = useState(isLocalMode);
 
   useEffect(() => {
     sheets
@@ -63,14 +73,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSessionExpired(false);
   };
 
-  const signOut = () => {
+  const signOut = async () => {
+    // Saves still waiting go to the sheet first; whatever fails stays for the next sign-in.
+    await syncNow().catch((err) => console.warn("[sync] before sign-out:", err));
+    await sheets.forgetSheetCopies().catch((err) => console.warn("[localDb] forgetting copies:", err));
     sheets.signOut();
     setSignedIn(false);
     setSessionExpired(false);
   };
 
+  const startWithoutGoogle = async () => {
+    await startLocalMode();
+    setLocalMode(true);
+  };
+
+  const endLocalMode = () => setLocalMode(false);
+
   return (
-    <AuthContext.Provider value={{ signedIn, initializing, sessionExpired, signIn, signOut }}>{children}</AuthContext.Provider>
+    <AuthContext.Provider
+      value={{ signedIn: signedIn || localMode, localMode, startWithoutGoogle, endLocalMode, initializing, sessionExpired, signIn, signOut }}
+    >
+      {children}
+    </AuthContext.Provider>
   );
 }
 

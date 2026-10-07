@@ -101,6 +101,9 @@ export default function ConnectSheetDialog() {
 
   if (!connectOpen) return null;
 
+  // Nothing to tap until every list has loaded: lists arriving one by one push the
+  // buttons around, and a tap meant for «Підключити» can land on «Створити».
+  const loading = found === null || (known === null && getKnownSpreadsheetIds().length > 0);
   const options = connectOptions({ currentId: getSpreadsheetId(), found: found ?? [], recent, known: known ?? [] });
 
   const run = async (action: () => Promise<void>, showError: (message: string) => void = setError) => {
@@ -131,7 +134,7 @@ export default function ConnectSheetDialog() {
         setSpreadsheetId(previous); // stay on the old sheet if the new one couldn't be set up
         throw err;
       }
-      await connectSpreadsheet({ id, title: name });
+      await connectSpreadsheet({ id, title: name }, { isNew: true });
     });
 
   const connectLink = () =>
@@ -155,62 +158,58 @@ export default function ConnectSheetDialog() {
         <h2 id="connect-sheet-title">{t.title}</h2>
         {error && <p className="food-form-error">{error}</p>}
 
-        <section>
-          <h3>{t.foundTitle}</h3>
-          {found === null ? (
-            <p className="food-form-hint">{t.searching}</p>
-          ) : options.found.length > 0 ? (
-            <SheetList sheets={options.found} busy={busy} onConnect={connect} />
-          ) : (
-            <p className="food-form-hint">{foundError ? t.foundError : t.foundNone}</p>
-          )}
-        </section>
-
-        <section>
-          <h3>{t.newTitle}</h3>
-          <p className="food-form-hint">{t.newHint}</p>
-          <label>
-            {t.newNameLabel}
-            <input value={newName} onChange={(e) => setNewName(e.target.value)} />
-          </label>
-          <button type="button" disabled={busy} onClick={create}>
-            {busy ? t.working : t.createButton}
-          </button>
-        </section>
-
-        {options.recent.length > 0 && (
-          <section>
-            <h3>{t.recentTitle}</h3>
-            <SheetList sheets={options.recent} busy={busy} onConnect={connect} onForget={forget} />
-          </section>
-        )}
-
-        {/* Checking access takes a moment (one request per built-in sheet) — say so instead of popping in late. */}
-        {known === null && getKnownSpreadsheetIds().length > 0 ? (
-          <section>
-            <h3>{t.knownTitle}</h3>
-            <p className="food-form-hint">{t.checkingAccess}</p>
-          </section>
+        {loading ? (
+          <p className="food-form-hint">{t.searching}</p>
         ) : (
-          options.known.length > 0 && (
+          <>
             <section>
-              <h3>{t.knownTitle}</h3>
-              <SheetList sheets={options.known} busy={busy} onConnect={connect} />
+              <h3>{t.foundTitle}</h3>
+              {options.found.length > 0 ? (
+                <SheetList sheets={options.found} busy={busy} onConnect={connect} />
+              ) : (
+                <p className="food-form-hint">{foundError ? t.foundError : t.foundNone}</p>
+              )}
             </section>
-          )
-        )}
 
-        <section>
-          <h3>{t.linkTitle}</h3>
-          <label>
-            {t.linkLabel}
-            <input value={link} placeholder={t.linkPlaceholder} onChange={(e) => setLink(e.target.value)} />
-          </label>
-          {linkError && <p className="food-form-error">{linkError}</p>}
-          <button type="button" className="button-secondary" disabled={busy} onClick={connectLink}>
-            {t.connectThis}
-          </button>
-        </section>
+            <section>
+              <h3>{t.newTitle}</h3>
+              <p className="food-form-hint">{t.newHint}</p>
+              <label>
+                {t.newNameLabel}
+                <input value={newName} onChange={(e) => setNewName(e.target.value)} />
+              </label>
+              <button type="button" disabled={busy} onClick={create}>
+                {busy ? t.working : t.createButton}
+              </button>
+            </section>
+
+            {options.recent.length > 0 && (
+              <section>
+                <h3>{t.recentTitle}</h3>
+                <SheetList sheets={options.recent} busy={busy} onConnect={connect} onForget={forget} />
+              </section>
+            )}
+
+            {options.known.length > 0 && (
+              <section>
+                <h3>{t.knownTitle}</h3>
+                <SheetList sheets={options.known} busy={busy} onConnect={connect} />
+              </section>
+            )}
+
+            <section>
+              <h3>{t.linkTitle}</h3>
+              <label>
+                {t.linkLabel}
+                <input value={link} placeholder={t.linkPlaceholder} onChange={(e) => setLink(e.target.value)} />
+              </label>
+              {linkError && <p className="food-form-error">{linkError}</p>}
+              <button type="button" className="button-secondary" disabled={busy} onClick={connectLink}>
+                {t.connectThis}
+              </button>
+            </section>
+          </>
+        )}
 
         <div className="modal-actions">
           <button type="button" className="button-secondary" disabled={busy} onClick={closeConnect}>

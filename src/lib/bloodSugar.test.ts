@@ -63,7 +63,7 @@ describe("planBloodSugarUpdate", () => {
   it("rewrites the matching row, counting from the first data row", () => {
     const updated = { ...b, timestamp: "2026-09-27T11:30:00.000Z", valueMmolL: 7.4 };
     const plan = planBloodSugarUpdate(b, updated, rows, columnIndex, 3);
-    expect(plan).toEqual({ range: "BloodSugar!A4:D4", values: [bloodSugarEntryToRow(updated, columnIndex)] });
+    expect(plan).toEqual({ range: "BloodSugar!A4:F4", values: [bloodSugarEntryToRow(updated, columnIndex)] });
   });
 
   it("returns null when the original reading is gone", () => {

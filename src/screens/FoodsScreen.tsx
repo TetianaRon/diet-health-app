@@ -1,3 +1,4 @@
+import { canOfferLocalMode } from "../lib/localMode";
 import DeleteItem from "./DeleteItem";
 import { deleteIngredient } from "../lib/ingredients";
 import { deleteDish, dishesUsingIngredient } from "../lib/dishes";
@@ -954,7 +955,7 @@ function ComposeDishForm({
 type FoodsSubTab = "ingredients" | "dishes";
 
 export default function FoodsScreen() {
-  const { signedIn, initializing, signIn, sessionExpired } = useAuth();
+  const { signedIn, initializing, signIn, sessionExpired, startWithoutGoogle } = useAuth();
   // Dishes first since 1.7 (Страви screen) — what most meals are.
   const [subTab, setSubTab] = useState<FoodsSubTab>("dishes");
   const [ingredients, setIngredients] = useState<Ingredient[] | null>(null);
@@ -1073,6 +1074,11 @@ export default function FoodsScreen() {
         <button type="button" onClick={() => void signIn()}>
           {uk.foods.signIn.button}
         </button>
+        {canOfferLocalMode() && (
+          <button type="button" className="button-secondary" onClick={() => void startWithoutGoogle()}>
+            {uk.localMode.startButton}
+          </button>
+        )}
       </section>
     );
   }

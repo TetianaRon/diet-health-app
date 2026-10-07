@@ -41,6 +41,10 @@ describe("normalizeDateCell", () => {
 });
 
 describe("weight rows", () => {
+  it("reads a date kept with its apostrophe (data only on the phone)", () => {
+    expect(rowToWeightEntry(["'2026-10-05", 72.4, ""]).date).toBe("2026-10-05");
+  });
+
   it("writes the date as text (apostrophe) and reads it back", () => {
     const row = weightEntryToRow(w(5, 72.4));
     expect(row[0]).toBe("'2026-10-05");
@@ -48,7 +52,7 @@ describe("weight rows", () => {
   });
 
   it("keeps one entry per day (the later row wins) and skips blank rows", () => {
-    const rows = [["Date", "WeightKg", "Notes"], ["Дата", "Вага, кг", "Примітки"], [day(5), 72.4, ""], ["", "", ""], [day(5), 72.1, "ввечері"], [day(6), 0, ""]];
+    const rows = [["Date", "WeightKg", "Notes", "Id", "UpdatedAt"], ["Дата", "Вага, кг", "Примітки", "Ідентифікатор", "Змінено"], [day(5), 72.4, ""], ["", "", ""], [day(5), 72.1, "ввечері"], [day(6), 0, ""]];
     expect(parseWeightEntries(rows)).toEqual([{ date: day(5), weightKg: 72.1, notes: "ввечері" }]);
   });
 

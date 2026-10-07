@@ -23,6 +23,10 @@ import { Capacitor } from "@capacitor/core";
 import { App } from "@capacitor/app";
 import { Browser } from "@capacitor/browser";
 import { uk } from "../i18n/uk";
+import { forgetDeviceCopies, getLocalMeta, getLocalTab, getOpenSpreadsheetId, listLocalChanges, openLocalDb, putLocalTabs, setLocalMeta } from "./localDb";
+import { applyChanges, type RecordChange } from "./sync/merge";
+import { sliceGrid, tabsOfRanges } from "./localDb/a1";
+import { isLocalSheetId } from "./localModeId";
 
 const SHEETS_API_BASE = "https://sheets.googleapis.com/v4/spreadsheets";
 const DRIVE_API_BASE = "https://www.googleapis.com/drive/v3/files";
@@ -67,6 +71,8 @@ declare global {
             client_id: string;
             scope: string;
             callback: (response: TokenResponse) => void;
+            /** The sign-in window failed to open (blocked) or was closed without signing in. */
+            error_callback?: (error: { type: string }) => void;
           }) => TokenClient;
         };
       };
@@ -75,6 +81,8 @@ declare global {
 }
 
 let tokenClient: TokenClient | null = null;
+/** Rejects the sign-in in progress when Google's window can't open or is closed (else it would wait forever). */
+let rejectPendingSignIn: ((err: Error) => void) | null = null;
 let accessToken: string | null = null;
 
 // --- Session expiry (1.5.4, 2026-10-02) ---
@@ -143,8 +151,16 @@ export function checkTokenExpiry(): void {
   if (accessToken !== null && accessTokenExpiresAt !== null && Date.now() >= accessTokenExpiresAt) expireSession();
 }
 
+/**
+ * Android opened without a connection (release 2.0): the stored refresh token
+ * couldn't be exchanged, but the person is signed in — the app runs on the
+ * device copy, and the first request once online gets a fresh access token.
+ */
+let offlineSession = false;
+
 function startSession(token: string, expiresInSeconds?: number | string): void {
   accessToken = token;
+  offlineSession = false;
   const seconds = Number(expiresInSeconds);
   accessTokenExpiresAt = Number.isFinite(seconds) && seconds > 0 ? Date.now() + (seconds - 60) * 1000 : null;
   sessionExpired = false;
@@ -324,7 +340,13 @@ export async function initGoogleAuth(): Promise<void> {
       nativeRedirectListenerRegistered = true;
       App.addListener("appUrlOpen", (data) => void handleNativeRedirect(data.url));
     }
-    await refreshAccessToken();
+    try {
+      await refreshAccessToken();
+    } catch (err) {
+      // fetch() throws a TypeError only when it can't reach Google at all.
+      if (!(err instanceof TypeError) || !localStorage.getItem(REFRESH_TOKEN_STORAGE_KEY)) throw err;
+      offlineSession = true;
+    }
     return;
   }
 
@@ -338,6 +360,10 @@ export async function initGoogleAuth(): Promise<void> {
     client_id: clientId,
     scope: SHEETS_SCOPE,
     callback: () => {}, // overridden per-call in signIn()
+    error_callback: () => {
+      rejectPendingSignIn?.(new Error(uk.auth.signInWindowFailed));
+      rejectPendingSignIn = null;
+    },
   });
 }
 
@@ -352,20 +378,48 @@ export function signIn(): Promise<void> {
       return;
     }
 
+    rejectPendingSignIn = reject;
     tokenClient.callback = (response) => {
+      rejectPendingSignIn = null;
       if (response.error || !response.access_token) {
         reject(new Error(response.error ?? "signIn: no access token returned"));
         return;
       }
       startSession(response.access_token, response.expires_in);
-      resolve();
+      bindWebAccount().then(resolve, (err) => {
+        signOut();
+        reject(err);
+      });
     };
     tokenClient.requestAccessToken(options);
   });
 }
 
+const WEB_ACCOUNT_STORAGE_KEY = "trackmymeals.webAccount";
+
+/**
+ * The web remembers its connected sheet for one Google account only (release
+ * 2.0): someone else may use the same browser. When a different account signs
+ * in, the previous person's sheet and recent-sheets list are forgotten before
+ * any screen shows them. The account is Drive's opaque permission ID — no
+ * email or name is stored.
+ */
+async function bindWebAccount(): Promise<void> {
+  const response = await authorizedFetchUrl("https://www.googleapis.com/drive/v3/about?fields=user(permissionId)");
+  const data = (await response.json()) as { user?: { permissionId?: string } };
+  const account = data.user?.permissionId;
+  if (!account) throw new Error(uk.auth.accountCheckFailed);
+  const previous = localStorage.getItem(WEB_ACCOUNT_STORAGE_KEY);
+  if (previous && previous !== account) {
+    if (!isLocalSheetId(getSpreadsheetId())) localStorage.removeItem(SPREADSHEET_ID_STORAGE_KEY);
+    localStorage.removeItem(RECENT_SHEETS_STORAGE_KEY);
+  }
+  localStorage.setItem(WEB_ACCOUNT_STORAGE_KEY, account);
+}
+
 export function signOut(): void {
   accessToken = null;
+  offlineSession = false;
   accessTokenExpiresAt = null;
   sessionExpired = false;
   // No-op if never set (e.g. on web) — removeItem on a missing key is safe.
@@ -373,7 +427,7 @@ export function signOut(): void {
 }
 
 export function isSignedIn(): boolean {
-  return accessToken !== null;
+  return accessToken !== null || offlineSession;
 }
 
 // --- Spreadsheet selection ---
@@ -384,6 +438,8 @@ export function isSignedIn(): boolean {
 // that never connected one has none («Підключити таблицю»), instead of
 // quietly landing in the testers' shared sheet.
 const SPREADSHEET_ID_STORAGE_KEY = "trackmymeals.spreadsheetId";
+/** sheetConnections.ts keeps the recent-sheets list under this key. */
+const RECENT_SHEETS_STORAGE_KEY = "trackmymeals.recentSheets";
 
 /** Pulls the spreadsheet ID out of a pasted Google Sheets URL, or returns the input as-is if it's already a bare ID. */
 export function parseSpreadsheetId(input: string): string {
@@ -443,6 +499,15 @@ export function getSpreadsheetUrl(id: string): string {
 /** Authorized fetch against an arbitrary absolute URL — the shared retry/error-handling logic behind both authorizedFetch (Sheets API) and the Drive API calls below. */
 async function authorizedFetchUrl(url: string, init?: RequestInit): Promise<Response> {
   checkTokenExpiry();
+  if (!accessToken && offlineSession) {
+    // Opened offline: still offline, this throws a TypeError (callers fall back
+    // to the device copy); a refresh token Google no longer accepts ends the session.
+    if (!(await refreshAccessToken())) {
+      offlineSession = false;
+      expireSession();
+      throw new SessionExpiredError();
+    }
+  }
   if (!accessToken) {
     if (sessionExpired) throw new SessionExpiredError();
     throw new Error("Not signed in — call signIn() first");
@@ -496,97 +561,200 @@ async function authorizedFetchUrl(url: string, init?: RequestInit): Promise<Resp
 }
 
 async function authorizedFetch(path: string, init?: RequestInit): Promise<Response> {
+  // Working without Google: there is no spreadsheet to reach (release 2.0).
+  if (isLocalSheetId(path.split(/[/:?]/)[0])) throw new Error(uk.localMode.noSheet);
   return authorizedFetchUrl(`${SHEETS_API_BASE}/${path}`, init);
 }
 
-// --- Offline read fallback ---
+// --- Reading: from the device first ---
 //
-// Writes deliberately still fail outright with no connection (queueing and
-// replaying writes safely — handling conflicts, retries, partial failures —
-// is a real sync-engine project of its own, not something to bolt on
-// quickly; a clear "try again" error beats a write that silently never
-// actually saved). Reads are different: falling back to whatever was last
-// successfully fetched is safe (nothing to lose) and means the app stays
-// usable — viewing today's log, targets, history — when the connection
-// drops, instead of going blank. Scoped per spreadsheet (via getSpreadsheetId())
-// so switching which sheet a device points at can't show stale data from
-// the wrong one.
-const READ_CACHE_PREFIX = "trackmymeals.cache.";
-let lastReadWasFromCache = false;
+// Every tab the app reads is kept on the device (localDb: SQLite, one database
+// per spreadsheet). A tab whose copy is current for this session is read from
+// the device with no request at all; otherwise the whole tab is fetched once,
+// stored, and served from there. pullAllTabs() refreshes every tab in ONE
+// request (values:batchGet) at start, on return to the app and from
+// «Синхронізувати». A write marks the tabs it touched as not current, so the
+// next read fetches them again. With no connection, reads fall back to the
+// stored copy, however old (wasLastReadFromCache() tells the screens).
+//
+// Lookups that decide WHICH row a write goes to use readRangeLive(): another
+// device may have changed the sheet since the last pull.
 
-function readCacheKey(tab: string, range: string): string {
-  return `${READ_CACHE_PREFIX}${getSpreadsheetId()}:${tab}:${range}`;
-}
-
-// Read the stored values, not their display text (2026-10-01). The default
-// (FORMATTED_VALUE) returns what the cell *shows*, which depends on the
-// spreadsheet's locale: in mom's Ukrainian-locale sheet a stored 6.2 comes
-// back as "6,2", Number("6,2") is NaN, and every decimal — blood sugar,
-// carbs, GL — read as 0 (TRUE/FALSE likewise show as ІСТИНА/ХИБНІСТЬ).
-// UNFORMATTED_VALUE returns real numbers and booleans in any locale.
-// Dates/times keep coming back as their displayed text (FORMATTED_STRING),
-// exactly as before, so DateAdded and time settings parse unchanged.
+// Read the stored values, not their display text. The default (FORMATTED_VALUE)
+// returns what the cell *shows*, which depends on the spreadsheet's locale: in
+// mom's Ukrainian-locale sheet a stored 6.2 comes back as "6,2", Number("6,2")
+// is NaN, and every decimal read as 0 (TRUE/FALSE likewise show as
+// ІСТИНА/ХИБНІСТЬ). UNFORMATTED_VALUE returns real numbers and booleans in any
+// locale. Dates/times come back as their displayed text (FORMATTED_STRING), so
+// DateAdded and time settings parse as they always have.
 const READ_OPTIONS = "valueRenderOption=UNFORMATTED_VALUE&dateTimeRenderOption=FORMATTED_STRING";
 
-/** True if the most recent readRange() call fell back to cached data instead of a live fetch — check after fetching to decide whether to show an "offline" hint. */
+let lastReadWasFromCache = false;
+/** Tabs whose device copy is current this session (cleared by writes and sheet switches). */
+const currentTabs = new Set<string>();
+let currentTabsSheet = "";
+
+/** True if the most recent read fell back to the stored copy because the sheet couldn't be reached — check after fetching to decide whether to show an "offline" hint. */
 export function wasLastReadFromCache(): boolean {
   return lastReadWasFromCache;
 }
 
-/**
- * Reads several ranges in ONE request (values:batchGet) — each counts once
- * against Google's per-minute read limit instead of once per tab. Same value
- * rendering and offline fallback as readRange, per range.
- */
-export async function readRanges(requests: { tab: string; range: string }[]): Promise<unknown[][][]> {
-  if (requests.length === 0) return [];
-  const spreadsheetId = requireSpreadsheetId();
-  const params = new URLSearchParams(READ_OPTIONS);
-  for (const { tab, range } of requests) params.append("ranges", `${tab}!${range}`);
+let oldCacheCleared = false;
+/** The read cache before 2.0 kept tabs in localStorage ("trackmymeals.cache.…"); the device database replaced it. */
+function clearOldReadCache(): void {
+  if (oldCacheCleared) return;
+  oldCacheCleared = true;
   try {
-    const response = await authorizedFetch(`${spreadsheetId}/values:batchGet?${params}`);
-    const data = await response.json();
-    const valueRanges = (data.valueRanges ?? []) as { values?: unknown[][] }[];
-    const results = requests.map((_, i) => valueRanges[i]?.values ?? []);
-    requests.forEach(({ tab, range }, i) => localStorage.setItem(readCacheKey(tab, range), JSON.stringify(results[i])));
-    lastReadWasFromCache = false;
-    return results;
-  } catch (err) {
-    if (!(err instanceof TypeError)) throw err;
-    const cached = requests.map(({ tab, range }) => localStorage.getItem(readCacheKey(tab, range)));
-    if (cached.some((c) => c === null)) throw err;
-    lastReadWasFromCache = true;
-    return cached.map((c) => JSON.parse(c as string) as unknown[][]);
+    for (const key of Object.keys(localStorage)) if (key.startsWith("trackmymeals.cache.")) localStorage.removeItem(key);
+  } catch {
+    // storage unavailable — nothing to clear
   }
 }
 
-/** Reads a range, e.g. readRange("Ingredients", "A1:L200"). Falls back to the last successful read for this exact tab/range if the network is unreachable — see the comment above. */
-export async function readRange(tab: string, range: string): Promise<unknown[][]> {
-  const spreadsheetId = requireSpreadsheetId();
-  const key = readCacheKey(tab, range);
-  try {
-    const response = await authorizedFetch(`${spreadsheetId}/values/${tab}!${range}?${READ_OPTIONS}`);
-    const data = await response.json();
-    const values = data.values ?? [];
-    localStorage.setItem(key, JSON.stringify(values));
-    lastReadWasFromCache = false;
-    return values;
-  } catch (err) {
-    // Only fall back for a genuine network failure — fetch() itself throws a
-    // TypeError when it can't reach the server at all (no connectivity, DNS
-    // failure, CORS block). An HTTP error status (bad permissions, a bad
-    // range, an expired session that couldn't be refreshed) resolves fine
-    // and is surfaced by authorizedFetch as a plain Error instead — that's a
-    // real problem a stale cache should never quietly paper over.
-    if (err instanceof TypeError) {
-      const cached = localStorage.getItem(key);
-      if (cached) {
-        lastReadWasFromCache = true;
-        return JSON.parse(cached);
-      }
-    }
-    throw err;
+/** Opens the connected spreadsheet's device database, and forgets "current" tabs when the sheet changed. */
+async function ensureLocalDb(spreadsheetId: string): Promise<void> {
+  clearOldReadCache();
+  if (currentTabsSheet !== spreadsheetId) {
+    currentTabs.clear();
+    currentTabsSheet = spreadsheetId;
   }
+  if (getOpenSpreadsheetId() !== spreadsheetId) await openLocalDb(spreadsheetId);
+}
+
+function markTabsChanged(tabs: readonly string[]): void {
+  tabs.forEach((t) => currentTabs.delete(t));
+}
+
+function markAllTabsChanged(): void {
+  currentTabs.clear();
+}
+
+/** Fetches whole tabs in one request and stores them on the device. */
+async function fetchAndStoreTabs(spreadsheetId: string, tabs: readonly string[]): Promise<Map<string, unknown[][]>> {
+  const params = new URLSearchParams(READ_OPTIONS);
+  for (const tab of tabs) params.append("ranges", tab);
+  const response = await authorizedFetch(`${spreadsheetId}/values:batchGet?${params}`);
+  const data = await response.json();
+  const valueRanges = (data.valueRanges ?? []) as { values?: unknown[][] }[];
+  const pulledAt = new Date().toISOString();
+  const grids = new Map(tabs.map((tab, i) => [tab, valueRanges[i]?.values ?? []] as const));
+  await putLocalTabs(tabs.map((tab) => ({ tab, rows: grids.get(tab)!, pulledAt })));
+  tabs.forEach((t) => currentTabs.add(t));
+  return grids;
+}
+
+/** Whole tabs, from the device where current, otherwise fetched (one request for all the missing ones). */
+async function readTabs(tabs: readonly string[], fresh = false): Promise<Map<string, unknown[][]>> {
+  const spreadsheetId = requireSpreadsheetId();
+  await ensureLocalDb(spreadsheetId);
+  const unique = [...new Set(tabs)];
+  const result = new Map<string, unknown[][]>();
+  if (isLocalSheetId(spreadsheetId)) {
+    // Without Google the device database is the data: nothing to fetch — and
+    // without it (another tab holds it) there is nothing to read.
+    if (getOpenSpreadsheetId() !== spreadsheetId) throw new Error(uk.otherTab.title);
+    for (const tab of unique) result.set(tab, (await getLocalTab(tab))?.rows ?? []);
+    lastReadWasFromCache = false;
+    return result;
+  }
+  const missing: string[] = [];
+  for (const tab of unique) {
+    const local = !fresh && currentTabs.has(tab) ? await getLocalTab(tab) : null;
+    if (local) result.set(tab, local.rows);
+    else missing.push(tab);
+  }
+  if (missing.length === 0) {
+    lastReadWasFromCache = false;
+    return withPendingChanges(result);
+  }
+  try {
+    const fetched = await fetchAndStoreTabs(spreadsheetId, missing);
+    fetched.forEach((rows, tab) => result.set(tab, rows));
+    lastReadWasFromCache = false;
+  } catch (err) {
+    // Only a genuine network failure falls back: fetch() throws a TypeError when
+    // it can't reach the server at all. An HTTP error (bad permissions, an
+    // expired session) is a real problem a stored copy must never paper over.
+    if (!(err instanceof TypeError)) throw err;
+    for (const tab of missing) {
+      const local = await getLocalTab(tab);
+      if (!local) throw err;
+      result.set(tab, local.rows);
+    }
+    lastReadWasFromCache = true;
+  }
+  return withPendingChanges(result);
+}
+
+/** Saves not yet synced, shown on top of the sheet's copy (release 2.0) — every read goes through this. */
+async function withPendingChanges(grids: Map<string, unknown[][]>): Promise<Map<string, unknown[][]>> {
+  const pending = (await listLocalChanges()) as RecordChange[];
+  if (pending.length > 0) {
+    for (const [tab, rows] of grids) grids.set(tab, applyChanges(tab, rows, pending));
+  }
+  return grids;
+}
+
+/**
+ * Reads several ranges, from the device where current, otherwise in ONE request.
+ * fresh: fetch every tab from the sheet regardless (the structure check must see the real sheet).
+ */
+export async function readRanges(requests: { tab: string; range: string }[], options: { fresh?: boolean } = {}): Promise<unknown[][][]> {
+  if (requests.length === 0) return [];
+  const grids = await readTabs(requests.map((r) => r.tab), options.fresh);
+  return requests.map(({ tab, range }) => sliceGrid(grids.get(tab) ?? [], range));
+}
+
+/** Reads a range, e.g. readRange("Ingredients", "A1:L200") — from the device when its copy is current. */
+export async function readRange(tab: string, range: string): Promise<unknown[][]> {
+  return (await readRanges([{ tab, range }]))[0];
+}
+
+/** Reads a range straight from the sheet, never from the device — for finding the row a write goes to. */
+export async function readRangeLive(tab: string, range: string): Promise<unknown[][]> {
+  const spreadsheetId = requireSpreadsheetId();
+  const response = await authorizedFetch(`${spreadsheetId}/values/${tab}!${range}?${READ_OPTIONS}`);
+  const data = await response.json();
+  return data.values ?? [];
+}
+
+/** Whole tabs straight from the sheet in ONE request, without storing them (sync decides against these). */
+export async function fetchTabsLive(tabs: readonly string[]): Promise<Map<string, unknown[][]>> {
+  const spreadsheetId = requireSpreadsheetId();
+  const params = new URLSearchParams(READ_OPTIONS);
+  for (const tab of tabs) params.append("ranges", tab);
+  const response = await authorizedFetch(`${spreadsheetId}/values:batchGet?${params}`);
+  const data = await response.json();
+  const valueRanges = (data.valueRanges ?? []) as { values?: unknown[][] }[];
+  return new Map(tabs.map((tab, i) => [tab, valueRanges[i]?.values ?? []] as const));
+}
+
+/** Opens the connected spreadsheet's device database (for modules that record saves). */
+export async function openDeviceDatabase(): Promise<void> {
+  await ensureLocalDb(requireSpreadsheetId());
+}
+
+/** Refreshes every given tab on the device in ONE request and records the sync time. */
+export async function pullAllTabs(tabs: readonly string[]): Promise<void> {
+  const spreadsheetId = requireSpreadsheetId();
+  if (isLocalSheetId(spreadsheetId)) return;
+  await ensureLocalDb(spreadsheetId);
+  await fetchAndStoreTabs(spreadsheetId, tabs);
+  await setLocalMeta("lastPullAt", new Date().toISOString());
+}
+
+/** «Вийти» on the web: no copy of the sheet stays on this device (saves not yet in the sheet stay). */
+export async function forgetSheetCopies(): Promise<void> {
+  markAllTabsChanged();
+  await forgetDeviceCopies();
+}
+
+/** When the device copy was last refreshed from the sheet (ISO time), or null. */
+export async function getLastPullAt(): Promise<string | null> {
+  const spreadsheetId = getSpreadsheetId();
+  if (!spreadsheetId) return null;
+  await ensureLocalDb(spreadsheetId);
+  return getLocalMeta("lastPullAt");
 }
 
 function isBlankRow(row: unknown[]): boolean {
@@ -609,6 +777,7 @@ export async function writeRange(tab: string, range: string, values: unknown[][]
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ values }),
   });
+  markTabsChanged([tab]);
   const data = await response.json().catch(() => null);
   if (data?.updates?.updatedCells === 0) {
     throw new Error(`writeRange: Google reported no cells written to ${tab}`);
@@ -630,6 +799,7 @@ export async function batchUpdateRanges(updates: { range: string; values: unknow
       data: updates.map((u) => ({ range: u.range, values: u.values })),
     }),
   });
+  markTabsChanged(tabsOfRanges(updates.map((u) => u.range)));
 }
 
 // --- Blank-spreadsheet initialization ---
@@ -697,6 +867,7 @@ export async function structuralBatchUpdate(requests: object[]): Promise<void> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ requests }),
   });
+  markAllTabsChanged();
 }
 
 export interface TabGrid {
@@ -726,6 +897,51 @@ export async function deleteSheetRow(tab: string, rowNumber: number): Promise<vo
   await structuralBatchUpdate([
     { deleteDimension: { range: { sheetId: grid.sheetId, dimension: "ROWS", startIndex: rowNumber - 1, endIndex: rowNumber } } },
   ]);
+}
+
+/** Removes several rows of one tab in one request; `rowNumbers` are 1-based, handled bottom-up so they stay valid. */
+export async function deleteSheetRows(tab: string, rowNumbers: readonly number[]): Promise<void> {
+  if (rowNumbers.length === 0) return;
+  const grid = (await getTabGrids()).get(tab);
+  if (!grid) throw new Error(`Tab ${tab} not found`);
+  const sorted = [...new Set(rowNumbers)].sort((a, b) => b - a);
+  await structuralBatchUpdate(
+    sorted.map((n) => ({ deleteDimension: { range: { sheetId: grid.sheetId, dimension: "ROWS", startIndex: n - 1, endIndex: n } } })),
+  );
+}
+
+/**
+ * Creates a new spreadsheet in the app's Drive folder holding the given tabs
+ * exactly (release 2.0: backup copies, and moving phone-only data to Google).
+ * Returns its ID. Values are written as they are (RAW).
+ */
+export async function createSpreadsheetFromGrids(name: string, grids: ReadonlyMap<string, unknown[][]>): Promise<string> {
+  const id = await createSpreadsheetInAppFolder(name);
+  const tabs = [...grids.keys()];
+  // Add the tabs, then remove the empty one Google creates with every new spreadsheet (sheetId 0).
+  await authorizedFetch(`${id}:batchUpdate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ requests: [...tabs.map((title) => ({ addSheet: { properties: { title } } })), { deleteSheet: { sheetId: 0 } }] }),
+  });
+  await authorizedFetch(`${id}/values:batchUpdate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      valueInputOption: "RAW",
+      data: tabs.filter((t) => (grids.get(t) ?? []).length > 0).map((t) => ({ range: `${t}!A1`, values: grids.get(t) })),
+    }),
+  });
+  return id;
+}
+
+/** Moves a file the app created to Drive's trash (recoverable there for 30 days). */
+export async function trashDriveFile(fileId: string): Promise<void> {
+  await authorizedFetchUrl(`${DRIVE_API_BASE}/${encodeURIComponent(fileId)}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ trashed: true }),
+  });
 }
 
 // --- Creating a brand-new spreadsheet from the app ---

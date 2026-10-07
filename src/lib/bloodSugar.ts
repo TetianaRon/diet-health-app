@@ -4,14 +4,18 @@
 // HEADER NAME (see sheetRow.ts), not fixed position, so a reordered sheet —
 // deliberately or by someone dragging a column in the Sheets UI — still
 // parses correctly.
-import { batchUpdateRanges, readRange, writeRange } from "./sheets";
-import { buildColumnIndex, buildRow, cell, columnLetter, parseTab, readColumnIndex, SCAN_LAST_COLUMN, type ColumnIndex } from "./sheetRow";
+import { newRecordId } from "./itemIds";
+import { readRange } from "./sheets";
+import { upsertRecord } from "./recordStore";
+import { buildColumnIndex, buildRow, cell, columnLetter, parseTab, SCAN_LAST_COLUMN, type ColumnIndex } from "./sheetRow";
 import { localDateKey } from "./dailyLog";
 
 export const BLOOD_SUGAR_CONTEXTS = ["fasting", "after-meal", "other"] as const;
 export type BloodSugarContext = (typeof BLOOD_SUGAR_CONTEXTS)[number];
 
 export interface BloodSugarEntry {
+  /** Row ID (release 2.0), shared across devices; absent only on a row not yet given one. */
+  id?: string;
   timestamp: string; // ISO
   valueMmolL: number;
   context: BloodSugarContext;
@@ -22,11 +26,10 @@ export interface BloodSugarEntry {
 // spreadsheetInit.ts, which imports this) and the default columnIndex used
 // below when none is given (tests, or before a live sheet's own header row
 // has been read).
-export const BLOOD_SUGAR_HEADERS = ["Timestamp", "ValueMmolL", "Context", "Notes"] as const;
+export const BLOOD_SUGAR_HEADERS = ["Timestamp", "ValueMmolL", "Context", "Notes", "Id", "UpdatedAt"] as const;
 const DEFAULT_COLUMN_INDEX = buildColumnIndex(BLOOD_SUGAR_HEADERS);
 
 const RANGE = `A1:${SCAN_LAST_COLUMN}5000`; // includes the header row (row 1), needed to resolve columns by name
-const APPEND_RANGE = `A:${SCAN_LAST_COLUMN}`;
 
 function toNumber(value: unknown): number {
   const n = Number(value);
@@ -43,14 +46,17 @@ export function rowToBloodSugarEntry(row: unknown[], columnIndex: ColumnIndex = 
     valueMmolL: toNumber(cell(row, columnIndex, "ValueMmolL")),
     context: toContext(cell(row, columnIndex, "Context")),
     notes: String(cell(row, columnIndex, "Notes") ?? ""),
+    id: String(cell(row, columnIndex, "Id") ?? "").trim() || undefined,
   };
 }
 
+/** The BloodSugar fields of a reading (header → value). A missing id writes nothing (null). */
+export function bloodSugarFields(entry: BloodSugarEntry): Record<string, unknown> {
+  return { Timestamp: entry.timestamp, ValueMmolL: entry.valueMmolL, Context: entry.context, Notes: entry.notes, Id: entry.id || null };
+}
+
 export function bloodSugarEntryToRow(entry: BloodSugarEntry, columnIndex: ColumnIndex = DEFAULT_COLUMN_INDEX): unknown[] {
-  return buildRow(
-    { Timestamp: entry.timestamp, ValueMmolL: entry.valueMmolL, Context: entry.context, Notes: entry.notes },
-    columnIndex,
-  );
+  return buildRow(bloodSugarFields(entry), columnIndex);
 }
 
 export async function listBloodSugarEntries(): Promise<BloodSugarEntry[]> {
@@ -62,14 +68,14 @@ export async function listBloodSugarEntries(): Promise<BloodSugarEntry[]> {
  * Appends a reading. `timestamp` is when the test was taken — it can differ
  * from when it's written down, so the form lets her set it (defaults to now).
  */
+// Saves go to the device first and reach the sheet with the next sync (recordStore.ts, release 2.0).
 export async function addBloodSugarEntry(
   entry: Omit<BloodSugarEntry, "timestamp">,
   timestamp: string = new Date().toISOString(),
 ): Promise<BloodSugarEntry> {
-  const withTimestamp: BloodSugarEntry = { ...entry, timestamp };
-  const columnIndex = await readColumnIndex("BloodSugar", BLOOD_SUGAR_HEADERS);
-  await writeRange("BloodSugar", APPEND_RANGE, [bloodSugarEntryToRow(withTimestamp, columnIndex)]);
-  return withTimestamp;
+  const saved: BloodSugarEntry = { ...entry, timestamp, id: entry.id ?? newRecordId("sugar") };
+  await upsertRecord("BloodSugar", saved.id!, bloodSugarFields(saved));
+  return saved;
 }
 
 /**
@@ -98,10 +104,8 @@ export function planBloodSugarUpdate(
 
 /** Rewrites one reading in place. Throws if it can't be found (e.g. changed on another device meanwhile). */
 export async function updateBloodSugarEntry(original: BloodSugarEntry, updated: BloodSugarEntry): Promise<void> {
-  const { columnIndex, dataRows, firstDataRow } = parseTab("BloodSugar", await readRange("BloodSugar", RANGE), BLOOD_SUGAR_HEADERS);
-  const update = planBloodSugarUpdate(original, updated, dataRows, columnIndex, firstDataRow);
-  if (!update) throw new Error("BloodSugar entry not found");
-  await batchUpdateRanges([update]);
+  if (!original.id) throw new Error("BloodSugar entry has no ID yet — sync first");
+  await upsertRecord("BloodSugar", original.id, bloodSugarFields({ ...updated, id: original.id }));
 }
 
 export interface BloodSugarDay {

@@ -5,12 +5,17 @@
 // dialog (SheetHealthDialog), instead of only on the Settings screen.
 // Also owns which spreadsheet is connected (release 1.7.1): whether there is
 // one, the «Підключити таблицю» window (ConnectSheetDialog) and switching.
+import { isLocalSheetId } from "../lib/localModeId";
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { useAuth } from "./AuthContext";
 import { checkAndUpgradeSpreadsheet, repairSpreadsheet, type UpgradeSummary } from "../lib/spreadsheetInit";
 import { getSpreadsheetId, getSpreadsheetName, setSpreadsheetId } from "../lib/sheets";
 import { addRecentSheet, loadRecentSheets, renameRecentSheet, saveRecentSheets, type SheetOption } from "../lib/sheetConnections";
 import { onSheetStructureError } from "../lib/sheetRow";
+import { attachLocalData, prepareAttach, type AttachPreparation } from "../lib/localMode";
+import { LOCAL_SHEET_ID } from "../lib/localModeId";
+import { onSynced, syncIfStale } from "../lib/sync";
+import type { Decision } from "../lib/localAttach";
 import type { TabReport } from "../lib/sheetSchema";
 
 interface SheetHealthContextValue {
@@ -46,8 +51,17 @@ interface SheetHealthContextValue {
   connectOpen: boolean;
   openConnect: () => void;
   closeConnect: () => void;
-  /** Connects this device to a spreadsheet, remembers it on the device, checks it and reloads the screens. */
-  connectSpreadsheet: (sheet: SheetOption) => Promise<void>;
+  /**
+   * Connects this device to a spreadsheet, remembers it on the device, checks it and reloads the screens.
+   * Working without Google, the phone's data is added to that sheet (isNew: it was just created, so the
+   * phone's Settings go too); same-name items first wait for the person's decisions (attachReview).
+   */
+  connectSpreadsheet: (sheet: SheetOption, options?: { isNew?: boolean }) => Promise<void>;
+  /** Duplicates found while adding the phone's data to a sheet, waiting for decisions (DuplicatesDialog). */
+  attachReview: AttachPreparation | null;
+  confirmAttach: (decisions: ReadonlyMap<string, Decision>) => Promise<void>;
+  /** Doesn't connect: the phone keeps working without Google, nothing uploaded. */
+  cancelAttach: () => void;
   /** Remounts the screens so they re-read the sheet (after an app-level write, e.g. updating saved copies). */
   reloadScreens: () => void;
 }
@@ -55,7 +69,9 @@ interface SheetHealthContextValue {
 const SheetHealthContext = createContext<SheetHealthContextValue | null>(null);
 
 export function SheetHealthProvider({ children }: { children: ReactNode }) {
-  const { signedIn } = useAuth();
+  const { signedIn, localMode, endLocalMode } = useAuth();
+  const [attachReview, setAttachReview] = useState<AttachPreparation | null>(null);
+  const pendingAttach = useRef<{ sheet: SheetOption; isNew: boolean } | null>(null);
   const [reports, setReports] = useState<TabReport[] | null>(null);
   const [checking, setChecking] = useState(false);
   const [checkError, setCheckError] = useState<string | null>(null);
@@ -80,8 +96,9 @@ export function SheetHealthProvider({ children }: { children: ReactNode }) {
     setCheckError(null);
     setDismissed(false);
     setDetailsOpen(false);
-    if (!getSpreadsheetId()) {
-      // Nothing to check yet — AppNotifications offers «Підключити».
+    if (!getSpreadsheetId() || isLocalSheetId(getSpreadsheetId())) {
+      // Nothing to check: no sheet yet (AppNotifications offers «Підключити»), or working without
+      // Google (the device data is created complete).
       setReports(null);
       setSpreadsheetName(null);
       setChecking(false);
@@ -104,7 +121,8 @@ export function SheetHealthProvider({ children }: { children: ReactNode }) {
     } catch (err) {
       if (id === latestCheck.current) {
         setReports(null);
-        setCheckError(err instanceof Error ? err.message : String(err));
+        // No connection (the phone works offline from its copy): nothing to report; the next check runs online.
+        if (!(err instanceof TypeError)) setCheckError(err instanceof Error ? err.message : String(err));
       }
     } finally {
       if (id === latestCheck.current) setChecking(false);
@@ -113,12 +131,24 @@ export function SheetHealthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (signedIn) {
-      void check();
+      // Signing in on the web can forget another account's sheet (sheets.ts → bindWebAccount).
+      setHasSpreadsheet(getSpreadsheetId() !== "");
+      // A new web session starts without a device copy: one sync loads every tab at once.
+      void check().then(() => syncIfStale().catch((err) => console.warn("[sync] after sign-in:", err)));
     } else {
       latestCheck.current++;
       setReports(null);
     }
   }, [signedIn, check]);
+
+  // Opened offline, the check found nothing to read: once a sync gets through, check for real.
+  useEffect(
+    () =>
+      onSynced(() => {
+        if (signedIn && checkError === null && reports === null && !checking && !isLocalSheetId(getSpreadsheetId())) void check();
+      }),
+    [signedIn, checkError, reports, checking, check],
+  );
 
   useEffect(
     () =>
@@ -155,9 +185,8 @@ export function SheetHealthProvider({ children }: { children: ReactNode }) {
   const reloadScreens = useCallback(() => setVersion((v) => v + 1), []);
   const closeConnect = useCallback(() => setConnectOpen(false), []);
 
-  const connectSpreadsheet = useCallback(
+  const finishConnect = useCallback(
     async (sheet: SheetOption) => {
-      setSpreadsheetId(sheet.id);
       saveRecentSheets(addRecentSheet(loadRecentSheets(), sheet));
       setHasSpreadsheet(true);
       setConnectOpen(false);
@@ -166,6 +195,54 @@ export function SheetHealthProvider({ children }: { children: ReactNode }) {
       setVersion((v) => v + 1); // screens remount and read the new sheet
     },
     [check],
+  );
+
+  const confirmAttach = useCallback(
+    async (decisions: ReadonlyMap<string, Decision>) => {
+      const pending = pendingAttach.current;
+      if (!attachReview || !pending) return;
+      await attachLocalData(attachReview, decisions, pending.isNew);
+      pendingAttach.current = null;
+      setAttachReview(null);
+      endLocalMode();
+      await finishConnect(pending.sheet);
+    },
+    [attachReview, endLocalMode, finishConnect],
+  );
+
+  const cancelAttach = useCallback(() => {
+    pendingAttach.current = null;
+    setAttachReview(null);
+    setSpreadsheetId(LOCAL_SHEET_ID);
+  }, []);
+
+  const connectSpreadsheet = useCallback(
+    async (sheet: SheetOption, options: { isNew?: boolean } = {}) => {
+      setSpreadsheetId(sheet.id);
+      if (localMode) {
+        // Working without Google: bring the sheet up to date, then add the phone's data to it.
+        await checkAndUpgradeSpreadsheet();
+        const prep = await prepareAttach();
+        pendingAttach.current = { sheet, isNew: options.isNew ?? false };
+        if (prep.duplicates.length > 0) {
+          setConnectOpen(false);
+          setAttachReview(prep);
+          return;
+        }
+        await attachLocalData(prep, new Map(), options.isNew ?? false);
+        pendingAttach.current = null;
+        endLocalMode();
+        await finishConnect(sheet);
+        return;
+      }
+      saveRecentSheets(addRecentSheet(loadRecentSheets(), sheet));
+      setHasSpreadsheet(true);
+      setConnectOpen(false);
+      setUpgradeSummary(null);
+      await check();
+      setVersion((v) => v + 1); // screens remount and read the new sheet
+    },
+    [check, localMode, endLocalMode, finishConnect],
   );
 
   const needsAttention = signedIn && !dismissed && (repairError !== null || (reports !== null && reports.length > 0));
@@ -194,6 +271,9 @@ export function SheetHealthProvider({ children }: { children: ReactNode }) {
         openConnect,
         closeConnect,
         connectSpreadsheet,
+        attachReview,
+        confirmAttach,
+        cancelAttach,
         reloadScreens,
       }}
     >

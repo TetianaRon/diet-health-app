@@ -598,7 +598,7 @@ Every screen reads its tabs from Sheets (Today and History read them in one `bat
 - **No row ID:** DailyLog rows (`MealId` groups a meal; there's no ID per row), BloodSugar, MedicationLog and Weight (one per date).
 
 ### Architecture
-- **A local database on each device is the source of truth for the screens.** It has one table per sheet tab, with the same fields, plus three bookkeeping fields per record:
+- **A local database on each device is the source of truth for the screens.** Since checkpoint A it holds a copy of each tab (rows as the sheet has them), read through the existing per-tab modules. Checkpoint B adds record-level bookkeeping, using these fields per record:
   - `id`: permanent; new prefixes for records that lack one, e.g. `L…` log row, `S…` sugar, `T…` medicine taken, `W…` weight;
   - `updatedAt`: an ISO timestamp from the device that made the change;
   - `deleted`: a deletion marker.
@@ -633,19 +633,28 @@ Every screen reads its tabs from Sheets (Today and History read them in one `bat
   - in both → the newer `updatedAt` wins (last writer wins, per row).
 
   This suits mostly-append data: meals, readings, weight. Settings merge per key.
+- **Saving (checkpoint B):** every save is a change on the device: the fields written (only those that differ), their previous values, and the time. Screens see the device copy with pending changes on top. New products, dishes and medicines get counter-free IDs (`I…`/`D…`/`M…` + time code) like the log rows.
+- **The decision per field at sync:** written unless the field also changed elsewhere since the save's previous value; a newer UpdatedAt elsewhere (another device, later) wins; a change without an UpdatedAt change (a hand edit) wins.
+- **Backup copies** (`backups.ts`): registered on the device, and moved to Drive's trash after 14 days of working sync, with a note. The same mechanism serves any future safety copy.
 - **Edits made by hand in the sheet are supported** (developer, 2026-10-05). The app remembers a fingerprint of each row as last synced. A row whose content changed in the sheet without a new `UpdatedAt` counts as an edit made at sync time. Rows typed in by hand without an `Id` get one.
 - **Deletions** (developer, 2026-10-05): the row is removed from the sheet, and its ID goes to a small «Видалені» tab (id, tab, time) so other devices delete it too. The sheet stays clean to read.
 - **Clock differences between devices** only matter when the same row is edited on two devices between syncs. For a single person's data that's rare, so it's accepted.
 
 ### Without Google: the Android app only (developer, 2026-10-05)
 - **Android:** first run offers «Почати без Google» or «Підключити Google Таблицю». A Google sheet can be connected later; the first sync then uploads everything.
-- **The web version requires Google sign-in.** Using the browser without Google isn't a real use case, and nobody restores a spreadsheet backup in a browser. On the web, the local database is a **fast copy of the user's sheet plus a queue of changes waiting to sync**. The sheet is the source of truth there.
-  - If the browser clears its storage, the copy is downloaded again. Only changes not yet synced could be lost, and sync runs a few seconds after each change.
-  - Before signing out, unsynced changes are synced first (or the user is warned if that fails).
-- **Backup (Android without Google): an .xlsx file in the same layout as the sheet** (developer, 2026-10-05). It's readable in any spreadsheet app, the same file can be restored, and it can be uploaded to Google later.
-  - Saved from Settings («Зберегти копію даних») through Android's share/save sheet, or restored («Відновити з файлу»).
-  - A reminder appears when the last backup is over 30 days old.
-  - Android's own backup of app data is checked during the build; if it covers the database, it's an extra layer of protection.
+- **The web version requires Google sign-in.** Using the browser without Google isn't a real use case. On the web, the local database is a **copy of the user's sheet for one session, plus a queue of changes waiting to sync**. The sheet is the source of truth there.
+- **The web keeps no copy between sessions** (developer, 2026-10-06; someone else may use the same browser). The sign-in lives in memory only, so a page load is a new session.
+  - Each page load, before its first database opens, every stored sheet copy is cleared (`forgetCopies` in the worker). Only changes not yet in the sheet stay, for up to 14 days, and they're read only after sign-in. Small markers such as "backup done" stay too.
+  - Within a session the copy is used fully (no requests while browsing). One sync right after sign-in loads every tab at once.
+  - «Вийти» syncs first, then clears the copy.
+  - Closing the tab with changes not yet in the sheet shows the browser's own "leave site?" message.
+  - The connected sheet and recent-sheets list belong to one Google account (Drive's opaque permission ID; no email or name is stored). When another account signs in, they're forgotten before any screen shows them.
+  - If sign-in ever survives a reload, the clearing moves to the start of a session.
+- **Android keeps its copy between sessions** (the phone is personal). Opened without a connection, it stays signed in on the device copy (the stored refresh token can't be exchanged offline). The first request once online gets a fresh access token; a refresh token Google refuses ends the session.
+- **No backup file** (developer, 2026-10-06): the app's own storage is enough. An .xlsx backup was built in checkpoint C and removed.
+- **Joining Google later** (developer's redesign, 2026-10-06): «Синхронізувати з Google Таблицею» signs in and opens the usual connect window. A new sheet or an existing one gets the phone's data (`localAttach.ts`): the phone's records become ordinary pending changes for that sheet, and the normal sync uploads them (IDs are unique per device). A new sheet also gets the phone's Settings; an existing one keeps its own.
+  - Duplicates: same-name products, dishes and medicines (normalised names), and a weight on a day the sheet already has. «Знайдено однакові записи» asks for each: keep the sheet's (the phone's records that used it point to the sheet's item), keep the phone's (the sheet's item takes the phone's values), or keep both under names she sets, which must differ. Meals, sugar readings and medicine taken are events, never duplicates. Unknown values read «невідомо».
+  - «Скасувати — залишитися без Google» uploads nothing. After a successful join, the phone's own copy is cleared, so starting without Google again begins empty.
 
 ### Sets and the clean start
 - The verified database stays bundled in the app (works offline). Later, updates come from a static file on the roncreator site, the same file the public pages are built from.
@@ -654,7 +663,7 @@ Every screen reads its tabs from Sheets (Today and History read them in one `bat
 
 ### Releases
 0. ✅ **Proof: SQLite in the browser and the app's WebView** (2026-10-05, see Storage).
-1. **2.0, one release** (developer, 2026-10-05), built in three internal checkpoints: **A** reading from the device (row IDs, one sheet upgrade adding `Id`, `UpdatedAt` and «Видалені»); **B** offline saving and full sync; **C** Android without Google and backup. **Safeguards:** an automatic sheet copy before the first sync, and a week on Play's internal testing track before production.
+1. **2.0, one release** (developer, 2026-10-05), built in three internal checkpoints: **A** reading from the device (row IDs, one sheet upgrade adding `Id`, `UpdatedAt` and «Видалені»); **B** offline saving and full sync; **C** Android without Google. **Safeguards:** an automatic sheet copy before the first sync, and a week on Play's internal testing track before production.
 2. **2.1 — Sets + clean start + moving mom over.** Then 2.2 (mom's data, verified) as sets plus her own rows.
 
 **Free/paid** is decided separately, before the public launch. Nothing above depends on it: sync, USDA search and label reading are separable features that can be switched on or off later.

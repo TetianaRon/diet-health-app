@@ -1,19 +1,22 @@
 // Weight diary (release 1.7, spec → "Daily records and the new Today").
 // Weight tab: Date, WeightKg, Notes — ONE record per day, no time of day
 // (developer, 2026-10-05). The trend (weightTrend) is pure.
-import { batchUpdateRanges, readRange, writeRange } from "./sheets";
+import { newRecordId } from "./itemIds";
+import { readRange } from "./sheets";
+import { upsertRecord } from "./recordStore";
 import { buildColumnIndex, buildRow, cell, columnLetter, parseTab, SCAN_LAST_COLUMN, type ColumnIndex } from "./sheetRow";
 
 export interface WeightEntry {
+  /** Row ID (release 2.0), shared across devices; absent only on a row not yet given one. */
+  id?: string;
   date: string; // local "YYYY-MM-DD"
   weightKg: number;
   notes: string;
 }
 
-export const WEIGHT_HEADERS = ["Date", "WeightKg", "Notes"] as const;
+export const WEIGHT_HEADERS = ["Date", "WeightKg", "Notes", "Id", "UpdatedAt"] as const;
 const DEFAULT_INDEX = buildColumnIndex(WEIGHT_HEADERS);
 export const WEIGHT_RANGE = `A1:${SCAN_LAST_COLUMN}5000`;
-const APPEND_RANGE = `A:${SCAN_LAST_COLUMN}`;
 
 function toNumber(value: unknown): number {
   const n = Number(String(value ?? "").trim().replace(",", "."));
@@ -27,7 +30,8 @@ function toNumber(value: unknown): number {
  * sheet — so that form is understood too.
  */
 export function normalizeDateCell(value: unknown): string {
-  const text = String(value ?? "").trim();
+  // A leading apostrophe (the "keep as text" mark Sheets drops) stays in data kept only on the phone.
+  const text = String(value ?? "").trim().replace(/^'/, "");
   const iso = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
   if (iso) return `${iso[1]}-${iso[2].padStart(2, "0")}-${iso[3].padStart(2, "0")}`;
   const dotted = text.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
@@ -40,13 +44,21 @@ export function rowToWeightEntry(row: unknown[], columnIndex: ColumnIndex = DEFA
     date: normalizeDateCell(cell(row, columnIndex, "Date")),
     weightKg: toNumber(cell(row, columnIndex, "WeightKg")),
     notes: String(cell(row, columnIndex, "Notes") ?? ""),
+    id: String(cell(row, columnIndex, "Id") ?? "").trim() || undefined,
   };
 }
 
+/**
+ * The Weight fields of an entry (header → value). The leading apostrophe keeps
+ * "2026-10-05" as text: otherwise Sheets turns it into a date shown in the
+ * sheet's own locale format. A missing id writes nothing (null).
+ */
+export function weightFields(e: WeightEntry): Record<string, unknown> {
+  return { Date: `'${e.date}`, WeightKg: e.weightKg, Notes: e.notes, Id: e.id || null };
+}
+
 export function weightEntryToRow(e: WeightEntry, columnIndex: ColumnIndex = DEFAULT_INDEX): unknown[] {
-  // The leading apostrophe keeps "2026-10-05" as text: otherwise Sheets turns
-  // it into a date shown in the sheet's own locale format.
-  return buildRow({ Date: `'${e.date}`, WeightKg: e.weightKg, Notes: e.notes }, columnIndex);
+  return buildRow(weightFields(e), columnIndex);
 }
 
 /** Weight entries from the tab as read (header row first); one per day — a later row for the same day wins. */
@@ -83,19 +95,16 @@ export function planWeightSave(
  * Saves the day's weight. When editing moves it to another day (`previousDate`),
  * the old day's row is overwritten with the new day — so it never duplicates.
  */
+// Saves go to the device first and reach the sheet with the next sync (recordStore.ts, release 2.0).
 export async function saveWeightEntry(entry: WeightEntry, previousDate?: string): Promise<WeightEntry> {
-  const { columnIndex, dataRows, firstDataRow } = parseTab("Weight", await readRange("Weight", WEIGHT_RANGE), WEIGHT_HEADERS);
-  const sameDay = planWeightSave(entry, dataRows, columnIndex, firstDataRow);
-  const movedFrom =
-    previousDate && previousDate !== entry.date ? planWeightSave({ ...entry, date: previousDate }, dataRows, columnIndex, firstDataRow) : null;
-  if (sameDay) {
-    await batchUpdateRanges([sameDay]);
-  } else if (movedFrom) {
-    await batchUpdateRanges([{ range: movedFrom.range, values: [weightEntryToRow(entry, columnIndex)] }]);
-  } else {
-    await writeRange("Weight", APPEND_RANGE, [weightEntryToRow(entry, columnIndex)]);
-  }
-  return entry;
+  const entries = parseWeightEntries(await readRange("Weight", WEIGHT_RANGE));
+  const sameDay = entries.find((e) => e.date === entry.date);
+  const movedFrom = previousDate && previousDate !== entry.date ? entries.find((e) => e.date === previousDate) : undefined;
+  // One weight per day: the day's record is overwritten; a moved entry keeps its record.
+  const id = sameDay?.id ?? movedFrom?.id ?? newRecordId("weight");
+  const saved: WeightEntry = { ...entry, id };
+  await upsertRecord("Weight", id, weightFields(saved));
+  return saved;
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;

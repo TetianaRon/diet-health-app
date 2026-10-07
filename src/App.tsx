@@ -1,3 +1,5 @@
+import DuplicatesDialog from "./screens/DuplicatesDialog";
+import OtherTabNotice from "./screens/OtherTabNotice";
 import { Fragment, useEffect, useState, type ReactNode } from "react";
 import { Capacitor } from "@capacitor/core";
 import { LocalNotifications } from "@capacitor/local-notifications";
@@ -103,6 +105,8 @@ export default function App() {
         <SheetHealthDialog onOpenSettings={() => setActiveTab("settings")} />
         <ConnectSheetDialog />
         <CopyUpdateOffer />
+        <OtherTabNotice />
+        <DuplicatesDialog />
         <Toaster />
 
         {!editorOpen && (

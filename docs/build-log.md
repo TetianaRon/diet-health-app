@@ -135,3 +135,112 @@ Answering "did we review only products?": the 69 home dishes were on the page bu
     - the first spike version waited on Firefox's persistence prompt (fixed);
     - the local dev server answers only on IPv6, so testing phone Chrome over `adb reverse` used a second dev server on `127.0.0.1:5174`.
   - The developer's Play install was replaced by the debug build for the WebView test, then uninstalled; the Play version gets reinstalled from the store.
+
+**Release 2.0 in progress — checkpoint A, reading from the device (2026-10-05, branch `release/2.0`):**
+- **Local database** (`src/lib/localDb/`): `@sqlite.org/sqlite-wasm` with the OPFS SAH-pool storage in a module worker; one database file per spreadsheet; an in-memory stand-in where the worker can't run (tests).
+  - **Stored as whole-tab copies** (`tab_rows`: tab, row index, cells), not one table per tab with typed fields. The per-tab modules keep reading through `readRange`/`parseTab` unchanged, and checkpoint B adds record-level bookkeeping on top. The spec's "one table per tab" became this.
+  - **One tab holds the database** (Web Lock). Another tab gets «Застосунок відкрито в іншій вкладці» / «Відкрити тут»; handing over ends the worker, which is the only way to free SQLite's storage handles.
+- **Reading** (`sheets.ts`): a tab whose copy is current this session is served from the device with no request; otherwise the whole tab is fetched, stored and sliced to the asked range (`localDb/a1.ts`, unit-tested). Writes mark the tabs they touch as not current. The old localStorage read cache is gone; the offline fallback now uses the device copy.
+  - Lookups that pick a write's row (find row, header check before an append, Settings counters) use `readRangeLive`.
+  - The structure check reads with `{ fresh: true }`.
+- **Sync** (`sync.ts`): `syncNow` pulls all 9 tabs in one `batchGet`. Today's resume handler pulls first when the copy is more than 5 minutes old. Settings shows «Синхронізовано: …» and «Синхронізувати».
+- **Sheet upgrade** (silent, one pass):
+  - `Id` on DailyLog/BloodSugar/MedicationLog/Weight, filled for existing rows with counter-free record IDs (`L`/`S`/`T`/`W` + base-36 time + 5 random characters, `newRecordId`);
+  - `UpdatedAt` («Змінено») on every data tab, blank until checkpoint B stamps it;
+  - a `Deleted` tab («Видалені»: Id, Tab, DeletedAt).
+
+  New rows get IDs; rewrites keep them (a missing id writes `null`, which the Sheets API skips).
+- **Verified (dev sheet, local web app):**
+  - the upgrade added every column with Ukrainian labels, filled IDs on all 8 meal and 3 sugar rows (none left blank), created `Deleted`, and kept the Weight tab's old migrated «Час» column;
+  - going through Today → History → Страви → Продукти → Today made **0 requests** to Sheets;
+  - «Синхронізувати» made **1 request** for all 9 tabs and showed the time;
+  - adding a weight saved it with a `W…` ID and re-read only the Weight tab;
+  - a second tab was refused, showed the notice, and «Відкрити тут» moved the database over, with the first tab showing the notice; taken back again.
+  - 352 tests, `tsc`, production build (SQLite WASM 0.87 MB in the bundle).
+- **Not checked yet:** reading in airplane mode on the phone, and the Android build of 2.0. Both are part of the release checks.
+
+**Release 2.0 — checkpoint B, offline saving and full sync (2026-10-05/06, branch `release/2.0`):**
+- **Saves go to the device first** (`recordStore.ts`: `upsertRecord` / `deleteRecord`). A save is a change row in the device database: tab, record ID, the fields written (only those that differ), their previous values (`base`), the time. Every read lays pending changes over the device copy (`applyChanges`), so a save shows at once, offline too.
+  - **Modules converted to record saves:** Ingredients, Dishes, DailyLog (`saveMeal` deletes removed dishes instead of blanking rows), BloodSugar, Medications/MedicationLog, Weight (one per day kept), Settings (one record per Key).
+  - **IDs:** new products, dishes and medicines get counter-free IDs (`I…`/`D…`/`M…` + time code), like the log rows; counters collide when two devices add offline.
+- **Sync** (`sync.ts` + `sync/merge.ts`, 16 merge tests):
+  1. download all tabs;
+  2. IDs for hand-typed rows;
+  3. a field-by-field decision for each pending change: written unless the field also changed elsewhere; a newer UpdatedAt elsewhere wins; a hand edit (no UpdatedAt change) wins;
+  4. writes in the order row rewrites → appends → Deleted log → row deletions (bottom-up);
+  5. download again.
+
+  Triggers: 3 s after a save, the `online` event, returning to the app (stale or pending), «Синхронізувати» (with «Очікують синхронізації: N»).
+- **Backup copies** (`backups.ts`): before a device's first sync that writes, a full copy goes to the app's Drive folder (local time in the name). It's registered on the device and moved to Drive's trash after 14 days of working sync, with a note (developer: removes the responsibility from the user and keeps Drive tidy; reusable for future safety copies).
+- **Found and fixed while checking:**
+  - an import cycle (data modules → recordStore → sync → spreadsheetInit → data modules) gave «Cannot access 'INGREDIENTS_HEADERS' before initialization»; fixed by moving `REQUIRED_TABS` to `tabs.ts` and `planRecordIds` to `recordIdPlan.ts`, and checked with an import-graph scan;
+  - reads served fully from the device skipped the pending-change overlay (an offline save didn't show until synced);
+  - creating `records.ts` overwrote the existing 1.7 module of that name; restored from git at once, and the new module is `recordStore.ts`.
+- **Verified (dev sheet, local web app):**
+  1. a sugar reading saved through the screen reached the sheet within seconds, with ID and UpdatedAt, and the backup copy appeared in Drive;
+  2. offline (googleapis requests failing as without a connection) a 5,5 reading was saved, survived a page remount and sign-in in the device database, showed on Today, and reached the sheet when the connection was back, with its original save time;
+  3. a note typed into the sheet plus a phone change of value and note: the value 5,7 written, the hand-typed note kept;
+  4. a deletion showed at once, the row left the sheet, and `Deleted` logged it;
+  5. a two-dish meal saved with `L…` IDs; removing one dish deleted its row (logged), and the kept dish kept its ID with the new portion.
+
+  367 tests, `tsc`.
+- **Test data left on the dev sheet:** sugar 6,1 and 5,7, one meal «Тест-страва А (2.0)», 89,4 kg, and the 00:46 backup copy (registered, trashed automatically after 14 days).
+
+**Release 2.0 — checkpoint C, Android without Google (2026-10-06, branch `release/2.0`):**
+- **Phone-only mode** (`localMode.ts`, `localModeId.ts`): «Почати без Google» on the sign-in screens. It's shown in the Android app only (and on the local dev server for testing); the web always signs in.
+  - The data lives in the device database named "local". It starts with the same tabs a new spreadsheet gets (`initialGrids()` from `buildInitUpdates`).
+  - Saves apply straight to it (`recordStore` → `record()`), with no queue and no sync. The structure check is skipped, and network calls for "local" fail with a message.
+  - The auth context treats this mode as in (`signedIn || localMode`).
+- **Backup** (`localBackup.ts`, SheetJS 0.20.3 from the official CDN, loaded only when used): .xlsx with one sheet per tab in the spreadsheet's layout.
+  - Saved through Android's share sheet (`@capacitor/filesystem` + `@capacitor/share`), or downloaded in a browser.
+  - «Відновити з файлу» replaces the phone's data after a confirmation, and refuses a file that isn't the app's backup.
+  - A reminder (action note) after 30 days without a backup, counted from the mode's start if there was never one.
+- **Moving to Google** («Перенести дані в Google Таблицю»): signs in through the app, creates a new spreadsheet in the «Track My Meals» Drive folder with all the phone's data, connects it, and stores it as the device copy.
+  - Developer's request: the window says where the file goes and lets her edit the name, like «Створити нову таблицю».
+  - Text kept with a leading apostrophe on the phone is written as the text itself. Only into a new spreadsheet; merging into one that holds data isn't offered.
+- **Found and fixed while checking:**
+  - weight dates kept on the phone carry Sheets' "keep as text" apostrophe, so `normalizeDateCell` read them as no date: every phone-only weight would vanish (tested now);
+  - the move signed in through the low-level function, so the screens thought she was signed out;
+  - spreadsheets created from grids (moves, backup copies) kept Google's empty «Sheet1» (now removed);
+  - a blocked or closed Google sign-in window left the app waiting forever (GIS `error_callback` → «Вікно входу Google не відкрилося або було закрите…»);
+  - two parts of the page opening the device database at once raced for the lock, and the loser marked it «busy» — opens are now shared;
+  - a reload's leftover lock is waited for (~2 s) before «busy»;
+  - phone-only reads without the database say so instead of returning empty tabs;
+  - the pre-2.0 localStorage read cache is cleared once;
+  - Today's offline notice still said new records wouldn't save.
+- **Verified (local web app, phone-only mode enabled for testing):**
+  - «Почати без Google» opened Today with the default targets and no Google requests;
+  - a weight saved and showed;
+  - Settings shows «Дані на цьому телефоні» with the three actions and loads targets from the phone's data;
+  - backup round trip (build the .xlsx → delete the weight → restore → back, ID and time included);
+  - the move: the developer clicked and signed in (an automated click can't open Google's window); the new spreadsheet had every tab and the weight row as text with ID and time, and the app connected to it. The test spreadsheet was moved to Drive's trash afterwards, and the dev sheet reconnected.
+  - The new move window was checked by eye. 371 tests, `tsc`.
+- **Not checked yet (release checks):** the Android share sheet, the file picker for restoring, and the button in the Android app.
+
+**Release 2.0 — checkpoint C reworked and the release checks (2026-10-06, branch `release/2.0`):**
+- **Phone backup removed** (developer: "Apps cache is doing the job, anything beyond that is unnecessary"): `localBackup.ts`, its reminder and the `@capacitor/filesystem`/`@capacitor/share` plugins are gone.
+- **«Перенести дані в Google Таблицю» replaced by «Синхронізувати з Google Таблицею»** (developer's design): the usual connect window, a new or existing sheet, and «Знайдено однакові записи» for same-name items and same-day weights (`localAttach.ts`, `DuplicatesDialog.tsx`; spec → "Without Google"). The developer raised the ID question (phone records joining a sheet that already has data): IDs are unique per device, so only names and days can clash.
+- **The web keeps no copy of a sheet between sessions** (developer: data mustn't be exposed to the next person on the same laptop). A page load is a new session, since sign-in lives in memory.
+  - Each load clears every stored copy (saves not yet in the sheet stay up to 14 days); «Вийти» syncs, then clears.
+  - The connection belongs to one Google account (Drive permission ID); another account signing in forgets the previous person's sheet and recent list.
+  - Closing the tab with unsynced saves asks first.
+  - Best practice discussed: keep data for the session only; clear at session start, not only on exit; tie data to the identity; offline data between sessions only on trusted devices (here: Android). Google-account sharing itself is outside the app (developer).
+- **Found and fixed during the checks:**
+  - **Android opened without a connection fell back to the sign-in screen:** the refresh-token exchange needs the network. It now stays signed in on the device copy, and the first request online refreshes the token. This would have defeated the release's main purpose.
+  - The connect window reflowed as Drive results arrived, and a tap meant for «Підключити» (the dev sheet) landed on «Створити й підключити». A stray spreadsheet was created (moved to the trash by its ID, with the developer's OK). The window now shows «Шукаємо ваші таблиці...» until every list has loaded.
+  - After sign-in on the web, Settings said «Ще не синхронізовано» (no copy yet): one sync now runs right after sign-in.
+  - Opened offline, the sheet check had nothing to read, and the sheet's name showed as «відкрити»: the check runs again after the first sync that gets through.
+  - «Знайдено однакові записи» showed an unknown carbs value as «0 г»: it now reads «невідомо» (text moved to `uk.ts`).
+  - The hint under «Синхронізувати з Google Таблицею» had no gap.
+- **Verified (web, dev sheet; the developer signed in):**
+  - the phone's data with a duplicate «Кабачки» and a weight on 2026-10-05: «Скасувати» returned to the phone's data with nothing uploaded; keep both (the phone's renamed «Кабачки (тест 2.0)», its meal pointing to it); keep the sheet's weight (89,4 stayed);
+  - a page reload cleared the stored copy and kept the backup marker; «Вийти» cleared it; signing in after a faked different account forgot the connection and the recent list;
+  - the closing warning fires only while saves wait (checked with a synthetic event, so no real dialog);
+  - the stray new sheet held the product, meal, weight and Settings.
+- **Verified (emulator, debug build):**
+  - «Почати без Google» on the first tap; a weight, product and meal saved and survived a restart;
+  - joining the dev sheet: keep the sheet's «Кабачки» (the meal now points to the sheet's item, the phone's copy dropped); keep the phone's weight (70,4 written onto the sheet's record);
+  - offline (Wi-Fi and data off): restoring 89,4 kg and deleting the test meal queued 2 changes; a restart offline opened signed in with «Немає з'єднання — показано дані з цього пристрою»; back online, they synced on return to the app.
+- **Test data:** the dev sheet is back to 89,4 kg on 2026-10-05; the test meals and products are deleted (logged in `Deleted`). Left: the backup copy made of the stray sheet («…копія перед синхронізацією 2026-10-06 19:05»), trashed automatically after 14 days.
+- **Not checked:** the WebView's `online` event on a real phone (the emulator never fired it, so syncing waited for the return to the app); a second real Google account on the web (simulated); two tabs and switching sheets since checkpoint A; the upgrade on a copy of mom's layout (checked on the dev sheet only). These go to the internal testing week.
+- 373 tests, `tsc -b`, `npm run build`. Version 2.0, versionCode 19.
