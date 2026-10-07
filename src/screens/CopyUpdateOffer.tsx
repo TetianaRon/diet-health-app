@@ -7,6 +7,7 @@
 // on «Переглянути», the dialog.
 import { useEffect, useState } from "react";
 import { uk } from "../i18n/uk";
+import { useBackHandler } from "../lib/useBackHandler";
 import { useAuth } from "../context/AuthContext";
 import { useSheetHealth } from "../context/SheetHealthContext";
 import { useNotifications } from "../context/NotificationsContext";
@@ -65,6 +66,13 @@ export default function CopyUpdateOffer() {
     }
     show({ key: "copy-update", kind: "action", title: t.notice(updates.length), actions: [{ label: t.review, onClick: () => setOpen(true) }] });
   }, [updates, show, remove]);
+
+  useBackHandler(open && !!updates && updates.length > 0, () => {
+    if (!busy) {
+      setOpen(false);
+      setError(null);
+    }
+  });
 
   if (!open || !updates || updates.length === 0) return null;
 

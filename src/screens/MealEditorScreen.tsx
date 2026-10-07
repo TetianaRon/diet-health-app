@@ -2,8 +2,8 @@ import { formatDecimal } from "../lib/numberFormat";
 import { verifiedEntry } from "../data/builtInFoods";
 import { searchFoods } from "../lib/foodSearch";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { App as CapacitorApp } from "@capacitor/app";
 import { uk } from "../i18n/uk";
+import { useBackHandler } from "../lib/useBackHandler";
 import { classifyGl } from "../lib/health";
 import type { IngredientNutrition, NutritionKey } from "../lib/dishes";
 import { GLYCEMIC_FLAG_SYMBOL, type GlycemicFlag } from "../lib/glycemicFlag";
@@ -466,19 +466,11 @@ export default function MealEditorScreen({
     else onCancel();
   };
 
-  // Android's hardware/gesture back: step back out of a dish form first, then
-  // treat it as Cancel — never leave the app with a half-composed meal.
-  const backRef = useRef<() => void>(() => {});
-  backRef.current = () => {
-    if (view.kind !== "meal") setView({ kind: "meal" });
-    else requestCancel();
-  };
-  useEffect(() => {
-    const listenerPromise = CapacitorApp.addListener("backButton", () => backRef.current());
-    return () => {
-      void listenerPromise.then((listener) => listener.remove());
-    };
-  }, []);
+  // Android's back: the breadcrumb steps out of a dish form, then asks before leaving a
+  // changed meal (its root crumb is requestCancel); an open confirmation closes first.
+  useBackHandler(confirming !== "none", () => {
+    if (!saving) setConfirming("none");
+  });
 
   useEffect(() => {
     window.scrollTo(0, 0);

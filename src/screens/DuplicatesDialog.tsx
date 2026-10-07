@@ -4,6 +4,7 @@
 // leaves the phone working without Google, nothing uploaded.
 import { useState } from "react";
 import { uk } from "../i18n/uk";
+import { useBackHandler } from "../lib/useBackHandler";
 import { useSheetHealth } from "../context/SheetHealthContext";
 import { decisionsComplete, type Decision, type Duplicate } from "../lib/localAttach";
 import { normalizeItemName } from "../lib/itemIds";
@@ -30,6 +31,14 @@ export default function DuplicatesDialog() {
   const [decisions, setDecisions] = useState<Map<string, Decision>>(new Map());
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Back = «Скасувати — залишитися без Google» (nothing uploaded).
+  useBackHandler(attachReview !== null, () => {
+    if (!busy) {
+      setDecisions(new Map());
+      cancelAttach();
+    }
+  });
 
   if (!attachReview) return null;
   const duplicates = attachReview.duplicates;

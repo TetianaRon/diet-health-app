@@ -5,6 +5,7 @@
 // her account can open, and paste a link. See sheetConnections.ts.
 import { useEffect, useState } from "react";
 import { uk } from "../i18n/uk";
+import { useBackHandler } from "../lib/useBackHandler";
 import { useSheetHealth } from "../context/SheetHealthContext";
 import {
   createSpreadsheetInAppFolder,
@@ -98,6 +99,10 @@ export default function ConnectSheetDialog() {
       cancelled = true;
     };
   }, [connectOpen]);
+
+  useBackHandler(connectOpen, () => {
+    if (!busy) closeConnect();
+  });
 
   if (!connectOpen) return null;
 

@@ -7,6 +7,7 @@
 // anything shown below it was off-screen on a phone (the 1.8.1 lesson).
 import { useState } from "react";
 import { uk } from "../i18n/uk";
+import { useBackHandler } from "../lib/useBackHandler";
 import type { Dish } from "../lib/dishes";
 
 const t = uk.deleteItem;
@@ -31,6 +32,10 @@ export default function DeleteItem({
   const [step, setStep] = useState<"idle" | "confirm" | "blocked">("idle");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useBackHandler(step !== "idle", () => {
+    if (!busy) setStep("idle");
+  });
 
   const start = () => setStep(usedIn.length > 0 ? "blocked" : "confirm");
   const confirm = async () => {
