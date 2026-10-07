@@ -10,13 +10,13 @@ The workflow (intake → release branch → verify → release) and the standing
 
 ---
 
-## Next session — start here (set 2026-10-05)
-1. **Local-first designed and proven** (2026-10-05, spec → "Local-first app"). Next: **2.0 — local-first in one release** (scope below, three internal checkpoints). Mom's data import is 2.2, after sets (2.1).
+## Next session — start here (set 2026-10-06)
+1. **2.0 built** (2026-10-06): merged to `main`, Play bundle versionCode 19. Next: the developer pushes `main` and uploads the bundle to Play's **internal testing** track; a week on her devices and the emulator, then production and mom. Then **2.0.1 — pack values per [n] g and per [n] pieces**.
 2. Chromium issue 569300356: reply sent 2026-10-05 (repro APK, videos; Chrome itself now affected too) — check for answers now and then.
 
 ## Current and upcoming releases
 
-### 2.0 — Local-first: the device is the app · 🔨 in progress (checkpoints A, B, C done — release checks next) — spec → "Local-first app"
+### 2.0 — Local-first: the device is the app · ✅ built (2026-10-06) — internal testing next — spec → "Local-first app"
 One release (developer, 2026-10-05) combining what was planned as three: reading from the device, offline saving with full sync, and Android without Google. Built on `release/2.0` in three internal checkpoints, each tested before the next starts; nothing ships in between.
 
 **Checkpoint A — reading from the device** · ✅ built and checked on the dev sheet (2026-10-05; build log)
@@ -34,13 +34,15 @@ One release (developer, 2026-10-05) combining what was planned as three: reading
 - **Safeguard:** an automatic backup copy of the sheet («Трекер харчування — копія перед синхронізацією <date>») as a separate file in the app's Drive folder before a device's first sync; moved to Drive's trash automatically after 14 days of working sync, with a note.
 - Switching sheet or signing out syncs first, or warns if it can't.
 
-**Checkpoint C — Android without Google** · ✅ built and checked in the web app (2026-10-06; build log) — the phone parts go to the release checks
-- «Почати без Google» on Android; connecting a sheet later (the first sync uploads everything).
-- .xlsx backup and restore, with a reminder after 30 days. The web stays sign-in only.
+**Checkpoint C — Android without Google** · ✅ built and checked (2026-10-06; build log)
+- «Почати без Google» on Android. The web stays sign-in only.
+- **No phone backup file** (developer, 2026-10-06: the app's own storage is enough; the .xlsx backup was built, then removed).
+- **«Синхронізувати з Google Таблицею»** (developer's redesign, 2026-10-06) opens the usual connect window: a new sheet or an existing one gets the phone's data. Same-name products, dishes and medicines, and a weight on a day the sheet already has, are decided in «Знайдено однакові записи»: keep the sheet's, keep the phone's, or keep both under names she sets.
 
-**Release checks**
-- Unit tests for the mapping, merge, deletions, hand-edit detection and backup round-trip.
-- In the app: one request per sync instead of one per screen; using it in airplane mode on the phone, then syncing; two tabs; switching sheet; the upgrade on a dev-sheet copy of mom's layout.
+**Release checks** · ✅ done 2026-10-06 (build log)
+- Unit tests for the mapping, merge, deletions, hand-edit detection, backups and the duplicates plan (373).
+- In the app: one request per sync instead of one per screen; syncing the phone's data into the dev sheet with duplicates (web and emulator); the emulator offline (saves, a restart, then syncing); the upgrade on the dev sheet.
+- **Added during the checks** (developer, 2026-10-06): the web keeps no copy of a sheet between sessions, its connection belongs to one Google account, and closing the tab with saves not yet in the sheet asks first. Android opens signed in without a connection.
 - **Safeguard:** a week on Play's **internal testing** track on the developer's devices and the emulator before production. Mom gets it after that.
 
 ### 2.0.1 — Pack values: per [n] g and per [n] pieces · 📝 planned (right after 2.0; developer, 2026-10-06 — needed in her own use; pieces added the same day)
@@ -70,7 +72,7 @@ Spec: "Planned: food families with cooking states". Raw weight + state in the fi
 - **Dry products get their GI through the family** (developer, 2026-10-05): until 2.4, dry grains, pasta and legumes carry the GI of their cooked form (labelled «після варіння»), so dishes composed from pack values keep a GI. With families, the composer asks how the product is cooked and takes the GI from the family's cooked entry; the dry entries then stop storing a GI of their own (one source per value).
 
 ### Local-first (2.0, 2.1) — design notes · spec → "Local-first app"
-**Decided 2026-10-05:** SQLite on every platform (web build proven first), hand edits in the sheet supported, deletions remove the row plus a «Видалені» tab, .xlsx backups. The web version always signs in (its local database is a copy of the sheet); working without Google and backups are Android-only. Releases: proof ✅ (spike, 2026-10-05) → 2.0 local-first in one release (reading, offline saving + sync, Android without Google + backup) → 2.1 sets, clean start and moving mom over, then 2.2 (mom's data). Free/paid is decided before the public launch. The notes below are the original idea, kept for the parts the spec doesn't cover yet (free/paid, payments).
+**Decided 2026-10-05:** SQLite on every platform (web build proven first), hand edits in the sheet supported, deletions remove the row plus a «Видалені» tab, .xlsx backups (dropped 2026-10-06: the app's storage is enough). The web version always signs in (its local database is a copy of the sheet for one session); working without Google is Android-only. Releases: proof ✅ (spike, 2026-10-05) → 2.0 local-first in one release (reading, offline saving + sync, Android without Google) → 2.1 sets, clean start and moving mom over, then 2.2 (mom's data). Free/paid is decided before the public launch. The notes below are the original idea, kept for the parts the spec doesn't cover yet (free/paid, payments).
 - **Local-first storage:** the app keeps its data on the device (IndexedDB in the WebView, or a native SQLite plugin for robustness), reads instantly and offline; Google Sheets becomes an optional **sync target** (send changes, fetch others' changes) instead of being read on every screen. Removes the read-limit problem at the root.
 - **Sync engine** — the hard part: phone + computer on one sheet, offline edits on both, deletions. 1.6's permanent IDs are the foundation; also needs per-row "last changed" times and deletion markers; "latest edit of a row wins" suits mostly-append data (meals, readings). A series of releases, not one.
 - **Fully local version without Google sign-in:** data only on the phone → needs **export/backup** (file, Android backup) against loss; the web version can't share data without sync.

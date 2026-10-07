@@ -216,3 +216,31 @@ Answering "did we review only products?": the 69 home dishes were on the page bu
   - the move: the developer clicked and signed in (an automated click can't open Google's window); the new spreadsheet had every tab and the weight row as text with ID and time, and the app connected to it. The test spreadsheet was moved to Drive's trash afterwards, and the dev sheet reconnected.
   - The new move window was checked by eye. 371 tests, `tsc`.
 - **Not checked yet (release checks):** the Android share sheet, the file picker for restoring, and the button in the Android app.
+
+**Release 2.0 — checkpoint C reworked and the release checks (2026-10-06, branch `release/2.0`):**
+- **Phone backup removed** (developer: "Apps cache is doing the job, anything beyond that is unnecessary"): `localBackup.ts`, its reminder and the `@capacitor/filesystem`/`@capacitor/share` plugins are gone.
+- **«Перенести дані в Google Таблицю» replaced by «Синхронізувати з Google Таблицею»** (developer's design): the usual connect window, a new or existing sheet, and «Знайдено однакові записи» for same-name items and same-day weights (`localAttach.ts`, `DuplicatesDialog.tsx`; spec → "Without Google"). The developer raised the ID question (phone records joining a sheet that already has data): IDs are unique per device, so only names and days can clash.
+- **The web keeps no copy of a sheet between sessions** (developer: data mustn't be exposed to the next person on the same laptop). A page load is a new session, since sign-in lives in memory.
+  - Each load clears every stored copy (saves not yet in the sheet stay up to 14 days); «Вийти» syncs, then clears.
+  - The connection belongs to one Google account (Drive permission ID); another account signing in forgets the previous person's sheet and recent list.
+  - Closing the tab with unsynced saves asks first.
+  - Best practice discussed: keep data for the session only; clear at session start, not only on exit; tie data to the identity; offline data between sessions only on trusted devices (here: Android). Google-account sharing itself is outside the app (developer).
+- **Found and fixed during the checks:**
+  - **Android opened without a connection fell back to the sign-in screen:** the refresh-token exchange needs the network. It now stays signed in on the device copy, and the first request online refreshes the token. This would have defeated the release's main purpose.
+  - The connect window reflowed as Drive results arrived, and a tap meant for «Підключити» (the dev sheet) landed on «Створити й підключити». A stray spreadsheet was created (moved to the trash by its ID, with the developer's OK). The window now shows «Шукаємо ваші таблиці...» until every list has loaded.
+  - After sign-in on the web, Settings said «Ще не синхронізовано» (no copy yet): one sync now runs right after sign-in.
+  - Opened offline, the sheet check had nothing to read, and the sheet's name showed as «відкрити»: the check runs again after the first sync that gets through.
+  - «Знайдено однакові записи» showed an unknown carbs value as «0 г»: it now reads «невідомо» (text moved to `uk.ts`).
+  - The hint under «Синхронізувати з Google Таблицею» had no gap.
+- **Verified (web, dev sheet; the developer signed in):**
+  - the phone's data with a duplicate «Кабачки» and a weight on 2026-10-05: «Скасувати» returned to the phone's data with nothing uploaded; keep both (the phone's renamed «Кабачки (тест 2.0)», its meal pointing to it); keep the sheet's weight (89,4 stayed);
+  - a page reload cleared the stored copy and kept the backup marker; «Вийти» cleared it; signing in after a faked different account forgot the connection and the recent list;
+  - the closing warning fires only while saves wait (checked with a synthetic event, so no real dialog);
+  - the stray new sheet held the product, meal, weight and Settings.
+- **Verified (emulator, debug build):**
+  - «Почати без Google» on the first tap; a weight, product and meal saved and survived a restart;
+  - joining the dev sheet: keep the sheet's «Кабачки» (the meal now points to the sheet's item, the phone's copy dropped); keep the phone's weight (70,4 written onto the sheet's record);
+  - offline (Wi-Fi and data off): restoring 89,4 kg and deleting the test meal queued 2 changes; a restart offline opened signed in with «Немає з'єднання — показано дані з цього пристрою»; back online, they synced on return to the app.
+- **Test data:** the dev sheet is back to 89,4 kg on 2026-10-05; the test meals and products are deleted (logged in `Deleted`). Left: the backup copy made of the stray sheet («…копія перед синхронізацією 2026-10-06 19:05»), trashed automatically after 14 days.
+- **Not checked:** the WebView's `online` event on a real phone (the emulator never fired it, so syncing waited for the return to the app); a second real Google account on the web (simulated); two tabs and switching sheets since checkpoint A; the upgrade on a copy of mom's layout (checked on the dev sheet only). These go to the internal testing week.
+- 373 tests, `tsc -b`, `npm run build`. Version 2.0, versionCode 19.
