@@ -10,7 +10,7 @@
 | Test (`VITE_SPREADSHEET_ID`) | Checking behaviour against the released schema; testers use it |
 | Dev (`VITE_DEV_SPREADSHEET_ID`) | Anything that changes the sheet's structure (new columns, migrations) until that release ships |
 
-Mom's phone is never part of testing. Her setup is reproduced instead: a Ukrainian-locale sheet, Ukrainian Gboard, large text.
+Mom's phone is never part of testing. Her setup is reproduced instead: a Ukrainian-locale sheet, Ukrainian Gboard, large text. The test and dev sheets are set to the Ukrainian locale (File → Settings → Locale), as hers is.
 
 ## Web app (local)
 

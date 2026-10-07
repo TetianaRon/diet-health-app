@@ -1,6 +1,6 @@
 # Track My Meals — Project Instructions
 
-**Version:** v2.3
+**Version:** v2.4
 
 ## Issues log
 
