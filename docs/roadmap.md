@@ -86,6 +86,12 @@ Packs never list GI, but they list «Склад». A packaged product is a dish 
 ### 2.7 — AI looks up GI and nutrients · 📝 planned (developer, 2026-10-07)
 - For products not in our database, AI does the work we did by hand for the database: finds published values, gives the source, reliability, reasoning and date, and picks the closest measured product where processing is unclear (for 2.6).
 - She confirms; the value is marked as found by AI, not checked by us.
+- **A worked case (developer, 2026-10-08): two grocery sandwiches with no label**, logged with only a name and weight (Montreal smoked meat 180 г, maple turkey 170 г). Estimated by hand:
+  - **Steps:** name and weight in → a typical recipe with grams (bread, filling, spread) → each ingredient matched to a USDA record → totals per sandwich and a carb-weighted GI from the bread → each assumption shown with its reliability.
+  - **Where the uncertainty came from:** missing facts, not the maths. The bread type (rye or light rye; whole-wheat or white), the cut of meat (lean or traditional smoked meat: ≈335 vs ≈440 kcal) and whether there was a spread (mayo ±70 kcal) each moved the result more than anything else.
+  - **So the feature should ask one or two short questions** ("білий чи цільнозерновий хліб?", "був майонез?") instead of guessing silently, and show the range when it can't ask.
+  - **No GI table lists such sandwiches;** the GI comes from the bread's GI weighted by its share of the carbs, marked as an estimate.
+  - **Ties in with saving it:** the result goes in as a fixed-value dish (2.0.2's «Також зберегти в «Страви»»), so the next time it's one tap.
 - **Needs a decision on AI costs first:** free/paid, or a daily cap like translation's. Looking up a vendor's own recipe isn't part of it (expensive; people can do that in their own AI assistant).
 
 ### 2.8 — English version · 📝 planned (developer, 2026-10-07: before the public launch — she lives in Canada and her own circle is English-speaking)
