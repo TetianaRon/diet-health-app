@@ -8,6 +8,7 @@
 //     `WeighedPieces` / `WeighedGrams`), which links grams and pieces.
 // Pure, unit-tested.
 import type { IngredientNutrition } from "./dishes";
+import { evaluateInput } from "./mathInput";
 
 export type Basis = "100g" | "piece";
 
@@ -32,11 +33,12 @@ export function toBasis(value: unknown): Basis {
   return String(value ?? "").trim() === "piece" ? "piece" : "100g";
 }
 
-/** A positive number, or null (blank, zero, negative or not a number). */
+/** A positive number (typed plainly or as a calculation, «12*2»), or null: blank, zero, negative or not a number. */
 export function positiveOrNull(value: unknown): number | null {
-  if (value === null || value === undefined || String(value).trim() === "") return null;
-  const n = Number(String(value).replace(",", "."));
-  return Number.isFinite(n) && n > 0 ? n : null;
+  if (value === null || value === undefined) return null;
+  if (typeof value === "number") return Number.isFinite(value) && value > 0 ? value : null;
+  const n = evaluateInput(String(value));
+  return n !== null && n > 0 ? n : null;
 }
 
 /** The weight of one piece, when a weighed count is known. */

@@ -349,6 +349,9 @@ export const uk = {
     done: "Ваші копії оновлено.",
     failed: (message: string) => `Не вдалося оновити: ${message}`,
   },
+  mathInput: {
+    cantCalculate: "Не вдається порахувати — перевірте запис.",
+  },
   foods: {
     title: "Страви",
     // «Значення вказано на … г / … шт.» (2.0.1, PackAmountFields.tsx).

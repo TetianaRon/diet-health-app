@@ -3,6 +3,8 @@ import { verifiedEntry } from "../data/builtInFoods";
 import { searchFoods } from "../lib/foodSearch";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { uk } from "../i18n/uk";
+import MathInput from "./MathInput";
+import { evaluateInput } from "../lib/mathInput";
 import { useBackHandler } from "../lib/useBackHandler";
 import { classifyGl } from "../lib/health";
 import { itemMeasure, type IngredientNutrition, type NutritionKey } from "../lib/dishes";
@@ -148,7 +150,7 @@ function AddDishToMealForm({
   };
 
   // Number("") is 0, so a blank portion must be rejected explicitly.
-  const parsedPortion = portionGrams.trim() === "" ? NaN : Number(portionGrams);
+  const parsedPortion = portionGrams.trim() === "" ? NaN : (evaluateInput(portionGrams) ?? NaN);
   const portionValid = Number.isFinite(parsedPortion) && parsedPortion > 0;
 
   // Which amount fields the picked item takes: both (linked) with a piece weight, else its own unit only.
@@ -190,7 +192,7 @@ function AddDishToMealForm({
   }
 
   const filledCustomFields = CUSTOM_FIELDS.filter((field) => customValues[field].trim() !== "");
-  const customFieldsValid = filledCustomFields.every((field) => Number.isFinite(Number(customValues[field])));
+  const customFieldsValid = filledCustomFields.every((field) => Number.isFinite((evaluateInput(customValues[field]) ?? NaN)));
 
   const handleAdd = () => {
     if (mode === "pick") {
@@ -207,7 +209,7 @@ function AddDishToMealForm({
       return;
     }
     const values: Partial<IngredientNutrition> = {};
-    for (const field of filledCustomFields) values[field] = Number(customValues[field]);
+    for (const field of filledCustomFields) values[field] = (evaluateInput(customValues[field]) ?? NaN);
     onAdd(buildCustomLogEntry(mealType, customName.trim(), parsedPortion, values, notes.trim(), mealId, timestamp));
   };
 
@@ -271,13 +273,13 @@ function AddDishToMealForm({
       {showGrams && (
         <label>
           {uk.today.form.portionLabel}
-          <input type="number" inputMode="decimal" step="0.1" value={portionGrams} onChange={(e) => changeGrams(e.target.value)} />
+          <MathInput value={portionGrams} onChange={(v) => changeGrams(v)} />
         </label>
       )}
       {showPieces && (
         <label>
           {uk.today.form.portionPiecesLabel}
-          <input type="number" inputMode="decimal" step="0.1" value={portionPieces} onChange={(e) => changePieces(e.target.value)} />
+          <MathInput value={portionPieces} onChange={(v) => changePieces(v)} />
         </label>
       )}
       {showPieces && (
@@ -294,13 +296,10 @@ function AddDishToMealForm({
           {CUSTOM_FIELDS.map((field) => (
             <label key={field}>
               {uk.today.form.customFieldLabels[field]}
-              <input
-                type="number"
-                inputMode="decimal"
-                step="0.1"
+              <MathInput
                 value={customValues[field]}
                 placeholder={uk.today.form.customFieldPlaceholder}
-                onChange={(e) => setCustomValues((prev) => ({ ...prev, [field]: e.target.value }))}
+                onChange={(v) => setCustomValues((prev) => ({ ...prev, [field]: v }))}
               />
             </label>
           ))}
@@ -355,9 +354,9 @@ function EditDishForm({
   const [notes, setNotes] = useState(entry.notes);
   const [error, setError] = useState<string | null>(null);
 
-  const parsedPortion = portionGrams.trim() === "" ? NaN : Number(portionGrams);
+  const parsedPortion = portionGrams.trim() === "" ? NaN : (evaluateInput(portionGrams) ?? NaN);
   const filledFields = CUSTOM_FIELDS.filter((field) => values[field].trim() !== "");
-  const fieldsValid = filledFields.every((field) => Number.isFinite(Number(values[field])));
+  const fieldsValid = filledFields.every((field) => Number.isFinite((evaluateInput(values[field]) ?? NaN)));
 
   const pieces = positiveOrNull(portionPieces);
   const gramsKnown = Number.isFinite(parsedPortion) && parsedPortion > 0;
@@ -368,7 +367,7 @@ function EditDishForm({
       return;
     }
     const nutritionValues: Partial<IngredientNutrition> = {};
-    for (const field of filledFields) nutritionValues[field] = Number(values[field]);
+    for (const field of filledFields) nutritionValues[field] = (evaluateInput(values[field]) ?? NaN);
     const updated = buildCustomLogEntry(
       entry.mealType,
       itemName.trim(),
@@ -395,18 +394,15 @@ function EditDishForm({
       </label>
       <label>
         {uk.today.form.portionLabel}
-        <input
-          type="number"
-          inputMode="decimal"
-          step="0.1"
+        <MathInput
           value={portionGrams}
-          onChange={(e) => setPortionGrams(e.target.value)}
+          onChange={(v) => setPortionGrams(v)}
         />
       </label>
       {(entry.portionPieces !== null || weightUnknown) && (
         <label>
           {uk.today.form.portionPiecesLabel}
-          <input type="number" inputMode="decimal" step="0.1" value={portionPieces} onChange={(e) => setPortionPieces(e.target.value)} />
+          <MathInput value={portionPieces} onChange={(v) => setPortionPieces(v)} />
         </label>
       )}
       <div className="food-form-custom-fields">
@@ -414,13 +410,10 @@ function EditDishForm({
         {CUSTOM_FIELDS.map((field) => (
           <label key={field}>
             {uk.today.form.customFieldLabels[field]}
-            <input
-              type="number"
-              inputMode="decimal"
-              step="0.1"
+            <MathInput
               value={values[field]}
               placeholder={uk.today.form.customFieldPlaceholder}
-              onChange={(e) => setValues((prev) => ({ ...prev, [field]: e.target.value }))}
+              onChange={(v) => setValues((prev) => ({ ...prev, [field]: v }))}
             />
           </label>
         ))}

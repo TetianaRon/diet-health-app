@@ -1592,3 +1592,12 @@ select {
   align-items: flex-end;
   flex-wrap: wrap;
 }
+
+/* Maths in value fields (2.0.2) */
+.math-result {
+  font-size: 0.9rem;
+  color: #2f7a4f;
+}
+.math-result-error {
+  color: #b3261e;
+}

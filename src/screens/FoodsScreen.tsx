@@ -11,6 +11,8 @@ import { builtInMatch, giSourceEntry } from "../lib/builtInStatus";
 import type { VerifiedFoodEntry } from "../data/verifiedFoods";
 import { useEffect, useState } from "react";
 import { uk } from "../i18n/uk";
+import MathInput from "./MathInput";
+import { evaluateInput } from "../lib/mathInput";
 import { useBackHandler } from "../lib/useBackHandler";
 import { useAuth } from "../context/AuthContext";
 import { classifyGi } from "../lib/health";
@@ -86,7 +88,7 @@ function parseFormValues(values: FormValues): {
 } {
   const unknownFields = NUMERIC_FIELDS.filter((field) => values[field].trim() === "");
   const parsed = Object.fromEntries(
-    NUMERIC_FIELDS.map((field) => [field, unknownFields.includes(field) ? 0 : Number(values[field])]),
+    NUMERIC_FIELDS.map((field) => [field, unknownFields.includes(field) ? 0 : (evaluateInput(values[field]) ?? NaN)]),
   ) as Record<NumericField, number>;
   const valid = NUMERIC_FIELDS.every((field) => Number.isFinite(parsed[field]) && parsed[field] >= 0);
   return { parsed, unknownFields, valid };
@@ -541,14 +543,11 @@ function AddFoodForm({
       {NUMERIC_FIELDS.map((field) => (
         <label key={field}>
           {uk.foods.form.fields[field]}
-          <input
-            type="number"
-            inputMode="decimal"
-            step="0.1"
+          <MathInput
             value={values[field]}
             placeholder={uk.foods.form.unknownPlaceholder}
-            onChange={(e) => {
-              setValues({ ...values, [field]: e.target.value });
+            onChange={(v) => {
+              setValues({ ...values, [field]: v });
               if (field === "gi") setGiFrom(""); // a GI typed by hand has no database source
             }}
           />
@@ -687,14 +686,11 @@ function EditIngredientForm({
       {NUMERIC_FIELDS.map((field) => (
         <label key={field}>
           {uk.foods.form.fields[field]}
-          <input
-            type="number"
-            inputMode="decimal"
-            step="0.1"
+          <MathInput
             value={values[field]}
             placeholder={uk.foods.form.unknownPlaceholder}
-            onChange={(e) => {
-              setValues({ ...values, [field]: e.target.value });
+            onChange={(v) => {
+              setValues({ ...values, [field]: v });
               if (field === "gi") {
                 setGiVerified(false); // a changed GI invalidates any prior confirmation
                 setGiFrom(""); // …and has no database source
@@ -823,7 +819,7 @@ function ComposeDishForm({
 
   const toRef = (row: ComposeRow): DishIngredientRef | null => {
     const ingredient = findIngredient(row);
-    const amount = Number(row.amount);
+    const amount = evaluateInput(row.amount) ?? NaN;
     if (!ingredient || !(amount > 0)) return null;
     const ref: DishIngredientRef =
       row.unit === "pieces" ? { id: ingredient.id, nameUk: ingredient.nameUk, grams: 0, pieces: amount } : { id: ingredient.id, nameUk: ingredient.nameUk, grams: amount };
@@ -961,12 +957,9 @@ function ComposeDishForm({
             <div className="compose-amount">
               <label>
                 {row.unit === "pieces" ? uk.dishes.composeForm.amountLabel : uk.dishes.composeForm.gramsLabel}
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  step="0.1"
+                <MathInput
                   value={row.amount}
-                  onChange={(e) => updateRow(index, { amount: e.target.value })}
+                  onChange={(v) => updateRow(index, { amount: v })}
                 />
               </label>
               {rowUnits(resolvedIngredient).grams && rowUnits(resolvedIngredient).pieces && (
