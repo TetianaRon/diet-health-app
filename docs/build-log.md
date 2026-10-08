@@ -438,3 +438,5 @@ Answering "did we review only products?": the 69 home dishes were on the page bu
 - **Not the cause, and older than 2.1:** the connect window on Android doesn't list «Мої дані» because the web app created it. With `drive.file`, Google shows the Android client only the files the Android client created; the web lists it. Workaround: «За посиланням»; the fix is the Google Picker (2.4).
 - **Left in her Drive:** the empty copy from 17:48 (created before the trash-on-failure fix, so never registered for clean-up).
 - 432 tests, `tsc -b`, `npm run build`. Version 2.1, versionCode 29.
+
+✅ **2.1 released 2026-10-08:** build 29 uploaded to the internal testing track (replacing build 28) and main pushed (web). Mom's phone was expected to update overnight; her sheet merges on her first open. The developer removed build 28's empty copy from her Drive.
