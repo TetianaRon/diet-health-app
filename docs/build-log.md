@@ -388,3 +388,40 @@ Answering "did we review only products?": the 69 home dishes were on the page bu
 - 412 tests, `tsc -b`, `npm run build`. Version 2.0.4, versionCode 27.
 
 ✅ **2.0.4 released 2026-10-08:** main pushed (web), the bundle uploaded to the internal testing track (versionCode 27), and the privacy policy update pushed (roncreator-site).
+
+**Release 2.1 — one product list (2026-10-08, branch `release/2.1`):**
+- **Why (developer, 2026-10-08):** «Продукти» and «Страви» mixed where an item's values come from with what it is. Cooked buckwheat is typed values from the database, but composed from her own pot; homemade mayonnaise is composed, and an ingredient of a salad. USDA makes no product/dish distinction either.
+- **Decided (developer):**
+  - one item model: values typed or composed, plus labels (інгредієнт, страва, напій, соус/заправка, перекус) for filtering only, several per item;
+  - the tab is «Продукти»;
+  - one sheet tab `Products`, so IDs never change; an automatic merge with a notice (no «Пізніше»);
+  - roadmap renumbered (2.2 sets, 2.2.1 base set, 2.3 mom's data…);
+  - millilitres moved to 2.1.1, database drink densities to 2.2.1.
+- **Built:**
+  - **Storage** (`products.ts`, `productsMerge.ts`, `sheetFormat.ts`):
+    - the merge — a sheet copy to Drive first, a new `Products` tab, the old tabs renamed «Інгредієнти (архів)» / «Страви (архів)», nothing overwritten or deleted;
+    - rows an older app saves into a re-created old tab are moved in later;
+    - changes waiting on a device are moved before each sync;
+    - a `SheetFormat` key (2) so a later structure change can stop an older app writing;
+    - the phone's own data (without Google) is merged at start.
+  - **One list** (`FoodsScreen.tsx`, `labels.ts`): composed items first, filter chips, «Додати продукт» / «Скласти за рецептом»; one editor with «Значення: Вказані / За рецептом» (same ID; the other side's data stays in its columns) and label chips; database items labelled by category and state. A fixed-value dish (2.0.2) is a typed item labelled страва; the meal editor saves such items and lists them right after composed ones.
+  - **Items inside recipes** (`recipeGraph.ts`): composed items in the composer, never one that would make a loop; changes carried upward after any save, typed items included (before, a product's change didn't reach its dishes); delete blocked while used.
+  - **Decimal comma in fields** (developer: fix now): every field filled from a stored number shows a comma (`fieldDecimal`); six number inputs (pack amount, «Вага штук», Settings) became text fields with the decimal keyboard — a number input can't hold a comma, and Settings didn't read one.
+- **Fixed during the checks:**
+  - the merge notice was lost when a newer sheet check started, and an info notice closed by itself — it now stays until «Зрозуміло», with its own title;
+  - the merge copy is named «… (перед об'єднанням вкладок)»;
+  - the switch hint named the wrong button;
+  - switching a composed item to typed values carried a batch weight without a count («Вага штук» half filled);
+  - phone spacing for chips and labels.
+- **Verified (local web app, the developer signed in):**
+  - **dev sheet:** the merge (10 items, IDs and values identical to the archives except a sodium cell formatted as a date, now 0), the copy in Drive, `SheetFormat` 2;
+  - **Ukrainian-locale sheet:** the merge (2 items; two blank cells now hold the defaults the app already assumed);
+  - **lists:** the chips (За рецептом 5, Напої 2, Страви 41, Інгредієнти 77); a typed ↔ composed round trip on I5 under one ID (its values restored afterwards; its test recipe stays in the recipe column);
+  - **recipes:** a mayonnaise → salad chain — the loop picker rule, the salad recalculated by hand-checkable numbers (166,54 kcal, 17,18 g carbs per 100 g), delete blocked; both deleted afterwards.
+- **Verified (developer's Pixel 10, debug build, dev sheet):** the list, chips and editor on the phone layout; commas in the editor and Settings; saving Settings with 7,8.
+- **Not checked:**
+  - the fixed merge notice live (no unmerged sheet left);
+  - the phone-only data merge (no device had such data);
+  - an older app version on a merged sheet.
+- **Release order (mom's sheet merges on the first open by any 2.1 app):** upload the Play bundle first, confirm her phone shows 2.1, then push `main` (the web).
+- 431 tests, `tsc -b`, `npm run build`. Version 2.1, versionCode 28.
