@@ -850,6 +850,9 @@ export default function MealEditorScreen({
               />
               <span className="dish-row-text">
                 <strong>{d.entry.itemName}</strong>
+                {(d.entry.portionSize || d.entry.portionPieces !== null) && (
+                  <> — {uk.today.dishAmount(d.entry.unknownFields.includes("portionGrams") ? null : d.entry.portionGrams, d.entry.portionPieces, d.entry.portionSize)}</>
+                )}
                 <br />
                 <span className="entry-time">{formatStats(entryStatItems(d.entry, settings))}</span>
               </span>

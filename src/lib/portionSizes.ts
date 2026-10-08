@@ -66,7 +66,10 @@ export function sizeAmount(size: PortionSize, count: number, measure: Measure): 
   return resolved ? { grams: resolved.grams, pieces: resolved.pieces } : null;
 }
 
-/** «2 × середнє» (or just «середнє» for one). */
+/** «2 × середнє», or «мигдалина × 10» for a one-piece size («1 мигдалина»); just the label for one. */
 export function sizeLabel(size: PortionSize, count: number): string {
-  return count === 1 ? size.label : `${String(count).replace(".", ",")} × ${size.label}`;
+  if (count === 1) return size.label;
+  const n = String(count).replace(".", ",");
+  const onePiece = size.label.match(/^1\s+(.+)$/);
+  return onePiece ? `${onePiece[1]} × ${n}` : `${n} × ${size.label}`;
 }

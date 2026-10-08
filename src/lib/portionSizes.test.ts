@@ -42,5 +42,7 @@ describe("portion sizes", () => {
     expect(sizeLabel({ label: "середнє", grams: 180 }, 2)).toBe("2 × середнє");
     expect(sizeLabel({ label: "середнє", grams: 180 }, 1)).toBe("середнє");
     expect(sizeLabel({ label: "скибка", grams: 45 }, 1.5)).toBe("1,5 × скибка");
+    expect(sizeLabel({ label: "1 мигдалина", grams: 1.29 }, 10)).toBe("мигдалина × 10");
+    expect(sizeLabel({ label: "1 мигдалина", grams: 1.29 }, 1)).toBe("1 мигдалина");
   });
 });
