@@ -39,6 +39,8 @@ export interface DailyLogEntry extends IngredientNutrition {
   portionPieces: number | null;
   // The named size it was logged by («2 × середнє», 2.0.2), else ""; its weight is approximate («≈»).
   portionSize: string;
+  /** Millilitres, for an item logged in ml (2.1.1), else null/absent. */
+  portionMl?: number | null;
   gl: number;
   notes: string;
   // Ties multiple items eaten in one sitting together as a single meal
@@ -84,6 +86,7 @@ export const DAILY_LOG_HEADERS = [
   "ItemId",
   "PortionPieces",
   "PortionSize",
+  "PortionMl",
   "Id",
   "UpdatedAt",
 ] as const;
@@ -232,6 +235,7 @@ export function buildLogEntryForAmount(
     itemName: item.nameUk,
     portionGrams: resolved.grams === null ? 0 : round2(resolved.grams),
     portionPieces: resolved.pieces === null ? null : round2(resolved.pieces),
+    portionMl: resolved.ml === null ? null : round2(resolved.ml),
     portionSize: "",
     ...portion,
     gl: glUnknown ? 0 : round2(calcGlycemicLoad(portion.gi, portion.carbsG)),
@@ -452,6 +456,7 @@ export function rowToLogEntry(row: unknown[], columnIndex: ColumnIndex = DEFAULT
     portionGrams: toNumber(cell(row, columnIndex, "PortionGrams")),
     portionPieces: positiveOrNull(cell(row, columnIndex, "PortionPieces")),
     portionSize: String(cell(row, columnIndex, "PortionSize") ?? "").trim(),
+    portionMl: positiveOrNull(cell(row, columnIndex, "PortionMl")),
     carbsG: toNumber(cell(row, columnIndex, "Carbs_g")),
     gi: toNumber(cell(row, columnIndex, "GI")),
     fiberG: toNumber(cell(row, columnIndex, "Fiber_g")),
@@ -490,6 +495,7 @@ export function logEntryFields(entry: DailyLogEntry): Record<string, unknown> {
       ItemId: entry.itemId,
       PortionPieces: entry.portionPieces ?? "",
       PortionSize: entry.portionSize,
+      PortionMl: entry.portionMl ?? "",
     Id: entry.id || null, // missing id → nothing written, so a rewrite keeps the row's ID
   };
 }

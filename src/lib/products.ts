@@ -34,6 +34,9 @@ export const PRODUCTS_HEADERS = [
   "ValuesPer",
   "WeighedPieces",
   "WeighedGrams",
+  // «100 мл = 103 г» (2.1.1, measure.ts).
+  "WeighedMl",
+  "WeighedMlGrams",
   "IngredientsJson",
   "YieldGrams",
   "YieldPieces",

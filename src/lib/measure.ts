@@ -6,11 +6,14 @@
 //     reopens as entered;
 //   • how much pieces weigh — any count weighed («12 шт. = 300 г»,
 //     `WeighedPieces` / `WeighedGrams`), which links grams and pieces.
+// Since 2.1.1 a third basis, per 100 ml (`Basis` 100ml, for drinks), and an
+// optional density («100 мл = 103 г», `WeighedMl` / `WeighedMlGrams`) that
+// links millilitres and grams for any item.
 // Pure, unit-tested.
 import type { IngredientNutrition } from "./dishes";
 import { evaluateInput } from "./mathInput";
 
-export type Basis = "100g" | "piece";
+export type Basis = "100g" | "piece" | "100ml";
 
 export interface Measure {
   basis: Basis;
@@ -19,18 +22,24 @@ export interface Measure {
   /** A weighed count of pieces and its weight («12 шт. = 300 г»); both null when unknown. */
   weighedPieces: number | null;
   weighedGrams: number | null;
+  /** A measured volume and its weight («100 мл = 103 г», 2.1.1); absent or null when unknown. */
+  densityMl?: number | null;
+  densityGrams?: number | null;
 }
 
 /** An amount eaten or put in a recipe: grams, pieces, or both. */
 export interface Amount {
   grams?: number | null;
   pieces?: number | null;
+  /** Millilitres (2.1.1). */
+  ml?: number | null;
 }
 
 export const PER_100G: Measure = { basis: "100g", valuesPer: null, weighedPieces: null, weighedGrams: null };
 
 export function toBasis(value: unknown): Basis {
-  return String(value ?? "").trim() === "piece" ? "piece" : "100g";
+  const v = String(value ?? "").trim();
+  return v === "piece" ? "piece" : v === "100ml" ? "100ml" : "100g";
 }
 
 /** A positive number (typed plainly or as a calculation, «12*2»), or null: blank, zero, negative or not a number. */
@@ -46,7 +55,12 @@ export function pieceGrams(measure: Measure): number | null {
   return measure.weighedPieces && measure.weighedGrams ? measure.weighedGrams / measure.weighedPieces : null;
 }
 
-/** The amount the values were typed for: 100 g / 1 piece unless the pack said otherwise. */
+/** Grams in one millilitre, when a density is known (2.1.1). */
+export function gramsPerMl(measure: Measure): number | null {
+  return measure.densityMl && measure.densityGrams ? measure.densityGrams / measure.densityMl : null;
+}
+
+/** The amount the values were typed for: 100 g / 100 ml / 1 piece unless the pack said otherwise. */
 export function valuesAmount(measure: Measure): number {
   return measure.valuesPer ?? (measure.basis === "piece" ? 1 : 100);
 }
@@ -57,23 +71,28 @@ export function packFactor(measure: Measure): number {
 }
 
 /**
- * Turns an amount into the factor applied to the stored values, plus both
- * sides of the amount where they can be known. Null when the amount can't be
- * used for this item: pieces of a per-100 g item, or grams of a per-piece
- * item, without a piece weight.
+ * Turns an amount into the factor applied to the stored values, plus every
+ * side of the amount that can be known: grams, pieces (through the piece
+ * weight) and millilitres (through the density). Null when the amount can't
+ * be used for this item — the unit its values are given in can't be reached.
  */
-export function resolveAmount(measure: Measure, amount: Amount): { factor: number; grams: number | null; pieces: number | null } | null {
+export function resolveAmount(
+  measure: Measure,
+  amount: Amount,
+): { factor: number; grams: number | null; pieces: number | null; ml: number | null } | null {
   const perPiece = pieceGrams(measure);
-  let grams = amount.grams && amount.grams > 0 ? amount.grams : null;
-  let pieces = amount.pieces && amount.pieces > 0 ? amount.pieces : null;
+  const perMl = gramsPerMl(measure);
+  const positive = (n: number | null | undefined) => (n && n > 0 ? n : null);
+  let grams = positive(amount.grams);
+  let pieces = positive(amount.pieces);
+  let ml = positive(amount.ml);
   if (grams === null && pieces !== null && perPiece !== null) grams = pieces * perPiece;
+  if (grams === null && ml !== null && perMl !== null) grams = ml * perMl;
   if (pieces === null && grams !== null && perPiece !== null) pieces = grams / perPiece;
-  if (measure.basis === "piece") {
-    if (pieces === null) return null;
-    return { factor: pieces, grams, pieces };
-  }
-  if (grams === null) return null;
-  return { factor: grams / 100, grams, pieces };
+  if (ml === null && grams !== null && perMl !== null) ml = grams / perMl;
+  if (measure.basis === "piece") return pieces === null ? null : { factor: pieces, grams, pieces, ml };
+  if (measure.basis === "100ml") return ml === null ? null : { factor: ml / 100, grams, pieces, ml };
+  return grams === null ? null : { factor: grams / 100, grams, pieces, ml };
 }
 
 /** Stored values times a factor; GI doesn't scale. */

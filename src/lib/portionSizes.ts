@@ -9,6 +9,8 @@ export interface PortionSize {
   label: string;
   grams?: number;
   pieces?: number;
+  /** Millilitres (2.1.1): «склянка ≈ 250 мл». */
+  ml?: number;
   /** A database size (shown with ⓘ), not one she set. */
   fromDatabase?: boolean;
 }
@@ -31,12 +33,13 @@ export function parsePortionSizes(value: unknown): PortionSize[] {
     if (!Array.isArray(parsed)) return [];
     return parsed
       .map((raw): PortionSize | null => {
-        const item = raw as { label?: unknown; grams?: unknown; pieces?: unknown };
+        const item = raw as { label?: unknown; grams?: unknown; pieces?: unknown; ml?: unknown };
         const label = typeof item.label === "string" ? item.label.trim() : "";
         const grams = positive(item.grams);
         const pieces = positive(item.pieces);
-        if (!label || (grams === undefined && pieces === undefined)) return null;
-        return grams !== undefined ? { label, grams } : { label, pieces: pieces as number };
+        const ml = positive(item.ml);
+        if (!label || (grams === undefined && pieces === undefined && ml === undefined)) return null;
+        return grams !== undefined ? { label, grams } : ml !== undefined ? { label, ml } : { label, pieces: pieces as number };
       })
       .filter((s): s is PortionSize => s !== null)
       .slice(0, MAX_OWN_SIZES);
@@ -49,7 +52,9 @@ export function parsePortionSizes(value: unknown): PortionSize[] {
 export function serializePortionSizes(sizes: readonly PortionSize[]): string {
   const own = sizes.filter((s) => !s.fromDatabase).slice(0, MAX_OWN_SIZES);
   if (own.length === 0) return "";
-  return JSON.stringify(own.map((s) => (s.grams !== undefined ? { label: s.label, grams: s.grams } : { label: s.label, pieces: s.pieces })));
+  return JSON.stringify(
+    own.map((s) => (s.grams !== undefined ? { label: s.label, grams: s.grams } : s.ml !== undefined ? { label: s.label, ml: s.ml } : { label: s.label, pieces: s.pieces })),
+  );
 }
 
 const key = (label: string) => label.trim().toLowerCase();
@@ -61,9 +66,15 @@ export function mergePortionSizes(database: readonly PortionSize[], own: readonl
 }
 
 /** A size times a count, as an amount for this item; null when the item can't use it (pieces without a piece weight, or the reverse). */
-export function sizeAmount(size: PortionSize, count: number, measure: Measure): { grams: number | null; pieces: number | null } | null {
-  const resolved = resolveAmount(measure, size.grams !== undefined ? { grams: size.grams * count } : { pieces: (size.pieces ?? 0) * count });
-  return resolved ? { grams: resolved.grams, pieces: resolved.pieces } : null;
+export function sizeAmount(
+  size: PortionSize,
+  count: number,
+  measure: Measure,
+): { grams: number | null; pieces: number | null; ml: number | null } | null {
+  const amount =
+    size.grams !== undefined ? { grams: size.grams * count } : size.ml !== undefined ? { ml: size.ml * count } : { pieces: (size.pieces ?? 0) * count };
+  const resolved = resolveAmount(measure, amount);
+  return resolved ? { grams: resolved.grams, pieces: resolved.pieces, ml: resolved.ml } : null;
 }
 
 /** «2 × середнє», or «мигдалина × 10» for a one-piece size («1 мигдалина»); just the label for one. */

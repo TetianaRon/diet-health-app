@@ -1,5 +1,9 @@
 // Single source of Ukrainian UI strings — don't hardcode UI text elsewhere.
 import { formatDecimal as n } from "../lib/numberFormat";
+
+type Basis = "100g" | "piece" | "100ml";
+/** «на 100 г», «на 1 шт.», «на 100 мл» (2.1.1). */
+const perText = (basis: Basis) => (basis === "piece" ? "на 1 шт." : basis === "100ml" ? "на 100 мл" : "на 100 г");
 export const uk = {
   appName: "Трекер харчування",
   tabs: {
@@ -130,12 +134,15 @@ export const uk = {
     // A dish's line inside a meal on Today — weight only; the meal's own
     // line carries the full stats (see mealStat below).
     // A meal row's amount (2.0.1): «7,5 шт.», «3 шт. (15 г)», «150 г».
-    dishAmount: (grams: number | null, pieces: number | null, size = "") =>
+    // «250 мл (258 г)» since 2.1.1.
+    dishAmount: (grams: number | null, pieces: number | null, size = "", ml: number | null = null) =>
       size
-        ? `${size} (≈${grams !== null ? `${n(grams)} г` : `${n(pieces ?? 0)} шт.`})`
+        ? `${size} (≈${grams !== null ? `${n(grams)} г` : ml !== null ? `${n(ml)} мл` : `${n(pieces ?? 0)} шт.`})`
         : pieces !== null
           ? `${n(pieces)} шт.${grams !== null ? ` (${n(grams)} г)` : ""}`
-          : `${n(grams ?? 0)} г`,
+          : ml !== null
+            ? `${n(ml)} мл${grams !== null ? ` (${n(grams)} г)` : ""}`
+            : `${n(grams ?? 0)} г`,
     carbsValue: (g: number) => `${n(g)} г вуглеводів`,
     caloriesValue: (kcal: number) => `${n(kcal)} ккал`,
     unknownValueLabel: "невідомо",
@@ -227,7 +234,10 @@ export const uk = {
       portionPiecesLabel: "Порція (шт.)",
       portionLinkedHint: (pieceGrams: string) => `Введіть грами або штуки — друге поле заповниться само (1 шт. ≈ ${pieceGrams} г).`,
       portionPiecesOnlyHint: "Вага однієї штуки невідома — вкажіть кількість штук.",
-      perBasis: (basis: "100g" | "piece") => (basis === "piece" ? "/1 шт." : "/100г"),
+      perBasis: (basis: Basis) => (basis === "piece" ? "/1 шт." : basis === "100ml" ? "/100мл" : "/100г"),
+      portionMlLabel: "Порція (мл)",
+      portionMlLinkedHint: (gramsPerMl: string) => `Введіть мілілітри або грами — друге поле заповниться само (1 мл ≈ ${gramsPerMl} г).`,
+      portionMlOnlyHint: "Скільки грамів у мілілітрі, невідомо — вкажіть мілілітри.",
       notesLabel: "Примітка",
       notesPlaceholder: "необов'язково",
       noMatches: "Нічого не знайдено. Спочатку додайте продукт на вкладці «Продукти».",
@@ -305,8 +315,8 @@ export const uk = {
       weightLine: (date: string) => `Вага за ${date}`,
       weightSummary: (kg: string) => `${kg} кг`,
       /** null: the value was left unknown on purpose. */
-      itemSummary: (kcal: string | null, carbsG: string | null, basis: "100g" | "piece" = "100g") =>
-        `${kcal === null ? "калорії невідомо" : `${kcal} ккал`}, ${carbsG === null ? "вуглеводи невідомо" : `${carbsG} г вуглеводів`} ${basis === "piece" ? "на 1 шт." : "на 100 г"}`,
+      itemSummary: (kcal: string | null, carbsG: string | null, basis: Basis = "100g") =>
+        `${kcal === null ? "калорії невідомо" : `${kcal} ккал`}, ${carbsG === null ? "вуглеводи невідомо" : `${carbsG} г вуглеводів`} ${perText(basis)}`,
       keepSheet: (summary: string) => `Залишити з таблиці: ${summary}`,
       keepPhone: (summary: string) => `Залишити з цього пристрою: ${summary}`,
       keepBoth: "Залишити обидва під різними назвами",
@@ -425,12 +435,21 @@ export const uk = {
       weighedHint: "Зважте кілька штук разом — напр. 12 шт. = 300 г. Тоді продукт можна записувати і поштучно, і в грамах.",
       weighedIncomplete: "Для ваги штук вкажіть і кількість, і вагу (або залиште обидва поля порожніми).",
       valuesHeading: (amount: string) => `Значення на ${amount}`,
-      amount: (amount: number, basis: "100g" | "piece") => (basis === "piece" ? `${n(amount)} шт.` : `${n(amount)} г`),
-      per: (basis: "100g" | "piece") => (basis === "piece" ? "на 1 шт." : "на 100 г"),
-      storedPreview: (basis: "100g" | "piece", carbs: string, calories: string) =>
-        `Буде збережено ${basis === "piece" ? "на 1 шт." : "на 100 г"}: ${carbs}, ${calories}`,
+      amount: (amount: number, basis: Basis) => (basis === "piece" ? `${n(amount)} шт.` : basis === "100ml" ? `${n(amount)} мл` : `${n(amount)} г`),
+      per: (basis: Basis) => perText(basis),
+      storedPreview: (basis: Basis, carbs: string, calories: string) => `Буде збережено ${perText(basis)}: ${carbs}, ${calories}`,
+      // Millilitres (2.1.1).
+      mlOption: "мілілітри",
+      amountMlLabel: "Кількість, мл",
+      mlMainHint: "Як на упаковці: напр. на 100 мл або на 250 мл.",
+      densityLegend: "Мілілітри й грами",
+      densityMlLabel: "Мілілітрів",
+      densityGramsLabel: "Їхня вага, г",
+      densityHint: "Зважте відміряний об'єм — напр. 100 мл = 103 г. Тоді продукт можна записувати і в мілілітрах, і в грамах.",
+      densityIncomplete: "Для мілілітрів і грамів вкажіть обидва числа (або залиште обидва поля порожніми).",
+      density: (grams: number) => `1 мл ≈ ${n(grams)} г`,
       pieceWeight: (grams: number) => `1 шт. ≈ ${n(grams)} г`,
-      mainMissing: "Вкажіть кількість, на яку подано значення (грами або штуки).",
+      mainMissing: "Вкажіть кількість, на яку подано значення (грами, мілілітри або штуки).",
     },
     subTabs: {
       ingredients: "Продукти",
@@ -553,8 +572,8 @@ export const uk = {
         `Деякі інгредієнти мають невідомі значення (${fields}) — для страви вони теж збережуться як невідомі.`,
       unresolvedIngredient: "Такого продукту немає в базі — спочатку додайте його на вкладці «Продукти».",
       // giVerifiedMarker: "" once she's checked "Я перевірив(ла)...", "≈" until then.
-      preview: (carbsG: number, caloriesKcal: number, gi: number, giVerifiedMarker: string, basis: "100g" | "piece" = "100g") =>
-        `${basis === "piece" ? "На 1 шт." : "На 100 г"} готової страви: ${n(carbsG)} г вуглеводів, ${Math.round(caloriesKcal)} ккал, ${giVerifiedMarker}ГІ ${gi}`,
+      preview: (carbsG: number, caloriesKcal: number, gi: number, giVerifiedMarker: string, basis: Basis = "100g") =>
+        `${perText(basis).replace(/^на/, "На")} готової страви: ${n(carbsG)} г вуглеводів, ${Math.round(caloriesKcal)} ккал, ${giVerifiedMarker}ГІ ${gi}`,
       saveButton: "Зберегти",
       validationError: "Заповніть назву страви, оберіть інгредієнти з бази з коректною кількістю та вкажіть, скільки вийшло (вагу або кількість штук).",
     },

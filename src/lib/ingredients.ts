@@ -67,6 +67,9 @@ export interface Ingredient {
   portionSizes: PortionSize[];
   // For finding and filtering only (2.1, labels.ts); undefined = not read (nothing is written).
   labels?: LabelKey[];
+  // A measured volume and its weight («100 мл = 103 г», 2.1.1); null or absent when unknown.
+  densityMl?: number | null;
+  densityGrams?: number | null;
 }
 
 // Canonical column order — what a brand-new sheet gets initialized with (see
@@ -147,6 +150,8 @@ export function rowToIngredient(row: unknown[], columnIndex: ColumnIndex = DEFAU
     weighedGrams: positiveOrNull(cell(row, columnIndex, "WeighedGrams")) ?? positiveOrNull(cell(row, columnIndex, "YieldGrams")),
     portionSizes: parsePortionSizes(cell(row, columnIndex, "PortionSizes")),
     labels: parseLabels(cell(row, columnIndex, "Labels")),
+    densityMl: positiveOrNull(cell(row, columnIndex, "WeighedMl")),
+    densityGrams: positiveOrNull(cell(row, columnIndex, "WeighedMlGrams")),
   };
 }
 
@@ -173,12 +178,14 @@ export function ingredientFields(ingredient: Ingredient): Record<string, unknown
       Id: ingredient.id,
       BasedOn: ingredient.basedOn,
       GiFrom: ingredient.giFrom,
-      Basis: ingredient.basis === "piece" ? "piece" : "",
+      Basis: ingredient.basis === "100g" ? "" : ingredient.basis,
       ValuesPer: ingredient.valuesPer ?? "",
       WeighedPieces: ingredient.weighedPieces ?? "",
       WeighedGrams: ingredient.weighedGrams ?? "",
       PortionSizes: serializePortionSizes(ingredient.portionSizes),
       Labels: ingredient.labels ? serializeLabels(ingredient.labels) : undefined,
+      WeighedMl: ingredient.densityMl === undefined ? undefined : (ingredient.densityMl ?? ""),
+      WeighedMlGrams: ingredient.densityGrams === undefined ? undefined : (ingredient.densityGrams ?? ""),
   };
 }
 
@@ -232,7 +239,7 @@ function productFields(ingredient: Ingredient): Record<string, unknown> {
 /** Adds a new ingredient with a new `I…` ID and returns it as saved. */
 export async function addIngredient(
   ingredient: Omit<Ingredient, "dateAdded" | "favorite" | "glycemicFlag" | "id" | "basedOn" | "giFrom" | "basis" | "valuesPer" | "weighedPieces" | "weighedGrams" | "portionSizes"> &
-    Partial<Pick<Ingredient, "basedOn" | "giFrom" | "basis" | "valuesPer" | "weighedPieces" | "weighedGrams" | "portionSizes" | "labels">>,
+    Partial<Pick<Ingredient, "basedOn" | "giFrom" | "basis" | "valuesPer" | "weighedPieces" | "weighedGrams" | "portionSizes" | "labels" | "densityMl" | "densityGrams">>,
   favorite = false,
   glycemicFlag: GlycemicFlag = "none",
 ): Promise<Ingredient> {
