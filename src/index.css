@@ -1639,3 +1639,33 @@ select {
   flex-wrap: wrap;
   gap: 8px;
 }
+
+/* Sign-in choices (2.0.4, SignInPanel.tsx) */
+.sign-in-panel,
+.local-ack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+.local-ack h2 {
+  margin: 0.5rem 0 0;
+  font-size: 1.15rem;
+}
+.local-ack p {
+  margin: 0;
+}
+/* Beside its label everywhere, also inside Settings' stacked field labels. */
+.remember-me,
+.settings-account label.remember-me {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 44px;
+}
+.remember-me input {
+  flex: none;
+  width: 1.4rem;
+  height: 1.4rem;
+}

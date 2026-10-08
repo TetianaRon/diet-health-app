@@ -354,3 +354,35 @@ Answering "did we review only products?": the 69 home dishes were on the page bu
 - 410 tests, `tsc -b`, `npm run build`. Version 2.0.3, versionCode 26.
 
 ✅ **2.0.3 released 2026-10-08:** main pushed (web) and the bundle uploaded to the internal testing track (versionCode 26). The repro app stays on the developer's phone for now, in case the plugin maintainers ask for more.
+
+**Release 2.0.4 — sign-in choices (2026-10-08, branch `release/2.0.4`):**
+- **Decided (developer):** «Запам'ятати мене на цьому пристрої» on by default in the app, off on the web; «Продовжити як» shows the email; on Android with remember off, closing the app ends the session.
+- **Built** (spec → "Sign-in choices (2.0.4)"):
+  - `rememberMe.ts`. With remember off, Android keeps the refresh token in memory only, and the device copy is cleared when the next session opens the database, now on every platform (before, only the web).
+  - The web stores the email while remember is on, for «Продовжити як <email>» (`prompt: ""`, `login_hint`); «Увійти іншим обліковим записом» opens Google's chooser.
+  - «Вийти» clears the copy everywhere and forgets the address. Another account signing in on the web also clears the previous account's copy.
+  - One `SignInPanel` replaces the sign-in buttons on Today, History, Foods and Settings.
+  - «Почати без Google» first shows an acknowledgement: only on this phone, anyone with the phone can read it, lost with the app or the phone, can move to a sheet later.
+- **Changed during the checks (developer):**
+  - «Вийти» also forgets the «Продовжити як» address; it was left showing after a deliberate sign-out.
+  - Settings shows «Увійшли як <email>», asked from Google and kept in memory.
+  - The remember checkbox sat above its label in Settings (Settings' stacked label style); now beside it.
+  - Changing remember in Settings asks first («Більше не запам'ятовувати вас на цьому пристрої?» — «Так, не запам'ятовувати» / «Залишити як є»), and the box shows the device's current choice.
+- **Privacy policy** (roncreator-site, both languages, dated 2026-10-08): the device copy, which the policy still denied ("never keeps a copy", "the only place this data ever lives" became untrue with 2.0); the remember choice and what each setting keeps; the stored email; using the app without Google.
+- **Verified (local web app, dev sheet, the developer signed in):**
+  - remember off by default with the matching hint;
+  - with it on, the copy survived a reload (`lastPullAt` kept), and «Продовжити як disanert@…» signed in with Google's window closing by itself (developer);
+  - «Вийти» cleared the copy (`lastPullAt` gone) and, after the fix, the address;
+  - the acknowledgement and «Назад до входу через Google».
+- **Verified (developer's Pixel 10, debug build, dev sheet):**
+  - remember on by default;
+  - the acknowledgement on the phone layout;
+  - unticking it removed the stored sign-in at once;
+  - ending the app's process (as a swipe-away does) and reopening asked for sign-in;
+  - Settings showed «Увійшли як …»;
+  - the Settings checkbox reflected the choice ticked at sign-in, and the confirmation appeared; «Залишити як є» kept it ticked.
+- **Not checked:**
+  - switching apps with remember off keeping the session (the token stays in memory while the process lives);
+  - «Увійти іншим обліковим записом» with a second account;
+  - starting without Google past the acknowledgement (unchanged code after it).
+- 412 tests, `tsc -b`, `npm run build`. Version 2.0.4, versionCode 27.

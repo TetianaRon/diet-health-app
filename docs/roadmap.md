@@ -13,7 +13,7 @@ The workflow (intake → release branch → verify → release) and the standing
 ## Next session — start here (set 2026-10-07)
 1. **2.0 released** to Play's internal testing track and the web (2026-10-06, builds 19–23). Nothing is public; mom is an internal tester, so **an upload is a release to her**. Still worth checking on the developer's devices: the `online` event on a real phone, two tabs, switching sheets.
 2. **Plan reviewed with the developer (2026-10-07):** 2.0.1 → 2.0.2 faster food entry → 2.0.3 reminders → 2.0.4 sign-in choices (+ privacy policy) → 2.1 sets → 2.2 mom's data → 2.3 Picker → 2.4 food families → 2.5 label photos → 2.6 GI from ingredients (after the research) → 2.7 AI lookup → 2.8 English → 3.0 public launch.
-3. **2.0.1 released** (2026-10-07, versionCode 24). **2.0.2 released** (2026-10-08, versionCode 25). **2.0.3 released** (2026-10-08, versionCode 26); still to do: check mom's notification volume and tone. Next: **2.0.4 — sign-in choices**.
+3. **2.0.1 released** (2026-10-07, versionCode 24). **2.0.2 released** (2026-10-08, versionCode 25). **2.0.3 released** (2026-10-08, versionCode 26); still to do: check mom's notification volume and tone. **2.0.4 — sign-in choices built** (2026-10-08, versionCode 27), waiting for the push, the upload and the privacy policy push (roncreator-site). Next: **2.1 — sets**.
 4. Chromium issue 569300356: reply sent 2026-10-05 — check for answers now and then.
 5. Plugin issue [capacitor-local-notifications#15](https://github.com/ionic-team/capacitor-local-notifications/issues/15) (reminders lost during a restart; reported 2026-10-08, our patch in `patches/`): check for answers now and then; drop the patch once a fixed version ships.
 
@@ -41,7 +41,8 @@ Packs list nutrients per portion (per 30 g) or per piece (dumplings per 12), not
 - **Easy to miss:** a new channel with vibration on (a channel's sound and vibration can't change after creation), maybe a more noticeable sound; check mom's notification volume.
 - **Two permission asks feel like one failed:** one short explanation screen, then both permissions one after the other; the notice only if exact alarms are still off (since 2.0 build 22 the app never opens the alarm settings by itself).
 
-### 2.0.4 — Sign-in choices · 📝 planned (developer, 2026-10-07)
+### 2.0.4 — Sign-in choices · ✅ built (2026-10-08) — spec → "Sign-in choices (2.0.4)"
+**Decided (developer, 2026-10-08):** remember on by default in the app, off on the web; «Продовжити як» shows the email; on Android with remember off, closing the app ends the session.
 The person decides where their data lives, with plain wording about each choice.
 - **«Запам'ятати мене на цьому пристрої»** at sign-in. On: the device keeps its copy of the sheet until «Вийти». Off: sign in every time, and the copy is cleared when the session ends (the web's behaviour today).
 - **Web:** one tap «Продовжити як …» on each visit (Google skips the password while the person is signed in to Google in that browser); no long-lived pass is stored (developer: works for now). **Android:** already remembered; this adds the choice not to.
@@ -85,6 +86,12 @@ Packs never list GI, but they list «Склад». A packaged product is a dish 
 ### 2.7 — AI looks up GI and nutrients · 📝 planned (developer, 2026-10-07)
 - For products not in our database, AI does the work we did by hand for the database: finds published values, gives the source, reliability, reasoning and date, and picks the closest measured product where processing is unclear (for 2.6).
 - She confirms; the value is marked as found by AI, not checked by us.
+- **A worked case (developer, 2026-10-08): two grocery sandwiches with no label**, logged with only a name and weight (Montreal smoked meat 180 г, maple turkey 170 г). Estimated by hand:
+  - **Steps:** name and weight in → a typical recipe with grams (bread, filling, spread) → each ingredient matched to a USDA record → totals per sandwich and a carb-weighted GI from the bread → each assumption shown with its reliability.
+  - **Where the uncertainty came from:** missing facts, not the maths. The bread type (rye or light rye; whole-wheat or white), the cut of meat (lean or traditional smoked meat: ≈335 vs ≈440 kcal) and whether there was a spread (mayo ±70 kcal) each moved the result more than anything else.
+  - **So the feature should ask one or two short questions** ("білий чи цільнозерновий хліб?", "був майонез?") instead of guessing silently, and show the range when it can't ask.
+  - **No GI table lists such sandwiches;** the GI comes from the bread's GI weighted by its share of the carbs, marked as an estimate.
+  - **Ties in with saving it:** the result goes in as a fixed-value dish (2.0.2's «Також зберегти в «Страви»»), so the next time it's one tap.
 - **Needs a decision on AI costs first:** free/paid, or a daily cap like translation's. Looking up a vendor's own recipe isn't part of it (expensive; people can do that in their own AI assistant).
 
 ### 2.8 — English version · 📝 planned (developer, 2026-10-07: before the public launch — she lives in Canada and her own circle is English-speaking)

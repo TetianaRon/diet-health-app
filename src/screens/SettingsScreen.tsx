@@ -7,12 +7,13 @@ import { getSettings, updateSettings, type Settings, type TimeFormat } from "../
 import { TimeInput } from "./TimeInput";
 import { fullMealShareLeavesNoRoom, mealShares } from "../lib/mealRecommendation";
 import { setTimeFormat } from "../lib/dateFormat";
-import { getLastPullAt, getSpreadsheetId, getSpreadsheetUrl } from "../lib/sheets";
+import { getLastPullAt, getSignedInEmail, getSpreadsheetId, getSpreadsheetUrl } from "../lib/sheets";
 import { onSynced, pendingCount, syncNow } from "../lib/sync";
 import { formatDateTime } from "../lib/dateFormat";
 import { useSheetHealth } from "../context/SheetHealthContext";
 import { useNotifications } from "../context/NotificationsContext";
 import { SheetHealthIssueList, summarizeIssues } from "./SheetHealthIssues";
+import SignInPanel, { RememberMeSetting } from "./SignInPanel";
 
 const NUMERIC_FIELDS = [
   "dailyCarbsTarget",
@@ -230,7 +231,7 @@ function SnackShareHint({ values }: { values: Record<string, string> }) {
 }
 
 export default function SettingsScreen() {
-  const { signedIn, initializing, signIn, signOut, sessionExpired, localMode } = useAuth();
+  const { signedIn, initializing, signOut, sessionExpired, localMode } = useAuth();
   const [values, setValues] = useState<Record<string, string>>({});
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
@@ -320,7 +321,8 @@ export default function SettingsScreen() {
           <p>{uk.settings.loading}</p>
         ) : signedIn ? (
           <>
-            <p>{uk.settings.account.signedIn}</p>
+            <SignedInAs />
+            {!localMode && <RememberMeSetting />}
             <button type="button" onClick={() => void signOut()}>
               {uk.settings.account.signOutButton}
             </button>
@@ -328,9 +330,7 @@ export default function SettingsScreen() {
         ) : (
           <>
             <p>{uk.settings.account.notSignedIn}</p>
-            <button type="button" onClick={() => void signIn()}>
-              {uk.settings.account.signInButton}
-            </button>
+            <SignInPanel buttonLabel={uk.settings.account.signInButton} offerLocalMode={false} />
           </>
         )}
       </div>
@@ -412,4 +412,17 @@ export default function SettingsScreen() {
       </button>
     </section>
   );
+}
+
+/** «Увійшли як <email>» (2.0.4); just «Увійшли» until Google answers, or offline. */
+function SignedInAs() {
+  const [email, setEmail] = useState<string | null>(null);
+  useEffect(() => {
+    let live = true;
+    void getSignedInEmail().then((e) => live && setEmail(e));
+    return () => {
+      live = false;
+    };
+  }, []);
+  return <p>{email ? uk.settings.account.signedInAs(email) : uk.settings.account.signedIn}</p>;
 }
