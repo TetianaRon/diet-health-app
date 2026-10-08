@@ -37,8 +37,9 @@ export function dishAsIngredient(dish: Dish): Ingredient {
     giFrom: "",
     basis: measure.basis,
     valuesPer: null,
-    weighedPieces: measure.weighedPieces,
-    weighedGrams: measure.weighedGrams,
+    // Only a full pair: a batch weight without a count isn't a piece weight.
+    weighedPieces: measure.weighedPieces && measure.weighedGrams ? measure.weighedPieces : null,
+    weighedGrams: measure.weighedPieces && measure.weighedGrams ? measure.weighedGrams : null,
     portionSizes: dish.portionSizes,
     labels: dish.labels,
   };

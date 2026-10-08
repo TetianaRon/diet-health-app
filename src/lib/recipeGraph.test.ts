@@ -67,4 +67,9 @@ describe("items inside recipes (2.1)", () => {
     expect(updated.map((d) => d.id)).toEqual(["D2", "D3"]);
     expect(updated[0].carbsG).toBeGreaterThan(settledSalad[0].carbsG);
   });
+
+  it("carries a piece weight only as a full pair (a batch weight alone isn't one)", () => {
+    expect(dishAsIngredient({ ...mayo, yieldGrams: 80 })).toMatchObject({ weighedPieces: null, weighedGrams: null });
+    expect(dishAsIngredient({ ...mayo, basis: "piece", yieldGrams: 400, yieldPieces: 10 })).toMatchObject({ weighedPieces: 10, weighedGrams: 400 });
+  });
 });

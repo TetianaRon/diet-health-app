@@ -1683,6 +1683,15 @@ select {
 .values-mode-legend {
   font-weight: 600;
 }
+.food-filters button {
+  white-space: nowrap;
+}
+.labels-field {
+  margin-bottom: 0.75rem;
+}
+.labels-field .food-form-hint {
+  margin-top: 0.5rem;
+}
 .labels-field .label-chips {
   display: flex;
   flex-wrap: wrap;
