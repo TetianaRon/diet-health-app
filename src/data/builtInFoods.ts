@@ -45,8 +45,9 @@ export function entryToIngredient(entry: VerifiedFoodEntry): Ingredient {
     unknownFields,
     giFrom: "",
     basis: "100g",
-    packPieces: null,
-    packGrams: null,
+    valuesPer: null,
+    weighedPieces: null,
+    weighedGrams: null,
   };
 }
 

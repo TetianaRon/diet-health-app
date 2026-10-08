@@ -17,7 +17,7 @@ const n = (carbsG: number, caloriesKcal: number, gi: number): IngredientNutritio
   sodiumMg: 0,
 });
 
-const dumplingMeasure: Measure = { basis: "piece", packPieces: 12, packGrams: null };
+const dumplingMeasure: Measure = { basis: "piece", valuesPer: 12, weighedPieces: null, weighedGrams: null };
 const dumpling = { id: "Idump", nameUk: "Пельмені", stored: n(4, 25, 60), unknownFields: [], measure: dumplingMeasure };
 
 describe("meal rows by count", () => {
@@ -36,7 +36,7 @@ describe("meal rows by count", () => {
   });
 
   it("logs nuts by count through their piece weight (100 г = 20 шт.)", () => {
-    const nuts = { id: "Inut", nameUk: "Мигдаль", stored: n(20, 600, 15), unknownFields: [], measure: { basis: "100g" as const, packPieces: 20, packGrams: 100 } };
+    const nuts = { id: "Inut", nameUk: "Мигдаль", stored: n(20, 600, 15), unknownFields: [], measure: { basis: "100g" as const, valuesPer: null, weighedPieces: 20, weighedGrams: 100 } };
     const entry = buildLogEntryForAmount("Перекус", nuts, { pieces: 3 }, "", "m2")!;
     expect(entry.portionGrams).toBe(15);
     expect(entry.carbsG).toBe(3);
@@ -65,7 +65,7 @@ describe("meal rows by count", () => {
 describe("dishes and recipes by count", () => {
   const items: Record<string, IngredientNutrition & Partial<Measure>> = {
     flour: n(70, 350, 70),
-    egg: { ...n(0.5, 75, 0), basis: "piece", packPieces: 1, packGrams: 50 },
+    egg: { ...n(0.5, 75, 0), basis: "piece", valuesPer: null, weighedPieces: 1, weighedGrams: 50 },
     dumpling: { ...n(4, 25, 60), ...dumplingMeasure },
   };
   const lookup = (ref: { id?: string }) => items[ref.id ?? ""] ?? null;
@@ -96,14 +96,18 @@ describe("dishes and recipes by count", () => {
   });
 });
 
-describe("items keep their pack statement", () => {
-  it("round-trips basis and the pack's count and weight", () => {
-    const item = rowToIngredient(ingredientToRow({ ...rowToIngredient([]), id: "I1", nameUk: "Пельмені", basis: "piece", packPieces: 12, packGrams: 200 } as Ingredient));
+describe("items keep how they're measured", () => {
+  it("round-trips the basis, the amount the values are for, and the weighed pieces", () => {
+    const item = rowToIngredient(
+      ingredientToRow({ ...rowToIngredient([]), id: "I1", nameUk: "Пельмені", basis: "piece", valuesPer: 12, weighedPieces: 12, weighedGrams: 200 } as Ingredient),
+    );
     expect(item.basis).toBe("piece");
-    expect(item.packPieces).toBe(12);
-    expect(item.packGrams).toBe(200);
+    expect(item.valuesPer).toBe(12);
+    expect(item.weighedPieces).toBe(12);
+    expect(item.weighedGrams).toBe(200);
     const plain = rowToIngredient(ingredientToRow({ ...rowToIngredient([]), id: "I2", nameUk: "Рис" } as Ingredient));
     expect(plain.basis).toBe("100g");
-    expect(plain.packGrams).toBeNull();
+    expect(plain.valuesPer).toBeNull();
+    expect(plain.weighedGrams).toBeNull();
   });
 });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { packAmount, pieceGrams, positiveOrNull, resolveAmount, toBasis, toStoredValues, toTypedValues, PER_100G, type Measure } from "./measure";
+import { pieceGrams, positiveOrNull, resolveAmount, toBasis, toStoredValues, toTypedValues, valuesAmount, PER_100G, type Measure } from "./measure";
 import type { IngredientNutrition } from "./dishes";
 
 const values = (carbsG: number, caloriesKcal: number, gi = 50): IngredientNutrition => ({
@@ -13,10 +13,13 @@ const values = (carbsG: number, caloriesKcal: number, gi = 50): IngredientNutrit
   sodiumMg: 0,
 });
 
-const dumplings: Measure = { basis: "piece", packPieces: 12, packGrams: 200 };
-const dumplingsNoWeight: Measure = { basis: "piece", packPieces: 12, packGrams: null };
-const nuts: Measure = { basis: "100g", packPieces: 20, packGrams: 100 };
-const portionPack: Measure = { basis: "100g", packPieces: null, packGrams: 30 };
+// Pack «на 12 шт. (200 г)»: values per 12 pieces, and the same 12 pieces weigh 200 g.
+const dumplings: Measure = { basis: "piece", valuesPer: 12, weighedPieces: 12, weighedGrams: 200 };
+const dumplingsNoWeight: Measure = { basis: "piece", valuesPer: 12, weighedPieces: null, weighedGrams: null };
+// Database values per 100 g, and 12 home-cooked dumplings weighed at 300 g.
+const potatoDumplings: Measure = { basis: "100g", valuesPer: null, weighedPieces: 12, weighedGrams: 300 };
+const nuts: Measure = { basis: "100g", valuesPer: null, weighedPieces: 20, weighedGrams: 100 };
+const portionPack: Measure = { basis: "100g", valuesPer: 30, weighedPieces: null, weighedGrams: null };
 
 describe("measure", () => {
   it("reads the basis and positive numbers", () => {
@@ -27,8 +30,9 @@ describe("measure", () => {
     expect(positiveOrNull("")).toBeNull();
   });
 
-  it("knows one piece's weight only when the pack gives a count and a weight", () => {
+  it("knows one piece's weight from any weighed count, separately from what the values are for", () => {
     expect(pieceGrams(dumplings)).toBeCloseTo(16.6667, 4);
+    expect(pieceGrams(potatoDumplings)).toBe(25);
     expect(pieceGrams(dumplingsNoWeight)).toBeNull();
     expect(pieceGrams(PER_100G)).toBeNull();
   });
@@ -38,11 +42,10 @@ describe("measure", () => {
     expect(stored.carbsG).toBe(4);
     expect(stored.caloriesKcal).toBe(25);
     expect(stored.gi).toBe(50);
-    const back = toTypedValues(stored, dumplings);
-    expect(back.carbsG).toBeCloseTo(48, 6);
+    expect(toTypedValues(stored, dumplings).carbsG).toBeCloseTo(48, 6);
     expect(toStoredValues(values(9, 120), portionPack).carbsG).toBe(30); // per 30 g → per 100 g
-    expect(packAmount(portionPack)).toEqual({ grams: 30, pieces: null });
-    expect(packAmount(dumplings)).toEqual({ pieces: 12, grams: 200 });
+    expect(valuesAmount(portionPack)).toBe(30);
+    expect(valuesAmount(potatoDumplings)).toBe(100);
   });
 
   it("turns pieces into the factor for a per-piece item, with grams when the piece weight is known", () => {
@@ -54,10 +57,12 @@ describe("measure", () => {
     expect(resolveAmount(dumplingsNoWeight, { grams: 50 })).toBeNull();
   });
 
-  it("logs a per-100 g item by count when a piece weight is known (nuts)", () => {
+  it("logs a per-100 g item by count through its weighed pieces (potato dumplings, nuts)", () => {
+    const eight = resolveAmount(potatoDumplings, { pieces: 8 })!;
+    expect(eight.grams).toBe(200);
+    expect(eight.factor).toBe(2);
     const n = resolveAmount(nuts, { pieces: 3 })!;
     expect(n.grams).toBeCloseTo(15, 6);
-    expect(n.factor).toBeCloseTo(0.15, 6);
     expect(resolveAmount(PER_100G, { pieces: 3 })).toBeNull();
     expect(resolveAmount(PER_100G, { grams: 150 })).toEqual({ factor: 1.5, grams: 150, pieces: null });
   });

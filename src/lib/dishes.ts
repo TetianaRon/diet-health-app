@@ -217,13 +217,13 @@ type WithUnknown = IngredientNutrition & { unknownFields: NutritionKey[] } & Par
 
 /** A product's or dish's measure: a dish's yield (weight and count) gives its piece weight. */
 export function itemMeasure(item: Partial<Measure> & { yieldGrams?: number; yieldPieces?: number | null }): Measure {
-  if (item.yieldGrams !== undefined) return { basis: item.basis ?? "100g", packPieces: item.yieldPieces ?? null, packGrams: item.yieldGrams || null };
+  if (item.yieldGrams !== undefined) return { basis: item.basis ?? "100g", valuesPer: null, weighedPieces: item.yieldPieces ?? null, weighedGrams: item.yieldGrams || null };
   return measureOf(item);
 }
 
 /** An item's measure, when it carries one (built-in and older items are per 100 g). */
 export function measureOf(item: Partial<Measure>): Measure {
-  return { basis: item.basis ?? "100g", packPieces: item.packPieces ?? null, packGrams: item.packGrams ?? null };
+  return { basis: item.basis ?? "100g", valuesPer: item.valuesPer ?? null, weighedPieces: item.weighedPieces ?? null, weighedGrams: item.weighedGrams ?? null };
 }
 
 /** Share (0–1) of the dish's carbohydrate that comes from ingredients with an unknown GI. */

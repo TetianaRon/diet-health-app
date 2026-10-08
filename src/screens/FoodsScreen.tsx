@@ -51,8 +51,9 @@ import {
 import Breadcrumb, { type Crumb } from "./Breadcrumb";
 import DuplicateNameNotice, { type NamedItem } from "./DuplicateNameNotice";
 import { findNameMatch, isBuiltInId, suggestFreeName } from "../lib/itemIds";
-import PackAmountFields, { measureFromPackFields, packFieldsFromMeasure, type PackFields } from "./PackAmountFields";
-import { pieceGrams, round2, toStoredValues, toTypedValues, PER_100G, type Measure } from "../lib/measure";
+import PackAmountFields, { measureFromPackFields, type PackFields } from "./PackAmountFields";
+import ProductMeasureFields, { isMeasure, measureFromProductFields, productFieldsFromMeasure, type ProductFields } from "./ProductMeasureFields";
+import { pieceGrams, round2, toStoredValues, toTypedValues, valuesAmount, PER_100G, type Measure } from "../lib/measure";
 import { measureOf, refFactor } from "../lib/dishes";
 
 const NUMERIC_FIELDS = ["carbsG", "gi", "fiberG", "sugarsG", "proteinG", "fatG", "caloriesKcal", "sodiumMg"] as const;
@@ -105,12 +106,11 @@ function typedFormValues(item: Ingredient): FormValues {
 }
 
 // «Буде збережено на 100 г: …» under the fields when the values were typed for another amount (2.0.1).
-function PackSummary({ pack, values }: { pack: PackFields; values: FormValues }) {
-  const measure = measureFromPackFields(pack);
-  if (!measure) return <p className="food-form-error">{uk.foods.pack.mainMissing}</p>;
+function PackSummary({ pack, values }: { pack: ProductFields; values: FormValues }) {
+  const measure = measureFromProductFields(pack);
+  if (!isMeasure(measure)) return <p className="food-form-error">{measure.problem}</p>;
   const { parsed, unknownFields, valid } = parseFormValues(values);
-  const typedForPack = measure.basis === "piece" ? measure.packPieces !== 1 : measure.packGrams !== 100;
-  if (!valid || !typedForPack) return null;
+  if (!valid || measure.valuesPer === null) return null;
   const stored = toStoredValues(parsed, measure);
   const carbs = unknownFields.includes("carbsG") ? `вуглеводи ${uk.today.unknownValueLabel}` : uk.today.carbsValue(round2(stored.carbsG));
   const calories = unknownFields.includes("caloriesKcal") ? `калорії ${uk.today.unknownValueLabel}` : uk.today.caloriesValue(round2(stored.caloriesKcal));
@@ -118,9 +118,9 @@ function PackSummary({ pack, values }: { pack: PackFields; values: FormValues })
 }
 
 // «Значення на 30 г» above the value fields.
-function valuesHeading(pack: PackFields): string | null {
-  const measure = measureFromPackFields(pack);
-  return measure ? uk.foods.pack.valuesHeading(uk.foods.pack.amount(measure.packGrams, measure.packPieces, measure.basis)) : null;
+function valuesHeading(pack: ProductFields): string | null {
+  const measure = measureFromProductFields(pack);
+  return isMeasure(measure) ? uk.foods.pack.valuesHeading(uk.foods.pack.amount(valuesAmount(measure), measure.basis)) : null;
 }
 
 // One-line "carbs, GI" summary for a list row — "невідомо" (never a
@@ -233,7 +233,7 @@ function AddFoodForm({
   const [saveNameUk, setSaveNameUk] = useState("");
   const [resolvedNameEn, setResolvedNameEn] = useState("");
   const [values, setValues] = useState<FormValues>(EMPTY_FORM_VALUES);
-  const [pack, setPack] = useState<PackFields>(() => packFieldsFromMeasure(PER_100G));
+  const [pack, setPack] = useState<ProductFields>(() => productFieldsFromMeasure(PER_100G));
   const [source, setSource] = useState<IngredientSource>("manual");
   // Always starts unchecked, even for a bundle/USDA-sourced estimate —
   // "we researched it" isn't the same as "a person confirmed it against a
@@ -273,7 +273,7 @@ function AddFoodForm({
     setLookupAttempted(true);
     setGiVerified(false); // a new pick hasn't been confirmed, even if a previous one was
     setGiFrom("");
-    setPack(packFieldsFromMeasure(PER_100G)); // database and USDA values are per 100 g
+    setPack((prev) => ({ ...productFieldsFromMeasure(PER_100G), weighedPieces: prev.weighedPieces, weighedGrams: prev.weighedGrams })); // database and USDA values are per 100 g
     if (estimate) {
       const unknown = estimate.unknownFields ?? [];
       const show = (field: NumericField, value: number | null) =>
@@ -380,14 +380,14 @@ function AddFoodForm({
     // Number("") is 0, so blanks are detected via .trim() there and recorded
     // in unknownFields instead of silently passing as a real 0.
     const { parsed, unknownFields, valid } = parseFormValues(values);
-    const measure = measureFromPackFields(pack);
+    const measure = measureFromProductFields(pack);
 
     if (saveNameUk.trim() === "" || !valid) {
       setError(uk.foods.form.validationError);
       return;
     }
-    if (!measure) {
-      setError(uk.foods.pack.mainMissing);
+    if (!isMeasure(measure)) {
+      setError(measure.problem);
       return;
     }
 
@@ -535,7 +535,7 @@ function AddFoodForm({
       )}
       <p className="food-form-hint">{uk.foods.form.saveNameHint}</p>
 
-      <PackAmountFields fields={pack} onChange={setPack} legend={uk.foods.pack.legend} />
+      <ProductMeasureFields fields={pack} onChange={setPack} />
       {valuesHeading(pack) && <h3 className="pack-values-heading">{valuesHeading(pack)}</h3>}
       <p className="food-form-hint">{uk.foods.form.unknownHint}</p>
       {NUMERIC_FIELDS.map((field) => (
@@ -611,7 +611,7 @@ function EditIngredientForm({
   const [nameUk, setNameUk] = useState(ingredient.nameUk);
   const [nameEn, setNameEn] = useState(ingredient.nameEn);
   const [values, setValues] = useState<FormValues>(() => typedFormValues(ingredient));
-  const [pack, setPack] = useState<PackFields>(() => packFieldsFromMeasure(measureOf(ingredient)));
+  const [pack, setPack] = useState<ProductFields>(() => productFieldsFromMeasure(measureOf(ingredient)));
   const [giVerified, setGiVerified] = useState(ingredient.giVerified);
   const [giFrom, setGiFrom] = useState(ingredient.giFrom);
   const [saving, setSaving] = useState(false);
@@ -623,14 +623,14 @@ function EditIngredientForm({
 
   const handleSave = async () => {
     const { parsed, unknownFields, valid } = parseFormValues(values);
-    const measure = measureFromPackFields(pack);
+    const measure = measureFromProductFields(pack);
 
     if (nameUk.trim() === "" || !valid) {
       setError(uk.foods.editForm.validationError);
       return;
     }
-    if (!measure) {
-      setError(uk.foods.pack.mainMissing);
+    if (!isMeasure(measure)) {
+      setError(measure.problem);
       return;
     }
     if (nameMatch) return;
@@ -681,7 +681,7 @@ function EditIngredientForm({
         <input value={nameEn} onChange={(e) => setNameEn(e.target.value)} />
       </label>
 
-      <PackAmountFields fields={pack} onChange={setPack} legend={uk.foods.pack.legend} />
+      <ProductMeasureFields fields={pack} onChange={setPack} />
       {valuesHeading(pack) && <h3 className="pack-values-heading">{valuesHeading(pack)}</h3>}
       <p className="food-form-hint">{uk.foods.form.unknownHint}</p>
       {NUMERIC_FIELDS.map((field) => (
@@ -833,7 +833,7 @@ function ComposeDishForm({
 
   const yieldMeasure = measureFromPackFields(yieldFields);
   const dishNutrition = (refs: DishIngredientRef[], y: Measure) =>
-    computeDishNutrition(refs, y.packGrams ?? 0, findIngredient, y.basis === "piece" ? y.packPieces : null);
+    computeDishNutrition(refs, y.weighedGrams ?? 0, findIngredient, y.basis === "piece" ? y.weighedPieces : null);
   const preview =
     resolvedRefs.length === rows.filter((r) => r.nameUk.trim()).length && resolvedRefs.length > 0 && yieldMeasure
       ? dishNutrition(resolvedRefs, yieldMeasure)
@@ -870,9 +870,9 @@ function ComposeDishForm({
         nameUk: nameUk.trim(),
         nameEn,
         ingredients: refs,
-        yieldGrams: yieldMeasure.packGrams ?? 0,
+        yieldGrams: yieldMeasure.weighedGrams ?? 0,
         basis: yieldMeasure.basis,
-        yieldPieces: yieldMeasure.packPieces,
+        yieldPieces: yieldMeasure.weighedPieces,
         ...nutrition,
         source: existingDish?.source ?? "manual",
         giVerified: giVerified && !unknownFields.includes("gi"),

@@ -1,19 +1,23 @@
-// How an item is measured (release 2.0.1, spec: "Pack values"). Values are
-// entered exactly as the pack prints them — per [n] g or per [n] pieces —
-// and stored per 100 g (`Basis` 100g, as before) or per 1 piece (`Basis`
-// piece). The pack's own statement is kept as typed (`PackPieces`,
-// `PackGrams`), so the editor reopens as entered and one piece's weight
-// needs no rounding. Pure, unit-tested.
+// How an item is measured (release 2.0.1, spec: "Pack values"). Two separate
+// things:
+//   • what amount the values are for — typed exactly as the pack prints them
+//     («на 30 г», «на 12 шт.»), stored per 100 g (`Basis` 100g) or per 1 piece
+//     (`Basis` piece), with the typed amount kept (`ValuesPer`) so the editor
+//     reopens as entered;
+//   • how much pieces weigh — any count weighed («12 шт. = 300 г»,
+//     `WeighedPieces` / `WeighedGrams`), which links grams and pieces.
+// Pure, unit-tested.
 import type { IngredientNutrition } from "./dishes";
 
 export type Basis = "100g" | "piece";
 
 export interface Measure {
   basis: Basis;
-  /** The pack's count («на 12 шт.»), else null. */
-  packPieces: number | null;
-  /** The pack's weight («на 30 г», or «12 шт. = 200 г»), else null. */
-  packGrams: number | null;
+  /** The amount the values were typed for (30 for «на 30 г», 12 for «на 12 шт.»); null = 100 g or 1 piece. */
+  valuesPer: number | null;
+  /** A weighed count of pieces and its weight («12 шт. = 300 г»); both null when unknown. */
+  weighedPieces: number | null;
+  weighedGrams: number | null;
 }
 
 /** An amount eaten or put in a recipe: grams, pieces, or both. */
@@ -22,7 +26,7 @@ export interface Amount {
   pieces?: number | null;
 }
 
-export const PER_100G: Measure = { basis: "100g", packPieces: null, packGrams: null };
+export const PER_100G: Measure = { basis: "100g", valuesPer: null, weighedPieces: null, weighedGrams: null };
 
 export function toBasis(value: unknown): Basis {
   return String(value ?? "").trim() === "piece" ? "piece" : "100g";
@@ -35,21 +39,19 @@ export function positiveOrNull(value: unknown): number | null {
   return Number.isFinite(n) && n > 0 ? n : null;
 }
 
-/** The weight of one piece, when the pack states both a count and a weight. */
+/** The weight of one piece, when a weighed count is known. */
 export function pieceGrams(measure: Measure): number | null {
-  return measure.packPieces && measure.packGrams ? measure.packGrams / measure.packPieces : null;
+  return measure.weighedPieces && measure.weighedGrams ? measure.weighedGrams / measure.weighedPieces : null;
 }
 
-/** The amount the stored values are for, as typed: «на 30 г», «на 12 шт.» (falls back to 100 g / 1 piece). */
-export function packAmount(measure: Measure): { grams: number | null; pieces: number | null } {
-  return measure.basis === "piece"
-    ? { pieces: measure.packPieces ?? 1, grams: measure.packGrams }
-    : { grams: measure.packGrams ?? 100, pieces: measure.packPieces };
+/** The amount the values were typed for: 100 g / 1 piece unless the pack said otherwise. */
+export function valuesAmount(measure: Measure): number {
+  return measure.valuesPer ?? (measure.basis === "piece" ? 1 : 100);
 }
 
-/** Multiplier from the stored values (per 100 g or per 1 piece) to the pack amount they were typed for. */
+/** Multiplier from the stored values (per 100 g or per 1 piece) to the amount they were typed for. */
 export function packFactor(measure: Measure): number {
-  return measure.basis === "piece" ? (measure.packPieces ?? 1) : (measure.packGrams ?? 100) / 100;
+  return measure.basis === "piece" ? valuesAmount(measure) : valuesAmount(measure) / 100;
 }
 
 /**
@@ -107,7 +109,7 @@ export function toTypedValues(stored: IngredientNutrition, measure: Measure): In
   return scaleNutrition(stored, packFactor(measure));
 }
 
-/** Rounded for display and for meal rows (stored item values keep full precision). */
+/** Rounded for display and for meal rows (stored item values keep 4 decimals). */
 export function round2(n: number): number {
   return Math.round(n * 100) / 100;
 }
