@@ -16,6 +16,9 @@ OUT = os.path.join(WORK, "review.html")
 OLD_LISTS_AT = "38c2eff~1"
 
 QUESTIONS = [
+    dict(id="nutsGi", title="Горіхи без власних досліджень ГІ: значення суміші горіхів чи «немає даних»?",
+         why="Мигдаль, фісташки, фундук, пекан, бразильський і смажені волоські горіхи окремо не вимірювали. Зараз вони, як і сирі волоські горіхи, мають ГІ суміші горіхів (смажених, солоних) — 24, низька надійність. Правило бази забороняє підставляти один продукт замість іншого; суміш горіхів містить ці горіхи, але не є жодним із них. Кешью й арахіс мають власні дослідження; кедрові горішки й насіння — «немає даних».",
+         options=[dict(id="mixed", label="Залишити ГІ суміші горіхів (24, низька надійність)"), dict(id="unknown", label="Позначити «немає даних» (і для сирих волоських горіхів теж)")]),
     dict(id="notApplicable", title="М'ясо, риба, олії, масло: ГІ «не застосовується»?",
          why="У цих продуктах вуглеводів практично немає (до 1 г на 100 г), тому ГІ для них не визначається, а ГН дорівнює 0. Якщо позначити їх «немає даних», застосунок вважатиме їх неповними й показуватиме попередження про невідомі значення.",
          options=[dict(id="yes", label="Так: «не застосовується», ГН = 0"), dict(id="no", label="Ні: позначати «немає даних»")]),
@@ -121,6 +124,17 @@ CHANGES["B0049"] = ("Тепер це запис для банана невідо
 # 1.9 additions (2026-10-05): coffee — brewed (how mom's coffee is made) and espresso.
 ROUND6_AT = "2026-10-05T20:27:25Z"
 ROUND6_IDS = {"B0097", "B0098"}
+# 2.0.2 (2026-10-07): nuts and seeds, and portion sizes on common foods.
+ROUND7_AT = "2026-10-07T23:00:00Z"
+NUT_IDS = [f"B{n:04d}" for n in range(99, 117)]
+SIZED_IDS = ["B0047", "B0048", "B0049", "B0050", "B0024", "B0010", "B0011", "B0090", "B0033", "B0080", "B0030", "B0035", "B0013", "B0012", "B0096",
+             "B0091", "B0092", "B0093", "B0094", "B0095", "B0054"]
+ROUND7_IDS = set(NUT_IDS) | set(SIZED_IDS)
+for _id in NUT_IDS:
+    CHANGES[_id] = ("Новий запис (2.0.2): горіхи й насіння, з вагою одного горіха чи ложки як розміром порції.", True)
+for _id in SIZED_IDS:
+    CHANGES[_id] = ("Додано розміри порцій з даних USDA (значення не змінювалися).", True)
+CHANGES["B0054"] = ("Додано розміри порцій: 1 половинка ≈ 2 г, 1 горіх ≈ 4 г (значення не змінювалися).", True)
 CHANGES["B0097"] = ("Новий запис (1.9): кава, зварена в джезві, — найближче до звичайної заварної кави USDA.", True)
 CHANGES["B0098"] = ("Новий запис (1.9): еспресо — міцніший варіант; ГІ «не застосовується», хоча вуглеводів 1,67 г — див. пояснення.", True)
 CHANGES["B0048"] = ("Тепер це запис для груші невідомої стиглості; додано окремі записи «стигла» і «недостигла».", True)
@@ -154,7 +168,7 @@ def main():
     for e in db["entries"]:
         o = old.get(e["id"])
         change = CHANGES.get(e["id"])
-        changed_at = ROUND6_AT if e["id"] in ROUND6_IDS else ROUND5_AT if e["id"] in ROUND5_IDS else ROUND_AT
+        changed_at = ROUND7_AT if e["id"] in ROUND7_IDS else ROUND6_AT if e["id"] in ROUND6_IDS else ROUND5_AT if e["id"] in ROUND5_IDS else ROUND_AT
         entries.append({**e, "oldName": o["name"] if o else None, "oldGi": o["gi"] if o else None, "old": o["vals"] if o else None,
                         **({"change": change[0], "reopen": change[1], "changedAt": changed_at} if change else {})})
     data = {"sources": db["sources"], "categories": db["categories"], "entries": entries, "questions": QUESTIONS, "roundAt": ROUND_AT}

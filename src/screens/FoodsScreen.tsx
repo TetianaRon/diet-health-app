@@ -11,6 +11,8 @@ import { builtInMatch, giSourceEntry } from "../lib/builtInStatus";
 import type { VerifiedFoodEntry } from "../data/verifiedFoods";
 import { useEffect, useState } from "react";
 import { uk } from "../i18n/uk";
+import MathInput from "./MathInput";
+import { evaluateInput } from "../lib/mathInput";
 import { useBackHandler } from "../lib/useBackHandler";
 import { useAuth } from "../context/AuthContext";
 import { classifyGi } from "../lib/health";
@@ -53,6 +55,9 @@ import DuplicateNameNotice, { type NamedItem } from "./DuplicateNameNotice";
 import { findNameMatch, isBuiltInId, suggestFreeName } from "../lib/itemIds";
 import PackAmountFields, { measureFromPackFields, type PackFields } from "./PackAmountFields";
 import ProductMeasureFields, { isMeasure, measureFromProductFields, productFieldsFromMeasure, type ProductFields } from "./ProductMeasureFields";
+import PortionSizesFields, { sizeRowsFrom, sizesFromRows, type SizeRow } from "./PortionSizesFields";
+import FixedDishForm from "./FixedDishForm";
+import WeighedPiecesFields, { weighedPair } from "./WeighedPiecesFields";
 import { pieceGrams, round2, toStoredValues, toTypedValues, valuesAmount, PER_100G, type Measure } from "../lib/measure";
 import { measureOf, refFactor } from "../lib/dishes";
 
@@ -86,7 +91,7 @@ function parseFormValues(values: FormValues): {
 } {
   const unknownFields = NUMERIC_FIELDS.filter((field) => values[field].trim() === "");
   const parsed = Object.fromEntries(
-    NUMERIC_FIELDS.map((field) => [field, unknownFields.includes(field) ? 0 : Number(values[field])]),
+    NUMERIC_FIELDS.map((field) => [field, unknownFields.includes(field) ? 0 : (evaluateInput(values[field]) ?? NaN)]),
   ) as Record<NumericField, number>;
   const valid = NUMERIC_FIELDS.every((field) => Number.isFinite(parsed[field]) && parsed[field] >= 0);
   return { parsed, unknownFields, valid };
@@ -117,6 +122,13 @@ function PackSummary({ pack, values }: { pack: ProductFields; values: FormValues
   return <p className="food-form-source">{uk.foods.pack.storedPreview(measure.basis, carbs, calories)}</p>;
 }
 
+// Which units her portion sizes can use: grams unless counted per piece without a weight, pieces when per piece or weighed.
+function sizeUnits(pack: ProductFields): { allowGrams: boolean; allowPieces: boolean } {
+  const measure = measureFromProductFields(pack);
+  const weighed = isMeasure(measure) && pieceGrams(measure) !== null;
+  return { allowGrams: pack.main !== "piece" || weighed, allowPieces: pack.main === "piece" || weighed };
+}
+
 // «Значення на 30 г» above the value fields.
 function valuesHeading(pack: ProductFields): string | null {
   const measure = measureFromProductFields(pack);
@@ -126,7 +138,7 @@ function valuesHeading(pack: ProductFields): string | null {
 // One-line "carbs, GI" summary for a list row — "невідомо" (never a
 // misleading 0) for a field the person left blank.
 function foodMetaText(
-  item: { carbsG: number; gi: number; giVerified: boolean; unknownFields: NutritionKey[] } & Partial<Measure>,
+  item: { carbsG: number; gi: number; giVerified: boolean; unknownFields: NutritionKey[]; ingredients?: unknown[] } & Partial<Measure>,
   entry: VerifiedFoodEntry | null = null,
 ): string {
   const carbs = item.unknownFields.includes("carbsG")
@@ -144,7 +156,8 @@ function foodMetaText(
           : entry?.state === "dry"
             ? `ГІ ${item.gi} (${uk.verified.afterCooking}, ${uk.health.gi[classifyGi(item.gi)]})`
             : `${item.giVerified || entry ? "" : "≈"}ГІ ${item.gi} (${uk.health.gi[classifyGi(item.gi)]})`;
-  const perPiece = item.basis === "piece" ? ` ${uk.foods.pack.per("piece")}` : "";
+  // A dish saved from a custom entry has no recipe: its piece is the whole portion.
+  const perPiece = item.basis !== "piece" ? "" : item.ingredients?.length === 0 ? ` ${uk.dishes.fixedForm.perPortion}` : ` ${uk.foods.pack.per("piece")}`;
   return `${carbs}${perPiece}, ${gi}`;
 }
 
@@ -234,6 +247,7 @@ function AddFoodForm({
   const [resolvedNameEn, setResolvedNameEn] = useState("");
   const [values, setValues] = useState<FormValues>(EMPTY_FORM_VALUES);
   const [pack, setPack] = useState<ProductFields>(() => productFieldsFromMeasure(PER_100G));
+  const [sizeRows, setSizeRows] = useState<SizeRow[]>([]);
   const [source, setSource] = useState<IngredientSource>("manual");
   // Always starts unchecked, even for a bundle/USDA-sourced estimate —
   // "we researched it" isn't the same as "a person confirmed it against a
@@ -390,6 +404,11 @@ function AddFoodForm({
       setError(measure.problem);
       return;
     }
+    const portionSizes = sizesFromRows(sizeRows);
+    if (!Array.isArray(portionSizes)) {
+      setError(portionSizes.problem);
+      return;
+    }
 
     // Ambiguous searches (e.g. "квасоля") can surface several distinct
     // matches that would all default to the same save name — the
@@ -408,6 +427,7 @@ function AddFoodForm({
         ...toStoredValues(parsed, measure),
         giFrom: giFromIfStill(giFrom, parsed.gi, unknownFields),
         ...measure,
+        portionSizes,
       });
       onSaved(saved);
     } catch (err) {
@@ -541,14 +561,11 @@ function AddFoodForm({
       {NUMERIC_FIELDS.map((field) => (
         <label key={field}>
           {uk.foods.form.fields[field]}
-          <input
-            type="number"
-            inputMode="decimal"
-            step="0.1"
+          <MathInput
             value={values[field]}
             placeholder={uk.foods.form.unknownPlaceholder}
-            onChange={(e) => {
-              setValues({ ...values, [field]: e.target.value });
+            onChange={(v) => {
+              setValues({ ...values, [field]: v });
               if (field === "gi") setGiFrom(""); // a GI typed by hand has no database source
             }}
           />
@@ -568,6 +585,7 @@ function AddFoodForm({
       ))}
 
       <PackSummary pack={pack} values={values} />
+      <PortionSizesFields rows={sizeRows} onChange={setSizeRows} {...sizeUnits(pack)} />
 
       <label className="settings-checkbox">
         <input
@@ -612,6 +630,7 @@ function EditIngredientForm({
   const [nameEn, setNameEn] = useState(ingredient.nameEn);
   const [values, setValues] = useState<FormValues>(() => typedFormValues(ingredient));
   const [pack, setPack] = useState<ProductFields>(() => productFieldsFromMeasure(measureOf(ingredient)));
+  const [sizeRows, setSizeRows] = useState<SizeRow[]>(() => sizeRowsFrom(ingredient.portionSizes));
   const [giVerified, setGiVerified] = useState(ingredient.giVerified);
   const [giFrom, setGiFrom] = useState(ingredient.giFrom);
   const [saving, setSaving] = useState(false);
@@ -633,6 +652,11 @@ function EditIngredientForm({
       setError(measure.problem);
       return;
     }
+    const portionSizes = sizesFromRows(sizeRows);
+    if (!Array.isArray(portionSizes)) {
+      setError(portionSizes.problem);
+      return;
+    }
     if (nameMatch) return;
 
     setSaving(true);
@@ -647,6 +671,7 @@ function EditIngredientForm({
         ...toStoredValues(parsed, measure),
         giFrom: giFromIfStill(isDatabaseValues ? ingredient.basedOn || ingredient.id : giFrom, parsed.gi, unknownFields),
         ...measure,
+        portionSizes,
       };
       if (isBuiltInId(ingredient.id)) {
         // Editing a built-in item saves her own copy, which takes its place.
@@ -687,14 +712,11 @@ function EditIngredientForm({
       {NUMERIC_FIELDS.map((field) => (
         <label key={field}>
           {uk.foods.form.fields[field]}
-          <input
-            type="number"
-            inputMode="decimal"
-            step="0.1"
+          <MathInput
             value={values[field]}
             placeholder={uk.foods.form.unknownPlaceholder}
-            onChange={(e) => {
-              setValues({ ...values, [field]: e.target.value });
+            onChange={(v) => {
+              setValues({ ...values, [field]: v });
               if (field === "gi") {
                 setGiVerified(false); // a changed GI invalidates any prior confirmation
                 setGiFrom(""); // …and has no database source
@@ -717,6 +739,7 @@ function EditIngredientForm({
       ))}
 
       <PackSummary pack={pack} values={values} />
+      <PortionSizesFields rows={sizeRows} onChange={setSizeRows} databaseSizes={ingredient.portionSizes.filter((p) => p.fromDatabase)} {...sizeUnits(pack)} />
 
       <label className="settings-checkbox">
         <input
@@ -804,6 +827,9 @@ function ComposeDishForm({
     pieces: existingDish?.yieldPieces ? String(existingDish.yieldPieces) : "",
   }));
   const [giVerified, setGiVerified] = useState(existingDish?.giVerified ?? false);
+  const [sizeRows, setSizeRows] = useState<SizeRow[]>(() => sizeRowsFrom(existingDish?.portionSizes ?? []));
+  const [weighedPieces, setWeighedPieces] = useState(existingDish?.weighedPieces ? String(existingDish.weighedPieces) : "");
+  const [weighedGrams, setWeighedGrams] = useState(existingDish?.weighedGrams ? String(existingDish.weighedGrams) : "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -823,7 +849,7 @@ function ComposeDishForm({
 
   const toRef = (row: ComposeRow): DishIngredientRef | null => {
     const ingredient = findIngredient(row);
-    const amount = Number(row.amount);
+    const amount = evaluateInput(row.amount) ?? NaN;
     if (!ingredient || !(amount > 0)) return null;
     const ref: DishIngredientRef =
       row.unit === "pieces" ? { id: ingredient.id, nameUk: ingredient.nameUk, grams: 0, pieces: amount } : { id: ingredient.id, nameUk: ingredient.nameUk, grams: amount };
@@ -832,6 +858,9 @@ function ComposeDishForm({
   const resolvedRefs: DishIngredientRef[] = rows.map(toRef).filter((ref): ref is DishIngredientRef => ref !== null);
 
   const yieldMeasure = measureFromPackFields(yieldFields);
+  const weighedNow = weighedPair(weighedPieces, weighedGrams);
+  const dishHasPieceWeight =
+    (!("problem" in weighedNow) && weighedNow.weighedPieces !== null) || (yieldMeasure !== null && pieceGrams(yieldMeasure) !== null);
   const dishNutrition = (refs: DishIngredientRef[], y: Measure) =>
     computeDishNutrition(refs, y.weighedGrams ?? 0, findIngredient, y.basis === "piece" ? y.weighedPieces : null);
   const preview =
@@ -857,6 +886,16 @@ function ComposeDishForm({
       setError(uk.dishes.composeForm.validationError);
       return;
     }
+    const portionSizes = sizesFromRows(sizeRows);
+    if (!Array.isArray(portionSizes)) {
+      setError(portionSizes.problem);
+      return;
+    }
+    const weighed = weighedPair(weighedPieces, weighedGrams);
+    if ("problem" in weighed) {
+      setError(weighed.problem);
+      return;
+    }
     if (nameMatch) return;
 
     setSaving(true);
@@ -873,6 +912,8 @@ function ComposeDishForm({
         yieldGrams: yieldMeasure.weighedGrams ?? 0,
         basis: yieldMeasure.basis,
         yieldPieces: yieldMeasure.weighedPieces,
+        ...weighed,
+        portionSizes,
         ...nutrition,
         source: existingDish?.source ?? "manual",
         giVerified: giVerified && !unknownFields.includes("gi"),
@@ -961,12 +1002,9 @@ function ComposeDishForm({
             <div className="compose-amount">
               <label>
                 {row.unit === "pieces" ? uk.dishes.composeForm.amountLabel : uk.dishes.composeForm.gramsLabel}
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  step="0.1"
+                <MathInput
                   value={row.amount}
-                  onChange={(e) => updateRow(index, { amount: e.target.value })}
+                  onChange={(v) => updateRow(index, { amount: v })}
                 />
               </label>
               {rowUnits(resolvedIngredient).grams && rowUnits(resolvedIngredient).pieces && (
@@ -1006,6 +1044,21 @@ function ComposeDishForm({
         hints={{ grams: uk.dishes.composeForm.yieldGramsHint, pieces: uk.dishes.composeForm.yieldPiecesHint }}
       />
       <p className="food-form-hint">{uk.dishes.composeForm.yieldHint}</p>
+      <WeighedPiecesFields
+        pieces={weighedPieces}
+        grams={weighedGrams}
+        onChange={(pieces, grams) => {
+          setWeighedPieces(pieces);
+          setWeighedGrams(grams);
+        }}
+        hint={uk.dishes.composeForm.weighedHint}
+      />
+      <PortionSizesFields
+        rows={sizeRows}
+        onChange={setSizeRows}
+        allowGrams={yieldFields.main !== "piece" || dishHasPieceWeight}
+        allowPieces={yieldFields.main === "piece" || dishHasPieceWeight}
+      />
 
       {preview && (
         <>
@@ -1298,16 +1351,28 @@ export default function FoodsScreen() {
       )}
 
       {editingDish && (
-        <ComposeDishForm
-          ingredients={availableIngredients}
-          existingItems={existingItems}
-          existingDish={editingDish}
-          onSaved={(updated) => {
-            setDishes((prev) => [...(prev ?? []).filter((d) => d.id !== editingDish.id && d.id !== updated.id), updated]);
-            setEditingDish(null);
-          }}
-          onCancel={() => setEditingDish(null)}
-        />
+        editingDish.ingredients.length === 0 && !isBuiltInId(editingDish.id) ? (
+          <FixedDishForm
+            dish={editingDish}
+            existingItems={existingItems}
+            onSaved={(updated) => {
+              setDishes((prev) => [...(prev ?? []).filter((d) => d.id !== editingDish.id), updated]);
+              setEditingDish(null);
+            }}
+            onCancel={() => setEditingDish(null)}
+          />
+        ) : (
+          <ComposeDishForm
+            ingredients={availableIngredients}
+            existingItems={existingItems}
+            existingDish={editingDish}
+            onSaved={(updated) => {
+              setDishes((prev) => [...(prev ?? []).filter((d) => d.id !== editingDish.id && d.id !== updated.id), updated]);
+              setEditingDish(null);
+            }}
+            onCancel={() => setEditingDish(null)}
+          />
+        )
       )}
       {editingDish && !isBuiltInId(editingDish.id) && (
         <DeleteItem

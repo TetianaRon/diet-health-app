@@ -232,6 +232,12 @@ function entryCard(e) {
           el("span", { class: "badge " + gi.reliability, text: REL[gi.reliability] }),
           e.oldGi !== null && e.oldGi !== undefined ? el("span", { class: "gi-old", text: "було " + e.oldGi }) : null),
         sourceDetails(gi, datasetName)),
+      ...(e.portions || []).map((p) => el("div", { class: "part" },
+        el("div", { class: "line" },
+          el("strong", { text: "Порція: " + p.labelUk }),
+          el("span", { class: "gi-val", text: String(p.grams).replace(".", ",") + " г" }),
+          el("span", { class: "badge " + p.reliability, text: REL[p.reliability] })),
+        sourceDetails(p, datasetName))),
     ),
   );
   const note = el("textarea", { id: "note-" + e.id, placeholder: "Що змінити (обов'язково для доопрацювання)", "aria-label": "Коментар до " + e.nameUk });

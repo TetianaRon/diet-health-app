@@ -1592,3 +1592,50 @@ select {
   align-items: flex-end;
   flex-wrap: wrap;
 }
+
+/* Maths in value fields (2.0.2) */
+.math-result {
+  font-size: 0.9rem;
+  color: #2f7a4f;
+}
+.math-result-error {
+  color: #b3261e;
+}
+.math-keys {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.4rem;
+}
+.math-key {
+  min-width: 3rem;
+  min-height: 2.75rem;
+  font-size: 1.3rem;
+  border: 1px solid #2f7a4f;
+  border-radius: 8px;
+  background: #fff;
+  color: #2f7a4f;
+}
+
+/* Named portion sizes (2.0.2) */
+.size-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: flex-end;
+  margin-bottom: 8px;
+}
+.size-pick {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 4px 0 8px;
+}
+.size-pick-label {
+  font-size: 0.95rem;
+  color: #4a4a4a;
+}
+.size-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

@@ -2,9 +2,9 @@
 // meal rows by count, dishes by count, recipe lines by count.
 import { describe, expect, it } from "vitest";
 import { buildLogEntryForAmount, groupIntoMeals, rowToLogEntry, logEntryToRow } from "./dailyLog";
-import { computeDishNutrition, parseIngredientsJson, serializeIngredientsJson, type IngredientNutrition } from "./dishes";
+import { computeDishNutrition, itemMeasure, parseIngredientsJson, serializeIngredientsJson, type IngredientNutrition } from "./dishes";
 import { rowToIngredient, ingredientToRow, type Ingredient } from "./ingredients";
-import { PER_100G, type Measure } from "./measure";
+import { resolveAmount, PER_100G, type Measure } from "./measure";
 
 const n = (carbsG: number, caloriesKcal: number, gi: number): IngredientNutrition => ({
   carbsG,
@@ -109,5 +109,20 @@ describe("items keep how they're measured", () => {
     expect(plain.basis).toBe("100g");
     expect(plain.valuesPer).toBeNull();
     expect(plain.weighedGrams).toBeNull();
+  });
+});
+
+describe("a dish's weighed pieces", () => {
+  it("gives the piece weight without counting the whole batch (10 pancakes = 400 g of a 1,2 kg stack)", () => {
+    const m = itemMeasure({ basis: "100g", yieldGrams: 1200, yieldPieces: null, weighedPieces: 10, weighedGrams: 400 });
+    expect(m.weighedPieces).toBe(10);
+    expect(m.weighedGrams).toBe(400);
+    expect(resolveAmount(m, { pieces: 3 })).toEqual({ factor: 1.2, grams: 120, pieces: 3 });
+  });
+
+  it("falls back to the batch's weight and count when no pieces were weighed", () => {
+    const m = itemMeasure({ basis: "piece", yieldGrams: 600, yieldPieces: 10, weighedPieces: null, weighedGrams: null });
+    expect(m.weighedPieces).toBe(10);
+    expect(m.weighedGrams).toBe(600);
   });
 });

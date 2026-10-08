@@ -13,6 +13,7 @@ import { newRecordId } from "./itemIds";
 import { buildColumnIndex, buildRow, cell, parseTab, SCAN_LAST_COLUMN, type ColumnIndex, type ParsedTab } from "./sheetRow";
 import { toGlycemicFlag, type GlycemicFlag } from "./glycemicFlag";
 import { positiveOrNull, resolveAmount, toBasis, PER_100G, type Basis, type Measure } from "./measure";
+import { parsePortionSizes, serializePortionSizes, type PortionSize } from "./portionSizes";
 
 export type DishSource = "starter" | "manual";
 
@@ -107,6 +108,12 @@ export interface Dish extends IngredientNutrition {
   // may be 0 (unknown).
   basis: Basis;
   yieldPieces: number | null;
+  // A weighed handful of pieces («10 млинців = 400 г», 2.0.2), so the whole
+  // batch never has to be counted; both null when not given.
+  weighedPieces: number | null;
+  weighedGrams: number | null;
+  // Her named portion sizes (2.0.2, portionSizes.ts).
+  portionSizes: PortionSize[];
   source: DishSource;
   dateAdded: string;
   glycemicFlag: GlycemicFlag;
@@ -215,9 +222,17 @@ export const SMALL_UNKNOWN_GI_SHARE = 0.05;
 
 type WithUnknown = IngredientNutrition & { unknownFields: NutritionKey[] } & Partial<Measure>;
 
-/** A product's or dish's measure: a dish's yield (weight and count) gives its piece weight. */
+/**
+ * A product's or dish's measure. A dish's piece weight comes from its weighed
+ * pieces («10 млинців = 400 г») when given, else from its yield when both the
+ * weight and the count of the whole batch are known.
+ */
 export function itemMeasure(item: Partial<Measure> & { yieldGrams?: number; yieldPieces?: number | null }): Measure {
-  if (item.yieldGrams !== undefined) return { basis: item.basis ?? "100g", valuesPer: null, weighedPieces: item.yieldPieces ?? null, weighedGrams: item.yieldGrams || null };
+  if (item.yieldGrams !== undefined) {
+    const basis = item.basis ?? "100g";
+    if (item.weighedPieces && item.weighedGrams) return { basis, valuesPer: null, weighedPieces: item.weighedPieces, weighedGrams: item.weighedGrams };
+    return { basis, valuesPer: null, weighedPieces: item.yieldPieces ?? null, weighedGrams: item.yieldGrams || null };
+  }
   return measureOf(item);
 }
 
@@ -330,6 +345,8 @@ export const DISHES_HEADERS = [
   "YieldGrams",
   "Basis",
   "YieldPieces",
+  "WeighedPieces",
+  "WeighedGrams",
   "Carbs_g",
   "GI",
   "Fiber_g",
@@ -345,6 +362,7 @@ export const DISHES_HEADERS = [
   "UnknownFields",
   "Id",
   "BasedOn",
+  "PortionSizes",
   "UpdatedAt",
 ] as const;
 const DEFAULT_COLUMN_INDEX = buildColumnIndex(DISHES_HEADERS);
@@ -361,6 +379,9 @@ export function rowToDish(row: unknown[], columnIndex: ColumnIndex = DEFAULT_COL
     yieldGrams: toNumber(cell(row, columnIndex, "YieldGrams")),
     basis: toBasis(cell(row, columnIndex, "Basis")),
     yieldPieces: positiveOrNull(cell(row, columnIndex, "YieldPieces")),
+    weighedPieces: positiveOrNull(cell(row, columnIndex, "WeighedPieces")),
+    weighedGrams: positiveOrNull(cell(row, columnIndex, "WeighedGrams")),
+    portionSizes: parsePortionSizes(cell(row, columnIndex, "PortionSizes")),
     carbsG: toNumber(cell(row, columnIndex, "Carbs_g")),
     gi: toNumber(cell(row, columnIndex, "GI")),
     fiberG: toNumber(cell(row, columnIndex, "Fiber_g")),
@@ -386,6 +407,9 @@ export function dishFields(dish: Dish): Record<string, unknown> {
       YieldGrams: dish.yieldGrams || "",
       Basis: dish.basis === "piece" ? "piece" : "",
       YieldPieces: dish.yieldPieces ?? "",
+      WeighedPieces: dish.weighedPieces ?? "",
+      WeighedGrams: dish.weighedGrams ?? "",
+      PortionSizes: serializePortionSizes(dish.portionSizes),
       Carbs_g: dish.carbsG,
       GI: dish.gi,
       Fiber_g: dish.fiberG,

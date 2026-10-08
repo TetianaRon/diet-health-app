@@ -679,13 +679,13 @@ Packs print nutrients per portion (per 30 g) or per piece (dumplings per 12), no
 Two separate things (developer, 2026-10-07: values per 100 g from the database, plus 12 home-cooked dumplings weighed at 300 g):
 - **«Значення вказано на»:** grams or pieces, and the amount as the pack says it («на 100 г», «на 30 г», «на 12 шт.»). The values are typed for that amount. Default: «на 100 г».
 - **«Вага штук» (optional):** any weighed count of pieces and its weight («12 шт. = 300 г»). It gives the product a piece weight, so it can be logged both by count and by weight.
-- **Dishes:** the yield is a weight («Вага готової страви, г»), a count («Вийшло, шт.»), or both — the same batch, so with both the dish has a piece weight. The main one decides how the dish is measured.
+- **Dishes:** the yield is a weight («Вага готової страви, г»), a count («Вийшло, шт.»), or both — the same batch. The main one decides how the dish is measured. **«Вага штук» (optional), like products** (2.0.2, developer: a stack of a few dozen pancakes isn't counted): any weighed handful, «10 млинців = 400 г», gives the piece weight; without it, the batch's weight and count give it when both are known.
 - The form shows what will be stored («Буде збережено на 100 г: …» or «на 1 шт.: …») and one piece's weight.
 - Editing a database product saves her own copy (as before), which replaces it in lists.
 
 ### Stored (new columns, added by the silent upgrade)
 - **Ingredients:** `Basis` (`100g` or `piece`; blank reads as `100g`, so every existing row stays as it is), `ValuesPer` (the amount the values were typed for; blank = 100 g or 1 piece), `WeighedPieces` and `WeighedGrams` (the weighed count; blank = no piece weight).
-- **Dishes:** `Basis` and `YieldPieces` (blank = none); `YieldGrams` may be 0 for a dish measured per piece.
+- **Dishes:** `Basis` and `YieldPieces` (blank = none); `YieldGrams` may be 0 for a dish measured per piece; `WeighedPieces` and `WeighedGrams` (2.0.2) for the weighed handful.
 - **Values:** per 100 g for `100g` (every value except GI recalculated from the typed amount), per 1 piece for `piece`, to 4 decimals.
 - **A dish's ingredient** (`IngredientsJson`) can be given as `pieces` instead of `grams`: its contribution is the values per piece × pieces, or through the piece weight.
 - **DailyLog:** `PortionPieces` (blank = logged by weight). When the weight isn't known, `PortionGrams` is 0 and `UnknownFields` lists `portionGrams`, so a meal's total weight never counts it as 0.
@@ -699,3 +699,31 @@ Two separate things (developer, 2026-10-07: values per 100 g from the database, 
 - Every nutrient, GI and GL work without weight: GL = GI × grams of carbs eaten ÷ 100; a dish's GI is already weighted by carbs; a dish needs only its ingredients' total nutrients and its yield.
 - A pieces-main dish: values per piece = the ingredients' totals ÷ `YieldPieces`. With a yield weight too, one piece weighs yield weight ÷ pieces.
 - Lists show «на 1 шт.» instead of «на 100 г» for pieces-main items. The duplicates review («Знайдено однакові записи») says which basis each version uses.
+
+## Faster food entry (2.0.2, designed 2026-10-07)
+
+Four things that make logging quicker. Builds on 2.0.1's measures (`measure.ts`).
+
+### Named portion sizes
+- **Up to 3 sizes per product or dish**, each a label and an amount: «скибка ≈ 45 г», «маленьке / середнє / велике яблуко», «чашка ≈ 250 г», or in pieces for an item counted per piece («порція ≈ 10 шт.»). New labels default to маленька / середня / велика; she renames them.
+- **The item editor** gets «Розміри порцій (необов'язково)»: up to 3 rows of label + amount (г or шт.).
+- **The meal editor** shows the sizes as buttons under the portion fields: «середнє ≈ 180 г». A tap fills the portion; a count next to them makes it «2 × середнє» (360 г). The portion fields stay editable.
+- **Stored:** a `PortionSizes` column on Ingredients and Dishes (JSON: `[{"label":"середнє","grams":180}]` or `{"label":"порція","pieces":10}`). A meal row logged by a size keeps its label in a new `PortionSize` column («2 × середнє»), and its weight shows with «≈».
+- **Database sizes:** the verified database ships typical sizes for common foods, each with its source (USDA FoodData Central portion weights, e.g. "1 medium apple"), reliability, reasoning and date, like every reference value (rule 5). They show with ⓘ. Her own sizes are added to them; a size of hers with the same label replaces the database one.
+
+### Common nuts in the verified database
+- Almonds, pistachios, hazelnuts, cashews, peanuts; pecans, Brazil nuts, pine nuts, sunflower and pumpkin seeds where sources allow. **Roasted, unsalted and salted** where USDA has both; walnuts stay raw (the existing entry).
+- Each with the typical weight of one nut or kernel as a database size («1 мигдалина ≈ 1,2 г»), so a few nuts are logged by count.
+- GI from the 2021 tables where a study exists, otherwise `unknown`; low-carb nuts follow the status rules of the database task.
+- Built through `docs/tasks/dha-task-verified-db-change.md`, with the developer's review on the review page.
+
+### Saving a custom entry to «Страви»
+- The meal editor's custom entry («Власний запис») gets «Зберегти в мої страви».
+- It's saved as a dish measured **per portion**: values per 1 piece, where the piece is the whole portion (a meal box, a restaurant dish), with its weight if she typed one. Later she logs «1 порція», or ½ (0,5) — the 2.0.1 pieces maths.
+- The dish has no recipe; its values are hers («неперевірено»), editable like a product's.
+
+### Maths in value fields
+- Number fields accept a short calculation: `200*3/4`, `150+30`, «200 ккал * 3/4». Allowed: numbers with a decimal comma or point, `+ − * / ( )`; unit words are ignored.
+- The field shows the result under it («= 150») while typing; the result is stored, never the formula.
+- The phone's number keyboard has no × or ÷ (checked on the emulator's Gboard: only − , . and space). So while a value field is focused, a row of keys «+ − × ÷» sits under it and adds the sign at the cursor; the number keyboard stays.
+- Applies to the meal editor's portion and custom-entry fields, and the product form's value fields.

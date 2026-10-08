@@ -130,8 +130,12 @@ export const uk = {
     // A dish's line inside a meal on Today — weight only; the meal's own
     // line carries the full stats (see mealStat below).
     // A meal row's amount (2.0.1): «7,5 шт.», «3 шт. (15 г)», «150 г».
-    dishAmount: (grams: number | null, pieces: number | null) =>
-      pieces !== null ? `${n(pieces)} шт.${grams !== null ? ` (${n(grams)} г)` : ""}` : `${n(grams ?? 0)} г`,
+    dishAmount: (grams: number | null, pieces: number | null, size = "") =>
+      size
+        ? `${size} (≈${grams !== null ? `${n(grams)} г` : `${n(pieces ?? 0)} шт.`})`
+        : pieces !== null
+          ? `${n(pieces)} шт.${grams !== null ? ` (${n(grams)} г)` : ""}`
+          : `${n(grams ?? 0)} г`,
     carbsValue: (g: number) => `${n(g)} г вуглеводів`,
     caloriesValue: (kcal: number) => `${n(kcal)} ккал`,
     unknownValueLabel: "невідомо",
@@ -239,6 +243,10 @@ export const uk = {
       switchToCustomButton: "Власний запис (страва не з бази)",
       switchToPickButton: "← Обрати з бази",
       customNameLabel: "Назва страви",
+      saveAsDishLabel: "Також зберегти в «Страви» — наступного разу обрати зі списку",
+      saveAsDishHint: "Збережеться як страва на 1 порцію (з цією вагою). Потім можна записати 1 порцію, половину (0,5) тощо.",
+      saveAsDishNameTaken: "Страва чи продукт із такою назвою вже є — змініть назву або зніміть позначку.",
+      portionSizeLabel: "порція",
       customNamePlaceholder: "напр. Борщ у ресторані",
       customHint: "Заповніть відомі значення, невідомі залиште порожніми — вони не враховуватимуться в денних підсумках.",
       customFieldPlaceholder: "невідомо",
@@ -262,6 +270,7 @@ export const uk = {
     title: "Джерело значень",
     nutrients: "Поживні речовини, на 100 г",
     gi: "Глікемічний індекс (ГІ)",
+    portions: "Розміри порцій",
     reliability: { high: "висока надійність", medium: "середня надійність", low: "низька надійність" } as Record<string, string>,
     giStatus: { measured: "виміряне", conventional: "умовне", unknown: "немає даних", notApplicable: "не застосовується" } as Record<string, string>,
     giNotApplicable: "ГІ не застосовується",
@@ -349,8 +358,30 @@ export const uk = {
     done: "Ваші копії оновлено.",
     failed: (message: string) => `Не вдалося оновити: ${message}`,
   },
+  mathInput: {
+    cantCalculate: "Не вдається порахувати — перевірте запис.",
+    plus: "Додати знак плюс",
+    minus: "Додати знак мінус",
+    times: "Додати знак множення",
+    divide: "Додати знак ділення",
+  },
   foods: {
     title: "Страви",
+    // «Розміри порцій» (2.0.2, PortionSizesFields.tsx and the meal editor).
+    sizes: {
+      legend: "Розміри порцій",
+      hint: "Напр. скибка ≈ 45 г, середнє яблуко ≈ 180 г. У прийомі їжі розмір обирається одним натиском.",
+      addButton: "+ Додати розмір",
+      removeButton: "Прибрати",
+      labelLabel: "Назва",
+      amountGramsLabel: "Грамів",
+      amountPiecesLabel: "Штук",
+      database: "З бази:",
+      invalid: "Для кожного розміру вкажіть назву й кількість (або приберіть рядок).",
+      pickLabel: "Розмір порції",
+      countLabel: "Скільки",
+      chip: (label: string, amount: string) => `${label} ≈ ${amount}`,
+    },
     // «Значення вказано на … г / … шт.» (2.0.1, PackAmountFields.tsx).
     pack: {
       legend: "Значення вказано на",
@@ -466,6 +497,12 @@ export const uk = {
     flagIngredientsPrompt: {
       title: "Позначити окремі продукти цієї страви? (необов'язково)",
     },
+    // A dish saved from a custom meal entry: her values for 1 portion, no recipe (2.0.2).
+    fixedForm: {
+      valuesHeading: "Значення на 1 порцію",
+      weightLabel: "Вага порції, г",
+      perPortion: "на 1 порцію",
+    },
     composeForm: {
       nameLabel: "Назва страви",
       namePlaceholder: "напр. борщ",
@@ -478,6 +515,7 @@ export const uk = {
       yieldLegend: "Рахувати страву на",
       yieldGramsHint: "Значення страви рахуватимуться на 100 г. Кількість штук необов'язкова (напр. вийшло 10 млинців) — тоді страву можна записувати й поштучно.",
       yieldPiecesHint: "Значення страви рахуватимуться на 1 шт. Вага готової страви необов'язкова — тоді страву можна записувати й у грамах.",
+      weighedHint: "Не треба рахувати всю партію: зважте кілька штук разом — напр. 10 млинців = 400 г. Тоді страву можна записувати й поштучно.",
       yieldGramsLabel: "Вага готової страви, г",
       yieldPiecesLabel: "Вийшло, шт.",
       amountUnitGrams: "г",
@@ -650,6 +688,7 @@ export const uk = {
       ValuesPer: "Значення на (г або шт.)",
       WeighedPieces: "Зважено штук",
       WeighedGrams: "Вага зважених штук, г",
+      PortionSizes: "Розміри порцій",
       Carbs_g: "Вуглеводи, г",
       GI: "Глікемічний індекс",
       Fiber_g: "Клітковина, г",
@@ -669,6 +708,7 @@ export const uk = {
       ItemName: "Назва продукту/страви",
       PortionGrams: "Порція, г",
       PortionPieces: "Порція, шт.",
+      PortionSize: "Розмір порції",
       GL: "Глікемічне навантаження",
       Notes: "Примітки",
       MealId: "Ідентифікатор прийому їжі",

@@ -126,6 +126,7 @@ describe("sumKnownField", () => {
     itemName: "Тест",
     portionGrams: 100,
     portionPieces: null,
+    portionSize: "",
     carbsG: 10,
     gi: 50,
     fiberG: 0,
@@ -195,6 +196,7 @@ describe("rowToLogEntry / logEntryToRow", () => {
       itemName: "Гречка варена",
       portionGrams: 200,
       portionPieces: null,
+      portionSize: "",
       carbsG: 39.8,
       gi: 54,
       fiberG: 5.4,
@@ -240,6 +242,7 @@ describe("groupIntoMeals", () => {
     itemName,
     portionGrams: 100,
     portionPieces: null,
+    portionSize: "",
     carbsG,
     gi: 50,
     fiberG: 0,
@@ -315,6 +318,7 @@ describe("recentDayGroups", () => {
     itemName,
     portionGrams: 100,
     portionPieces: null,
+    portionSize: "",
     carbsG: 0,
     gi: 0,
     fiberG: 0,
@@ -409,7 +413,7 @@ describe("planMealSave", () => {
       rowsOf(...existing),
       columnIndex,
     );
-    expect(updates.map((u) => u.range)).toEqual(["DailyLog!A3:T3", "DailyLog!A4:T4"]);
+    expect(updates.map((u) => u.range)).toEqual(["DailyLog!A3:U3", "DailyLog!A4:U4"]);
   });
 
   it("overwrites an edited dish in place and leaves untouched rows alone", () => {
@@ -425,7 +429,7 @@ describe("planMealSave", () => {
       rowsOf(a, b),
       columnIndex,
     );
-    expect(updates.map((u) => u.range)).toEqual(["DailyLog!A2:T2", "DailyLog!A3:T3"]);
+    expect(updates.map((u) => u.range)).toEqual(["DailyLog!A2:U2", "DailyLog!A3:U3"]);
     expect(rowToLogEntry(updates[1].values[0], columnIndex).portionGrams).toBe(250);
     expect(rowToLogEntry(updates[1].values[0], columnIndex).id).toBe(b.id);
   });
@@ -434,8 +438,8 @@ describe("planMealSave", () => {
     const a = entry("A");
     const b = entry("B", "2026-08-13T12:01:00.000Z");
     const updates = planMealSave([a, b], [{ entry: a, original: a }], rowsOf(a, b), columnIndex);
-    const blanked = updates.find((u) => u.range === "DailyLog!A3:T3");
-    expect(blanked?.values[0]).toEqual(new Array(20).fill(""));
+    const blanked = updates.find((u) => u.range === "DailyLog!A3:U3");
+    expect(blanked?.values[0]).toEqual(new Array(21).fill(""));
   });
 
   it("reuses a freed row for a new dish before appending", () => {
@@ -451,7 +455,7 @@ describe("planMealSave", () => {
       rowsOf(a, b),
       columnIndex,
     );
-    expect(updates.map((u) => u.range)).toEqual(["DailyLog!A2:T2", "DailyLog!A3:T3"]);
+    expect(updates.map((u) => u.range)).toEqual(["DailyLog!A2:U2", "DailyLog!A3:U3"]);
     expect(rowToLogEntry(updates[1].values[0], columnIndex).itemName).toBe("C");
     expect(rowToLogEntry(updates[1].values[0], columnIndex).id).toMatch(/^L[0-9a-z]{13}$/);
   });
@@ -476,7 +480,7 @@ describe("planMealSave", () => {
       rowsOf(a1, a2),
       columnIndex,
     );
-    expect(updates.map((u) => u.range)).toEqual(["DailyLog!A2:T2", "DailyLog!A3:T3"]);
+    expect(updates.map((u) => u.range)).toEqual(["DailyLog!A2:U2", "DailyLog!A3:U3"]);
   });
 
   it("throws rather than guess when an original row is gone", () => {

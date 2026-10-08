@@ -3,10 +3,15 @@ import { verifiedEntry } from "../data/builtInFoods";
 import { searchFoods } from "../lib/foodSearch";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { uk } from "../i18n/uk";
+import MathInput from "./MathInput";
+import { evaluateInput } from "../lib/mathInput";
 import { useBackHandler } from "../lib/useBackHandler";
 import { classifyGl } from "../lib/health";
-import { itemMeasure, type IngredientNutrition, type NutritionKey } from "../lib/dishes";
+import { addDish, itemMeasure, type IngredientNutrition, type NutritionKey } from "../lib/dishes";
+import { normalizeItemName } from "../lib/itemIds";
 import { pieceGrams, positiveOrNull, round2, type Measure } from "../lib/measure";
+import { sizeAmount, sizeLabel, type PortionSize } from "../lib/portionSizes";
+import { sizeAmountText } from "./PortionSizesFields";
 import { GLYCEMIC_FLAG_SYMBOL, type GlycemicFlag } from "../lib/glycemicFlag";
 import { fromDatetimeLocalValue, toDatetimeLocalValue } from "../lib/dateFormat";
 import type { Settings } from "../lib/settings";
@@ -45,11 +50,13 @@ export interface PickableFood {
   // meal entry so its totals exclude them (see buildLogEntry).
   unknownFields: NutritionKey[];
   measure: Measure;
+  /** Named sizes (database sizes, then hers) offered as one tap (2.0.2). */
+  portionSizes: PortionSize[];
 }
 
 export function toPickable(
   item: { id: string; nameUk: string; nameEn: string; glycemicFlag: GlycemicFlag; unknownFields: NutritionKey[] } & IngredientNutrition &
-    Partial<Measure> & { yieldGrams?: number; yieldPieces?: number | null },
+    Partial<Measure> & { yieldGrams?: number; yieldPieces?: number | null; portionSizes?: PortionSize[] },
 ): PickableFood {
   const { id, nameUk, nameEn, glycemicFlag, unknownFields, carbsG, gi, fiberG, sugarsG, proteinG, fatG, caloriesKcal, sodiumMg } =
     item;
@@ -61,6 +68,7 @@ export function toPickable(
     unknownFields,
     per100g: { carbsG, gi, fiberG, sugarsG, proteinG, fatG, caloriesKcal, sodiumMg },
     measure: itemMeasure(item),
+    portionSizes: item.portionSizes ?? [],
   };
 }
 
@@ -116,6 +124,9 @@ function AddDishToMealForm({
   const [portionGrams, setPortionGrams] = useState("");
   // Pieces, for an item counted per piece or with a piece weight (2.0.1); linked to the grams when the weight is known.
   const [portionPieces, setPortionPieces] = useState("");
+  // A named size picked with a count («2 × середнє», 2.0.2); typing in the portion fields drops it.
+  const [pickedSize, setPickedSize] = useState<PortionSize | null>(null);
+  const [sizeCount, setSizeCount] = useState("1");
   const [notes, setNotes] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -124,6 +135,9 @@ function AddDishToMealForm({
   // it only ever produces a DailyLog row.
   const [mode, setMode] = useState<"pick" | "custom">("pick");
   const [customName, setCustomName] = useState("");
+  // «Також зберегти в «Страви»» (2.0.2): the custom entry becomes a dish of 1 portion.
+  const [saveAsDish, setSaveAsDish] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [customValues, setCustomValues] = useState<Record<keyof IngredientNutrition, string>>(EMPTY_CUSTOM_VALUES);
 
   const switchMode = (next: "pick" | "custom") => {
@@ -145,22 +159,35 @@ function AddDishToMealForm({
     setSearch(food.nameUk);
     setPortionGrams("");
     setPortionPieces("");
+    setPickedSize(null);
+    setSizeCount("1");
   };
 
   // Number("") is 0, so a blank portion must be rejected explicitly.
-  const parsedPortion = portionGrams.trim() === "" ? NaN : Number(portionGrams);
+  const parsedPortion = portionGrams.trim() === "" ? NaN : (evaluateInput(portionGrams) ?? NaN);
   const portionValid = Number.isFinite(parsedPortion) && parsedPortion > 0;
 
   // Which amount fields the picked item takes: both (linked) with a piece weight, else its own unit only.
   const weightOfPiece = mode === "pick" && selected ? pieceGrams(selected.measure) : null;
   const showGrams = mode === "custom" || !selected || selected.measure.basis !== "piece" || weightOfPiece !== null;
   const showPieces = mode === "pick" && selected !== null && (selected.measure.basis === "piece" || weightOfPiece !== null);
+  const fillFromSize = (size: PortionSize, countText: string) => {
+    if (!selected) return;
+    const count = positiveOrNull(countText) ?? 1;
+    const amount = sizeAmount(size, count, selected.measure);
+    if (!amount) return;
+    setPortionGrams(amount.grams === null ? "" : String(round2(amount.grams)));
+    setPortionPieces(amount.pieces === null ? "" : String(round2(amount.pieces)));
+  };
+  const usableSizes = mode === "pick" && selected ? selected.portionSizes.filter((s) => sizeAmount(s, 1, selected.measure) !== null) : [];
   const changeGrams = (value: string) => {
+    setPickedSize(null);
     setPortionGrams(value);
     const grams = positiveOrNull(value);
     if (weightOfPiece !== null) setPortionPieces(grams === null ? "" : String(round2(grams / weightOfPiece)));
   };
   const changePieces = (value: string) => {
+    setPickedSize(null);
     setPortionPieces(value);
     const pieces = positiveOrNull(value);
     if (weightOfPiece !== null) setPortionGrams(pieces === null ? "" : String(round2(pieces * weightOfPiece)));
@@ -190,15 +217,15 @@ function AddDishToMealForm({
   }
 
   const filledCustomFields = CUSTOM_FIELDS.filter((field) => customValues[field].trim() !== "");
-  const customFieldsValid = filledCustomFields.every((field) => Number.isFinite(Number(customValues[field])));
+  const customFieldsValid = filledCustomFields.every((field) => Number.isFinite((evaluateInput(customValues[field]) ?? NaN)));
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (mode === "pick") {
       if (!selected || !pickedEntry) {
         setError(uk.today.form.validationError);
         return;
       }
-      onAdd(pickedEntry);
+      onAdd(pickedSize ? { ...pickedEntry, portionSize: sizeLabel(pickedSize, positiveOrNull(sizeCount) ?? 1) } : pickedEntry);
       return;
     }
 
@@ -207,8 +234,49 @@ function AddDishToMealForm({
       return;
     }
     const values: Partial<IngredientNutrition> = {};
-    for (const field of filledCustomFields) values[field] = Number(customValues[field]);
-    onAdd(buildCustomLogEntry(mealType, customName.trim(), parsedPortion, values, notes.trim(), mealId, timestamp));
+    for (const field of filledCustomFields) values[field] = (evaluateInput(customValues[field]) ?? NaN);
+    const entry = buildCustomLogEntry(mealType, customName.trim(), parsedPortion, values, notes.trim(), mealId, timestamp);
+    if (!saveAsDish) {
+      onAdd(entry);
+      return;
+    }
+    // Saved as a dish measured per portion: values per 1 piece, where the piece is the whole portion.
+    const name = customName.trim();
+    if (foods.some((f) => normalizeItemName(f.nameUk) === normalizeItemName(name))) {
+      setError(uk.today.form.saveAsDishNameTaken);
+      return;
+    }
+    setSaving(true);
+    try {
+      const unknownFields = CUSTOM_FIELDS.filter((field) => !filledCustomFields.includes(field));
+      const dish = await addDish({
+        nameUk: name,
+        nameEn: "",
+        ingredients: [],
+        yieldGrams: parsedPortion,
+        basis: "piece",
+        yieldPieces: 1,
+        weighedPieces: null,
+        weighedGrams: null,
+        portionSizes: [{ label: uk.today.form.portionSizeLabel, pieces: 1 }],
+        carbsG: values.carbsG ?? 0,
+        gi: values.gi ?? 0,
+        fiberG: values.fiberG ?? 0,
+        sugarsG: values.sugarsG ?? 0,
+        proteinG: values.proteinG ?? 0,
+        fatG: values.fatG ?? 0,
+        caloriesKcal: values.caloriesKcal ?? 0,
+        sodiumMg: values.sodiumMg ?? 0,
+        source: "manual",
+        giVerified: false,
+        unknownFields,
+      });
+      onAdd({ ...entry, itemId: dish.id, portionPieces: 1, portionSize: uk.today.form.portionSizeLabel });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -271,14 +339,47 @@ function AddDishToMealForm({
       {showGrams && (
         <label>
           {uk.today.form.portionLabel}
-          <input type="number" inputMode="decimal" step="0.1" value={portionGrams} onChange={(e) => changeGrams(e.target.value)} />
+          <MathInput value={portionGrams} onChange={(v) => changeGrams(v)} />
         </label>
       )}
       {showPieces && (
         <label>
           {uk.today.form.portionPiecesLabel}
-          <input type="number" inputMode="decimal" step="0.1" value={portionPieces} onChange={(e) => changePieces(e.target.value)} />
+          <MathInput value={portionPieces} onChange={(v) => changePieces(v)} />
         </label>
+      )}
+      {usableSizes.length > 0 && (
+        <div className="size-pick">
+          <span className="size-pick-label">{uk.foods.sizes.pickLabel}</span>
+          <div className="size-chips">
+            {usableSizes.map((size) => (
+              <button
+                key={size.label}
+                type="button"
+                className={pickedSize?.label === size.label ? undefined : "button-secondary"}
+                aria-pressed={pickedSize?.label === size.label}
+                onClick={() => {
+                  setPickedSize(size);
+                  fillFromSize(size, sizeCount);
+                }}
+              >
+                {uk.foods.sizes.chip(size.label, sizeAmountText(size))}
+              </button>
+            ))}
+          </div>
+          {pickedSize && (
+            <label className="size-count">
+              {uk.foods.sizes.countLabel}
+              <MathInput
+                value={sizeCount}
+                onChange={(v) => {
+                  setSizeCount(v);
+                  fillFromSize(pickedSize, v);
+                }}
+              />
+            </label>
+          )}
+        </div>
       )}
       {showPieces && (
         <p className="food-form-hint">
@@ -289,18 +390,25 @@ function AddDishToMealForm({
       {previewText && <p className="food-form-source">{previewText}</p>}
 
       {mode === "custom" && (
+        <>
+          <label className="settings-checkbox">
+            <input type="checkbox" checked={saveAsDish} onChange={(e) => setSaveAsDish(e.target.checked)} />
+            {uk.today.form.saveAsDishLabel}
+          </label>
+          {saveAsDish && <p className="food-form-hint">{uk.today.form.saveAsDishHint}</p>}
+        </>
+      )}
+
+      {mode === "custom" && (
         <div className="food-form-custom-fields">
           <p className="food-form-source">{uk.today.form.customHint}</p>
           {CUSTOM_FIELDS.map((field) => (
             <label key={field}>
               {uk.today.form.customFieldLabels[field]}
-              <input
-                type="number"
-                inputMode="decimal"
-                step="0.1"
+              <MathInput
                 value={customValues[field]}
                 placeholder={uk.today.form.customFieldPlaceholder}
-                onChange={(e) => setCustomValues((prev) => ({ ...prev, [field]: e.target.value }))}
+                onChange={(v) => setCustomValues((prev) => ({ ...prev, [field]: v }))}
               />
             </label>
           ))}
@@ -315,7 +423,7 @@ function AddDishToMealForm({
       {error && <p className="food-form-error">{error}</p>}
 
       <div className="food-form-actions">
-        <button type="button" onClick={handleAdd}>
+        <button type="button" onClick={() => void handleAdd()} disabled={saving}>
           {uk.today.mealEditor.addDish.addButton}
         </button>
         <button type="button" onClick={onBack}>
@@ -355,9 +463,9 @@ function EditDishForm({
   const [notes, setNotes] = useState(entry.notes);
   const [error, setError] = useState<string | null>(null);
 
-  const parsedPortion = portionGrams.trim() === "" ? NaN : Number(portionGrams);
+  const parsedPortion = portionGrams.trim() === "" ? NaN : (evaluateInput(portionGrams) ?? NaN);
   const filledFields = CUSTOM_FIELDS.filter((field) => values[field].trim() !== "");
-  const fieldsValid = filledFields.every((field) => Number.isFinite(Number(values[field])));
+  const fieldsValid = filledFields.every((field) => Number.isFinite((evaluateInput(values[field]) ?? NaN)));
 
   const pieces = positiveOrNull(portionPieces);
   const gramsKnown = Number.isFinite(parsedPortion) && parsedPortion > 0;
@@ -368,7 +476,7 @@ function EditDishForm({
       return;
     }
     const nutritionValues: Partial<IngredientNutrition> = {};
-    for (const field of filledFields) nutritionValues[field] = Number(values[field]);
+    for (const field of filledFields) nutritionValues[field] = (evaluateInput(values[field]) ?? NaN);
     const updated = buildCustomLogEntry(
       entry.mealType,
       itemName.trim(),
@@ -395,18 +503,15 @@ function EditDishForm({
       </label>
       <label>
         {uk.today.form.portionLabel}
-        <input
-          type="number"
-          inputMode="decimal"
-          step="0.1"
+        <MathInput
           value={portionGrams}
-          onChange={(e) => setPortionGrams(e.target.value)}
+          onChange={(v) => setPortionGrams(v)}
         />
       </label>
       {(entry.portionPieces !== null || weightUnknown) && (
         <label>
           {uk.today.form.portionPiecesLabel}
-          <input type="number" inputMode="decimal" step="0.1" value={portionPieces} onChange={(e) => setPortionPieces(e.target.value)} />
+          <MathInput value={portionPieces} onChange={(v) => setPortionPieces(v)} />
         </label>
       )}
       <div className="food-form-custom-fields">
@@ -414,13 +519,10 @@ function EditDishForm({
         {CUSTOM_FIELDS.map((field) => (
           <label key={field}>
             {uk.today.form.customFieldLabels[field]}
-            <input
-              type="number"
-              inputMode="decimal"
-              step="0.1"
+            <MathInput
               value={values[field]}
               placeholder={uk.today.form.customFieldPlaceholder}
-              onChange={(e) => setValues((prev) => ({ ...prev, [field]: e.target.value }))}
+              onChange={(v) => setValues((prev) => ({ ...prev, [field]: v }))}
             />
           </label>
         ))}
@@ -748,6 +850,9 @@ export default function MealEditorScreen({
               />
               <span className="dish-row-text">
                 <strong>{d.entry.itemName}</strong>
+                {(d.entry.portionSize || d.entry.portionPieces !== null) && (
+                  <> — {uk.today.dishAmount(d.entry.unknownFields.includes("portionGrams") ? null : d.entry.portionGrams, d.entry.portionPieces, d.entry.portionSize)}</>
+                )}
                 <br />
                 <span className="entry-time">{formatStats(entryStatItems(d.entry, settings))}</span>
               </span>

@@ -297,3 +297,32 @@ Answering "did we review only products?": the 69 home dishes were on the page bu
 - 395 tests, `tsc -b`, `npm run build`. Version 2.0.1, versionCode 24.
 
 ✅ **2.0.1 released 2026-10-07:** main pushed (web) and the bundle uploaded to the internal testing track (versionCode 24).
+
+**Release 2.0.2 — faster food entry (2026-10-07/08, branch `release/2.0.2`):**
+- **Built as designed** (spec → "Faster food entry (2.0.2)"):
+  - **named portion sizes:** up to 3 of her own per product or dish (column `PortionSizes`, JSON), merged with the database's sizes. The meal editor offers them as chips plus a «Скільки» count, which gives «2 × середнє»; a one-piece size reads «мигдалина × 10». The chosen size is kept on the meal row (`PortionSize`);
+  - **saving a custom meal entry to «Страви»:** it becomes a dish of 1 portion (basis piece, yield 1, size «порція»), and a dish with no recipe is edited by its values (`FixedDishForm`);
+  - **maths in value fields** (`mathInput.ts`): the field shows «= N», and the result is stored.
+- **Changes during the build (developer):**
+  - **Dishes get «Вага штук»** (`WeighedPieces`, `WeighedGrams` on Dishes): weigh 10 pancakes from the stack (400 г) instead of counting the whole batch. The dish's piece weight prefers this pair over the batch count «Вийшло, шт.», which stays available.
+  - **Operator keys:** the phone's number keyboard (Gboard, `inputMode="decimal"`) has only − , . and space. So while a value field is focused, a row «+ − × ÷» sits under it and adds the sign at the cursor; the number keyboard stays (the developer chose this over the full text keyboard).
+  - The meal editor shows a dish row's size or count.
+- **Verified database round** (`dha-task-verified-db-change.md`):
+  - **18 nuts and seeds, B0099–B0116** (USDA SR Legacy / FNDDS, new dataset `usda-fndds`, new state `roasted`): almonds, pistachios, cashews, peanuts, pecans, sunflower and pumpkin seeds, each roasted without and with salt; hazelnuts roasted unsalted; Brazil nuts and pine nuts dried; walnuts roasted with salt, next to the existing raw walnuts (added to the core list by the developer).
+  - **Typical portion sizes** (`portions`, each with source, reliability, reason and date) on 39 entries, among them apple, banana, egg, bread, potato, carrot, orange, milk and kefir, plus one nut or seed for each of the 18 new entries. In the app they appear in the ⓘ dialog and as size chips.
+  - **Review** (https://claude.ai/artifact/Qv3xCH1UDqGwhxWeo8hFw4, ROUND7): every entry accepted. The nut GI question was answered "mixed": nuts keep GI 24 at low reliability.
+- **Verified (local web app, dev sheet, the developer signed in):**
+  - the silent upgrade added the new columns with no errors;
+  - apple chips маленьке 149 / середнє 182 / велике 223 г, and «2 × середнє» → 364 г;
+  - almonds «мигдалина × 10» → 12,9 г;
+  - «800 ккал * 3/4» → 600 and «80*3/4» → 60;
+  - the custom entry «Ланч-бокс» saved as a dish of 1 portion (yield 450 г, size «порція»);
+  - a pancakes dish from 300 г buckwheat, yield 1 200 г, with 10 = 400 г weighed: «3 шт.» → 120 г, and Today showed «3 шт. (120 г)»;
+  - her own size «скибка ≈ 45 г» appears as a chip.
+- **Verified (Ukrainian-locale test sheet):** upgraded on connecting; `PortionSizes` JSON, 136,5 and 68,25, and «1,5 × скибка» written and read back as numbers and text.
+- **Verified (emulator):** the size chips on the phone layout; «80×3÷4» typed with the number keyboard plus the operator keys → «= 60», with the field keeping focus. All test data was deleted afterwards.
+- **Not checked:**
+  - the operator row on the web: it's the same component, and the web keyboard has every sign anyway;
+  - editing a fixed-value dish on the phone;
+  - the duplicates review with sized items.
+- 406 tests, `tsc -b`, `npm run build`. Version 2.0.2, versionCode 25.

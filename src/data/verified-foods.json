@@ -30,6 +30,12 @@
       "version": "see the entry's description",
       "citation": "Our own arithmetic from the sources named in the entry's description.",
       "url": "https://roncreator.com/track-my-meals"
+    },
+    "usda-fndds": {
+      "name": "USDA FoodData Central — Food and Nutrient Database for Dietary Studies (FNDDS)",
+      "version": "2021-2023",
+      "citation": "U.S. Department of Agriculture, Agricultural Research Service. FoodData Central: Food and Nutrient Database for Dietary Studies 2021-2023.",
+      "url": "https://fdc.nal.usda.gov/"
     }
   },
   "categories": [
@@ -571,7 +577,41 @@
           "entryId": "#212, #213, #218, #223",
           "description": "#212 Bread, long rye (50% wholemeal wheat, 30% rye, 20% white wheat, yeast (13% net flour weight), 20 min rising time, 30 min proving time, 220°C baking temperature, 30 min bake time (New Zealand, 2010) — GI 76±15; #213 Bread, short rye (50% wholemeal wheat, 30% rye, 20% white wheat, yeast (1.3% net flour weight), no rising time, 30 min proving time, 220°C baking temperature, 30 min bake time (New Zealand, 2010) — GI 82±11; #218 Rye wheat sourdough bread (Paderborner, Lieken Urkorn, Dortmund, Germany) (Germany, 2014) — GI 62±4; #223 Rye, made with 30% wholemeal wheat, 20% kibbled rye, 30% wheat flour, and baker's yeast (New Zealand, 2010) — GI 60±3"
         }
-      }
+      },
+      "portions": [
+        {
+          "labelUk": "скибка",
+          "labelEn": "slice",
+          "grams": 32,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "172684",
+            "description": "1 slice, regular = 32 g"
+          }
+        },
+        {
+          "labelUk": "тонка скибка",
+          "labelEn": "thin slice",
+          "grams": 25,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "172684",
+            "description": "1 slice, thin = 25 g"
+          }
+        }
+      ]
     },
     {
       "id": "B0011",
@@ -617,7 +657,41 @@
           "entryId": "summary row; #234–#268",
           "description": "White wheat flour bread, mean of 35 foods — GI 73 (summary row). Entries used: #234 59, #235 59, #236 60, #237 62, #238 63, #239 65, #240 66, #241 68, #242 69, #243 70, #244 70, #245 70, #246 71, #247 71, #248 71, #249 71, #250 71, #251 72, #252 72, #253 74, #254 75, #255 75, #256 75, #257 76, #258 76, #259 76, #260 76, #261 76, #262 78, #263 81, #264 83, #265 83, #266 84, #267 87, #268 88"
         }
-      }
+      },
+      "portions": [
+        {
+          "labelUk": "скибка",
+          "labelEn": "slice",
+          "grams": 29,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "174924",
+            "description": "1 slice = 29 g"
+          }
+        },
+        {
+          "labelUk": "тонка скибка",
+          "labelEn": "thin slice",
+          "grams": 20,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "174924",
+            "description": "1 slice, thin = 20 g"
+          }
+        }
+      ]
     },
     {
       "id": "B0012",
@@ -664,7 +738,25 @@
           "entryId": "#933",
           "description": "#933 Kefir, low-fat, plain (Lifeway Foods, Chicago, USA) (USA, 2012) — GI 36±9"
         }
-      }
+      },
+      "portions": [
+        {
+          "labelUk": "склянка (240 мл)",
+          "labelEn": "cup (240 ml)",
+          "grams": 243,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "170904",
+            "description": "1 cup = 243 g"
+          }
+        }
+      ]
     },
     {
       "id": "B0013",
@@ -710,7 +802,25 @@
           "entryId": "summary row; #942–#947",
           "description": "Reduced-fat or low-fat milk, mean of six studies — GI 27 (summary row). Entries used: #942 26, #943 34, #944 20, #945 20, #946 30, #947 30"
         }
-      }
+      },
+      "portions": [
+        {
+          "labelUk": "склянка (240 мл)",
+          "labelEn": "cup (240 ml)",
+          "grams": 244,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "171267",
+            "description": "1 cup = 244 g"
+          }
+        }
+      ]
     },
     {
       "id": "B0014",
@@ -1176,7 +1286,25 @@
           "uk": "Вуглеводів дуже мало, тому ГІ не вимірюють; умовне значення 15, щоб ці вуглеводи все одно враховувалися в ГН.",
           "en": "Too little carbohydrate for GI to be measured; a conventional value of 15 so these carbohydrates still count in GL."
         }
-      }
+      },
+      "portions": [
+        {
+          "labelUk": "1 яйце",
+          "labelEn": "1 egg",
+          "grams": 50,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага великого яйця з даних USDA для цього ж запису.",
+            "en": "A large egg's weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "173424",
+            "description": "1 large = 50 g"
+          }
+        }
+      ]
     },
     {
       "id": "B0025",
@@ -1448,7 +1576,57 @@
           "entryId": "#3595, #3596",
           "description": "#3595 Carrots, raw, diced (Australia, 1982) — GI 35±5; #3596 Carrots, raw, ground (Australia, 1982) — GI 39±1"
         }
-      }
+      },
+      "portions": [
+        {
+          "labelUk": "маленька",
+          "labelEn": "small",
+          "grams": 50,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "170393",
+            "description": "1 small (5-1/2\" long) = 50 g"
+          }
+        },
+        {
+          "labelUk": "середня",
+          "labelEn": "medium",
+          "grams": 61,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "170393",
+            "description": "1 medium = 61 g"
+          }
+        },
+        {
+          "labelUk": "велика",
+          "labelEn": "large",
+          "grams": 72,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "170393",
+            "description": "1 large (7-1/4\" to 8-1/2\" long) = 72 g"
+          }
+        }
+      ]
     },
     {
       "id": "B0031",
@@ -1587,7 +1765,57 @@
           "entryId": "summary row; #1810–#1838",
           "description": "Boiled potato, mean of 29 studies — GI 73 (summary row). Entries used: #1810 94, #1811 53, #1812 57, #1813 66, #1814 68, #1815 101, #1816 74, #1817 79, #1818 66, #1819 75, #1820 103, #1821 56, #1822 85, #1823 59, #1824 58, #1825 69, #1826 88, #1827 82, #1828 87, #1829 93, #1830 60, #1831 75, #1832 82, #1833 38, #1834 79, #1835 79, #1836 73, #1837 72, #1838 58"
         }
-      }
+      },
+      "portions": [
+        {
+          "labelUk": "маленька",
+          "labelEn": "small",
+          "grams": 125,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "170440",
+            "description": "1 small (1-3/4\" to 2-1/2\" dia.) = 125 g"
+          }
+        },
+        {
+          "labelUk": "середня",
+          "labelEn": "medium",
+          "grams": 167,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "170440",
+            "description": "1 medium (2-1/4\" to 3-1/4\" dia.) = 167 g"
+          }
+        },
+        {
+          "labelUk": "велика",
+          "labelEn": "large",
+          "grams": 300,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "170440",
+            "description": "1 large (3\" to 4-1/4\" dia.) = 300 g"
+          }
+        }
+      ]
     },
     {
       "id": "B0034",
@@ -1671,7 +1899,57 @@
           "uk": "Вуглеводів дуже мало, тому ГІ не вимірюють; умовне значення 15, щоб ці вуглеводи все одно враховувалися в ГН.",
           "en": "Too little carbohydrate for GI to be measured; a conventional value of 15 so these carbohydrates still count in GL."
         }
-      }
+      },
+      "portions": [
+        {
+          "labelUk": "черрі",
+          "labelEn": "cherry",
+          "grams": 17,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "170457",
+            "description": "1 cherry = 17 g"
+          }
+        },
+        {
+          "labelUk": "середній",
+          "labelEn": "medium",
+          "grams": 123,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "170457",
+            "description": "1 medium whole (2-3/5\" dia) = 123 g"
+          }
+        },
+        {
+          "labelUk": "великий",
+          "labelEn": "large",
+          "grams": 182,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "170457",
+            "description": "1 large whole (3\" dia) = 182 g"
+          }
+        }
+      ]
     },
     {
       "id": "B0036",
@@ -2187,7 +2465,57 @@
           "entryId": "#1078",
           "description": "#1078 Apples, raw (Australia, 2020) — GI 44±5"
         }
-      }
+      },
+      "portions": [
+        {
+          "labelUk": "маленьке",
+          "labelEn": "small",
+          "grams": 149,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "171688",
+            "description": "1 small (2-3/4\" dia) = 149 g"
+          }
+        },
+        {
+          "labelUk": "середнє",
+          "labelEn": "medium",
+          "grams": 182,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "171688",
+            "description": "1 medium (3\" dia) = 182 g"
+          }
+        },
+        {
+          "labelUk": "велике",
+          "labelEn": "large",
+          "grams": 223,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "171688",
+            "description": "1 large (3-1/4\" dia) = 223 g"
+          }
+        }
+      ]
     },
     {
       "id": "B0048",
@@ -2233,7 +2561,57 @@
           "entryId": "#1160, #1161",
           "description": "#1160 Pear, Williams, raw, under ripe/crunchy (Australia, 2015) — GI 24±3; #1161 Pear, Williams, raw, ripe/soft (Australia, 2015) — GI 33±4"
         }
-      }
+      },
+      "portions": [
+        {
+          "labelUk": "маленька",
+          "labelEn": "small",
+          "grams": 148,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "169118",
+            "description": "1 small = 148 g"
+          }
+        },
+        {
+          "labelUk": "середня",
+          "labelEn": "medium",
+          "grams": 178,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "169118",
+            "description": "1 medium = 178 g"
+          }
+        },
+        {
+          "labelUk": "велика",
+          "labelEn": "large",
+          "grams": 230,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "169118",
+            "description": "1 large = 230 g"
+          }
+        }
+      ]
     },
     {
       "id": "B0049",
@@ -2279,7 +2657,57 @@
           "entryId": "#1088, #1089, #1090, #1091",
           "description": "#1088 Banana, raw (Australia, 2008) — GI 47±5; #1089 Banana, lady finger (Moraitis, Australia) (Australia, 2014) — GI 49±5; #1090 Banana, lady finger (Moraitis, Australia) (Australia, 2014) — GI 53±4; #1091 Banana, raw, overripe (Australia, 2008) — GI 57±8"
         }
-      }
+      },
+      "portions": [
+        {
+          "labelUk": "маленький",
+          "labelEn": "small",
+          "grams": 101,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "173944",
+            "description": "1 small (6\" to 6-7/8\" long) = 101 g"
+          }
+        },
+        {
+          "labelUk": "середній",
+          "labelEn": "medium",
+          "grams": 118,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "173944",
+            "description": "1 medium (7\" to 7-7/8\" long) = 118 g"
+          }
+        },
+        {
+          "labelUk": "великий",
+          "labelEn": "large",
+          "grams": 136,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "173944",
+            "description": "1 large (8\" to 8-7/8\" long) = 136 g"
+          }
+        }
+      ]
     },
     {
       "id": "B0050",
@@ -2325,7 +2753,57 @@
           "entryId": "#1150",
           "description": "#1150 Oranges, navel (Australia, 2020) — GI 45±5"
         }
-      }
+      },
+      "portions": [
+        {
+          "labelUk": "маленький",
+          "labelEn": "small",
+          "grams": 96,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "169097",
+            "description": "1 small (2-3/8\" dia) = 96 g"
+          }
+        },
+        {
+          "labelUk": "середній",
+          "labelEn": "medium",
+          "grams": 131,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "169097",
+            "description": "1 fruit (2-5/8\" dia) = 131 g"
+          }
+        },
+        {
+          "labelUk": "великий",
+          "labelEn": "large",
+          "grams": 184,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "169097",
+            "description": "1 large (3-1/16\" dia) = 184 g"
+          }
+        }
+      ]
     },
     {
       "id": "B0051",
@@ -2509,7 +2987,41 @@
           "entryId": "#1433",
           "description": "#1433 Mixed nuts, roasted and salted (UK, 2005) — GI 24±10"
         }
-      }
+      },
+      "portions": [
+        {
+          "labelUk": "1 половинка",
+          "labelEn": "1 half",
+          "grams": 2.0,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Поділено з даних USDA: 28,35 г = 14 половинок.",
+            "en": "Divided from USDA's portion data: 28.35 g = 14 halves."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "170187",
+            "description": "1 oz (14 halves) = 28.35 g"
+          }
+        },
+        {
+          "labelUk": "1 горіх",
+          "labelEn": "1 nut",
+          "grams": 4.0,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Поділено з даних USDA: 28 г ядер = 7 горіхів.",
+            "en": "Divided from USDA's portion data: 28 g of kernels = 7 nuts."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "170187",
+            "description": "1 cup, in shell, edible yield (7 nuts) = 28 g"
+          }
+        }
+      ]
     },
     {
       "id": "B0055",
@@ -3715,7 +4227,57 @@
           "entryId": "summary row; #1845–#1852",
           "description": "Potato cooked then cooled, mean of eight foods — GI 49 (summary row). Entries used: #1845 55, #1846 48, #1847 55, #1848 41, #1849 40, #1850 49, #1851 44, #1852 56"
         }
-      }
+      },
+      "portions": [
+        {
+          "labelUk": "маленька",
+          "labelEn": "small",
+          "grams": 125,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "170440",
+            "description": "1 small (1-3/4\" to 2-1/2\" dia.) = 125 g"
+          }
+        },
+        {
+          "labelUk": "середня",
+          "labelEn": "medium",
+          "grams": 167,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "170440",
+            "description": "1 medium (2-1/4\" to 3-1/4\" dia.) = 167 g"
+          }
+        },
+        {
+          "labelUk": "велика",
+          "labelEn": "large",
+          "grams": 300,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "170440",
+            "description": "1 large (3\" to 4-1/4\" dia.) = 300 g"
+          }
+        }
+      ]
     },
     {
       "id": "B0081",
@@ -4185,7 +4747,41 @@
           "entryId": "#215, #216, #219, #224",
           "description": "#215 Rye, Country Grain Organic (Country Life Bakery, Australia) Australia 2006- 2007 53±4 8 No — GI 53±4; #216 Pumpernickel Rye bread (Van der Meulen BV, Netherlands) (Netherlands, 2015) — GI 49±4; #219 Sourdough rye bread (Australia, 2004) — GI 48±5; #224 Wholemeal rye bread with intact grains and sunflower seeds (Kraftkerni, Lieken Urkorn, Dortmund, Germany) (Germany, 2014) — GI 55±4"
         }
-      }
+      },
+      "portions": [
+        {
+          "labelUk": "скибка",
+          "labelEn": "slice",
+          "grams": 26,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "174918",
+            "description": "1 slice, regular = 26 g"
+          }
+        },
+        {
+          "labelUk": "тонка скибка",
+          "labelEn": "thin slice",
+          "grams": 20,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "174918",
+            "description": "1 slice, thin = 20 g"
+          }
+        }
+      ]
     },
     {
       "id": "B0091",
@@ -4232,7 +4828,57 @@
           "entryId": "#2906, #2907",
           "description": "#2906 Banana, slightly under-ripe (yellow with green tips) (USA, 1992) — GI 41; #2907 Banana, slightly under-ripe (yellow with green sections) (USA, 1992) — GI 42"
         }
-      }
+      },
+      "portions": [
+        {
+          "labelUk": "маленький",
+          "labelEn": "small",
+          "grams": 101,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "173944",
+            "description": "1 small (6\" to 6-7/8\" long) = 101 g"
+          }
+        },
+        {
+          "labelUk": "середній",
+          "labelEn": "medium",
+          "grams": 118,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "173944",
+            "description": "1 medium (7\" to 7-7/8\" long) = 118 g"
+          }
+        },
+        {
+          "labelUk": "великий",
+          "labelEn": "large",
+          "grams": 136,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "173944",
+            "description": "1 large (8\" to 8-7/8\" long) = 136 g"
+          }
+        }
+      ]
     },
     {
       "id": "B0092",
@@ -4279,7 +4925,57 @@
           "entryId": "#1088, #1089, #1090",
           "description": "#1088 Banana, raw (Australia, 2008) — GI 47±5; #1089 Banana, lady finger (Moraitis, Australia) (Australia, 2014) — GI 49±5; #1090 Banana, lady finger (Moraitis, Australia) (Australia, 2014) — GI 53±4"
         }
-      }
+      },
+      "portions": [
+        {
+          "labelUk": "маленький",
+          "labelEn": "small",
+          "grams": 101,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "173944",
+            "description": "1 small (6\" to 6-7/8\" long) = 101 g"
+          }
+        },
+        {
+          "labelUk": "середній",
+          "labelEn": "medium",
+          "grams": 118,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "173944",
+            "description": "1 medium (7\" to 7-7/8\" long) = 118 g"
+          }
+        },
+        {
+          "labelUk": "великий",
+          "labelEn": "large",
+          "grams": 136,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "173944",
+            "description": "1 large (8\" to 8-7/8\" long) = 136 g"
+          }
+        }
+      ]
     },
     {
       "id": "B0093",
@@ -4326,7 +5022,57 @@
           "entryId": "#1091",
           "description": "#1091 Banana, raw, overripe (Australia, 2008) — GI 57±8"
         }
-      }
+      },
+      "portions": [
+        {
+          "labelUk": "маленький",
+          "labelEn": "small",
+          "grams": 101,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "173944",
+            "description": "1 small (6\" to 6-7/8\" long) = 101 g"
+          }
+        },
+        {
+          "labelUk": "середній",
+          "labelEn": "medium",
+          "grams": 118,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "173944",
+            "description": "1 medium (7\" to 7-7/8\" long) = 118 g"
+          }
+        },
+        {
+          "labelUk": "великий",
+          "labelEn": "large",
+          "grams": 136,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "173944",
+            "description": "1 large (8\" to 8-7/8\" long) = 136 g"
+          }
+        }
+      ]
     },
     {
       "id": "B0094",
@@ -4373,7 +5119,57 @@
           "entryId": "#1161",
           "description": "#1161 Pear, Williams, raw, ripe/soft (Australia, 2015) — GI 33±4"
         }
-      }
+      },
+      "portions": [
+        {
+          "labelUk": "маленька",
+          "labelEn": "small",
+          "grams": 148,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "169118",
+            "description": "1 small = 148 g"
+          }
+        },
+        {
+          "labelUk": "середня",
+          "labelEn": "medium",
+          "grams": 178,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "169118",
+            "description": "1 medium = 178 g"
+          }
+        },
+        {
+          "labelUk": "велика",
+          "labelEn": "large",
+          "grams": 230,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "169118",
+            "description": "1 large = 230 g"
+          }
+        }
+      ]
     },
     {
       "id": "B0095",
@@ -4420,7 +5216,57 @@
           "entryId": "#1160",
           "description": "#1160 Pear, Williams, raw, under ripe/crunchy (Australia, 2015) — GI 24±3"
         }
-      }
+      },
+      "portions": [
+        {
+          "labelUk": "маленька",
+          "labelEn": "small",
+          "grams": 148,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "169118",
+            "description": "1 small = 148 g"
+          }
+        },
+        {
+          "labelUk": "середня",
+          "labelEn": "medium",
+          "grams": 178,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "169118",
+            "description": "1 medium = 178 g"
+          }
+        },
+        {
+          "labelUk": "велика",
+          "labelEn": "large",
+          "grams": 230,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "169118",
+            "description": "1 large = 230 g"
+          }
+        }
+      ]
     },
     {
       "id": "B0096",
@@ -4467,7 +5313,25 @@
           "entryId": "#933",
           "description": "#933 Kefir, low-fat, plain (Lifeway Foods, Chicago, USA) (USA, 2012) — GI 36±9"
         }
-      }
+      },
+      "portions": [
+        {
+          "labelUk": "склянка (240 мл)",
+          "labelEn": "cup (240 ml)",
+          "grams": 243,
+          "reliability": "medium",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага склянки кефіру 1% з даних USDA; жирність на вагу склянки майже не впливає.",
+            "en": "The weight of a cup of 1% kefir from USDA; fat content barely changes it."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "170904",
+            "description": "1 cup = 243 g"
+          }
+        }
+      ]
     },
     {
       "id": "B0097",
@@ -4554,6 +5418,1138 @@
           "en": "GI isn't measured for black coffee: it has no sugars (0 g) and no starch. USDA's 1.67 g of \"carbohydrate\" is calculated \"by difference\" (everything that isn't water, protein, fat or ash), not sugar or starch. GL is 0."
         }
       }
+    },
+    {
+      "id": "B0099",
+      "status": "active",
+      "category": "nuts",
+      "family": "almond",
+      "state": "roasted",
+      "nameUk": "Мигдаль смажений, без солі",
+      "nameEn": "Almonds, dry roasted, without salt",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 598.0,
+          "carbsG": 21.01,
+          "fiberG": 10.9,
+          "sugarsG": 4.86,
+          "proteinG": 20.96,
+          "fatG": 52.54,
+          "sodiumMg": 3.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "170158",
+          "description": "Nuts, almonds, dry roasted, without salt added"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-07"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 24,
+        "reliability": "low",
+        "verified": "2026-10-07",
+        "reason": {
+          "uk": "Значення запису (Таблиця 1, метод ISO). Окремо мигдаль не вимірювали; значення для суміші горіхів (смажених, солоних), як і для волоських горіхів.",
+          "en": "The entry's value (Table 1, ISO method). Almonds weren't measured on their own; the value is for mixed nuts (roasted, salted), as for walnuts."
+        },
+        "source": {
+          "dataset": "gi-2021-st1",
+          "entryId": "#1433",
+          "description": "#1433 Mixed nuts, roasted and salted (UK, 2005) — GI 24±10"
+        }
+      },
+      "portions": [
+        {
+          "labelUk": "1 мигдалина",
+          "labelEn": "1 almond",
+          "grams": 1.29,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Поділено з даних USDA: 28,35 г = 22 ядра.",
+            "en": "Divided from USDA's portion data: 28.35 g = 22 kernels."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "170158",
+            "description": "1 oz (22 whole kernels) = 28.35 g"
+          }
+        }
+      ]
+    },
+    {
+      "id": "B0100",
+      "status": "active",
+      "category": "nuts",
+      "family": "almond",
+      "state": "roasted",
+      "nameUk": "Мигдаль смажений, з сіллю",
+      "nameEn": "Almonds, dry roasted, with salt",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 598.0,
+          "carbsG": 21.01,
+          "fiberG": 10.9,
+          "sugarsG": 4.86,
+          "proteinG": 20.96,
+          "fatG": 52.54,
+          "sodiumMg": 234.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "168596",
+          "description": "Nuts, almonds, dry roasted, with salt added"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-07"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 24,
+        "reliability": "low",
+        "verified": "2026-10-07",
+        "reason": {
+          "uk": "Значення запису (Таблиця 1, метод ISO). Окремо мигдаль не вимірювали; значення для суміші горіхів (смажених, солоних), як і для волоських горіхів.",
+          "en": "The entry's value (Table 1, ISO method). Almonds weren't measured on their own; the value is for mixed nuts (roasted, salted), as for walnuts."
+        },
+        "source": {
+          "dataset": "gi-2021-st1",
+          "entryId": "#1433",
+          "description": "#1433 Mixed nuts, roasted and salted (UK, 2005) — GI 24±10"
+        }
+      },
+      "portions": [
+        {
+          "labelUk": "1 мигдалина",
+          "labelEn": "1 almond",
+          "grams": 1.29,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Поділено з даних USDA: 28,35 г = 22 ядра.",
+            "en": "Divided from USDA's portion data: 28.35 g = 22 kernels."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "168596",
+            "description": "1 oz (22 whole kernels) = 28.35 g"
+          }
+        }
+      ]
+    },
+    {
+      "id": "B0101",
+      "status": "active",
+      "category": "nuts",
+      "family": "pistachio",
+      "state": "roasted",
+      "nameUk": "Фісташки смажені, без солі",
+      "nameEn": "Pistachios, dry roasted, without salt",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 572.0,
+          "carbsG": 28.28,
+          "fiberG": 10.3,
+          "sugarsG": 7.74,
+          "proteinG": 21.05,
+          "fatG": 45.82,
+          "sodiumMg": 6.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "170185",
+          "description": "Nuts, pistachio nuts, dry roasted, without salt added"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-07"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 24,
+        "reliability": "low",
+        "verified": "2026-10-07",
+        "reason": {
+          "uk": "Значення запису (Таблиця 1, метод ISO). Окремо фісташки не вимірювали; значення для суміші горіхів (смажених, солоних), як і для волоських горіхів.",
+          "en": "The entry's value (Table 1, ISO method). Pistachios weren't measured on their own; the value is for mixed nuts (roasted, salted), as for walnuts."
+        },
+        "source": {
+          "dataset": "gi-2021-st1",
+          "entryId": "#1433",
+          "description": "#1433 Mixed nuts, roasted and salted (UK, 2005) — GI 24±10"
+        }
+      },
+      "portions": [
+        {
+          "labelUk": "1 фісташка",
+          "labelEn": "1 pistachio",
+          "grams": 0.7,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "170185",
+            "description": "1 kernel = 0.7 g"
+          }
+        }
+      ]
+    },
+    {
+      "id": "B0102",
+      "status": "active",
+      "category": "nuts",
+      "family": "pistachio",
+      "state": "roasted",
+      "nameUk": "Фісташки смажені, з сіллю",
+      "nameEn": "Pistachios, dry roasted, with salt",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 569.0,
+          "carbsG": 27.55,
+          "fiberG": 10.3,
+          "sugarsG": 7.74,
+          "proteinG": 21.05,
+          "fatG": 45.82,
+          "sodiumMg": 428.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "169426",
+          "description": "Nuts, pistachio nuts, dry roasted, with salt added"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-07"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 24,
+        "reliability": "low",
+        "verified": "2026-10-07",
+        "reason": {
+          "uk": "Значення запису (Таблиця 1, метод ISO). Окремо фісташки не вимірювали; значення для суміші горіхів (смажених, солоних), як і для волоських горіхів.",
+          "en": "The entry's value (Table 1, ISO method). Pistachios weren't measured on their own; the value is for mixed nuts (roasted, salted), as for walnuts."
+        },
+        "source": {
+          "dataset": "gi-2021-st1",
+          "entryId": "#1433",
+          "description": "#1433 Mixed nuts, roasted and salted (UK, 2005) — GI 24±10"
+        }
+      },
+      "portions": [
+        {
+          "labelUk": "1 фісташка",
+          "labelEn": "1 pistachio",
+          "grams": 0.7,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "169426",
+            "description": "1 kernel = 0.7 g"
+          }
+        }
+      ]
+    },
+    {
+      "id": "B0103",
+      "status": "active",
+      "category": "nuts",
+      "family": "hazelnut",
+      "state": "roasted",
+      "nameUk": "Фундук смажений, без солі",
+      "nameEn": "Hazelnuts, dry roasted, without salt",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 646.0,
+          "carbsG": 17.6,
+          "fiberG": 9.4,
+          "sugarsG": 4.89,
+          "proteinG": 15.03,
+          "fatG": 62.4,
+          "sodiumMg": 0.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "170583",
+          "description": "Nuts, hazelnuts or filberts, dry roasted, without salt added"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані. Солоного фундуку в USDA немає.",
+          "en": "The USDA entry describes exactly this food in this state. USDA has no salted hazelnuts."
+        },
+        "verified": "2026-10-07"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 24,
+        "reliability": "low",
+        "verified": "2026-10-07",
+        "reason": {
+          "uk": "Значення запису (Таблиця 1, метод ISO). Окремо фундук не вимірювали; значення для суміші горіхів (смажених, солоних), як і для волоських горіхів.",
+          "en": "The entry's value (Table 1, ISO method). Hazelnuts weren't measured on their own; the value is for mixed nuts (roasted, salted), as for walnuts."
+        },
+        "source": {
+          "dataset": "gi-2021-st1",
+          "entryId": "#1433",
+          "description": "#1433 Mixed nuts, roasted and salted (UK, 2005) — GI 24±10"
+        }
+      },
+      "portions": [
+        {
+          "labelUk": "1 горіх",
+          "labelEn": "1 nut",
+          "grams": 1.4,
+          "reliability": "medium",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "З даних USDA для сирого фундуку (10 горіхів = 14 г): для смаженого кількість штук не вказана.",
+            "en": "From USDA's data for raw hazelnuts (10 nuts = 14 g): the roasted entry gives no count."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "170581",
+            "description": "10 nuts = 14 g"
+          }
+        }
+      ]
+    },
+    {
+      "id": "B0104",
+      "status": "active",
+      "category": "nuts",
+      "family": "cashew",
+      "state": "roasted",
+      "nameUk": "Кешью смажений, без солі",
+      "nameEn": "Cashews, dry roasted, without salt",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 574.0,
+          "carbsG": 32.69,
+          "fiberG": 3.0,
+          "sugarsG": 5.01,
+          "proteinG": 15.31,
+          "fatG": 46.35,
+          "sodiumMg": 16.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "170571",
+          "description": "Nuts, cashew nuts, dry roasted, without salt added"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-07"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 22,
+        "reliability": "medium",
+        "verified": "2026-10-07",
+        "reason": {
+          "uk": "Значення запису (Таблиця 1, метод ISO). Одне дослідження солоного кешью (Австралія); сіль на ГІ не впливає.",
+          "en": "The entry's value (Table 1, ISO method). One study of salted cashews (Australia); salt doesn't affect GI."
+        },
+        "source": {
+          "dataset": "gi-2021-st1",
+          "entryId": "#1431",
+          "description": "#1431 Cashew nuts, salted (Coles Supermarkets, Australia) (Australia, 2001) — GI 22±5"
+        }
+      },
+      "portions": [
+        {
+          "labelUk": "1 горіх",
+          "labelEn": "1 nut",
+          "grams": 1.5,
+          "reliability": "medium",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "З даних USDA FNDDS для кешью (1 горіх = 1,5 г): у записі SR Legacy кількість штук не вказана.",
+            "en": "From USDA FNDDS data for cashews (1 nut = 1.5 g): the SR Legacy entry gives no count."
+          },
+          "source": {
+            "dataset": "usda-fndds",
+            "entryId": "2707497",
+            "description": "Cashews, unsalted: 1 nut = 1.5 g"
+          }
+        }
+      ]
+    },
+    {
+      "id": "B0105",
+      "status": "active",
+      "category": "nuts",
+      "family": "cashew",
+      "state": "roasted",
+      "nameUk": "Кешью смажений, з сіллю",
+      "nameEn": "Cashews, dry roasted, with salt",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 574.0,
+          "carbsG": 32.69,
+          "fiberG": 3.0,
+          "sugarsG": 5.01,
+          "proteinG": 15.31,
+          "fatG": 46.35,
+          "sodiumMg": 640.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "169421",
+          "description": "Nuts, cashew nuts, dry roasted, with salt added"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-07"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 22,
+        "reliability": "medium",
+        "verified": "2026-10-07",
+        "reason": {
+          "uk": "Значення запису (Таблиця 1, метод ISO). Одне дослідження солоного кешью (Австралія); сіль на ГІ не впливає.",
+          "en": "The entry's value (Table 1, ISO method). One study of salted cashews (Australia); salt doesn't affect GI."
+        },
+        "source": {
+          "dataset": "gi-2021-st1",
+          "entryId": "#1431",
+          "description": "#1431 Cashew nuts, salted (Coles Supermarkets, Australia) (Australia, 2001) — GI 22±5"
+        }
+      },
+      "portions": [
+        {
+          "labelUk": "1 горіх",
+          "labelEn": "1 nut",
+          "grams": 1.5,
+          "reliability": "medium",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "З даних USDA FNDDS для кешью (1 горіх = 1,5 г): у записі SR Legacy кількість штук не вказана.",
+            "en": "From USDA FNDDS data for cashews (1 nut = 1.5 g): the SR Legacy entry gives no count."
+          },
+          "source": {
+            "dataset": "usda-fndds",
+            "entryId": "2707497",
+            "description": "Cashews, unsalted: 1 nut = 1.5 g"
+          }
+        }
+      ]
+    },
+    {
+      "id": "B0106",
+      "status": "active",
+      "category": "nuts",
+      "family": "peanut",
+      "state": "roasted",
+      "nameUk": "Арахіс смажений, без солі",
+      "nameEn": "Peanuts, dry roasted, without salt",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 587.0,
+          "carbsG": 21.26,
+          "fiberG": 8.4,
+          "sugarsG": 4.9,
+          "proteinG": 24.35,
+          "fatG": 49.66,
+          "sodiumMg": 6.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "173806",
+          "description": "Peanuts, all types, dry-roasted, without salt"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-07"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 12,
+        "reliability": "low",
+        "verified": "2026-10-07",
+        "reason": {
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (2 записи, Таблиця 2, менш надійні методи; діапазон 7–13, середнє 10). Лише Таблиця 2: два давні дослідження (1981, 1984) з малою кількістю учасників.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (2 entries, Table 2, less robust methods; range 7–13, mean 10). Table 2 only: two old studies (1981, 1984) with few participants."
+        },
+        "source": {
+          "dataset": "gi-2021-st2",
+          "entryId": "#3244, #3245",
+          "description": "#3244 Peanuts, crushed, tested in young adults (17-18 y) (South Africa, 1984) — GI 7±4; #3245 Peanuts (Canada, 1981) — GI 13±6"
+        }
+      },
+      "portions": [
+        {
+          "labelUk": "1 горішок",
+          "labelEn": "1 peanut",
+          "grams": 1.0,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "173806",
+            "description": "1 peanut = 1 g"
+          }
+        }
+      ]
+    },
+    {
+      "id": "B0107",
+      "status": "active",
+      "category": "nuts",
+      "family": "peanut",
+      "state": "roasted",
+      "nameUk": "Арахіс смажений, з сіллю",
+      "nameEn": "Peanuts, dry roasted, with salt",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 587.0,
+          "carbsG": 21.26,
+          "fiberG": 8.4,
+          "sugarsG": 4.9,
+          "proteinG": 24.35,
+          "fatG": 49.66,
+          "sodiumMg": 410.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "174262",
+          "description": "Peanuts, all types, dry-roasted, with salt"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-07"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 12,
+        "reliability": "low",
+        "verified": "2026-10-07",
+        "reason": {
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (2 записи, Таблиця 2, менш надійні методи; діапазон 7–13, середнє 10). Лише Таблиця 2: два давні дослідження (1981, 1984) з малою кількістю учасників.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (2 entries, Table 2, less robust methods; range 7–13, mean 10). Table 2 only: two old studies (1981, 1984) with few participants."
+        },
+        "source": {
+          "dataset": "gi-2021-st2",
+          "entryId": "#3244, #3245",
+          "description": "#3244 Peanuts, crushed, tested in young adults (17-18 y) (South Africa, 1984) — GI 7±4; #3245 Peanuts (Canada, 1981) — GI 13±6"
+        }
+      },
+      "portions": [
+        {
+          "labelUk": "1 горішок",
+          "labelEn": "1 peanut",
+          "grams": 1.0,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "174262",
+            "description": "1 peanut = 1 g"
+          }
+        }
+      ]
+    },
+    {
+      "id": "B0108",
+      "status": "active",
+      "category": "nuts",
+      "family": "pecan",
+      "state": "roasted",
+      "nameUk": "Пекан смажений, без солі",
+      "nameEn": "Pecans, dry roasted, without salt",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 710.0,
+          "carbsG": 13.55,
+          "fiberG": 9.4,
+          "sugarsG": 4.06,
+          "proteinG": 9.5,
+          "fatG": 74.27,
+          "sodiumMg": 1.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "170183",
+          "description": "Nuts, pecans, dry roasted, without salt added"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-07"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 24,
+        "reliability": "low",
+        "verified": "2026-10-07",
+        "reason": {
+          "uk": "Значення запису (Таблиця 1, метод ISO). Окремо пекан не вимірювали; значення для суміші горіхів (смажених, солоних), як і для волоських горіхів.",
+          "en": "The entry's value (Table 1, ISO method). Pecans weren't measured on their own; the value is for mixed nuts (roasted, salted), as for walnuts."
+        },
+        "source": {
+          "dataset": "gi-2021-st1",
+          "entryId": "#1433",
+          "description": "#1433 Mixed nuts, roasted and salted (UK, 2005) — GI 24±10"
+        }
+      },
+      "portions": [
+        {
+          "labelUk": "1 половинка",
+          "labelEn": "1 half",
+          "grams": 1.49,
+          "reliability": "medium",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "З даних USDA для сирого пекану (28,35 г = 19 половинок): для смаженого кількість штук не вказана.",
+            "en": "From USDA's data for raw pecans (28.35 g = 19 halves): the roasted entry gives no count."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "170182",
+            "description": "1 oz (19 halves) = 28.35 g"
+          }
+        }
+      ]
+    },
+    {
+      "id": "B0109",
+      "status": "active",
+      "category": "nuts",
+      "family": "pecan",
+      "state": "roasted",
+      "nameUk": "Пекан смажений, з сіллю",
+      "nameEn": "Pecans, dry roasted, with salt",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 710.0,
+          "carbsG": 13.55,
+          "fiberG": 9.4,
+          "sugarsG": 4.06,
+          "proteinG": 9.5,
+          "fatG": 74.27,
+          "sodiumMg": 383.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "169424",
+          "description": "Nuts, pecans, dry roasted, with salt added"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-07"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 24,
+        "reliability": "low",
+        "verified": "2026-10-07",
+        "reason": {
+          "uk": "Значення запису (Таблиця 1, метод ISO). Окремо пекан не вимірювали; значення для суміші горіхів (смажених, солоних), як і для волоських горіхів.",
+          "en": "The entry's value (Table 1, ISO method). Pecans weren't measured on their own; the value is for mixed nuts (roasted, salted), as for walnuts."
+        },
+        "source": {
+          "dataset": "gi-2021-st1",
+          "entryId": "#1433",
+          "description": "#1433 Mixed nuts, roasted and salted (UK, 2005) — GI 24±10"
+        }
+      },
+      "portions": [
+        {
+          "labelUk": "1 половинка",
+          "labelEn": "1 half",
+          "grams": 1.49,
+          "reliability": "medium",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "З даних USDA для сирого пекану (28,35 г = 19 половинок): для смаженого кількість штук не вказана.",
+            "en": "From USDA's data for raw pecans (28.35 g = 19 halves): the roasted entry gives no count."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "170182",
+            "description": "1 oz (19 halves) = 28.35 g"
+          }
+        }
+      ]
+    },
+    {
+      "id": "B0110",
+      "status": "active",
+      "category": "nuts",
+      "family": "brazil-nut",
+      "state": "dried",
+      "nameUk": "Бразильський горіх, сушений",
+      "nameEn": "Brazil nuts, dried",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 659.0,
+          "carbsG": 11.74,
+          "fiberG": 7.5,
+          "sugarsG": 2.33,
+          "proteinG": 14.32,
+          "fatG": 67.1,
+          "sodiumMg": 3.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "170569",
+          "description": "Nuts, brazilnuts, dried, unblanched"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані. Смаженого бразильського горіха в USDA немає.",
+          "en": "The USDA entry describes exactly this food in this state. USDA has no roasted Brazil nuts."
+        },
+        "verified": "2026-10-07"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 24,
+        "reliability": "low",
+        "verified": "2026-10-07",
+        "reason": {
+          "uk": "Значення запису (Таблиця 1, метод ISO). Окремо бразильський горіх не вимірювали; значення для суміші горіхів (смажених, солоних), як і для волоських горіхів.",
+          "en": "The entry's value (Table 1, ISO method). Brazil nuts weren't measured on their own; the value is for mixed nuts (roasted, salted), as for walnuts."
+        },
+        "source": {
+          "dataset": "gi-2021-st1",
+          "entryId": "#1433",
+          "description": "#1433 Mixed nuts, roasted and salted (UK, 2005) — GI 24±10"
+        }
+      },
+      "portions": [
+        {
+          "labelUk": "1 горіх",
+          "labelEn": "1 nut",
+          "grams": 5.0,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "170569",
+            "description": "1 kernel = 5 g"
+          }
+        }
+      ]
+    },
+    {
+      "id": "B0111",
+      "status": "active",
+      "category": "nuts",
+      "family": "pine-nut",
+      "state": "dried",
+      "nameUk": "Кедрові горішки, сушені",
+      "nameEn": "Pine nuts, dried",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 673.0,
+          "carbsG": 13.08,
+          "fiberG": 3.7,
+          "sugarsG": 3.59,
+          "proteinG": 13.69,
+          "fatG": 68.37,
+          "sodiumMg": 2.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "170591",
+          "description": "Nuts, pine nuts, dried"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані. Смажених кедрових горішків у USDA немає.",
+          "en": "The USDA entry describes exactly this food in this state. USDA has no roasted pine nuts."
+        },
+        "verified": "2026-10-07"
+      },
+      "gi": {
+        "status": "unknown",
+        "value": null,
+        "source": null,
+        "reliability": "low",
+        "verified": "2026-10-07",
+        "reason": {
+          "uk": "Досліджень ГІ для кедрових горішків немає в міжнародних таблицях 2021 року.",
+          "en": "The 2021 international tables have no GI study of pine nuts."
+        }
+      },
+      "portions": [
+        {
+          "labelUk": "10 горішків",
+          "labelEn": "10 nuts",
+          "grams": 1.7,
+          "reliability": "high",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Вага з даних USDA для цього ж запису.",
+            "en": "The weight from USDA's portion data for this same entry."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "170591",
+            "description": "10 nuts = 1.7 g"
+          }
+        }
+      ]
+    },
+    {
+      "id": "B0112",
+      "status": "active",
+      "category": "nuts",
+      "family": "sunflower-seed",
+      "state": "roasted",
+      "nameUk": "Насіння соняшнику смажене, очищене, без солі",
+      "nameEn": "Sunflower seed kernels, dry roasted, without salt",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 582.0,
+          "carbsG": 24.07,
+          "fiberG": 11.1,
+          "sugarsG": 2.73,
+          "proteinG": 19.33,
+          "fatG": 49.8,
+          "sodiumMg": 3.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "170563",
+          "description": "Seeds, sunflower seed kernels, dry roasted, without salt"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-07"
+      },
+      "gi": {
+        "status": "unknown",
+        "value": null,
+        "source": null,
+        "reliability": "low",
+        "verified": "2026-10-07",
+        "reason": {
+          "uk": "Досліджень ГІ для насіння соняшнику немає в міжнародних таблицях 2021 року.",
+          "en": "The 2021 international tables have no GI study of sunflower seeds."
+        }
+      },
+      "portions": [
+        {
+          "labelUk": "столова ложка",
+          "labelEn": "tablespoon",
+          "grams": 8.0,
+          "reliability": "medium",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Склянка з даних USDA, поділена на 16 столових ложок (128 г ÷ 16).",
+            "en": "USDA's cup divided into 16 tablespoons (128 g ÷ 16)."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "170563",
+            "description": "1 cup = 128 g"
+          }
+        }
+      ]
+    },
+    {
+      "id": "B0113",
+      "status": "active",
+      "category": "nuts",
+      "family": "sunflower-seed",
+      "state": "roasted",
+      "nameUk": "Насіння соняшнику смажене, очищене, з сіллю",
+      "nameEn": "Sunflower seed kernels, dry roasted, with salt",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 582.0,
+          "carbsG": 24.07,
+          "fiberG": 9.0,
+          "sugarsG": 2.73,
+          "proteinG": 19.33,
+          "fatG": 49.8,
+          "sodiumMg": 655.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "169418",
+          "description": "Seeds, sunflower seed kernels, dry roasted, with salt added"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-07"
+      },
+      "gi": {
+        "status": "unknown",
+        "value": null,
+        "source": null,
+        "reliability": "low",
+        "verified": "2026-10-07",
+        "reason": {
+          "uk": "Досліджень ГІ для насіння соняшнику немає в міжнародних таблицях 2021 року.",
+          "en": "The 2021 international tables have no GI study of sunflower seeds."
+        }
+      },
+      "portions": [
+        {
+          "labelUk": "столова ложка",
+          "labelEn": "tablespoon",
+          "grams": 8.0,
+          "reliability": "medium",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Склянка з даних USDA, поділена на 16 столових ложок (128 г ÷ 16).",
+            "en": "USDA's cup divided into 16 tablespoons (128 g ÷ 16)."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "169418",
+            "description": "1 cup = 128 g"
+          }
+        }
+      ]
+    },
+    {
+      "id": "B0114",
+      "status": "active",
+      "category": "nuts",
+      "family": "pumpkin-seed",
+      "state": "roasted",
+      "nameUk": "Гарбузове насіння смажене, очищене, без солі",
+      "nameEn": "Pumpkin seed kernels, roasted, without salt",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 574.0,
+          "carbsG": 14.71,
+          "fiberG": 6.5,
+          "sugarsG": 1.29,
+          "proteinG": 29.84,
+          "fatG": 49.05,
+          "sodiumMg": 18.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "170557",
+          "description": "Seeds, pumpkin and squash seed kernels, roasted, without salt"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-07"
+      },
+      "gi": {
+        "status": "unknown",
+        "value": null,
+        "source": null,
+        "reliability": "low",
+        "verified": "2026-10-07",
+        "reason": {
+          "uk": "Досліджень ГІ для гарбузового насіння немає в міжнародних таблицях 2021 року.",
+          "en": "The 2021 international tables have no GI study of pumpkin seeds."
+        }
+      },
+      "portions": [
+        {
+          "labelUk": "столова ложка",
+          "labelEn": "tablespoon",
+          "grams": 7.4,
+          "reliability": "medium",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Склянка з даних USDA, поділена на 16 столових ложок (118 г ÷ 16).",
+            "en": "USDA's cup divided into 16 tablespoons (118 g ÷ 16)."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "170557",
+            "description": "1 cup = 118 g"
+          }
+        }
+      ]
+    },
+    {
+      "id": "B0115",
+      "status": "active",
+      "category": "nuts",
+      "family": "pumpkin-seed",
+      "state": "roasted",
+      "nameUk": "Гарбузове насіння смажене, очищене, з сіллю",
+      "nameEn": "Pumpkin seed kernels, roasted, with salt",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 574.0,
+          "carbsG": 14.71,
+          "fiberG": 6.5,
+          "sugarsG": 1.29,
+          "proteinG": 29.84,
+          "fatG": 49.05,
+          "sodiumMg": 256.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "169415",
+          "description": "Seeds, pumpkin and squash seed kernels, roasted, with salt added"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-07"
+      },
+      "gi": {
+        "status": "unknown",
+        "value": null,
+        "source": null,
+        "reliability": "low",
+        "verified": "2026-10-07",
+        "reason": {
+          "uk": "Досліджень ГІ для гарбузового насіння немає в міжнародних таблицях 2021 року.",
+          "en": "The 2021 international tables have no GI study of pumpkin seeds."
+        }
+      },
+      "portions": [
+        {
+          "labelUk": "столова ложка",
+          "labelEn": "tablespoon",
+          "grams": 7.4,
+          "reliability": "medium",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "Склянка з даних USDA, поділена на 16 столових ложок (118 г ÷ 16).",
+            "en": "USDA's cup divided into 16 tablespoons (118 g ÷ 16)."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "169415",
+            "description": "1 cup = 118 g"
+          }
+        }
+      ]
+    },
+    {
+      "id": "B0116",
+      "status": "active",
+      "category": "nuts",
+      "family": "walnut",
+      "state": "roasted",
+      "nameUk": "Волоські горіхи смажені, з сіллю",
+      "nameEn": "Walnuts, dry roasted, with salt",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 643.0,
+          "carbsG": 17.86,
+          "fiberG": 7.1,
+          "sugarsG": 3.57,
+          "proteinG": 14.29,
+          "fatG": 60.71,
+          "sodiumMg": 643.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "170594",
+          "description": "Nuts, walnuts, dry roasted, with salt added"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані. Смажених волоських горіхів без солі в USDA немає.",
+          "en": "The USDA entry describes exactly this food in this state. USDA has no roasted walnuts without salt."
+        },
+        "verified": "2026-10-07"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 24,
+        "reliability": "low",
+        "verified": "2026-10-07",
+        "reason": {
+          "uk": "Значення запису (Таблиця 1, метод ISO). Окремо волоські горіхи не вимірювали; значення для суміші горіхів (смажених, солоних), як і для волоських горіхів.",
+          "en": "The entry's value (Table 1, ISO method). Walnuts weren't measured on their own; the value is for mixed nuts (roasted, salted), as for walnuts."
+        },
+        "source": {
+          "dataset": "gi-2021-st1",
+          "entryId": "#1433",
+          "description": "#1433 Mixed nuts, roasted and salted (UK, 2005) — GI 24±10"
+        }
+      },
+      "portions": [
+        {
+          "labelUk": "1 половинка",
+          "labelEn": "1 half",
+          "grams": 2.0,
+          "reliability": "medium",
+          "verified": "2026-10-07",
+          "reason": {
+            "uk": "З даних USDA для сирих волоських горіхів (28,35 г = 14 половинок): для смажених кількість штук не вказана.",
+            "en": "From USDA's data for raw walnuts (28.35 g = 14 halves): the roasted entry gives no count."
+          },
+          "source": {
+            "dataset": "usda-sr-legacy",
+            "entryId": "170187",
+            "description": "1 oz (14 halves) = 28.35 g"
+          }
+        }
+      ]
     }
   ]
 }

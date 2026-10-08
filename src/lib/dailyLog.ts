@@ -37,6 +37,8 @@ export interface DailyLogEntry extends IngredientNutrition {
   // Pieces eaten, for an item counted in pieces (2.0.1), else null. When the
   // weight isn't known, portionGrams is 0 and unknownFields has "portionGrams".
   portionPieces: number | null;
+  // The named size it was logged by («2 × середнє», 2.0.2), else ""; its weight is approximate («≈»).
+  portionSize: string;
   gl: number;
   notes: string;
   // Ties multiple items eaten in one sitting together as a single meal
@@ -81,6 +83,7 @@ export const DAILY_LOG_HEADERS = [
   "UnknownFields",
   "ItemId",
   "PortionPieces",
+  "PortionSize",
   "Id",
   "UpdatedAt",
 ] as const;
@@ -181,6 +184,7 @@ export function buildLogEntry(
     itemName,
     portionGrams,
     portionPieces: null,
+    portionSize: "",
     ...portion,
     gl: glUnknown ? 0 : round2(calcGlycemicLoad(portion.gi, portion.carbsG)),
     notes,
@@ -228,6 +232,7 @@ export function buildLogEntryForAmount(
     itemName: item.nameUk,
     portionGrams: resolved.grams === null ? 0 : round2(resolved.grams),
     portionPieces: resolved.pieces === null ? null : round2(resolved.pieces),
+    portionSize: "",
     ...portion,
     gl: glUnknown ? 0 : round2(calcGlycemicLoad(portion.gi, portion.carbsG)),
     notes,
@@ -289,6 +294,7 @@ export function buildCustomLogEntry(
     itemName,
     portionGrams,
     portionPieces: null,
+    portionSize: "",
     ...portion,
     gl: glUnknown ? 0 : round2(calcGlycemicLoad(portion.gi, portion.carbsG)),
     notes,
@@ -445,6 +451,7 @@ export function rowToLogEntry(row: unknown[], columnIndex: ColumnIndex = DEFAULT
     itemName: String(cell(row, columnIndex, "ItemName") ?? ""),
     portionGrams: toNumber(cell(row, columnIndex, "PortionGrams")),
     portionPieces: positiveOrNull(cell(row, columnIndex, "PortionPieces")),
+    portionSize: String(cell(row, columnIndex, "PortionSize") ?? "").trim(),
     carbsG: toNumber(cell(row, columnIndex, "Carbs_g")),
     gi: toNumber(cell(row, columnIndex, "GI")),
     fiberG: toNumber(cell(row, columnIndex, "Fiber_g")),
@@ -482,6 +489,7 @@ export function logEntryFields(entry: DailyLogEntry): Record<string, unknown> {
       UnknownFields: entry.unknownFields.join(","),
       ItemId: entry.itemId,
       PortionPieces: entry.portionPieces ?? "",
+      PortionSize: entry.portionSize,
     Id: entry.id || null, // missing id → nothing written, so a rewrite keeps the row's ID
   };
 }

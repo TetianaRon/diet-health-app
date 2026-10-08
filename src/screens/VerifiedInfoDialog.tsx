@@ -65,6 +65,22 @@ export default function VerifiedInfoDialog({ entry, giOnly = false, onClose }: {
           <p className="verified-date">{t.verifiedOn(dmy(gi.verified))}</p>
         </section>
 
+        {!giOnly && (entry.portions ?? []).length > 0 && (
+          <section>
+            <h3>{t.portions}</h3>
+            {(entry.portions ?? []).map((p) => (
+              <div key={p.labelUk} className="verified-portion">
+                <p>
+                  {p.labelUk} ≈ {formatDecimal(p.grams)} г · {t.reliability[p.reliability]}
+                </p>
+                <p>{p.reason.uk}</p>
+                <SourceLine source={p.source} />
+                <p className="verified-date">{t.verifiedOn(dmy(p.verified))}</p>
+              </div>
+            ))}
+          </section>
+        )}
+
         <p className="food-form-hint">{t.disclaimer}</p>
         <div className="modal-actions">
           <button type="button" className="button-secondary" onClick={onClose}>
