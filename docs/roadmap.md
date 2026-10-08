@@ -151,6 +151,8 @@ Before building 2.7: run the method by hand on products sold in Ukraine that hav
 
 - **TMM: favourites are half-built** (2026-10-08, developer): only typed items have the ☆ (composed ones don't, a gap the one list makes visible), and there's no way to see your favourites (no «Улюблені» filter or list; they only sort first). Redesign favourites as a whole. Not urgent, nothing breaks. Place: before 3.0 — fits with 2.2 sets (the lists change there anyway).
 
+- **TMM: composed items can't be measured in millilitres** (2026-10-08, developer): 2.1.1 gave ml to typed items only. Mixed drinks are composed — airan (yogurt, sparkling water, salt and herbs), smoothies, homemade dressings, soups by the ladle. Needs a yield in ml («Вийшло, мл»), values per 100 ml when that's the main yield, the optional «мл = г» density, then ml sizes and logging follow. Place: 2.1.2 (small, the maths exists) or with 2.2.
+
 New items land here with a one-line note, then get placed above.
 
 ---
