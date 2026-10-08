@@ -1439,7 +1439,8 @@ export default function FoodsScreen() {
                   <div className="food-list-item-with-action">
                     <span>
                       <strong>{dish.nameUk}</strong> {dish.nameEn && <span className="food-name-en">({dish.nameEn})</span>} —{" "}
-                      {foodMetaText(dish)} ({uk.foods.pack.per(dish.basis)})
+                      {foodMetaText(dish)}
+                      {dish.basis !== "piece" && ` (${uk.foods.pack.per("100g")})`}
                     </span>
                     <div className="food-list-actions">
                       <button

@@ -1561,11 +1561,16 @@ select {
   flex-wrap: wrap;
   margin-bottom: 8px;
 }
-.pack-option {
-  display: inline-flex;
+.food-form label.pack-option {
+  flex-direction: row;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   font-weight: normal;
+}
+.food-form label.pack-option input {
+  width: 20px;
+  height: 20px;
+  margin: 0;
 }
 .pack-amounts {
   display: grid;

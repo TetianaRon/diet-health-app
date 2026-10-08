@@ -185,7 +185,7 @@ function AddDishToMealForm({
       selected.unknownFields.includes("caloriesKcal")
         ? uk.today.unknownValueLabel
         : uk.today.caloriesValue(pickedEntry.caloriesKcal),
-      glUnknown ? uk.today.unknownValueLabel : `${pickedEntry.gl} (${uk.health.gl[classifyGl(pickedEntry.gl)]})`,
+      glUnknown ? uk.today.unknownValueLabel : `${formatDecimal(pickedEntry.gl)} (${uk.health.gl[classifyGl(pickedEntry.gl)]})`,
     );
   }
 
