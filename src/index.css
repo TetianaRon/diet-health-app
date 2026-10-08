@@ -1655,13 +1655,17 @@ select {
 .local-ack p {
   margin: 0;
 }
-.remember-me {
+/* Beside its label everywhere, also inside Settings' stacked field labels. */
+.remember-me,
+.settings-account label.remember-me {
   display: flex;
+  flex-direction: row;
   align-items: center;
   gap: 0.6rem;
   min-height: 44px;
 }
 .remember-me input {
+  flex: none;
   width: 1.4rem;
   height: 1.4rem;
 }

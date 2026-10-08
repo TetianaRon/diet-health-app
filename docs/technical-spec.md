@@ -676,6 +676,7 @@ The person decides where their data lives, with plain wording about each choice.
 - **Without Google (Android):** «Почати без Google» first shows what that means (`SignInPanel`): the records stay only on this phone; anyone with access to the phone can read them; deleting the app, clearing its data or losing the phone loses them; they can be moved to a Google sheet later. «Зрозуміло — почати без Google» starts, «Назад до входу через Google» returns.
 - **The privacy policy** (roncreator.com) is updated in the same release: what each choice keeps on the device, and the stored email.
 - One shared panel (`SignInPanel.tsx`) replaces the separate sign-in buttons on Today, History, Foods and Settings.
+- **Settings shows «Увійшли як <email>»** (developer, 2026-10-08): asked from Google when Settings opens (`getSignedInEmail`), kept in memory only; offline it reads just «Увійшли».
 
 ### Sets and the clean start
 - The verified database stays bundled in the app (works offline). Later, updates come from a static file on the roncreator site, the same file the public pages are built from.

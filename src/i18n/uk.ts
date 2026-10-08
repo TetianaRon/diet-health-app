@@ -592,6 +592,7 @@ export const uk = {
       title: "Обліковий запис Google",
       notSignedIn: "Не увійшли",
       signedIn: "Увійшли",
+      signedInAs: (email: string) => `Увійшли як ${email}`,
       signInButton: "Увійти через Google",
       signOutButton: "Вийти",
     },

@@ -460,6 +460,23 @@ async function bindWebAccount(): Promise<void> {
 // The signed-in address, in memory for this page; stored only while «Запам'ятати мене» is on.
 let currentEmail: string | null = null;
 
+/**
+ * The signed-in address for Settings' «Увійшли як …» (2.0.4): the one this
+ * page already knows, else asked from Google once. Kept in memory only (the
+ * web also stores it while «Запам'ятати мене» is on). Null offline.
+ */
+export async function getSignedInEmail(): Promise<string | null> {
+  if (currentEmail || !isSignedIn()) return currentEmail;
+  try {
+    const response = await authorizedFetchUrl("https://www.googleapis.com/drive/v3/about?fields=user(emailAddress)");
+    const data = (await response.json()) as { user?: { emailAddress?: string } };
+    currentEmail = data.user?.emailAddress ?? null;
+  } catch {
+    return null;
+  }
+  return currentEmail;
+}
+
 /** The web's «Продовжити як …» address, or null (remember off, or nobody signed in here before). */
 export function getRememberedEmail(): string | null {
   return Capacitor.isNativePlatform() ? null : rememberedEmail();
