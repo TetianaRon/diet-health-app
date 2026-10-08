@@ -81,11 +81,14 @@ export default function AppNotifications() {
       remove("sheet-upgrade");
       return;
     }
+    // The 2.1 products merge changes the sheet's tabs: that notice stays until read.
+    const merged = upgradeSummary.productsMerged || upgradeSummary.productsAbsorbed > 0;
     show({
       key: "sheet-upgrade",
-      kind: "info",
-      title: uk.sheetUpgrade.title,
+      kind: merged ? "action" : "info",
+      title: upgradeSummary.productsMerged ? uk.sheetUpgrade.mergedTitle : uk.sheetUpgrade.title,
       details: upgradeNoticeLines(upgradeSummary),
+      ...(merged ? { actions: [{ label: uk.sheetUpgrade.dismiss, onClick: () => { remove("sheet-upgrade"); dismissUpgradeSummary(); } }] } : {}),
       onDismiss: dismissUpgradeSummary,
     });
   }, [upgrading, upgradeSummary, dismissUpgradeSummary, show, remove]);
