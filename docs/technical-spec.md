@@ -699,3 +699,30 @@ Two separate things (developer, 2026-10-07: values per 100 g from the database, 
 - Every nutrient, GI and GL work without weight: GL = GI × grams of carbs eaten ÷ 100; a dish's GI is already weighted by carbs; a dish needs only its ingredients' total nutrients and its yield.
 - A pieces-main dish: values per piece = the ingredients' totals ÷ `YieldPieces`. With a yield weight too, one piece weighs yield weight ÷ pieces.
 - Lists show «на 1 шт.» instead of «на 100 г» for pieces-main items. The duplicates review («Знайдено однакові записи») says which basis each version uses.
+
+## Faster food entry (2.0.2, designed 2026-10-07)
+
+Four things that make logging quicker. Builds on 2.0.1's measures (`measure.ts`).
+
+### Named portion sizes
+- **Up to 3 sizes per product or dish**, each a label and an amount: «скибка ≈ 45 г», «маленьке / середнє / велике яблуко», «чашка ≈ 250 г», or in pieces for an item counted per piece («порція ≈ 10 шт.»). New labels default to маленька / середня / велика; she renames them.
+- **The item editor** gets «Розміри порцій (необов'язково)»: up to 3 rows of label + amount (г or шт.).
+- **The meal editor** shows the sizes as buttons under the portion fields: «середнє ≈ 180 г». A tap fills the portion; a count next to them makes it «2 × середнє» (360 г). The portion fields stay editable.
+- **Stored:** a `PortionSizes` column on Ingredients and Dishes (JSON: `[{"label":"середнє","grams":180}]` or `{"label":"порція","pieces":10}`). A meal row logged by a size keeps its label in a new `PortionSize` column («2 × середнє»), and its weight shows with «≈».
+- **Database sizes:** the verified database ships typical sizes for common foods, each with its source (USDA FoodData Central portion weights, e.g. "1 medium apple"), reliability, reasoning and date, like every reference value (rule 5). They show with ⓘ. Her own sizes are added to them; a size of hers with the same label replaces the database one.
+
+### Common nuts in the verified database
+- Almonds, pistachios, hazelnuts, cashews, peanuts; pecans, Brazil nuts, pine nuts, sunflower and pumpkin seeds where sources allow. **Roasted, unsalted and salted** where USDA has both; walnuts stay raw (the existing entry).
+- Each with the typical weight of one nut or kernel as a database size («1 мигдалина ≈ 1,2 г»), so a few nuts are logged by count.
+- GI from the 2021 tables where a study exists, otherwise `unknown`; low-carb nuts follow the status rules of the database task.
+- Built through `docs/tasks/dha-task-verified-db-change.md`, with the developer's review on the review page.
+
+### Saving a custom entry to «Страви»
+- The meal editor's custom entry («Власний запис») gets «Зберегти в мої страви».
+- It's saved as a dish measured **per portion**: values per 1 piece, where the piece is the whole portion (a meal box, a restaurant dish), with its weight if she typed one. Later she logs «1 порція», or ½ (0,5) — the 2.0.1 pieces maths.
+- The dish has no recipe; its values are hers («неперевірено»), editable like a product's.
+
+### Maths in value fields
+- Number fields accept a short calculation: `200*3/4`, `150+30`, «200 ккал * 3/4». Allowed: numbers with a decimal comma or point, `+ − * / ( )`; unit words are ignored.
+- The field shows the result under it («= 150») while typing; the result is stored, never the formula.
+- Applies to the meal editor's portion and custom-entry fields, and the product form's value fields.
