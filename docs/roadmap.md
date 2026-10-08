@@ -118,7 +118,6 @@ Before building 2.6: run the method by hand on products sold in Ukraine that hav
 - ⏸ Pomodoro Guardian: second Figma page (inner page design) not reviewed yet.
 
 ## Chores
-- 📝 **Set the test and dev sheets to the Ukrainian locale** (File → Settings → Locale), if they aren't already — the developer, once. The device-testing task requires it (2026-10-07); the 1.5.3 decimals bug only showed in Ukrainian-locale sheets.
 - 📝 **Now that 1.5.x is released:** retire the old GitHub Pages privacy page, rename the repo to `track-my-meals`, make it private, rename the local folder (+ move Claude's notes).
 - 📝 **Staging address** for signed-in branch testing (`staging` branch + fixed domain + OAuth origin) and tick **Preview** for `USDA_API_KEY` / `VITE_SPREADSHEET_ID` in Vercel.
 - 📝 Review page: clear the stale кисляк objection (Г68).

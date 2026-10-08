@@ -6,11 +6,11 @@
 
 | Sheet | Use |
 |---|---|
-| Mom's (`VITE_DEFAULT_SPREADSHEET_ID`) | Never: no tests, no experiments |
-| Test (`VITE_SPREADSHEET_ID`) | Checking behaviour against the released schema; testers use it |
+| Ukrainian-locale test (`VITE_DEFAULT_SPREADSHEET_ID`, mom's old sheet) | Checking behaviour in mom's conventions: Ukrainian locale, decimal comma |
+| Test (`VITE_SPREADSHEET_ID`) | Checking behaviour against the released schema, in English (Canada) conventions; testers use it |
 | Dev (`VITE_DEV_SPREADSHEET_ID`) | Anything that changes the sheet's structure (new columns, migrations) until that release ships |
 
-Mom's phone is never part of testing. Her setup is reproduced instead: a Ukrainian-locale sheet, Ukrainian Gboard, large text. The test and dev sheets are set to the Ukrainian locale (File → Settings → Locale), as hers is.
+Mom's phone and her own sheet (on her Drive, unknown to the app) are never part of testing. Her setup is reproduced instead: the Ukrainian-locale test sheet, Ukrainian Gboard, large text. A change that reads or writes numbers or dates is checked on both locales: the Ukrainian-locale sheet and the test or dev sheet (English, Canada).
 
 ## Web app (local)
 
