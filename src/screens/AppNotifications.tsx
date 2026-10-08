@@ -70,6 +70,23 @@ export default function AppNotifications() {
     });
   }, [needsAttention, reports, repairError, openDetails, dismissDialog, show, remove]);
 
+  // The sheet couldn't be brought up to date (2.1: the products merge stopped). The data
+  // isn't changed — the merge writes only after its copy — but the screens can't read it yet.
+  const { checkError, check } = health;
+  useEffect(() => {
+    if (!signedIn || localMode || !checkError) {
+      remove("sheet-check-error");
+      return;
+    }
+    show({
+      key: "sheet-check-error",
+      kind: "action",
+      title: uk.sheetUpgrade.failed,
+      details: [checkError, uk.sheetUpgrade.failedSafe],
+      actions: [{ label: uk.sheetUpgrade.retry, onClick: () => void check() }],
+    });
+  }, [signedIn, localMode, checkError, check, show, remove]);
+
   const { upgrading, upgradeSummary, dismissUpgradeSummary } = health;
   useEffect(() => {
     if (upgrading) {
