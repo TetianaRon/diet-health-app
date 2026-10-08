@@ -56,7 +56,7 @@ The person decides where their data lives, with plain wording about each choice.
 - **One «Продукти» tab** with filter chips; one editor («Значення: вказані / за рецептом»).
 - **One sheet tab, `Products`** (developer, 2026-10-08): IDs never change; an automatic merge on the first open of 2.1, with the sheet copy first and a notice; the old tabs kept as «Інгредієнти (архів)» and «Страви (архів)».
 
-### 2.1.1 — Millilitres · 📝 planned (developer, 2026-10-08: moved out of 2.1) — spec → "One product list (2.1)" → "Millilitres"
+### 2.1.1 — Millilitres · 🔨 in progress (2026-10-08) — spec → "One product list (2.1)" → "Millilitres"
 - A third basis, «на 100 мл» (or «на 250 мл» as a label gives it), for her own items; logging in ml (a `PortionMl` meal-log column, so a drink without a known density keeps its amount); recipe lines in ml.
 - An optional density «100 мл = 103 г» linking ml and grams. **Database densities for drinks** (milk, kefir, coffee; USDA household measures, with source and reliability) go through **2.2.1's review round**.
 
