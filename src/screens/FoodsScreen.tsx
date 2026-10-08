@@ -11,6 +11,7 @@ import { builtInMatch, giSourceEntry } from "../lib/builtInStatus";
 import type { VerifiedFoodEntry } from "../data/verifiedFoods";
 import { useEffect, useState } from "react";
 import { LABEL_KEYS, type LabelKey } from "../lib/labels";
+import { carryUpward, dishAsIngredient, recipeCandidates } from "../lib/recipeGraph";
 import { uk } from "../i18n/uk";
 import MathInput from "./MathInput";
 import { evaluateInput } from "../lib/mathInput";
@@ -38,6 +39,7 @@ import {
   resolveItemRef,
   setDishGlycemicFlag,
   updateDish,
+  updateDishes,
   type Dish,
   type DishIngredientRef,
   type NutritionKey,
@@ -1116,37 +1118,6 @@ type ListFilter = "all" | LabelKey | "recipe";
 const FILTERS: ListFilter[] = ["all", "ingredient", "dish", "drink", "sauce", "snack", "recipe"];
 type Editing = { mode: "typed"; item: Ingredient } | { mode: "recipe"; item: Dish };
 
-/** A composed item seen as a typed one (its current values, same ID) — for «Значення: вказані». */
-function dishAsIngredient(dish: Dish): Ingredient {
-  return {
-    id: dish.id,
-    basedOn: dish.basedOn,
-    nameUk: dish.nameUk,
-    nameEn: dish.nameEn,
-    carbsG: dish.carbsG,
-    gi: dish.gi,
-    fiberG: dish.fiberG,
-    sugarsG: dish.sugarsG,
-    proteinG: dish.proteinG,
-    fatG: dish.fatG,
-    caloriesKcal: dish.caloriesKcal,
-    sodiumMg: dish.sodiumMg,
-    source: "manual",
-    dateAdded: dish.dateAdded,
-    favorite: false,
-    glycemicFlag: dish.glycemicFlag,
-    giVerified: false,
-    unknownFields: dish.unknownFields,
-    giFrom: "",
-    basis: dish.basis,
-    valuesPer: null,
-    weighedPieces: dish.weighedPieces ?? dish.yieldPieces,
-    weighedGrams: dish.weighedGrams ?? (dish.yieldPieces ? dish.yieldGrams || null : null),
-    portionSizes: dish.portionSizes,
-    labels: dish.labels,
-  };
-}
-
 /** A typed item seen as a composed one with an empty recipe (same ID) — for «Значення: за рецептом». */
 function ingredientAsDish(item: Ingredient): Dish {
   return {
@@ -1231,6 +1202,8 @@ export default function FoodsScreen() {
   const [adding, setAdding] = useState<"typed" | "recipe" | null>(null);
   const [editing, setEditing] = useState<Editing | null>(null);
   const [labelsDraft, setLabelsDraft] = useState<LabelKey[]>([]);
+  // After a save, the items made with it that were recalculated (changes carry upward, 2.1).
+  const [carriedNote, setCarriedNote] = useState<string | null>(null);
   // A composed item opened from a typed item's «used in» list: Android's back returns to that item.
   const [openedFrom, setOpenedFrom] = useState<Ingredient | null>(null);
   useEffect(() => {
@@ -1279,14 +1252,38 @@ export default function FoodsScreen() {
     );
   };
 
+  // Every composed item made with the saved one is recalculated and saved
+  // too, inner ones first (changes carry upward, 2.1); the list says which.
+  const carryChange = async (changedId: string, nextIngredients: Ingredient[], nextDishes: Dish[]) => {
+    const updated = carryUpward(changedId, nextDishes, mergeWithBuiltInFoods(nextIngredients));
+    if (updated.length === 0) {
+      setCarriedNote(null);
+      return;
+    }
+    const byId = new Map(updated.map((d) => [d.id, d]));
+    setDishes(nextDishes.map((d) => byId.get(d.id) ?? d));
+    setCarriedNote(uk.foods.carriedUpward(updated.map((d) => d.nameUk)));
+    try {
+      await updateDishes(updated);
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : String(err));
+    }
+  };
+
   // Saved as the other kind (a switch): the item leaves one list and joins the other.
   const placeIngredient = (updated: Ingredient, replacesId: string) => {
-    setIngredients((prev) => [...(prev ?? []).filter((i) => i.id !== replacesId && i.id !== updated.id), updated]);
-    setDishes((prev) => (prev ?? []).filter((d) => d.id !== updated.id));
+    const nextIngredients = [...(ingredients ?? []).filter((i) => i.id !== replacesId && i.id !== updated.id), updated];
+    const nextDishes = (dishes ?? []).filter((d) => d.id !== updated.id);
+    setIngredients(nextIngredients);
+    setDishes(nextDishes);
+    void carryChange(updated.id, nextIngredients, nextDishes);
   };
   const placeDish = (updated: Dish, replacesId: string) => {
-    setDishes((prev) => [...(prev ?? []).filter((d) => d.id !== replacesId && d.id !== updated.id), updated]);
-    setIngredients((prev) => (prev ?? []).filter((i) => i.id !== updated.id));
+    const nextDishes = [...(dishes ?? []).filter((d) => d.id !== replacesId && d.id !== updated.id), updated];
+    const nextIngredients = (ingredients ?? []).filter((i) => i.id !== updated.id);
+    setDishes(nextDishes);
+    setIngredients(nextIngredients);
+    void carryChange(updated.id, nextIngredients, nextDishes);
   };
 
   const handleToggleFavorite = async (ingredient: Ingredient) => {
@@ -1455,7 +1452,7 @@ export default function FoodsScreen() {
       {editing?.mode === "recipe" && (
         <ComposeDishForm
           key={`recipe-${editing.item.id}`}
-          ingredients={availableIngredients}
+          ingredients={[...availableIngredients, ...recipeCandidates(editing.item.id, availableDishes).map(dishAsIngredient)]}
           labels={labelsDraft}
           existingItems={existingItems}
           existingDish={editing.item}
@@ -1470,6 +1467,8 @@ export default function FoodsScreen() {
         <DeleteItem
           kind="dish"
           name={editing.item.nameUk}
+          usedIn={dishesUsingIngredient(editing.item, availableDishes)}
+          onEditDish={(dish) => startEditing({ mode: "recipe", item: dish })}
           onConfirm={async () => {
             await deleteDish(editing.item.id);
             setDishes((prev) => (prev ?? []).filter((d) => d.id !== editing.item.id));
@@ -1494,7 +1493,7 @@ export default function FoodsScreen() {
       )}
       {!editing && adding === "recipe" && (
         <ComposeDishForm
-          ingredients={availableIngredients}
+          ingredients={[...availableIngredients, ...availableDishes.map(dishAsIngredient)]}
           labels={labelsDraft}
           existingItems={existingItems}
           onUseExisting={showExistingItem}
@@ -1534,6 +1533,7 @@ export default function FoodsScreen() {
           <p className="food-list-hint">{uk.foods.giLegend}</p>
 
           {loadError && <p className="food-form-error">{loadError}</p>}
+          {carriedNote && <p className="food-form-notice">{carriedNote}</p>}
           {shownDishes.length === 0 && shownIngredients.length === 0 && <p>{uk.foods.noResults}</p>}
 
           <ul className="food-list">
