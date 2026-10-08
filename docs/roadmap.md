@@ -13,7 +13,7 @@ The workflow (intake → release branch → verify → release) and the standing
 ## Next session — start here (set 2026-10-07)
 1. **2.0 released** to Play's internal testing track and the web (2026-10-06, builds 19–23). Nothing is public; mom is an internal tester, so **an upload is a release to her**. Still worth checking on the developer's devices: the `online` event on a real phone, two tabs, switching sheets.
 2. **Plan reviewed with the developer (2026-10-07):** 2.0.1 → 2.0.2 faster food entry → 2.0.3 reminders → 2.0.4 sign-in choices (+ privacy policy) → 2.1 one product list → 2.1.1 millilitres → 2.2 sets → 2.3 mom's data → 2.4 Picker → 2.5 food families → 2.6 label photos → 2.7 GI from ingredients (after the research) → 2.8 AI lookup → 2.9 English → 3.0 public launch.
-3. **2.0.1 released** (2026-10-07, versionCode 24). **2.0.2 released** (2026-10-08, versionCode 25). **2.0.3 released** (2026-10-08, versionCode 26); still to do: check mom's notification volume and tone. **2.0.4 released** (2026-10-08, versionCode 27, with the privacy policy update on roncreator.com). **2.1 released** (2026-10-08, build 29, versionCode 29; build 28 failed to merge a sheet with a «Sheet1» tab, nothing written). Mom's sheet merges on her first open; check in the morning that her phone has build 29 and her data loads. **2.1.1 — millilitres built** (2026-10-08, versionCode 30). Next: **2.2 — sets**. Next: **2.1.1 — millilitres**.
+3. **2.0.1 released** (2026-10-07, versionCode 24). **2.0.2 released** (2026-10-08, versionCode 25). **2.0.3 released** (2026-10-08, versionCode 26); still to do: check mom's notification volume and tone. **2.0.4 released** (2026-10-08, versionCode 27, with the privacy policy update on roncreator.com). **2.1 released** (2026-10-08, build 29, versionCode 29; build 28 failed to merge a sheet with a «Sheet1» tab, nothing written). Mom's sheet merges on her first open; check in the morning that her phone has build 29 and her data loads. **2.1.1 released** (2026-10-08, versionCode 30). Next: **2.2 — sets**. Next: **2.1.1 — millilitres**.
 4. Chromium issue 569300356: reply sent 2026-10-05 — check for answers now and then.
 5. Plugin issue [capacitor-local-notifications#15](https://github.com/ionic-team/capacitor-local-notifications/issues/15) (reminders lost during a restart; reported 2026-10-08, our patch in `patches/`): check for answers now and then; drop the patch once a fixed version ships.
 
@@ -56,7 +56,7 @@ The person decides where their data lives, with plain wording about each choice.
 - **One «Продукти» tab** with filter chips; one editor («Значення: вказані / за рецептом»).
 - **One sheet tab, `Products`** (developer, 2026-10-08): IDs never change; an automatic merge on the first open of 2.1, with the sheet copy first and a notice; the old tabs kept as «Інгредієнти (архів)» and «Страви (архів)».
 
-### 2.1.1 — Millilitres · ✅ built (2026-10-08) — spec → "One product list (2.1)" → "Millilitres"
+### 2.1.1 — Millilitres · ✅ released (2026-10-08, web + Play internal testing) — spec → "One product list (2.1)" → "Millilitres"
 - A third basis, «на 100 мл» (or «на 250 мл» as a label gives it), for her own items; logging in ml (a `PortionMl` meal-log column, so a drink without a known density keeps its amount); recipe lines in ml.
 - An optional density «100 мл = 103 г» linking ml and grams. **Database densities for drinks** (milk, kefir, coffee; USDA household measures, with source and reliability) go through **2.2.1's review round**.
 

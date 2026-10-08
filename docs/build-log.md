@@ -456,3 +456,5 @@ Answering "did we review only products?": the 69 home dishes were on the page bu
 - **Not checked:** the meal editor's ml field on the phone (same field type as «Порція (г)»); editing a logged drink's ml.
 - **Not in 2.1.1:** densities for the database's drinks (2.2.1's review round).
 - 437 tests, `tsc -b`, `npm run build`. Version 2.1.1, versionCode 30.
+
+✅ **2.1.1 released 2026-10-08:** main pushed (web) and the bundle uploaded to the internal testing track (versionCode 30).
