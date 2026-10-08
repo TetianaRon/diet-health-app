@@ -295,3 +295,5 @@ Answering "did we review only products?": the 69 home dishes were on the page bu
 - **Verified (emulator):** the product form and the linked grams/pieces in the meal editor on the phone layout. During clean-up Android closed the app for a system update; the leftover test product was deleted from the web afterwards.
 - **Not checked:** editing an existing meal row that was counted (the «Порція (шт.)» field in the dish editor); the duplicates review with a per-piece item.
 - 395 tests, `tsc -b`, `npm run build`. Version 2.0.1, versionCode 24.
+
+✅ **2.0.1 released 2026-10-07:** main pushed (web) and the bundle uploaded to the internal testing track (versionCode 24).

@@ -13,12 +13,12 @@ The workflow (intake → release branch → verify → release) and the standing
 ## Next session — start here (set 2026-10-07)
 1. **2.0 released** to Play's internal testing track and the web (2026-10-06, builds 19–23). Nothing is public; mom is an internal tester, so **an upload is a release to her**. Still worth checking on the developer's devices: the `online` event on a real phone, two tabs, switching sheets.
 2. **Plan reviewed with the developer (2026-10-07):** 2.0.1 → 2.0.2 faster food entry → 2.0.3 reminders → 2.0.4 sign-in choices (+ privacy policy) → 2.1 sets → 2.2 mom's data → 2.3 Picker → 2.4 food families → 2.5 label photos → 2.6 GI from ingredients (after the research) → 2.7 AI lookup → 2.8 English → 3.0 public launch.
-3. **2.0.1 built** (2026-10-07, versionCode 24): waiting for the developer to push `main` and upload the bundle. Next: **2.0.2 — faster food entry**.
+3. **2.0.1 released** (2026-10-07, versionCode 24). Next: **2.0.2 — faster food entry** (named portion sizes with database sizes, common nuts, saving a custom entry, maths in fields).
 4. Chromium issue 569300356: reply sent 2026-10-05 — check for answers now and then.
 
 ## Current and upcoming releases
 
-### 2.0.1 — Pack values: per [n] g and per [n] pieces · ✅ built (2026-10-07) — spec → "Pack values"
+### 2.0.1 — Pack values: per [n] g and per [n] pieces · ✅ released (2026-10-07, web + Play internal testing) — spec → "Pack values"
 Packs list nutrients per portion (per 30 g) or per piece (dumplings per 12), not always per 100 g. Values are entered exactly as printed.
 - **Item editor (products and dishes):** two separate parts (developer, 2026-10-07). «Значення вказано на»: grams or pieces and the amount, as the pack says it (на 100 г, на 30 г, на 12 шт.). «Вага штук» (optional): any weighed count, e.g. 12 home-cooked dumplings = 300 г, which works for database products too (her copy is saved). A dish's yield is a weight, a count («Вийшло 10 млинців») or both. The form shows what will be stored.
 - **Stored:** grams-main items stay per 100 g as today (every value except GI recalculated). Pieces-main items store values per 1 piece. New columns `Basis`, `ValuesPer`, `WeighedPieces`, `WeighedGrams` (Ingredients), `Basis`, `YieldPieces` (Dishes), `PortionPieces` (DailyLog) arrive through the silent upgrade; the sync, the duplicates review and the database search learn them.
