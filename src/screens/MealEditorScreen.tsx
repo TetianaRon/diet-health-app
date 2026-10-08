@@ -7,7 +7,8 @@ import MathInput from "./MathInput";
 import { evaluateInput } from "../lib/mathInput";
 import { useBackHandler } from "../lib/useBackHandler";
 import { classifyGl } from "../lib/health";
-import { itemMeasure, type IngredientNutrition, type NutritionKey } from "../lib/dishes";
+import { addDish, itemMeasure, type IngredientNutrition, type NutritionKey } from "../lib/dishes";
+import { normalizeItemName } from "../lib/itemIds";
 import { pieceGrams, positiveOrNull, round2, type Measure } from "../lib/measure";
 import { sizeAmount, sizeLabel, type PortionSize } from "../lib/portionSizes";
 import { sizeAmountText } from "./PortionSizesFields";
@@ -134,6 +135,9 @@ function AddDishToMealForm({
   // it only ever produces a DailyLog row.
   const [mode, setMode] = useState<"pick" | "custom">("pick");
   const [customName, setCustomName] = useState("");
+  // «Також зберегти в «Страви»» (2.0.2): the custom entry becomes a dish of 1 portion.
+  const [saveAsDish, setSaveAsDish] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [customValues, setCustomValues] = useState<Record<keyof IngredientNutrition, string>>(EMPTY_CUSTOM_VALUES);
 
   const switchMode = (next: "pick" | "custom") => {
@@ -215,7 +219,7 @@ function AddDishToMealForm({
   const filledCustomFields = CUSTOM_FIELDS.filter((field) => customValues[field].trim() !== "");
   const customFieldsValid = filledCustomFields.every((field) => Number.isFinite((evaluateInput(customValues[field]) ?? NaN)));
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (mode === "pick") {
       if (!selected || !pickedEntry) {
         setError(uk.today.form.validationError);
@@ -231,7 +235,46 @@ function AddDishToMealForm({
     }
     const values: Partial<IngredientNutrition> = {};
     for (const field of filledCustomFields) values[field] = (evaluateInput(customValues[field]) ?? NaN);
-    onAdd(buildCustomLogEntry(mealType, customName.trim(), parsedPortion, values, notes.trim(), mealId, timestamp));
+    const entry = buildCustomLogEntry(mealType, customName.trim(), parsedPortion, values, notes.trim(), mealId, timestamp);
+    if (!saveAsDish) {
+      onAdd(entry);
+      return;
+    }
+    // Saved as a dish measured per portion: values per 1 piece, where the piece is the whole portion.
+    const name = customName.trim();
+    if (foods.some((f) => normalizeItemName(f.nameUk) === normalizeItemName(name))) {
+      setError(uk.today.form.saveAsDishNameTaken);
+      return;
+    }
+    setSaving(true);
+    try {
+      const unknownFields = CUSTOM_FIELDS.filter((field) => !filledCustomFields.includes(field));
+      const dish = await addDish({
+        nameUk: name,
+        nameEn: "",
+        ingredients: [],
+        yieldGrams: parsedPortion,
+        basis: "piece",
+        yieldPieces: 1,
+        portionSizes: [{ label: uk.today.form.portionSizeLabel, pieces: 1 }],
+        carbsG: values.carbsG ?? 0,
+        gi: values.gi ?? 0,
+        fiberG: values.fiberG ?? 0,
+        sugarsG: values.sugarsG ?? 0,
+        proteinG: values.proteinG ?? 0,
+        fatG: values.fatG ?? 0,
+        caloriesKcal: values.caloriesKcal ?? 0,
+        sodiumMg: values.sodiumMg ?? 0,
+        source: "manual",
+        giVerified: false,
+        unknownFields,
+      });
+      onAdd({ ...entry, itemId: dish.id, portionPieces: 1, portionSize: uk.today.form.portionSizeLabel });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -345,6 +388,16 @@ function AddDishToMealForm({
       {previewText && <p className="food-form-source">{previewText}</p>}
 
       {mode === "custom" && (
+        <>
+          <label className="settings-checkbox">
+            <input type="checkbox" checked={saveAsDish} onChange={(e) => setSaveAsDish(e.target.checked)} />
+            {uk.today.form.saveAsDishLabel}
+          </label>
+          {saveAsDish && <p className="food-form-hint">{uk.today.form.saveAsDishHint}</p>}
+        </>
+      )}
+
+      {mode === "custom" && (
         <div className="food-form-custom-fields">
           <p className="food-form-source">{uk.today.form.customHint}</p>
           {CUSTOM_FIELDS.map((field) => (
@@ -368,7 +421,7 @@ function AddDishToMealForm({
       {error && <p className="food-form-error">{error}</p>}
 
       <div className="food-form-actions">
-        <button type="button" onClick={handleAdd}>
+        <button type="button" onClick={() => void handleAdd()} disabled={saving}>
           {uk.today.mealEditor.addDish.addButton}
         </button>
         <button type="button" onClick={onBack}>

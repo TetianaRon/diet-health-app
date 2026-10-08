@@ -56,6 +56,7 @@ import { findNameMatch, isBuiltInId, suggestFreeName } from "../lib/itemIds";
 import PackAmountFields, { measureFromPackFields, type PackFields } from "./PackAmountFields";
 import ProductMeasureFields, { isMeasure, measureFromProductFields, productFieldsFromMeasure, type ProductFields } from "./ProductMeasureFields";
 import PortionSizesFields, { sizeRowsFrom, sizesFromRows, type SizeRow } from "./PortionSizesFields";
+import FixedDishForm from "./FixedDishForm";
 import { pieceGrams, round2, toStoredValues, toTypedValues, valuesAmount, PER_100G, type Measure } from "../lib/measure";
 import { measureOf, refFactor } from "../lib/dishes";
 
@@ -136,7 +137,7 @@ function valuesHeading(pack: ProductFields): string | null {
 // One-line "carbs, GI" summary for a list row — "невідомо" (never a
 // misleading 0) for a field the person left blank.
 function foodMetaText(
-  item: { carbsG: number; gi: number; giVerified: boolean; unknownFields: NutritionKey[] } & Partial<Measure>,
+  item: { carbsG: number; gi: number; giVerified: boolean; unknownFields: NutritionKey[]; ingredients?: unknown[] } & Partial<Measure>,
   entry: VerifiedFoodEntry | null = null,
 ): string {
   const carbs = item.unknownFields.includes("carbsG")
@@ -154,7 +155,8 @@ function foodMetaText(
           : entry?.state === "dry"
             ? `ГІ ${item.gi} (${uk.verified.afterCooking}, ${uk.health.gi[classifyGi(item.gi)]})`
             : `${item.giVerified || entry ? "" : "≈"}ГІ ${item.gi} (${uk.health.gi[classifyGi(item.gi)]})`;
-  const perPiece = item.basis === "piece" ? ` ${uk.foods.pack.per("piece")}` : "";
+  // A dish saved from a custom entry has no recipe: its piece is the whole portion.
+  const perPiece = item.basis !== "piece" ? "" : item.ingredients?.length === 0 ? ` ${uk.dishes.fixedForm.perPortion}` : ` ${uk.foods.pack.per("piece")}`;
   return `${carbs}${perPiece}, ${gi}`;
 }
 
@@ -1328,16 +1330,28 @@ export default function FoodsScreen() {
       )}
 
       {editingDish && (
-        <ComposeDishForm
-          ingredients={availableIngredients}
-          existingItems={existingItems}
-          existingDish={editingDish}
-          onSaved={(updated) => {
-            setDishes((prev) => [...(prev ?? []).filter((d) => d.id !== editingDish.id && d.id !== updated.id), updated]);
-            setEditingDish(null);
-          }}
-          onCancel={() => setEditingDish(null)}
-        />
+        editingDish.ingredients.length === 0 && !isBuiltInId(editingDish.id) ? (
+          <FixedDishForm
+            dish={editingDish}
+            existingItems={existingItems}
+            onSaved={(updated) => {
+              setDishes((prev) => [...(prev ?? []).filter((d) => d.id !== editingDish.id), updated]);
+              setEditingDish(null);
+            }}
+            onCancel={() => setEditingDish(null)}
+          />
+        ) : (
+          <ComposeDishForm
+            ingredients={availableIngredients}
+            existingItems={existingItems}
+            existingDish={editingDish}
+            onSaved={(updated) => {
+              setDishes((prev) => [...(prev ?? []).filter((d) => d.id !== editingDish.id && d.id !== updated.id), updated]);
+              setEditingDish(null);
+            }}
+            onCancel={() => setEditingDish(null)}
+          />
+        )
       )}
       {editingDish && !isBuiltInId(editingDish.id) && (
         <DeleteItem
