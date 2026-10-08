@@ -808,6 +808,14 @@ export const uk = {
     forgetOnPhone: "Після закриття застосунку потрібно буде ввійти знову, а копію таблиці на телефоні буде очищено.",
     continueAs: (email: string) => `Продовжити як ${email}`,
     otherAccount: "Увійти іншим обліковим записом",
+    // Changing it in Settings asks first (developer, 2026-10-08).
+    rememberConfirm: {
+      turnOn: "Запам'ятати вас на цьому пристрої?",
+      turnOff: "Більше не запам'ятовувати вас на цьому пристрої?",
+      yesOn: "Так, запам'ятати мене",
+      yesOff: "Так, не запам'ятовувати",
+      keep: "Залишити як є",
+    },
     // Before working without Google (2.0.4).
     localAck: {
       title: "Без Google: дані лише на цьому телефоні",
