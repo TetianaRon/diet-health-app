@@ -697,5 +697,5 @@ Two separate things (developer, 2026-10-07: values per 100 g from the database, 
 
 ### Maths
 - Every nutrient, GI and GL work without weight: GL = GI × grams of carbs eaten ÷ 100; a dish's GI is already weighted by carbs; a dish needs only its ingredients' total nutrients and its yield.
-- A pieces-main dish: values per piece = the ingredients' totals ÷ `YieldPieces`. With a yield weight too, `PieceGrams` = yield weight ÷ pieces.
+- A pieces-main dish: values per piece = the ingredients' totals ÷ `YieldPieces`. With a yield weight too, one piece weighs yield weight ÷ pieces.
 - Lists show «на 1 шт.» instead of «на 100 г» for pieces-main items. The duplicates review («Знайдено однакові записи») says which basis each version uses.
