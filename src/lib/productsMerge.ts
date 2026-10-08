@@ -11,7 +11,7 @@ import { listLocalChanges, removeLocalChanges, addLocalChange } from "./localDb"
 import { makeBackupCopy } from "./backups";
 import { BACKUP_NAME_PREFIX } from "./backupTag";
 import { newRecordId } from "./itemIds";
-import { columnLetter, buildRow, cell, parseTab } from "./sheetRow";
+import { columnLetter, buildRow, cell, parseTab, parseTabLenient } from "./sheetRow";
 import { labelFor } from "./sheetLabels";
 import { absorbLeftovers, ARCHIVE_TITLES, OLD_PRODUCT_TABS, planProductsMerge, PRODUCTS_COLUMN_INDEX, PRODUCTS_HEADERS, PRODUCTS_TAB } from "./products";
 import { writeSheetFormat } from "./sheetFormat";
@@ -109,7 +109,7 @@ export async function mergeProductsIfNeeded(onStart?: () => void): Promise<Produ
     await batchUpdateRanges([{ range: `${PRODUCTS_TAB}!A${firstDataRow}:${lastCol}${firstDataRow + rows.length - 1}`, values: rows }]);
     for (const tab of oldTabs) {
       const grid = grids.get(tab) ?? [];
-      const { dataRows } = parseTab(tab, grid, tab === "Ingredients" ? INGREDIENTS_HEADERS : DISHES_HEADERS);
+      const { dataRows } = parseTabLenient(tab, grid, tab === "Ingredients" ? INGREDIENTS_HEADERS : DISHES_HEADERS);
       const first = grid.length - dataRows.length + 1;
       if (dataRows.length > 0) await deleteSheetRows(tab, dataRows.map((_, i) => first + i));
     }

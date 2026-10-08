@@ -127,6 +127,21 @@ export interface ParsedTab {
 }
 
 /** Splits a tab as read (header row first) into a resolved column index and its data rows. Throws SheetStructureError on an unsound header row. */
+/**
+ * Like parseTab, for carrying an older tab's rows into a new one (2.1, the
+ * products merge, which runs before the silent upgrade): columns the tab
+ * doesn't have yet are allowed and read as blank. A tab that isn't this
+ * app's layout, or has a column twice, is still refused.
+ */
+export function parseTabLenient(tab: string, rows: unknown[][], canonicalHeaders: readonly string[]): ParsedTab {
+  const [header = [], second] = rows;
+  const problems = findHeaderProblems(header, canonicalHeaders);
+  if (problems.notAppLayout || problems.duplicates.size > 0) throw new SheetStructureError(tab);
+  const columnIndex = buildColumnIndex(header);
+  const hasLabelRow = isLabelRow(second, columnIndex);
+  return { columnIndex, dataRows: rows.slice(hasLabelRow ? 2 : 1), firstDataRow: hasLabelRow ? 3 : 2 };
+}
+
 export function parseTab(tab: string, rows: unknown[][], canonicalHeaders: readonly string[]): ParsedTab {
   const [header = [], second] = rows;
   const columnIndex = resolveColumnIndex(tab, header, canonicalHeaders);

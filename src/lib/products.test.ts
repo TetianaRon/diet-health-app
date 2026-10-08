@@ -54,6 +54,13 @@ describe("merging Ingredients and Dishes into Products (2.1)", () => {
     expect([box.basis, box.weighedPieces, box.weighedGrams, box.caloriesKcal, box.labels]).toEqual(["piece", 1, 450, 600, ["dish"]]);
   });
 
+  it("carries an older tab that lacks newer columns (they read as blank), and refuses one that isn't the app's layout", () => {
+    const old = [["NameUk", "Carbs_g", "Calories_kcal"], ["Гречка", 62, 343]];
+    const plan = planProductsMerge(old, undefined, () => "Inew");
+    expect([at(plan.rows[0], "NameUk"), at(plan.rows[0], "Carbs_g"), at(plan.rows[0], "Id"), at(plan.rows[0], "Values")]).toEqual(["Гречка", 62, "Inew", "typed"]);
+    expect(() => planProductsMerge([["Something", "Else"], ["x", 1]], undefined, () => "X")).toThrow();
+  });
+
   it("works with one tab missing or empty", () => {
     expect(planProductsMerge(undefined, dishes, () => "X").rows).toHaveLength(2);
     expect(planProductsMerge([[...INGREDIENTS_HEADERS]], undefined, () => "X").rows).toHaveLength(0);

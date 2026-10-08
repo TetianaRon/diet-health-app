@@ -1006,22 +1006,42 @@ export async function createSpreadsheetFromGrids(
   appProperties?: Record<string, string>,
 ): Promise<string> {
   const id = await createSpreadsheetInAppFolder(name, appProperties);
+  try {
+    await fillSpreadsheetFromGrids(id, grids);
+  } catch (err) {
+    // A half-made copy isn't a copy: it goes to Drive's trash (2.1 left empty ones behind).
+    await trashDriveFile(id).catch(() => undefined);
+    throw err;
+  }
+  return id;
+}
+
+async function fillSpreadsheetFromGrids(id: string, grids: ReadonlyMap<string, unknown[][]>): Promise<void> {
   const tabs = [...grids.keys()];
-  // Add the tabs, then remove the empty one Google creates with every new spreadsheet (sheetId 0).
+  // Add the tabs, then remove the empty one Google creates with every new
+  // spreadsheet (sheetId 0). It's renamed first: a copied sheet can have its
+  // own tab with the default name («Sheet1», «Аркуш1»), and adding a second
+  // tab with that name failed and left the copy empty (2.1, the products merge).
   await authorizedFetch(`${id}:batchUpdate`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ requests: [...tabs.map((title) => ({ addSheet: { properties: { title } } })), { deleteSheet: { sheetId: 0 } }] }),
+    body: JSON.stringify({
+      requests: [
+        { updateSheetProperties: { properties: { sheetId: 0, title: `tmm-temp-${Date.now()}` }, fields: "title" } },
+        ...tabs.map((title) => ({ addSheet: { properties: { title } } })),
+        { deleteSheet: { sheetId: 0 } },
+      ],
+    }),
   });
   await authorizedFetch(`${id}/values:batchUpdate`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       valueInputOption: "RAW",
-      data: tabs.filter((t) => (grids.get(t) ?? []).length > 0).map((t) => ({ range: `${t}!A1`, values: grids.get(t) })),
+      // A tab name with spaces or brackets is quoted in A1 notation («'Страви (архів)'!A1»).
+      data: tabs.filter((t) => (grids.get(t) ?? []).length > 0).map((t) => ({ range: `'${t.replace(/'/g, "''")}'!A1`, values: grids.get(t) })),
     }),
   });
-  return id;
 }
 
 /** Moves a file the app created to Drive's trash (recoverable there for 30 days). */
