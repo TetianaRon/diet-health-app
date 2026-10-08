@@ -757,18 +757,22 @@ The split into «Продукти» and «Страви» mixed two independent t
   - **labels:** none, one or several of **інгредієнт, страва, напій, соус/заправка, перекус** (developer; «продукт» isn't a label, since every item is one). Labels are for finding and filtering only; they never change the maths.
 - **Any item can be a recipe line,** composed ones included (homemade mayonnaise in a salad).
   - **No loops:** an item can't contain itself, directly or through another recipe; the composer leaves such items out of its picker.
-  - **Changes carry upward:** saving a composed item recalculates every item made with it (and those made with them), and the app says which ones changed.
+  - **Changes carry upward:** saving any item, typed or composed, recalculates every composed item made with it (and those made with them, inner ones first — `recipeGraph.ts`), saves them, and the list says «Перераховано за новими значеннями: «…»». Since 2.1 editing a typed product updates the dishes made with it too (before, their stored values stayed).
+  - **Deleting** an item that's in another recipe is blocked, with links to those recipes (as for products before); the texts say «продукт», not «страва».
 - **Database items are typed items.** They get labels from their category: Напої → напій; the cooked foods (гречка варена…) → страва; the rest → інгредієнт.
 
-### Millilitres
+### Millilitres — moved to 2.1.1 (developer, 2026-10-08: 2.1 ships the list, labels and items inside recipes; database densities for drinks join 2.2.1's review round)
 - A third basis beside per 100 g and per piece: **per 100 ml** (or per any amount in ml, as a drink's label gives it: «на 250 мл»).
 - In a recipe, ml needs no conversion: nutrients add up line by line, and the final weight is weighed.
 - Between ml and g (logging juice in ml from values per 100 g, or a recipe weight) the app needs a density: an optional pair like «Вага штук», **«100 мл = 103 г»**. The database supplies it for drinks from USDA's household measures ("1 cup = 244 g", 240 ml). Without it, an ml item is logged in ml only.
 
-### Screens
-- **The tab is «Продукти»** (developer), one list of all items with filter chips by label (Усі · Інгредієнти · Страви · Напої · Соуси · Перекуси) and by values (Складені за рецептом). Favourites first, as now.
-- **One editor:** «Значення: вказані / за рецептом» decides which fields show. Typed values are today's product form (pack values, «Вага штук», sizes, now with ml). «За рецептом» is today's dish composer, whose picker offers every item except those that would make a loop.
-- **Changing typed ↔ composed** on a saved item is a field change: it keeps its name, labels, ID and the meals logged with it. The other side's data is kept in its columns, so switching back loses nothing.
+### Screens (as built)
+- **The tab is «Продукти»** (developer): one list, composed items first (marked «· за рецептом»), then typed ones (favourites first; best match first while searching). Filter chips: Усі · Інгредієнти · Страви · Напої · Соуси · Перекуси · За рецептом.
+- **Adding:** «Додати продукт» (typed values) and «Скласти за рецептом».
+- **One editor:** above the form, «Значення: Вказані / За рецептом» picks the form, and the label chips (інгредієнт, страва, напій, соус/заправка, перекус; «Лише для пошуку й фільтрів — на розрахунки не впливають»). A database item that isn't hers yet can't switch (editing it saves her copy first).
+- **Changing typed ↔ composed** on a saved item is a field change: it keeps its name, labels, ID and the meals logged with it. The other side's data is kept in its columns, so switching back loses nothing. Switching to «Вказані» starts from the item's current values; switching to «За рецептом» starts with an empty recipe. Nothing changes until it's saved.
+- **A fixed-value dish** (2.0.2's saved meal box) is a typed item labelled страва, measured per portion (its portion weight read from the former YieldGrams). «Також зберегти в «Страви»» in the meal editor now saves such an item.
+- **The meal editor** lists composed items first, then her typed items labelled страва, then the rest.
 
 ### Storage: one tab (developer chose this, 2026-10-08)
 - **An item's ID is its identity and never changes** (developer's question: what happens to the ID when an item switches between typed and composed?). Two tabs would have meant moving the row under a new ID and rewriting every link on each switch, which breaks links held by another device's pending changes.
