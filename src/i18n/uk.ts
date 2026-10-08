@@ -410,6 +410,7 @@ export const uk = {
       removeButton: "Прибрати",
       labelLabel: "Назва",
       amountGramsLabel: "Грамів",
+      amountMlLabel: "Мілілітрів",
       amountPiecesLabel: "Штук",
       database: "З бази:",
       invalid: "Для кожного розміру вкажіть назву й кількість (або приберіть рядок).",
@@ -553,6 +554,7 @@ export const uk = {
       ingredientLabel: "Інгредієнт",
       ingredientPlaceholder: "Пошук продукту...",
       gramsLabel: "Грамів (сирих)",
+      mlLabel: "Мілілітрів",
       addIngredientButton: "Додати інгредієнт",
       removeIngredientButton: "Прибрати",
       yieldLabel: "Вага готової страви (г)",
@@ -564,6 +566,7 @@ export const uk = {
       yieldPiecesLabel: "Вийшло, шт.",
       amountUnitGrams: "г",
       amountUnitPieces: "шт.",
+      amountUnitMl: "мл",
       amountLabel: "Кількість",
       yieldHint: "Загальна вага після приготування — вода додає вагу, але не калорії.",
       smallUnknownGi: (percent: number) =>
