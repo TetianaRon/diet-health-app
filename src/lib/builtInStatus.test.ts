@@ -66,7 +66,7 @@ describe("dishCopyUpdates", () => {
   const oldDish = LEGACY_BUILT_INS.find((l) => l.id === "B0059")!; // «Рис білий варений», a built-in dish before 1.8
   const copy: Dish = {
     id: "D2", basedOn: "B0059", nameUk: oldDish.nameUk, nameEn: "white rice, cooked", ingredients: [{ id: "B0002", nameUk: "Рис білий сирий", grams: 100 }],
-    yieldGrams: 280, source: "starter", dateAdded: "2026-09-20", glycemicFlag: "none", giVerified: false, unknownFields: [], ...oldDish.values,
+    yieldGrams: 280, basis: "100g" as const, yieldPieces: null, source: "starter", dateAdded: "2026-09-20", glycemicFlag: "none", giVerified: false, unknownFields: [], ...oldDish.values,
   };
 
   it("brings an unchanged old dish copy to the verified cooked product, as 100 g of it", () => {

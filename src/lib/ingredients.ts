@@ -10,6 +10,7 @@ import { BUILT_IN_ALIASES, BUILT_IN_FOODS } from "../data/builtInFoods";
 import { toGlycemicFlag, type GlycemicFlag } from "./glycemicFlag";
 import { parseUnknownNutritionFields, type NutritionKey } from "./dishes";
 import { mergeBuiltInsById, newRecordId } from "./itemIds";
+import { positiveOrNull, toBasis, type Basis } from "./measure";
 
 export type IngredientSource = "starter" | "usda" | "manual";
 
@@ -51,6 +52,12 @@ export interface Ingredient {
   // release 1.9), else "" — typing a GI by hand empties it. Lets her own
   // item show ⓘ for its GI while its nutrients stay «неперевірено».
   giFrom: string;
+  // How the values are measured (2.0.1, measure.ts): per 100 g (as before)
+  // or per 1 piece, and the pack's own statement as typed («на 30 г»,
+  // «12 шт. = 200 г»). Blank cells read as per 100 g with no pack statement.
+  basis: Basis;
+  packPieces: number | null;
+  packGrams: number | null;
 }
 
 // Canonical column order — what a brand-new sheet gets initialized with (see
@@ -78,6 +85,9 @@ export const INGREDIENTS_HEADERS = [
   "Id",
   "BasedOn",
   "GiFrom",
+  "Basis",
+  "PackPieces",
+  "PackGrams",
   "UpdatedAt",
 ] as const;
 const DEFAULT_COLUMN_INDEX = buildColumnIndex(INGREDIENTS_HEADERS);
@@ -119,6 +129,9 @@ export function rowToIngredient(row: unknown[], columnIndex: ColumnIndex = DEFAU
     giVerified: toBoolean(cell(row, columnIndex, "GiVerified")),
     unknownFields: parseUnknownNutritionFields(cell(row, columnIndex, "UnknownFields")),
     giFrom: String(cell(row, columnIndex, "GiFrom") ?? "").trim(),
+    basis: toBasis(cell(row, columnIndex, "Basis")),
+    packPieces: positiveOrNull(cell(row, columnIndex, "PackPieces")),
+    packGrams: positiveOrNull(cell(row, columnIndex, "PackGrams")),
   };
 }
 
@@ -145,6 +158,9 @@ export function ingredientFields(ingredient: Ingredient): Record<string, unknown
       Id: ingredient.id,
       BasedOn: ingredient.basedOn,
       GiFrom: ingredient.giFrom,
+      Basis: ingredient.basis === "piece" ? "piece" : "",
+      PackPieces: ingredient.packPieces ?? "",
+      PackGrams: ingredient.packGrams ?? "",
   };
 }
 
@@ -187,7 +203,8 @@ export async function listIngredients(): Promise<Ingredient[]> {
 
 /** Adds a new ingredient with a new `I…` ID and returns it as saved. */
 export async function addIngredient(
-  ingredient: Omit<Ingredient, "dateAdded" | "favorite" | "glycemicFlag" | "id" | "basedOn" | "giFrom"> & { basedOn?: string; giFrom?: string },
+  ingredient: Omit<Ingredient, "dateAdded" | "favorite" | "glycemicFlag" | "id" | "basedOn" | "giFrom" | "basis" | "packPieces" | "packGrams"> &
+    Partial<Pick<Ingredient, "basedOn" | "giFrom" | "basis" | "packPieces" | "packGrams">>,
   favorite = false,
   glycemicFlag: GlycemicFlag = "none",
 ): Promise<Ingredient> {
@@ -196,6 +213,9 @@ export async function addIngredient(
     id: newRecordId("ingredient"),
     basedOn: ingredient.basedOn ?? "",
     giFrom: ingredient.giFrom ?? "",
+    basis: ingredient.basis ?? "100g",
+    packPieces: ingredient.packPieces ?? null,
+    packGrams: ingredient.packGrams ?? null,
     dateAdded: new Date().toISOString().slice(0, 10),
     favorite,
     glycemicFlag,
