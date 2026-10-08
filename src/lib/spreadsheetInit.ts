@@ -11,6 +11,9 @@
 // its own single default tab, so every read this app makes fails. The init
 // flow only ever adds the tabs this app expects — never touches or removes
 // anything a sheet already has.
+import { mergeProductsIfNeeded } from "./productsMerge";
+import { isSheetTooNew, SheetTooNewError } from "./sheetFormat";
+import { PRODUCTS_HEADERS } from "./products";
 import { addSheetTabs, batchUpdateRanges, getTabGrids, listSheetTitles, readRanges, structuralBatchUpdate } from "./sheets";
 import { columnLetter, SCAN_LAST_COLUMN } from "./sheetRow";
 import { labelFor } from "./sheetLabels";
@@ -24,8 +27,6 @@ import { writeItemCounter } from "./itemIdStore";
 import { BUILT_IN_FOODS } from "../data/builtInFoods";
 import { LEGACY_BUILT_INS } from "../data/legacyBuiltIns";
 import { DEFAULT_SETTINGS, SETTINGS_KEYS, settingsToRows, type Settings } from "./settings";
-import { INGREDIENTS_HEADERS } from "./ingredients";
-import { DISHES_HEADERS } from "./dishes";
 import { DAILY_LOG_HEADERS } from "./dailyLog";
 import { BLOOD_SUGAR_HEADERS } from "./bloodSugar";
 import { MEDICATIONS_HEADERS, MEDICATION_LOG_HEADERS } from "./medications";
@@ -37,8 +38,7 @@ import { uk } from "../i18n/uk";
 export { REQUIRED_TABS };
 
 const DATA_TAB_HEADERS: Record<string, readonly string[]> = {
-  Ingredients: INGREDIENTS_HEADERS,
-  Dishes: DISHES_HEADERS,
+  Products: PRODUCTS_HEADERS,
   DailyLog: DAILY_LOG_HEADERS,
   BloodSugar: BLOOD_SUGAR_HEADERS,
   Medications: MEDICATIONS_HEADERS,
@@ -343,10 +343,14 @@ export interface UpgradeSummary {
   idsRenumbered: number;
   /** Column migrations that filled a new column from an old one (readable names). */
   migrated: { to: string; from: string; cells: number }[];
+  /** 2.1: Ingredients and Dishes were merged into one Products tab (a copy was saved first). */
+  productsMerged: boolean;
+  /** 2.1: rows an older app version saved in an old tab, moved into Products. */
+  productsAbsorbed: number;
 }
 
 function emptySummary(): UpgradeSummary {
-  return { addedTabs: [], addedColumns: [], labelsFilled: 0, idsFilled: 0, idsRenumbered: 0, migrated: [] };
+  return { addedTabs: [], addedColumns: [], labelsFilled: 0, idsFilled: 0, idsRenumbered: 0, migrated: [], productsMerged: false, productsAbsorbed: 0 };
 }
 
 async function applySilentRepairs({ reports, rowsByTab }: HealthScan, summary: UpgradeSummary): Promise<boolean> {
@@ -472,11 +476,20 @@ async function applyColumnMigrations({ rowsByTab }: HealthScan, summary: Upgrade
 export async function checkAndUpgradeSpreadsheet(
   options: { onUpgradeStart?: () => void } = {},
 ): Promise<{ reports: TabReport[]; upgrade: UpgradeSummary | null }> {
+  // 2.1: one Products tab instead of Ingredients and Dishes — first, so nothing else reads the old tabs.
+  const merge = await mergeProductsIfNeeded(options.onUpgradeStart);
   let scan = await scanSpreadsheet();
+  // A newer app version changed this sheet's structure: don't touch it.
+  if (isSheetTooNew(scan.rowsByTab.get("Settings") ?? [])) throw new SheetTooNewError(uk.sheetUpgrade.tooNew);
   // Something to bring up to date: say so before the writes («Оновлюємо таблицю…»).
   if (scan.reports.some((report) => report.issues.length > 0)) options.onUpgradeStart?.();
   const summary = emptySummary();
   let changed = false;
+  if (merge) {
+    changed = true;
+    summary.productsMerged = merge.merged;
+    summary.productsAbsorbed = merge.absorbed;
+  }
   if (await applySilentRepairs(scan, summary)) {
     changed = true;
     scan = await scanSpreadsheet();

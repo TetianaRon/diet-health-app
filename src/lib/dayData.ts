@@ -3,8 +3,9 @@
 // and these screens re-read on every app resume (release 1.7).
 import { readRanges } from "./sheets";
 import { parseTab, SCAN_LAST_COLUMN } from "./sheetRow";
-import { INGREDIENTS_HEADERS, rowToIngredient, type Ingredient } from "./ingredients";
-import { DISHES_HEADERS, rowToDish, type Dish } from "./dishes";
+import { rowToIngredient, type Ingredient } from "./ingredients";
+import { rowToDish, type Dish } from "./dishes";
+import { isDishRow, PRODUCTS_HEADERS, PRODUCTS_TAB } from "./products";
 import { DAILY_LOG_HEADERS, rowToLogEntry, type DailyLogEntry } from "./dailyLog";
 import { BLOOD_SUGAR_HEADERS, rowToBloodSugarEntry, type BloodSugarEntry } from "./bloodSugar";
 import { parseSettingsRows, SETTINGS_RANGE, type Settings } from "./settings";
@@ -32,8 +33,7 @@ function parseRows<T>(tab: string, rows: unknown[][], headers: readonly string[]
 }
 
 const CORE_TABS = [
-  { tab: "Ingredients", range: SHORT },
-  { tab: "Dishes", range: SHORT },
+  { tab: PRODUCTS_TAB, range: SHORT },
   { tab: "Settings", range: SETTINGS_RANGE },
   { tab: "DailyLog", range: LONG },
   { tab: "BloodSugar", range: LONG },
@@ -59,13 +59,16 @@ async function readAll(): Promise<unknown[][][]> {
 }
 
 export async function loadDayData(): Promise<DayData> {
-  const [ingredients, dishes, settings, log, sugar, meds, intakes, weights] = await readAll();
+  const [products, settings, log, sugar, meds, intakes, weights] = await readAll();
+  // Products and dishes share one tab since 2.1 (products.ts).
+  const parsedProducts = parseTab(PRODUCTS_TAB, products, PRODUCTS_HEADERS);
+  const productRows = parsedProducts.dataRows.filter((row) => row.length > 0);
   const parsedSettings = parseSettingsRows(settings);
   // Same side effect as getSettings(): formatTime() follows the setting.
   setTimeFormat(parsedSettings.timeFormat);
   return {
-    ingredients: parseRows("Ingredients", ingredients, INGREDIENTS_HEADERS, rowToIngredient),
-    dishes: parseRows("Dishes", dishes, DISHES_HEADERS, rowToDish),
+    ingredients: productRows.filter((row) => !isDishRow(row, parsedProducts.columnIndex)).map((row) => rowToIngredient(row, parsedProducts.columnIndex)),
+    dishes: productRows.filter((row) => isDishRow(row, parsedProducts.columnIndex)).map((row) => rowToDish(row, parsedProducts.columnIndex)),
     settings: parsedSettings,
     logEntries: parseRows("DailyLog", log, DAILY_LOG_HEADERS, rowToLogEntry),
     bloodSugar: parseRows("BloodSugar", sugar, BLOOD_SUGAR_HEADERS, rowToBloodSugarEntry),

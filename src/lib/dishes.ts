@@ -7,6 +7,7 @@
 // Schema is deliberately kept consistent with Ingredient: NameUk/NameEn
 // first, Source/DateAdded last, same nutrient column names in between —
 // only IngredientsJson/YieldGrams are Dish-specific, inserted in the middle.
+import { isDishRow, PRODUCTS_HEADERS, PRODUCTS_TAB } from "./products";
 import { readRange } from "./sheets";
 import { deleteRecord, upsertRecord } from "./recordStore";
 import { newRecordId } from "./itemIds";
@@ -432,13 +433,19 @@ export function dishToRow(dish: Dish, columnIndex: ColumnIndex = DEFAULT_COLUMN_
   return buildRow(dishFields(dish), columnIndex);
 }
 
-async function readDishesSheet(): Promise<ParsedTab> {
-  return parseTab("Dishes", await readRange("Dishes", DISHES_RANGE), DISHES_HEADERS);
+// Since 2.1 dishes share the Products tab with products (products.ts).
+async function readProductsSheet(): Promise<ParsedTab> {
+  return parseTab(PRODUCTS_TAB, await readRange(PRODUCTS_TAB, DISHES_RANGE), PRODUCTS_HEADERS);
 }
 
 export async function listDishes(): Promise<Dish[]> {
-  const { columnIndex, dataRows } = await readDishesSheet();
-  return dataRows.filter((row) => row.length > 0).map((row) => rowToDish(row, columnIndex));
+  const { columnIndex, dataRows } = await readProductsSheet();
+  return dataRows.filter((row) => row.length > 0 && isDishRow(row, columnIndex)).map((row) => rowToDish(row, columnIndex));
+}
+
+/** A dish's fields in the Products tab: composed when it has a recipe, typed for a fixed-value dish. */
+function productFields(dish: Dish): Record<string, unknown> {
+  return { ...dishFields(dish), Values: dish.ingredients.length > 0 ? "recipe" : "typed" };
 }
 
 // Saves go to the device first and reach the sheet with the next sync
@@ -450,28 +457,28 @@ export async function addDish(
   glycemicFlag: GlycemicFlag = "none",
 ): Promise<Dish> {
   const saved: Dish = { ...dish, id: newRecordId("dish"), basedOn: dish.basedOn ?? "", dateAdded: new Date().toISOString().slice(0, 10), glycemicFlag };
-  await upsertRecord("Dishes", saved.id, dishFields(saved));
+  await upsertRecord(PRODUCTS_TAB, saved.id, { ...productFields(saved), Labels: "dish" });
   return saved;
 }
 
 /** Sets a dish's GlycemicFlag. */
 export async function setDishGlycemicFlag(id: string, glycemicFlag: GlycemicFlag): Promise<void> {
-  await upsertRecord("Dishes", id, { GlycemicFlag: glycemicFlag });
+  await upsertRecord(PRODUCTS_TAB, id, { GlycemicFlag: glycemicFlag });
 }
 
 /** Saves several edited dishes. */
 export async function updateDishes(dishes: readonly Dish[]): Promise<void> {
-  for (const dish of dishes) await upsertRecord("Dishes", dish.id, dishFields(dish));
+  for (const dish of dishes) await upsertRecord(PRODUCTS_TAB, dish.id, productFields(dish));
 }
 
 /** Saves an edited dish (a rename is part of the same save: nothing refers to a dish by name since 1.6). */
 export async function updateDish(dish: Dish): Promise<void> {
-  await upsertRecord("Dishes", dish.id, dishFields(dish));
+  await upsertRecord(PRODUCTS_TAB, dish.id, productFields(dish));
 }
 
 /** Deletes her saved dish (its row leaves the sheet at the next sync). Past meals keep their own values. */
 export async function deleteDish(id: string): Promise<void> {
-  await deleteRecord("Dishes", id);
+  await deleteRecord(PRODUCTS_TAB, id);
 }
 
 /**

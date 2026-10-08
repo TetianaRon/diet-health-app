@@ -3,6 +3,7 @@
 // read/written by column HEADER NAME (see sheetRow.ts), not fixed position,
 // so a reordered sheet — deliberately or by someone dragging a column in the
 // Sheets UI — still parses correctly.
+import { isDishRow, PRODUCTS_HEADERS, PRODUCTS_TAB } from "./products";
 import { readRange } from "./sheets";
 import { deleteRecord, upsertRecord } from "./recordStore";
 import { buildColumnIndex, buildRow, cell, parseTab, SCAN_LAST_COLUMN, type ColumnIndex, type ParsedTab } from "./sheetRow";
@@ -203,13 +204,20 @@ export function mergeWithBuiltInFoods(sheetIngredients: Ingredient[]): Ingredien
   );
 }
 
-async function readIngredientsSheet(): Promise<ParsedTab> {
-  return parseTab("Ingredients", await readRange("Ingredients", INGREDIENTS_RANGE), INGREDIENTS_HEADERS);
+// Since 2.1 products and dishes share the Products tab (products.ts); until the
+// screens become one list, the rows not shown as dishes are the products.
+async function readProductsSheet(): Promise<ParsedTab> {
+  return parseTab(PRODUCTS_TAB, await readRange(PRODUCTS_TAB, INGREDIENTS_RANGE), PRODUCTS_HEADERS);
 }
 
 export async function listIngredients(): Promise<Ingredient[]> {
-  const { columnIndex, dataRows } = await readIngredientsSheet();
-  return dataRows.filter((row) => row.length > 0).map((row) => rowToIngredient(row, columnIndex));
+  const { columnIndex, dataRows } = await readProductsSheet();
+  return dataRows.filter((row) => row.length > 0 && !isDishRow(row, columnIndex)).map((row) => rowToIngredient(row, columnIndex));
+}
+
+/** A product's fields in the Products tab: its own plus `Values = typed`. */
+function productFields(ingredient: Ingredient): Record<string, unknown> {
+  return { ...ingredientFields(ingredient), Values: "typed" };
 }
 
 // Saves go to the device first and reach the sheet with the next sync
@@ -236,31 +244,31 @@ export async function addIngredient(
     favorite,
     glycemicFlag,
   };
-  await upsertRecord("Ingredients", saved.id, ingredientFields(saved));
+  await upsertRecord(PRODUCTS_TAB, saved.id, productFields(saved));
   return saved;
 }
 
 /** Sets an ingredient's Favorite mark. */
 export async function setIngredientFavorite(id: string, favorite: boolean): Promise<void> {
-  await upsertRecord("Ingredients", id, { Favorite: favorite });
+  await upsertRecord(PRODUCTS_TAB, id, { Favorite: favorite });
 }
 
 /** Sets an ingredient's GlycemicFlag. */
 export async function setIngredientGlycemicFlag(id: string, glycemicFlag: GlycemicFlag): Promise<void> {
-  await upsertRecord("Ingredients", id, { GlycemicFlag: glycemicFlag });
+  await upsertRecord(PRODUCTS_TAB, id, { GlycemicFlag: glycemicFlag });
 }
 
 /** Saves several edited ingredients. */
 export async function updateIngredients(items: readonly Ingredient[]): Promise<void> {
-  for (const item of items) await upsertRecord("Ingredients", item.id, ingredientFields(item));
+  for (const item of items) await upsertRecord(PRODUCTS_TAB, item.id, productFields(item));
 }
 
 /** Saves an edited ingredient (a rename is part of the same save: links go by ID since 1.6). */
 export async function updateIngredient(ingredient: Ingredient): Promise<void> {
-  await upsertRecord("Ingredients", ingredient.id, ingredientFields(ingredient));
+  await upsertRecord(PRODUCTS_TAB, ingredient.id, productFields(ingredient));
 }
 
 /** Deletes her saved product (its row leaves the sheet at the next sync). Final — the app can't bring it back. */
 export async function deleteIngredient(id: string): Promise<void> {
-  await deleteRecord("Ingredients", id);
+  await deleteRecord(PRODUCTS_TAB, id);
 }

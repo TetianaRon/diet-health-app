@@ -4,10 +4,9 @@ import { labelFor } from "./sheetLabels";
 
 const labels = (headers: string[]) => headers.map((h) => labelFor(h));
 
-const ING = ["NameUk", "Carbs_g", "Calories_kcal", "Id", "UpdatedAt"];
+// Products and dishes share the Products tab since 2.1.
+const ING = ["NameUk", "Carbs_g", "Calories_kcal", "IngredientsJson", "Id", "UpdatedAt"];
 const ING_L = labels(ING);
-const DISH = ["NameUk", "IngredientsJson", "Id", "UpdatedAt"];
-const DISH_L = labels(DISH);
 const LOG = ["Timestamp", "ItemName", "ItemId", "Id", "UpdatedAt"];
 const LOG_L = labels(LOG);
 const W = ["Date", "WeightKg", "Id", "UpdatedAt"];
@@ -15,12 +14,20 @@ const W_L = labels(W);
 const NOW = "2026-10-06T10:00:00.000Z";
 
 const sheet = new Map<string, unknown[][]>([
-  ["Ingredients", [ING, ING_L, ["Гречка", 20, 92, "I1", ""], ["Рис", 28, 130, "I2", ""]]],
+  ["Products", [ING, ING_L, ["Гречка", 20, 92, "", "I1", ""], ["Рис", 28, 130, "", "I2", ""]]],
   ["Weight", [W, W_L, ["2026-10-05", 71, "Wsheet", ""]]],
 ]);
 const local = new Map<string, unknown[][]>([
-  ["Ingredients", [ING, ING_L, ["гречка ", 19, 90, "Iphone1", ""], ["Кефір", 4, 40, "Iphone2", ""]]],
-  ["Dishes", [DISH, DISH_L, ["Каша", JSON.stringify([{ id: "Iphone1", name: "гречка", grams: 100 }]), "Dphone", ""]]],
+  [
+    "Products",
+    [
+      ING,
+      ING_L,
+      ["гречка ", 19, 90, "", "Iphone1", ""],
+      ["Кефір", 4, 40, "", "Iphone2", ""],
+      ["Каша", "", "", JSON.stringify([{ id: "Iphone1", name: "гречка", grams: 100 }]), "Dphone", ""],
+    ],
+  ],
   ["DailyLog", [LOG, LOG_L, ["2026-10-05T08:00:00Z", "гречка", "Iphone1", "Lphone", ""]]],
   ["Weight", [W, W_L, ["'2026-10-05", 70.2, "Wphone", ""], ["2026-10-04", 70.5, "Wphone2", ""]]],
 ]);
@@ -29,7 +36,7 @@ describe("findDuplicates", () => {
   it("matches products by normalised name and weights by day", () => {
     const dups = findDuplicates(local, sheet);
     expect(dups.map((d) => [d.tab, d.localId, d.sheetId])).toEqual([
-      ["Ingredients", "Iphone1", "I1"],
+      ["Products", "Iphone1", "I1"],
       ["Weight", "Wphone", "Wsheet"],
     ]);
   });
