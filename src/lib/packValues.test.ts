@@ -117,7 +117,7 @@ describe("a dish's weighed pieces", () => {
     const m = itemMeasure({ basis: "100g", yieldGrams: 1200, yieldPieces: null, weighedPieces: 10, weighedGrams: 400 });
     expect(m.weighedPieces).toBe(10);
     expect(m.weighedGrams).toBe(400);
-    expect(resolveAmount(m, { pieces: 3 })).toEqual({ factor: 1.2, grams: 120, pieces: 3 });
+    expect(resolveAmount(m, { pieces: 3 })).toEqual({ factor: 1.2, grams: 120, pieces: 3, ml: null });
   });
 
   it("falls back to the batch's weight and count when no pieces were weighed", () => {

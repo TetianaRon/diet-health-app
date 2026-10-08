@@ -35,14 +35,23 @@ describe("portion sizes", () => {
   });
 
   it("turns a size and a count into an amount for the item", () => {
-    expect(sizeAmount({ label: "середнє", grams: 180 }, 2, PER_100G)).toEqual({ grams: 360, pieces: null });
+    expect(sizeAmount({ label: "середнє", grams: 180 }, 2, PER_100G)).toEqual({ grams: 360, pieces: null, ml: null });
     const dumplings: Measure = { basis: "piece", valuesPer: null, weighedPieces: null, weighedGrams: null };
-    expect(sizeAmount({ label: "порція", pieces: 10 }, 1, dumplings)).toEqual({ grams: null, pieces: 10 });
+    expect(sizeAmount({ label: "порція", pieces: 10 }, 1, dumplings)).toEqual({ grams: null, pieces: 10, ml: null });
     expect(sizeAmount({ label: "скибка", grams: 45 }, 1, dumplings)).toBeNull(); // grams of a per-piece item without a weight
     expect(sizeLabel({ label: "середнє", grams: 180 }, 2)).toBe("2 × середнє");
     expect(sizeLabel({ label: "середнє", grams: 180 }, 1)).toBe("середнє");
     expect(sizeLabel({ label: "скибка", grams: 45 }, 1.5)).toBe("1,5 × скибка");
     expect(sizeLabel({ label: "1 мигдалина", grams: 1.29 }, 10)).toBe("мигдалина × 10");
     expect(sizeLabel({ label: "1 мигдалина", grams: 1.29 }, 1)).toBe("1 мигдалина");
+  });
+});
+
+describe("sizes in millilitres (2.1.1)", () => {
+  it("round-trips an ml size and turns it into an amount", () => {
+    const sizes = [{ label: "склянка", ml: 250 }];
+    expect(parsePortionSizes(serializePortionSizes(sizes))).toEqual(sizes);
+    const kefir: Measure = { basis: "100ml", valuesPer: null, weighedPieces: null, weighedGrams: null, densityMl: 100, densityGrams: 103 };
+    expect(sizeAmount({ label: "склянка", ml: 250 }, 1, kefir)).toEqual({ grams: 257.5, pieces: null, ml: 250 });
   });
 });

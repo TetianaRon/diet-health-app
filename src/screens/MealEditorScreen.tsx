@@ -10,7 +10,7 @@ import { classifyGl } from "../lib/health";
 import { itemMeasure, type IngredientNutrition, type NutritionKey } from "../lib/dishes";
 import { addIngredient } from "../lib/ingredients";
 import { normalizeItemName } from "../lib/itemIds";
-import { pieceGrams, positiveOrNull, round2, type Measure } from "../lib/measure";
+import { gramsPerMl, pieceGrams, positiveOrNull, round2, type Measure } from "../lib/measure";
 import { sizeAmount, sizeLabel, type PortionSize } from "../lib/portionSizes";
 import { sizeAmountText } from "./PortionSizesFields";
 import { GLYCEMIC_FLAG_SYMBOL, type GlycemicFlag } from "../lib/glycemicFlag";
@@ -125,6 +125,8 @@ function AddDishToMealForm({
   const [portionGrams, setPortionGrams] = useState("");
   // Pieces, for an item counted per piece or with a piece weight (2.0.1); linked to the grams when the weight is known.
   const [portionPieces, setPortionPieces] = useState("");
+  // Millilitres, for an item measured per 100 ml or with a density (2.1.1); linked to the grams when the density is known.
+  const [portionMl, setPortionMl] = useState("");
   // A named size picked with a count («2 × середнє», 2.0.2); typing in the portion fields drops it.
   const [pickedSize, setPickedSize] = useState<PortionSize | null>(null);
   const [sizeCount, setSizeCount] = useState("1");
@@ -160,6 +162,7 @@ function AddDishToMealForm({
     setSearch(food.nameUk);
     setPortionGrams("");
     setPortionPieces("");
+    setPortionMl("");
     setPickedSize(null);
     setSizeCount("1");
   };
@@ -170,8 +173,15 @@ function AddDishToMealForm({
 
   // Which amount fields the picked item takes: both (linked) with a piece weight, else its own unit only.
   const weightOfPiece = mode === "pick" && selected ? pieceGrams(selected.measure) : null;
-  const showGrams = mode === "custom" || !selected || selected.measure.basis !== "piece" || weightOfPiece !== null;
+  const weightOfMl = mode === "pick" && selected ? gramsPerMl(selected.measure) : null;
+  const showGrams = mode === "custom" || !selected || selected.measure.basis === "100g" || weightOfPiece !== null || weightOfMl !== null;
   const showPieces = mode === "pick" && selected !== null && (selected.measure.basis === "piece" || weightOfPiece !== null);
+  const showMl = mode === "pick" && selected !== null && (selected.measure.basis === "100ml" || weightOfMl !== null);
+  // Every linked field from a weight in grams (when the item links them).
+  const fillFromGrams = (grams: number | null, except: "pieces" | "ml" | null) => {
+    if (weightOfPiece !== null && except !== "pieces") setPortionPieces(grams === null ? "" : fieldDecimal(round2(grams / weightOfPiece)));
+    if (weightOfMl !== null && except !== "ml") setPortionMl(grams === null ? "" : fieldDecimal(round2(grams / weightOfMl)));
+  };
   const fillFromSize = (size: PortionSize, countText: string) => {
     if (!selected) return;
     const count = positiveOrNull(countText) ?? 1;
@@ -179,26 +189,38 @@ function AddDishToMealForm({
     if (!amount) return;
     setPortionGrams(amount.grams === null ? "" : fieldDecimal(round2(amount.grams)));
     setPortionPieces(amount.pieces === null ? "" : fieldDecimal(round2(amount.pieces)));
+    setPortionMl(amount.ml === null ? "" : fieldDecimal(round2(amount.ml)));
   };
   const usableSizes = mode === "pick" && selected ? selected.portionSizes.filter((s) => sizeAmount(s, 1, selected.measure) !== null) : [];
   const changeGrams = (value: string) => {
     setPickedSize(null);
     setPortionGrams(value);
-    const grams = positiveOrNull(value);
-    if (weightOfPiece !== null) setPortionPieces(grams === null ? "" : fieldDecimal(round2(grams / weightOfPiece)));
+    fillFromGrams(positiveOrNull(value), null);
   };
   const changePieces = (value: string) => {
     setPickedSize(null);
     setPortionPieces(value);
     const pieces = positiveOrNull(value);
-    if (weightOfPiece !== null) setPortionGrams(pieces === null ? "" : fieldDecimal(round2(pieces * weightOfPiece)));
+    if (weightOfPiece === null) return;
+    const grams = pieces === null ? null : pieces * weightOfPiece;
+    setPortionGrams(grams === null ? "" : fieldDecimal(round2(grams)));
+    fillFromGrams(grams, "pieces");
+  };
+  const changeMl = (value: string) => {
+    setPickedSize(null);
+    setPortionMl(value);
+    const ml = positiveOrNull(value);
+    if (weightOfMl === null) return;
+    const grams = ml === null ? null : ml * weightOfMl;
+    setPortionGrams(grams === null ? "" : fieldDecimal(round2(grams)));
+    fillFromGrams(grams, "ml");
   };
   const pickedEntry =
     mode === "pick" && selected
       ? buildLogEntryForAmount(
           mealType,
           { id: selected.id, nameUk: selected.nameUk, stored: selected.per100g, unknownFields: selected.unknownFields, measure: selected.measure },
-          { grams: positiveOrNull(portionGrams), pieces: positiveOrNull(portionPieces) },
+          { grams: positiveOrNull(portionGrams), pieces: positiveOrNull(portionPieces), ml: positiveOrNull(portionMl) },
           notes.trim(),
           mealId,
           timestamp,
@@ -342,6 +364,12 @@ function AddDishToMealForm({
           <MathInput value={portionGrams} onChange={(v) => changeGrams(v)} />
         </label>
       )}
+      {showMl && (
+        <label>
+          {uk.today.form.portionMlLabel}
+          <MathInput value={portionMl} onChange={(v) => changeMl(v)} />
+        </label>
+      )}
       {showPieces && (
         <label>
           {uk.today.form.portionPiecesLabel}
@@ -384,6 +412,11 @@ function AddDishToMealForm({
       {showPieces && (
         <p className="food-form-hint">
           {weightOfPiece !== null ? uk.today.form.portionLinkedHint(formatDecimal(round2(weightOfPiece))) : uk.today.form.portionPiecesOnlyHint}
+        </p>
+      )}
+      {showMl && (
+        <p className="food-form-hint">
+          {weightOfMl !== null ? uk.today.form.portionMlLinkedHint(formatDecimal(round2(weightOfMl), 3)) : uk.today.form.portionMlOnlyHint}
         </p>
       )}
 
@@ -453,6 +486,7 @@ function EditDishForm({
   const weightUnknown = entry.unknownFields.includes("portionGrams");
   const [portionGrams, setPortionGrams] = useState(weightUnknown ? "" : fieldDecimal(entry.portionGrams));
   const [portionPieces, setPortionPieces] = useState(entry.portionPieces !== null ? fieldDecimal(entry.portionPieces) : "");
+  const [portionMl, setPortionMl] = useState(entry.portionMl ? fieldDecimal(entry.portionMl) : "");
   const [values, setValues] = useState<Record<keyof IngredientNutrition, string>>(() => {
     const initial = { ...EMPTY_CUSTOM_VALUES };
     for (const field of CUSTOM_FIELDS) {
@@ -468,10 +502,11 @@ function EditDishForm({
   const fieldsValid = filledFields.every((field) => Number.isFinite((evaluateInput(values[field]) ?? NaN)));
 
   const pieces = positiveOrNull(portionPieces);
+  const ml = positiveOrNull(portionMl);
   const gramsKnown = Number.isFinite(parsedPortion) && parsedPortion > 0;
 
   const handleSave = () => {
-    if (!itemName.trim() || (!gramsKnown && pieces === null) || filledFields.length === 0 || !fieldsValid) {
+    if (!itemName.trim() || (!gramsKnown && pieces === null && ml === null) || filledFields.length === 0 || !fieldsValid) {
       setError(uk.today.form.customValidationError);
       return;
     }
@@ -486,10 +521,11 @@ function EditDishForm({
       entry.mealId,
       entry.timestamp,
     );
-    // A counted dish keeps its count; without a weight, the weight stays unknown (never 0).
+    // A counted dish keeps its count, a poured one its ml; without a weight, the weight stays unknown (never 0).
     onSave({
       ...updated,
       portionPieces: pieces,
+      portionMl: ml,
       unknownFields: gramsKnown ? updated.unknownFields : [...updated.unknownFields, "portionGrams"],
     });
   };
@@ -508,7 +544,13 @@ function EditDishForm({
           onChange={(v) => setPortionGrams(v)}
         />
       </label>
-      {(entry.portionPieces !== null || weightUnknown) && (
+      {entry.portionMl != null && (
+        <label>
+          {uk.today.form.portionMlLabel}
+          <MathInput value={portionMl} onChange={(v) => setPortionMl(v)} />
+        </label>
+      )}
+      {(entry.portionPieces !== null || (weightUnknown && entry.portionMl == null)) && (
         <label>
           {uk.today.form.portionPiecesLabel}
           <MathInput value={portionPieces} onChange={(v) => setPortionPieces(v)} />
@@ -850,8 +892,8 @@ export default function MealEditorScreen({
               />
               <span className="dish-row-text">
                 <strong>{d.entry.itemName}</strong>
-                {(d.entry.portionSize || d.entry.portionPieces !== null) && (
-                  <> — {uk.today.dishAmount(d.entry.unknownFields.includes("portionGrams") ? null : d.entry.portionGrams, d.entry.portionPieces, d.entry.portionSize)}</>
+                {(d.entry.portionSize || d.entry.portionPieces !== null || d.entry.portionMl != null) && (
+                  <> — {uk.today.dishAmount(d.entry.unknownFields.includes("portionGrams") ? null : d.entry.portionGrams, d.entry.portionPieces, d.entry.portionSize, d.entry.portionMl ?? null)}</>
                 )}
                 <br />
                 <span className="entry-time">{formatStats(entryStatItems(d.entry, settings))}</span>

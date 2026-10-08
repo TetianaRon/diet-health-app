@@ -1,5 +1,5 @@
 // «Розміри порцій» in the product and dish editors (release 2.0.2): up to 3
-// sizes of her own — a label and an amount in г or шт. Database sizes, when
+// sizes of her own — a label and an amount in г, шт. or мл (2.1.1). Database sizes, when
 // the item has them, are listed above (read-only; one of hers with the same
 // label replaces it).
 import { uk } from "../i18n/uk";
@@ -11,7 +11,7 @@ import MathInput from "./MathInput";
 export interface SizeRow {
   label: string;
   amount: string;
-  unit: "grams" | "pieces";
+  unit: "grams" | "pieces" | "ml";
 }
 
 const t = uk.foods.sizes;
@@ -19,7 +19,13 @@ const t = uk.foods.sizes;
 export function sizeRowsFrom(sizes: readonly PortionSize[]): SizeRow[] {
   return sizes
     .filter((s) => !s.fromDatabase)
-    .map((s) => (s.grams !== undefined ? { label: s.label, amount: fieldDecimal(s.grams), unit: "grams" as const } : { label: s.label, amount: s.pieces !== undefined ? fieldDecimal(s.pieces) : "", unit: "pieces" as const }));
+    .map((s) =>
+      s.grams !== undefined
+        ? { label: s.label, amount: fieldDecimal(s.grams), unit: "grams" as const }
+        : s.ml !== undefined
+          ? { label: s.label, amount: fieldDecimal(s.ml), unit: "ml" as const }
+          : { label: s.label, amount: s.pieces !== undefined ? fieldDecimal(s.pieces) : "", unit: "pieces" as const },
+    );
 }
 
 /** Her sizes from the rows (empty rows dropped), or the problem to show. */
@@ -29,13 +35,16 @@ export function sizesFromRows(rows: readonly SizeRow[]): PortionSize[] | { probl
   for (const row of filled) {
     const amount = evaluateInput(row.amount);
     if (row.label.trim() === "" || amount === null || amount <= 0) return { problem: t.invalid };
-    sizes.push(row.unit === "grams" ? { label: row.label.trim(), grams: amount } : { label: row.label.trim(), pieces: amount });
+    const label = row.label.trim();
+    sizes.push(row.unit === "grams" ? { label, grams: amount } : row.unit === "ml" ? { label, ml: amount } : { label, pieces: amount });
   }
   return sizes;
 }
 
 export function sizeAmountText(size: PortionSize): string {
-  return size.grams !== undefined ? `${formatDecimal(size.grams)} г` : `${formatDecimal(size.pieces ?? 0)} шт.`;
+  if (size.grams !== undefined) return `${formatDecimal(size.grams)} г`;
+  if (size.ml !== undefined) return `${formatDecimal(size.ml)} мл`;
+  return `${formatDecimal(size.pieces ?? 0)} шт.`;
 }
 
 export default function PortionSizesFields({
@@ -44,16 +53,20 @@ export default function PortionSizesFields({
   databaseSizes = [],
   allowGrams,
   allowPieces,
+  allowMl = false,
 }: {
   rows: SizeRow[];
   onChange: (rows: SizeRow[]) => void;
   databaseSizes?: readonly PortionSize[];
   allowGrams: boolean;
   allowPieces: boolean;
+  /** Millilitres (2.1.1): for an item measured per 100 ml, or with a density. */
+  allowMl?: boolean;
 }) {
+  const units = ([["grams", allowGrams], ["ml", allowMl], ["pieces", allowPieces]] as const).filter(([, ok]) => ok).map(([u]) => u);
   const update = (index: number, patch: Partial<SizeRow>) => onChange(rows.map((r, i) => (i === index ? { ...r, ...patch } : r)));
   const add = () =>
-    onChange([...rows, { label: DEFAULT_SIZE_LABELS[rows.length] ?? "", amount: "", unit: allowGrams ? "grams" : "pieces" }]);
+    onChange([...rows, { label: DEFAULT_SIZE_LABELS[rows.length] ?? "", amount: "", unit: units[0] ?? "grams" }]);
   return (
     <fieldset className="pack-fields">
       <legend>
@@ -71,15 +84,15 @@ export default function PortionSizesFields({
             <input value={row.label} onChange={(e) => update(index, { label: e.target.value })} />
           </label>
           <label>
-            {row.unit === "pieces" ? t.amountPiecesLabel : t.amountGramsLabel}
+            {row.unit === "pieces" ? t.amountPiecesLabel : row.unit === "ml" ? t.amountMlLabel : t.amountGramsLabel}
             <MathInput value={row.amount} onChange={(v) => update(index, { amount: v })} />
           </label>
-          {allowGrams && allowPieces && (
+          {units.length > 1 && (
             <div className="compose-unit" role="radiogroup">
-              {(["grams", "pieces"] as const).map((unit) => (
+              {units.map((unit) => (
                 <label key={unit} className="pack-option">
                   <input type="radio" checked={row.unit === unit} onChange={() => update(index, { unit })} />
-                  {unit === "grams" ? "г" : "шт."}
+                  {unit === "grams" ? "г" : unit === "ml" ? "мл" : "шт."}
                 </label>
               ))}
             </div>

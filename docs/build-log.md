@@ -440,3 +440,19 @@ Answering "did we review only products?": the 69 home dishes were on the page bu
 - 432 tests, `tsc -b`, `npm run build`. Version 2.1, versionCode 29.
 
 ✅ **2.1 released 2026-10-08:** build 29 uploaded to the internal testing track (replacing build 28) and main pushed (web). Mom's phone was expected to update overnight; her sheet merges on her first open. The developer removed build 28's empty copy from her Drive.
+
+**Release 2.1.1 — millilitres (2026-10-08, branch `release/2.1.1`):**
+- **Built** (spec → "One product list (2.1)" → "Millilitres (2.1.1, as built)"):
+  - `measure.ts`: a third basis `100ml` and an optional density (`WeighedMl` / `WeighedMlGrams`) linking ml and g for any item; `resolveAmount` returns grams, pieces and ml where they can be known.
+  - Meal rows keep the ml (`PortionMl`) and read «250 мл (258 г)»; recipe lines (`ml` in the recipe JSON) and portion sizes can be in ml.
+  - Product form «грами · мілілітри · штуки» with «Мілілітри й грами»; a linked «Порція (мл)» in the meal editor; ml when editing a logged drink; «на 100 мл» in the list.
+- **Verified (local web app, dev sheet, the developer signed in):**
+  - the silent upgrade added `WeighedMl`, `WeighedMlGrams` and `PortionMl`;
+  - «Тест кефір» (на 100 мл, 100 мл = 103 г, «склянка ≈ 250 мл»): the chip filled 250 мл / 257,5 г, the preview 10 г вуглеводів / 100 ккал, the row «склянка (≈257,5 г)» with `PortionMl` 250;
+  - «Тест сік» (на 100 мл, no density): ml only, the row 330 мл with the weight unknown (0 + UnknownFields), 148,5 ккал;
+  - a recipe line of 200 мл kefir in a 300 г dish: `ml: 200`, 2,67 г вуглеводів / 26,67 ккал per 100 г (hand-checked);
+  - test data deleted afterwards.
+- **Verified (developer's Pixel 10, debug build, dev sheet):** the product form with «мілілітри» and the density fields on the phone layout (nothing saved).
+- **Not checked:** the meal editor's ml field on the phone (same field type as «Порція (г)»); editing a logged drink's ml.
+- **Not in 2.1.1:** densities for the database's drinks (2.2.1's review round).
+- 437 tests, `tsc -b`, `npm run build`. Version 2.1.1, versionCode 30.

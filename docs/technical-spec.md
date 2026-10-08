@@ -761,10 +761,14 @@ The split into «Продукти» and «Страви» mixed two independent t
   - **Deleting** an item that's in another recipe is blocked, with links to those recipes (as for products before); the texts say «продукт», not «страва».
 - **Database items are typed items.** They get labels from their category: Напої → напій; the cooked foods (гречка варена…) → страва; the rest → інгредієнт.
 
-### Millilitres — moved to 2.1.1 (developer, 2026-10-08: 2.1 ships the list, labels and items inside recipes; database densities for drinks join 2.2.1's review round)
-- A third basis beside per 100 g and per piece: **per 100 ml** (or per any amount in ml, as a drink's label gives it: «на 250 мл»).
-- In a recipe, ml needs no conversion: nutrients add up line by line, and the final weight is weighed.
-- Between ml and g (logging juice in ml from values per 100 g, or a recipe weight) the app needs a density: an optional pair like «Вага штук», **«100 мл = 103 г»**. The database supplies it for drinks from USDA's household measures ("1 cup = 244 g", 240 ml). Without it, an ml item is logged in ml only.
+### Millilitres (2.1.1, as built)
+- **A third basis, per 100 ml** (`Basis` = `100ml`; the typed amount kept in `ValuesPer`, «на 250 мл»). The product form offers «грами · мілілітри · штуки».
+- **An optional density, «Мілілітри й грами»** (`WeighedMl` / `WeighedMlGrams`, e.g. 100 мл = 103 г), for items in grams or millilitres. It links ml and g everywhere: a product labelled per 100 g can be logged in ml, and a drink per 100 ml in grams. Without it, an item per 100 ml is logged in ml only and its weight stays unknown (stored 0, listed in UnknownFields, as for pieces).
+- **Meal editor:** «Порція (мл)» for an item per 100 ml or with a density, filled from grams and back when the density is known («1 мл ≈ 1,03 г»). Meal rows keep the ml in `PortionMl` and read «250 мл (258 г)». A logged drink's ml can be edited.
+- **Recipes:** a line can be typed in ml (`ml` in the recipe JSON); nutrients add up from the line, and the final weight is weighed as before.
+- **Portion sizes** can be in ml («склянка ≈ 250 мл»).
+- **The list** says «на 100 мл» for such items (per 100 g stays unspoken).
+- **Not in 2.1.1:** densities for the database's drinks (milk, kefir, coffee — USDA household measures with source and reliability) come with **2.2.1's review round**; until then a database drink is logged in grams. Composed items stay in grams or pieces.
 
 ### Screens (as built)
 - **The tab is «Продукти»** (developer): one list, composed items first (marked «· за рецептом»), then typed ones (favourites first; best match first while searching). Filter chips: Усі · Інгредієнти · Страви · Напої · Соуси · Перекуси · За рецептом.

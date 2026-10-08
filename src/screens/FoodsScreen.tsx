@@ -60,7 +60,7 @@ import PackAmountFields, { measureFromPackFields, type PackFields } from "./Pack
 import ProductMeasureFields, { isMeasure, measureFromProductFields, productFieldsFromMeasure, type ProductFields } from "./ProductMeasureFields";
 import PortionSizesFields, { sizeRowsFrom, sizesFromRows, type SizeRow } from "./PortionSizesFields";
 import WeighedPiecesFields, { weighedPair } from "./WeighedPiecesFields";
-import { pieceGrams, round2, toStoredValues, toTypedValues, valuesAmount, PER_100G, type Measure } from "../lib/measure";
+import { gramsPerMl, pieceGrams, round2, toStoredValues, toTypedValues, valuesAmount, PER_100G, type Measure } from "../lib/measure";
 import { measureOf, refFactor } from "../lib/dishes";
 
 const NUMERIC_FIELDS = ["carbsG", "gi", "fiberG", "sugarsG", "proteinG", "fatG", "caloriesKcal", "sodiumMg"] as const;
@@ -125,10 +125,15 @@ function PackSummary({ pack, values }: { pack: ProductFields; values: FormValues
 }
 
 // Which units her portion sizes can use: grams unless counted per piece without a weight, pieces when per piece or weighed.
-function sizeUnits(pack: ProductFields): { allowGrams: boolean; allowPieces: boolean } {
+function sizeUnits(pack: ProductFields): { allowGrams: boolean; allowPieces: boolean; allowMl: boolean } {
   const measure = measureFromProductFields(pack);
   const weighed = isMeasure(measure) && pieceGrams(measure) !== null;
-  return { allowGrams: pack.main !== "piece" || weighed, allowPieces: pack.main === "piece" || weighed };
+  const density = isMeasure(measure) && gramsPerMl(measure) !== null;
+  return {
+    allowGrams: pack.main === "100g" || weighed || density,
+    allowPieces: pack.main === "piece" || weighed,
+    allowMl: pack.main === "100ml" || density,
+  };
 }
 
 // «Значення на 30 г» above the value fields.
@@ -159,7 +164,15 @@ function foodMetaText(
             ? `ГІ ${item.gi} (${uk.verified.afterCooking}, ${uk.health.gi[classifyGi(item.gi)]})`
             : `${item.giVerified || entry ? "" : "≈"}ГІ ${item.gi} (${uk.health.gi[classifyGi(item.gi)]})`;
   // A dish saved from a custom entry has no recipe: its piece is the whole portion.
-  const perPiece = item.basis !== "piece" ? "" : item.ingredients?.length === 0 ? ` ${uk.dishes.fixedForm.perPortion}` : ` ${uk.foods.pack.per("piece")}`;
+  // Per 100 g is the unspoken default; per 100 ml (2.1.1) and per piece are said.
+  const perPiece =
+    item.basis === "100ml"
+      ? ` ${uk.foods.pack.per("100ml")}`
+      : item.basis !== "piece"
+        ? ""
+        : item.ingredients?.length === 0
+          ? ` ${uk.dishes.fixedForm.perPortion}`
+          : ` ${uk.foods.pack.per("piece")}`;
   return `${carbs}${perPiece}, ${gi}`;
 }
 
@@ -292,7 +305,7 @@ function AddFoodForm({
     setLookupAttempted(true);
     setGiVerified(false); // a new pick hasn't been confirmed, even if a previous one was
     setGiFrom("");
-    setPack((prev) => ({ ...productFieldsFromMeasure(PER_100G), weighedPieces: prev.weighedPieces, weighedGrams: prev.weighedGrams })); // database and USDA values are per 100 g
+    setPack((prev) => ({ ...productFieldsFromMeasure(PER_100G), weighedPieces: prev.weighedPieces, weighedGrams: prev.weighedGrams, densityMl: prev.densityMl, densityGrams: prev.densityGrams })); // database and USDA values are per 100 g
     if (estimate) {
       const unknown = estimate.unknownFields ?? [];
       const show = (field: NumericField, value: number | null) =>
@@ -783,16 +796,28 @@ interface ComposeRow {
   nameUk: string;
   // The amount in grams or in pieces (2.0.1: a product counted per piece goes in by count).
   amount: string;
-  unit: "grams" | "pieces";
+  unit: "grams" | "pieces" | "ml";
 }
 
 const EMPTY_ROW: ComposeRow = { nameUk: "", amount: "", unit: "grams" };
 
 /** Which units a recipe line can use for this product: grams unless it's counted per piece without a weight, pieces when it's per piece or has a piece weight. */
-function rowUnits(ingredient: Ingredient | null): { grams: boolean; pieces: boolean } {
-  if (!ingredient) return { grams: true, pieces: false };
-  const weight = pieceGrams(measureOf(ingredient));
-  return { grams: ingredient.basis !== "piece" || weight !== null, pieces: ingredient.basis === "piece" || weight !== null };
+function rowUnits(ingredient: Ingredient | null): { grams: boolean; pieces: boolean; ml: boolean } {
+  if (!ingredient) return { grams: true, pieces: false, ml: false };
+  const measure = measureOf(ingredient);
+  const weight = pieceGrams(measure);
+  const density = gramsPerMl(measure);
+  return {
+    grams: ingredient.basis === "100g" || weight !== null || density !== null,
+    pieces: ingredient.basis === "piece" || weight !== null,
+    ml: ingredient.basis === "100ml" || density !== null,
+  };
+}
+
+/** The units a recipe line can be typed in, in the order offered (2.1.1). */
+function rowUnitList(ingredient: Ingredient | null): ("grams" | "ml" | "pieces")[] {
+  const units = rowUnits(ingredient);
+  return (["grams", "ml", "pieces"] as const).filter((u) => units[u]);
 }
 
 // Compose a real multi-ingredient recipe from existing Ingredients rows —
@@ -828,8 +853,8 @@ function ComposeDishForm({
       ? existingDish.ingredients.map((ref) => ({
           id: ref.id,
           nameUk: resolveItemRef(ref, ingredients)?.nameUk ?? ref.nameUk,
-          amount: fieldDecimal(ref.pieces ?? ref.grams),
-          unit: ref.pieces ? ("pieces" as const) : ("grams" as const),
+          amount: fieldDecimal(ref.pieces ?? ref.ml ?? ref.grams),
+          unit: ref.pieces ? ("pieces" as const) : ref.ml ? ("ml" as const) : ("grams" as const),
         }))
       : [EMPTY_ROW],
   );
@@ -865,7 +890,11 @@ function ComposeDishForm({
     const amount = evaluateInput(row.amount) ?? NaN;
     if (!ingredient || !(amount > 0)) return null;
     const ref: DishIngredientRef =
-      row.unit === "pieces" ? { id: ingredient.id, nameUk: ingredient.nameUk, grams: 0, pieces: amount } : { id: ingredient.id, nameUk: ingredient.nameUk, grams: amount };
+      row.unit === "pieces"
+        ? { id: ingredient.id, nameUk: ingredient.nameUk, grams: 0, pieces: amount }
+        : row.unit === "ml"
+          ? { id: ingredient.id, nameUk: ingredient.nameUk, grams: 0, ml: amount }
+          : { id: ingredient.id, nameUk: ingredient.nameUk, grams: amount };
     return refFactor(ref, measureOf(ingredient)) === null ? null : ref;
   };
   const resolvedRefs: DishIngredientRef[] = rows.map(toRef).filter((ref): ref is DishIngredientRef => ref !== null);
@@ -1001,7 +1030,7 @@ function ComposeDishForm({
                     </span>
                     <button
                       type="button"
-                      onClick={() => updateRow(index, { id: ingredient.id, nameUk: ingredient.nameUk, unit: ingredient.basis === "piece" ? "pieces" : "grams" })}
+                      onClick={() => updateRow(index, { id: ingredient.id, nameUk: ingredient.nameUk, unit: ingredient.basis === "piece" ? "pieces" : ingredient.basis === "100ml" ? "ml" : "grams" })}
                     >
                       {uk.foods.form.pickButton}
                     </button>
@@ -1015,24 +1044,24 @@ function ComposeDishForm({
 
             <div className="compose-amount">
               <label>
-                {row.unit === "pieces" ? uk.dishes.composeForm.amountLabel : uk.dishes.composeForm.gramsLabel}
+                {row.unit === "pieces" ? uk.dishes.composeForm.amountLabel : row.unit === "ml" ? uk.dishes.composeForm.mlLabel : uk.dishes.composeForm.gramsLabel}
                 <MathInput
                   value={row.amount}
                   onChange={(v) => updateRow(index, { amount: v })}
                 />
               </label>
-              {rowUnits(resolvedIngredient).grams && rowUnits(resolvedIngredient).pieces && (
+              {rowUnitList(resolvedIngredient).length > 1 && (
                 <div className="compose-unit" role="radiogroup">
-                  {(["grams", "pieces"] as const).map((unit) => (
+                  {rowUnitList(resolvedIngredient).map((unit) => (
                     <label key={unit} className="pack-option">
                       <input type="radio" checked={row.unit === unit} onChange={() => updateRow(index, { unit })} />
-                      {unit === "grams" ? uk.dishes.composeForm.amountUnitGrams : uk.dishes.composeForm.amountUnitPieces}
+                      {unit === "grams" ? uk.dishes.composeForm.amountUnitGrams : unit === "ml" ? uk.dishes.composeForm.amountUnitMl : uk.dishes.composeForm.amountUnitPieces}
                     </label>
                   ))}
                 </div>
               )}
-              {!(rowUnits(resolvedIngredient).grams && rowUnits(resolvedIngredient).pieces) && row.unit === "pieces" && (
-                <span className="compose-unit">{uk.dishes.composeForm.amountUnitPieces}</span>
+              {rowUnitList(resolvedIngredient).length === 1 && row.unit !== "grams" && (
+                <span className="compose-unit">{row.unit === "ml" ? uk.dishes.composeForm.amountUnitMl : uk.dishes.composeForm.amountUnitPieces}</span>
               )}
             </div>
 

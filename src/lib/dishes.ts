@@ -31,11 +31,13 @@ export interface DishIngredientRef {
   grams: number;
   /** Pieces in the recipe, for an item measured per piece (2.0.1), else absent. */
   pieces?: number;
+  /** Millilitres in the recipe (2.1.1), else absent. */
+  ml?: number;
 }
 
 /** A recipe line's amount as the factor on the ingredient's stored values (per 100 g or per piece); null if it can't be used. */
 export function refFactor(ref: DishIngredientRef, measure: Measure | undefined): number | null {
-  return resolveAmount(measure ?? PER_100G, { grams: ref.grams, pieces: ref.pieces ?? null })?.factor ?? null;
+  return resolveAmount(measure ?? PER_100G, { grams: ref.grams, pieces: ref.pieces ?? null, ml: ref.ml ?? null })?.factor ?? null;
 }
 
 /** What a recipe ingredient points at: anything with an ID, the built-in ID it copies (if any), and a name. */
@@ -242,7 +244,14 @@ export function itemMeasure(item: Partial<Measure> & { yieldGrams?: number; yiel
 
 /** An item's measure, when it carries one (built-in and older items are per 100 g). */
 export function measureOf(item: Partial<Measure>): Measure {
-  return { basis: item.basis ?? "100g", valuesPer: item.valuesPer ?? null, weighedPieces: item.weighedPieces ?? null, weighedGrams: item.weighedGrams ?? null };
+  return {
+    basis: item.basis ?? "100g",
+    valuesPer: item.valuesPer ?? null,
+    weighedPieces: item.weighedPieces ?? null,
+    weighedGrams: item.weighedGrams ?? null,
+    densityMl: item.densityMl ?? null,
+    densityGrams: item.densityGrams ?? null,
+  };
 }
 
 /** Share (0–1) of the dish's carbohydrate that comes from ingredients with an unknown GI. */
@@ -320,11 +329,12 @@ export function parseIngredientsJson(value: unknown): DishIngredientRef[] {
     const parsed = JSON.parse(String(value ?? "[]"));
     if (!Array.isArray(parsed)) return [];
     return parsed
-      .filter((item): item is { id?: unknown; name: string; grams: number; pieces?: unknown } => typeof item?.name === "string")
+      .filter((item): item is { id?: unknown; name: string; grams: number; pieces?: unknown; ml?: unknown } => typeof item?.name === "string")
       .map((item) => {
         const id = typeof item.id === "string" && item.id.trim() !== "" ? item.id.trim() : undefined;
         const pieces = positiveOrNull(item.pieces);
-        return { ...(id ? { id } : {}), nameUk: item.name, grams: toNumber(item.grams), ...(pieces ? { pieces } : {}) };
+        const ml = positiveOrNull(item.ml);
+        return { ...(id ? { id } : {}), nameUk: item.name, grams: toNumber(item.grams), ...(pieces ? { pieces } : {}), ...(ml ? { ml } : {}) };
       });
   } catch {
     return [];
@@ -332,7 +342,9 @@ export function parseIngredientsJson(value: unknown): DishIngredientRef[] {
 }
 
 export function serializeIngredientsJson(ingredients: readonly DishIngredientRef[]): string {
-  return JSON.stringify(ingredients.map((i) => ({ ...(i.id ? { id: i.id } : {}), name: i.nameUk, grams: i.grams, ...(i.pieces ? { pieces: i.pieces } : {}) })));
+  return JSON.stringify(
+    ingredients.map((i) => ({ ...(i.id ? { id: i.id } : {}), name: i.nameUk, grams: i.grams, ...(i.pieces ? { pieces: i.pieces } : {}), ...(i.ml ? { ml: i.ml } : {}) })),
+  );
 }
 
 // Canonical column order — what a brand-new sheet gets initialized with (see
