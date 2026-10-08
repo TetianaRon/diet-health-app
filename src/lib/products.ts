@@ -4,7 +4,7 @@
 // where its values come from (typed, or composed by a recipe); `Labels` are for
 // finding and filtering only. This file holds the tab's columns and the pure
 // merge of the two old tabs; the IO is in productsMerge.ts.
-import { buildColumnIndex, buildRow, cell, parseTab, type ColumnIndex } from "./sheetRow";
+import { buildColumnIndex, buildRow, cell, parseTabLenient, type ColumnIndex } from "./sheetRow";
 import { ingredientFields, INGREDIENTS_HEADERS, rowToIngredient } from "./ingredients";
 import { dishFields, DISHES_HEADERS, parseIngredientsJson, rowToDish } from "./dishes";
 import { serializeLabels } from "./labels";
@@ -117,7 +117,7 @@ export function planProductsMerge(
   let idsAdded = 0;
   const take = (grid: unknown[][] | undefined, tab: string, headers: readonly string[], kind: "ingredient" | "dish") => {
     if (!grid || grid.length === 0) return;
-    const { columnIndex, dataRows } = parseTab(tab, grid, headers);
+    const { columnIndex, dataRows } = parseTabLenient(tab, grid, headers);
     for (const row of dataRows) {
       if (row.every((v) => String(v ?? "").trim() === "")) continue;
       const fields = kind === "ingredient" ? fromIngredientRow(row, columnIndex) : fromDishRow(row, columnIndex);
