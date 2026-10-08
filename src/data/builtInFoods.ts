@@ -15,6 +15,7 @@ import type { NutritionKey } from "../lib/dishes";
 import type { VerifiedFoodEntry, VerifiedFoodsFile } from "./verifiedFoods";
 import { LEGACY_BUILT_INS } from "./legacyBuiltIns";
 import type { PortionSize } from "../lib/portionSizes";
+import { databaseLabels } from "../lib/labels";
 
 const DATABASE = file as VerifiedFoodsFile;
 
@@ -50,6 +51,7 @@ export function entryToIngredient(entry: VerifiedFoodEntry): Ingredient {
     weighedPieces: null,
     weighedGrams: null,
     portionSizes: databasePortionSizes(entry),
+    labels: databaseLabels(entry.category, entry.state),
   };
 }
 

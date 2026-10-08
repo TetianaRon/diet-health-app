@@ -3,6 +3,8 @@
 // read/written by column HEADER NAME (see sheetRow.ts), not fixed position,
 // so a reordered sheet — deliberately or by someone dragging a column in the
 // Sheets UI — still parses correctly.
+import { parseLabels, serializeLabels, type LabelKey } from "./labels";
+import { isDishRow, PRODUCTS_HEADERS, PRODUCTS_TAB } from "./products";
 import { readRange } from "./sheets";
 import { deleteRecord, upsertRecord } from "./recordStore";
 import { buildColumnIndex, buildRow, cell, parseTab, SCAN_LAST_COLUMN, type ColumnIndex, type ParsedTab } from "./sheetRow";
@@ -63,6 +65,8 @@ export interface Ingredient {
   weighedGrams: number | null;
   // Her named portion sizes (2.0.2, portionSizes.ts); database sizes are added when shown.
   portionSizes: PortionSize[];
+  // For finding and filtering only (2.1, labels.ts); undefined = not read (nothing is written).
+  labels?: LabelKey[];
 }
 
 // Canonical column order — what a brand-new sheet gets initialized with (see
@@ -138,9 +142,11 @@ export function rowToIngredient(row: unknown[], columnIndex: ColumnIndex = DEFAU
     giFrom: String(cell(row, columnIndex, "GiFrom") ?? "").trim(),
     basis: toBasis(cell(row, columnIndex, "Basis")),
     valuesPer: positiveOrNull(cell(row, columnIndex, "ValuesPer")),
-    weighedPieces: positiveOrNull(cell(row, columnIndex, "WeighedPieces")),
-    weighedGrams: positiveOrNull(cell(row, columnIndex, "WeighedGrams")),
+    // A typed item that was a fixed-value dish (2.0.2) keeps its portion weight in YieldGrams (2.1).
+    weighedPieces: positiveOrNull(cell(row, columnIndex, "WeighedPieces")) ?? (positiveOrNull(cell(row, columnIndex, "YieldGrams")) ? (positiveOrNull(cell(row, columnIndex, "YieldPieces")) ?? 1) : null),
+    weighedGrams: positiveOrNull(cell(row, columnIndex, "WeighedGrams")) ?? positiveOrNull(cell(row, columnIndex, "YieldGrams")),
     portionSizes: parsePortionSizes(cell(row, columnIndex, "PortionSizes")),
+    labels: parseLabels(cell(row, columnIndex, "Labels")),
   };
 }
 
@@ -172,6 +178,7 @@ export function ingredientFields(ingredient: Ingredient): Record<string, unknown
       WeighedPieces: ingredient.weighedPieces ?? "",
       WeighedGrams: ingredient.weighedGrams ?? "",
       PortionSizes: serializePortionSizes(ingredient.portionSizes),
+      Labels: ingredient.labels ? serializeLabels(ingredient.labels) : undefined,
   };
 }
 
@@ -203,13 +210,20 @@ export function mergeWithBuiltInFoods(sheetIngredients: Ingredient[]): Ingredien
   );
 }
 
-async function readIngredientsSheet(): Promise<ParsedTab> {
-  return parseTab("Ingredients", await readRange("Ingredients", INGREDIENTS_RANGE), INGREDIENTS_HEADERS);
+// Since 2.1 products and dishes share the Products tab (products.ts); until the
+// screens become one list, the rows not shown as dishes are the products.
+async function readProductsSheet(): Promise<ParsedTab> {
+  return parseTab(PRODUCTS_TAB, await readRange(PRODUCTS_TAB, INGREDIENTS_RANGE), PRODUCTS_HEADERS);
 }
 
 export async function listIngredients(): Promise<Ingredient[]> {
-  const { columnIndex, dataRows } = await readIngredientsSheet();
-  return dataRows.filter((row) => row.length > 0).map((row) => rowToIngredient(row, columnIndex));
+  const { columnIndex, dataRows } = await readProductsSheet();
+  return dataRows.filter((row) => row.length > 0 && !isDishRow(row, columnIndex)).map((row) => rowToIngredient(row, columnIndex));
+}
+
+/** A product's fields in the Products tab: its own plus `Values = typed`. */
+function productFields(ingredient: Ingredient): Record<string, unknown> {
+  return { ...ingredientFields(ingredient), Values: "typed" };
 }
 
 // Saves go to the device first and reach the sheet with the next sync
@@ -218,7 +232,7 @@ export async function listIngredients(): Promise<Ingredient[]> {
 /** Adds a new ingredient with a new `I…` ID and returns it as saved. */
 export async function addIngredient(
   ingredient: Omit<Ingredient, "dateAdded" | "favorite" | "glycemicFlag" | "id" | "basedOn" | "giFrom" | "basis" | "valuesPer" | "weighedPieces" | "weighedGrams" | "portionSizes"> &
-    Partial<Pick<Ingredient, "basedOn" | "giFrom" | "basis" | "valuesPer" | "weighedPieces" | "weighedGrams" | "portionSizes">>,
+    Partial<Pick<Ingredient, "basedOn" | "giFrom" | "basis" | "valuesPer" | "weighedPieces" | "weighedGrams" | "portionSizes" | "labels">>,
   favorite = false,
   glycemicFlag: GlycemicFlag = "none",
 ): Promise<Ingredient> {
@@ -232,35 +246,36 @@ export async function addIngredient(
     weighedPieces: ingredient.weighedPieces ?? null,
     weighedGrams: ingredient.weighedGrams ?? null,
     portionSizes: ingredient.portionSizes ?? [],
+    labels: ingredient.labels ?? [],
     dateAdded: new Date().toISOString().slice(0, 10),
     favorite,
     glycemicFlag,
   };
-  await upsertRecord("Ingredients", saved.id, ingredientFields(saved));
+  await upsertRecord(PRODUCTS_TAB, saved.id, productFields(saved));
   return saved;
 }
 
 /** Sets an ingredient's Favorite mark. */
 export async function setIngredientFavorite(id: string, favorite: boolean): Promise<void> {
-  await upsertRecord("Ingredients", id, { Favorite: favorite });
+  await upsertRecord(PRODUCTS_TAB, id, { Favorite: favorite });
 }
 
 /** Sets an ingredient's GlycemicFlag. */
 export async function setIngredientGlycemicFlag(id: string, glycemicFlag: GlycemicFlag): Promise<void> {
-  await upsertRecord("Ingredients", id, { GlycemicFlag: glycemicFlag });
+  await upsertRecord(PRODUCTS_TAB, id, { GlycemicFlag: glycemicFlag });
 }
 
 /** Saves several edited ingredients. */
 export async function updateIngredients(items: readonly Ingredient[]): Promise<void> {
-  for (const item of items) await upsertRecord("Ingredients", item.id, ingredientFields(item));
+  for (const item of items) await upsertRecord(PRODUCTS_TAB, item.id, productFields(item));
 }
 
 /** Saves an edited ingredient (a rename is part of the same save: links go by ID since 1.6). */
 export async function updateIngredient(ingredient: Ingredient): Promise<void> {
-  await upsertRecord("Ingredients", ingredient.id, ingredientFields(ingredient));
+  await upsertRecord(PRODUCTS_TAB, ingredient.id, productFields(ingredient));
 }
 
 /** Deletes her saved product (its row leaves the sheet at the next sync). Final — the app can't bring it back. */
 export async function deleteIngredient(id: string): Promise<void> {
-  await deleteRecord("Ingredients", id);
+  await deleteRecord(PRODUCTS_TAB, id);
 }

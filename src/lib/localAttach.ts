@@ -33,8 +33,8 @@ export interface Duplicate {
 
 export type Decision = { keep: "sheet" } | { keep: "phone" } | { keep: "both"; localName: string; sheetName: string };
 
-const NAME_COLUMN: Record<string, string> = { Ingredients: "NameUk", Dishes: "NameUk", Medications: "Name" };
-const DATA_TABS = ["Ingredients", "Dishes", "Medications", "DailyLog", "BloodSugar", "MedicationLog", "Weight"];
+const NAME_COLUMN: Record<string, string> = { Products: "NameUk", Medications: "Name" };
+const DATA_TABS = ["Products", "Medications", "DailyLog", "BloodSugar", "MedicationLog", "Weight"];
 
 interface Rec {
   id: string;
@@ -143,7 +143,7 @@ export function planAttach(
       const fields = { ...r.fields };
       if (tab === "DailyLog" && fields.ItemId !== undefined) fields.ItemId = mapId(fields.ItemId);
       if (tab === "MedicationLog" && fields.MedicationId !== undefined) fields.MedicationId = mapId(fields.MedicationId);
-      if (tab === "Dishes" && fields.IngredientsJson !== undefined) {
+      if (tab === "Products" && fields.IngredientsJson !== undefined) {
         fields.IngredientsJson = serializeIngredientsJson(parseIngredientsJson(fields.IngredientsJson).map((i) => (i.id ? { ...i, id: mapId(i.id) } : i)));
       }
       const dup = byLocal.get(`${tab}:${r.id}`);

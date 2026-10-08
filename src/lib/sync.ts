@@ -29,6 +29,9 @@ import { cleanUpBackups, makeBackupCopy } from "./backups";
 import { BACKUP_NAME_PREFIX } from "./backupTag";
 import { isLocalSheetId } from "./localModeId";
 import { Capacitor } from "@capacitor/core";
+import { isSheetTooNew, SheetTooNewError } from "./sheetFormat";
+import { movePendingProductChanges } from "./productsMerge";
+import { uk } from "../i18n/uk";
 
 /** A copy older than this is refreshed when the app comes back to the foreground. */
 export const STALE_AFTER_MS = 5 * 60 * 1000;
@@ -41,8 +44,7 @@ const ID_KINDS: Record<string, RecordKind> = {
   BloodSugar: "sugar",
   MedicationLog: "intake",
   Weight: "weight",
-  Ingredients: "ingredient",
-  Dishes: "dish",
+  Products: "ingredient",
   Medications: "medication",
 };
 
@@ -70,9 +72,12 @@ async function backupBeforeFirstPush(remote: Map<string, unknown[][]>): Promise<
 async function runSync(): Promise<void> {
   // No spreadsheet, or working without Google: nothing to sync with.
   if (!getSpreadsheetId() || isLocalSheetId(getSpreadsheetId())) return;
+  await movePendingProductChanges();
   const pending = (await listLocalChanges()) as RecordChange[];
   if (pending.length > 0) {
     const remote = await fetchTabsLive(REQUIRED_TABS);
+    // A newer app version changed this sheet's structure: the saves wait (2.1).
+    if (isSheetTooNew(remote.get("Settings") ?? [])) throw new SheetTooNewError(uk.sheetUpgrade.tooNew);
     await backupBeforeFirstPush(remote);
 
     // Rows typed into the sheet by hand get an ID first, so they can be matched.

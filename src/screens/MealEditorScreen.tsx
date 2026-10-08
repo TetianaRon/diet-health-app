@@ -1,4 +1,4 @@
-import { formatDecimal } from "../lib/numberFormat";
+import { fieldDecimal, formatDecimal } from "../lib/numberFormat";
 import { verifiedEntry } from "../data/builtInFoods";
 import { searchFoods } from "../lib/foodSearch";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -7,7 +7,8 @@ import MathInput from "./MathInput";
 import { evaluateInput } from "../lib/mathInput";
 import { useBackHandler } from "../lib/useBackHandler";
 import { classifyGl } from "../lib/health";
-import { addDish, itemMeasure, type IngredientNutrition, type NutritionKey } from "../lib/dishes";
+import { itemMeasure, type IngredientNutrition, type NutritionKey } from "../lib/dishes";
+import { addIngredient } from "../lib/ingredients";
 import { normalizeItemName } from "../lib/itemIds";
 import { pieceGrams, positiveOrNull, round2, type Measure } from "../lib/measure";
 import { sizeAmount, sizeLabel, type PortionSize } from "../lib/portionSizes";
@@ -176,21 +177,21 @@ function AddDishToMealForm({
     const count = positiveOrNull(countText) ?? 1;
     const amount = sizeAmount(size, count, selected.measure);
     if (!amount) return;
-    setPortionGrams(amount.grams === null ? "" : String(round2(amount.grams)));
-    setPortionPieces(amount.pieces === null ? "" : String(round2(amount.pieces)));
+    setPortionGrams(amount.grams === null ? "" : fieldDecimal(round2(amount.grams)));
+    setPortionPieces(amount.pieces === null ? "" : fieldDecimal(round2(amount.pieces)));
   };
   const usableSizes = mode === "pick" && selected ? selected.portionSizes.filter((s) => sizeAmount(s, 1, selected.measure) !== null) : [];
   const changeGrams = (value: string) => {
     setPickedSize(null);
     setPortionGrams(value);
     const grams = positiveOrNull(value);
-    if (weightOfPiece !== null) setPortionPieces(grams === null ? "" : String(round2(grams / weightOfPiece)));
+    if (weightOfPiece !== null) setPortionPieces(grams === null ? "" : fieldDecimal(round2(grams / weightOfPiece)));
   };
   const changePieces = (value: string) => {
     setPickedSize(null);
     setPortionPieces(value);
     const pieces = positiveOrNull(value);
-    if (weightOfPiece !== null) setPortionGrams(pieces === null ? "" : String(round2(pieces * weightOfPiece)));
+    if (weightOfPiece !== null) setPortionGrams(pieces === null ? "" : fieldDecimal(round2(pieces * weightOfPiece)));
   };
   const pickedEntry =
     mode === "pick" && selected
@@ -249,16 +250,15 @@ function AddDishToMealForm({
     setSaving(true);
     try {
       const unknownFields = CUSTOM_FIELDS.filter((field) => !filledCustomFields.includes(field));
-      const dish = await addDish({
+      // A typed item labelled страва, measured per portion (2.1; 2.0.2 saved a fixed-value dish).
+      const dish = await addIngredient({
         nameUk: name,
         nameEn: "",
-        ingredients: [],
-        yieldGrams: parsedPortion,
         basis: "piece",
-        yieldPieces: 1,
-        weighedPieces: null,
-        weighedGrams: null,
+        weighedPieces: parsedPortion > 0 ? 1 : null,
+        weighedGrams: parsedPortion > 0 ? parsedPortion : null,
         portionSizes: [{ label: uk.today.form.portionSizeLabel, pieces: 1 }],
+        labels: ["dish"],
         carbsG: values.carbsG ?? 0,
         gi: values.gi ?? 0,
         fiberG: values.fiberG ?? 0,
@@ -451,12 +451,12 @@ function EditDishForm({
 }) {
   const [itemName, setItemName] = useState(entry.itemName);
   const weightUnknown = entry.unknownFields.includes("portionGrams");
-  const [portionGrams, setPortionGrams] = useState(weightUnknown ? "" : String(entry.portionGrams));
-  const [portionPieces, setPortionPieces] = useState(entry.portionPieces !== null ? String(entry.portionPieces) : "");
+  const [portionGrams, setPortionGrams] = useState(weightUnknown ? "" : fieldDecimal(entry.portionGrams));
+  const [portionPieces, setPortionPieces] = useState(entry.portionPieces !== null ? fieldDecimal(entry.portionPieces) : "");
   const [values, setValues] = useState<Record<keyof IngredientNutrition, string>>(() => {
     const initial = { ...EMPTY_CUSTOM_VALUES };
     for (const field of CUSTOM_FIELDS) {
-      if (!entry.unknownFields.includes(field)) initial[field] = String(entry[field]);
+      if (!entry.unknownFields.includes(field)) initial[field] = fieldDecimal(entry[field]);
     }
     return initial;
   });

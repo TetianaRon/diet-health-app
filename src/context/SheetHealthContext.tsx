@@ -5,6 +5,7 @@
 // dialog (SheetHealthDialog), instead of only on the Settings screen.
 // Also owns which spreadsheet is connected (release 1.7.1): whether there is
 // one, the «Підключити таблицю» window (ConnectSheetDialog) and switching.
+import { upgradeLocalData } from "../lib/localMode";
 import { isLocalSheetId } from "../lib/localModeId";
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { useAuth } from "./AuthContext";
@@ -110,6 +111,8 @@ export function SheetHealthProvider({ children }: { children: ReactNode }) {
     setCheckError(null);
     setDismissed(false);
     setDetailsOpen(false);
+    // Working without Google: the phone's own data gets the same upgrades (2.1: one Products tab).
+    if (isLocalSheetId(getSpreadsheetId())) await upgradeLocalData().catch((err) => console.warn("[localMode] upgrade:", err));
     if (!getSpreadsheetId() || isLocalSheetId(getSpreadsheetId())) {
       // Nothing to check: no sheet yet (AppNotifications offers «Підключити»), or working without
       // Google (the device data is created complete).
@@ -127,14 +130,16 @@ export function SheetHealthProvider({ children }: { children: ReactNode }) {
         checkAndUpgradeSpreadsheet({ onUpgradeStart: () => id === latestCheck.current && setUpgrading(true) }),
         getSpreadsheetName().catch(() => null),
       ]);
+      // What an upgrade changed is shown even when a newer check has started since:
+      // that check finds nothing left to do (2.1's merge notice was lost this way).
+      if (result.upgrade) {
+        setUpgradeSummary(result.upgrade);
+        setVersion((v) => v + 1);
+      }
       if (id === latestCheck.current) {
         setReports(result.reports);
         setSpreadsheetName(name);
         rememberConnectedSheet(name);
-        if (result.upgrade) {
-          setUpgradeSummary(result.upgrade);
-          setVersion((v) => v + 1);
-        }
       }
     } catch (err) {
       if (id === latestCheck.current) {

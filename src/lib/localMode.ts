@@ -14,6 +14,9 @@ import { buildInitUpdates } from "./spreadsheetInit";
 import { REQUIRED_TABS } from "./tabs";
 import { isLocalSheetId, LOCAL_SHEET_ID } from "./localModeId";
 import { parseA1Range } from "./localDb/a1";
+import { planProductsMerge, PRODUCTS_HEADERS, PRODUCTS_TAB } from "./products";
+import { labelFor } from "./sheetLabels";
+import { newRecordId } from "./itemIds";
 
 export function isLocalMode(): boolean {
   return isLocalSheetId(getSpreadsheetId());
@@ -42,11 +45,31 @@ export async function startLocalMode(): Promise<void> {
   setSpreadsheetId(LOCAL_SHEET_ID);
   await openLocalDb(LOCAL_SHEET_ID);
   if (!(await getLocalMeta("localSince"))) await setLocalMeta("localSince", new Date().toISOString());
+  await upgradeLocalData();
+}
+
+/**
+ * Brings the phone's own data (working without Google) to the current tabs:
+ * since 2.1 its Ingredients and Dishes become one Products tab (same IDs, as
+ * on a sheet — products.ts), and any tab still missing is created. Safe to run
+ * on every start; does nothing when everything is current.
+ */
+export async function upgradeLocalData(): Promise<void> {
+  await openLocalDb(LOCAL_SHEET_ID);
+  const pulledAt = new Date().toISOString();
+  if (!(await getLocalTab(PRODUCTS_TAB))) {
+    const ingredients = await getLocalTab("Ingredients");
+    const dishes = await getLocalTab("Dishes");
+    if (ingredients || dishes) {
+      const plan = planProductsMerge(ingredients?.rows, dishes?.rows, (kind) => newRecordId(kind));
+      const rows = [[...PRODUCTS_HEADERS], PRODUCTS_HEADERS.map((h) => labelFor(h)), ...plan.rows];
+      await putLocalTabs([{ tab: PRODUCTS_TAB, rows, pulledAt }]);
+    }
+  }
   const missing = [];
   for (const tab of REQUIRED_TABS) if (!(await getLocalTab(tab))) missing.push(tab);
   if (missing.length === 0) return;
   const grids = initialGrids();
-  const pulledAt = new Date().toISOString();
   await putLocalTabs(missing.map((tab) => ({ tab, rows: grids.get(tab) ?? [], pulledAt })));
 }
 

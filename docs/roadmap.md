@@ -12,8 +12,8 @@ The workflow (intake → release branch → verify → release) and the standing
 
 ## Next session — start here (set 2026-10-07)
 1. **2.0 released** to Play's internal testing track and the web (2026-10-06, builds 19–23). Nothing is public; mom is an internal tester, so **an upload is a release to her**. Still worth checking on the developer's devices: the `online` event on a real phone, two tabs, switching sheets.
-2. **Plan reviewed with the developer (2026-10-07):** 2.0.1 → 2.0.2 faster food entry → 2.0.3 reminders → 2.0.4 sign-in choices (+ privacy policy) → 2.1 sets → 2.2 mom's data → 2.3 Picker → 2.4 food families → 2.5 label photos → 2.6 GI from ingredients (after the research) → 2.7 AI lookup → 2.8 English → 3.0 public launch.
-3. **2.0.1 released** (2026-10-07, versionCode 24). **2.0.2 released** (2026-10-08, versionCode 25). **2.0.3 released** (2026-10-08, versionCode 26); still to do: check mom's notification volume and tone. **2.0.4 released** (2026-10-08, versionCode 27, with the privacy policy update on roncreator.com). Next: **2.1 — sets**.
+2. **Plan reviewed with the developer (2026-10-07):** 2.0.1 → 2.0.2 faster food entry → 2.0.3 reminders → 2.0.4 sign-in choices (+ privacy policy) → 2.1 one product list → 2.1.1 millilitres → 2.2 sets → 2.3 mom's data → 2.4 Picker → 2.5 food families → 2.6 label photos → 2.7 GI from ingredients (after the research) → 2.8 AI lookup → 2.9 English → 3.0 public launch.
+3. **2.0.1 released** (2026-10-07, versionCode 24). **2.0.2 released** (2026-10-08, versionCode 25). **2.0.3 released** (2026-10-08, versionCode 26); still to do: check mom's notification volume and tone. **2.0.4 released** (2026-10-08, versionCode 27, with the privacy policy update on roncreator.com). **2.1 — one product list built** (2026-10-08, versionCode 28): release order — upload to Play, confirm mom's phone shows 2.1, then push `main`. Next: **2.1.1 — millilitres**.
 4. Chromium issue 569300356: reply sent 2026-10-05 — check for answers now and then.
 5. Plugin issue [capacitor-local-notifications#15](https://github.com/ionic-team/capacitor-local-notifications/issues/15) (reminders lost during a restart; reported 2026-10-08, our patch in `patches/`): check for answers now and then; drop the patch once a fixed version ships.
 
@@ -50,32 +50,42 @@ The person decides where their data lives, with plain wording about each choice.
 - Also ends the dev server's sign-in on every reload.
 - **The privacy policy update ships with it** (roncreator.com).
 
-### 2.1 — Sets, clean start, moving mom over · 📝 planned
-The verified database offered as sets; new data starts empty; built-in items she used become her rows; the generalised update offer.
-- **A base ingredients set** (2026-10-07): kinds of flour, sugars, starches, seeds, oils — for recipes, and needed by 2.6.
+### 2.1 — One product list · ✅ built (2026-10-08) — spec → "One product list (2.1)"
+- **One item model:** values typed or composed by recipe; labels (інгредієнт, страва, напій, соус/заправка, перекус) for filtering only.
+- **Dishes inside dishes:** any item can be a recipe line (homemade mayonnaise in a salad), with no loops and changes carried upward.
+- **One «Продукти» tab** with filter chips; one editor («Значення: вказані / за рецептом»).
+- **One sheet tab, `Products`** (developer, 2026-10-08): IDs never change; an automatic merge on the first open of 2.1, with the sheet copy first and a notice; the old tabs kept as «Інгредієнти (архів)» and «Страви (архів)».
 
-### 2.2 — Mom's data, verified · 📝 planned — **after local-first** (developer, 2026-10-05)
-Her import comes **after local-first (2.0) and sets (2.1)**, as sets plus her own rows, so it's built once (developer chose this over an earlier import into the bundled database, 2026-10-05). The release number stays; it ships after local-first.
+### 2.1.1 — Millilitres · 📝 planned (developer, 2026-10-08: moved out of 2.1) — spec → "One product list (2.1)" → "Millilitres"
+- A third basis, «на 100 мл» (or «на 250 мл» as a label gives it), for her own items; logging in ml (a `PortionMl` meal-log column, so a drink without a known density keeps its amount); recipe lines in ml.
+- An optional density «100 мл = 103 г» linking ml and grams. **Database densities for drinks** (milk, kefir, coffee; USDA household measures, with source and reliability) go through **2.2.1's review round**.
+
+### 2.2 — Sets, clean start, moving mom over · 📝 planned (2.1's one product list first)
+The verified database offered as sets; new data starts empty; built-in items she used become her rows; the generalised update offer.
+- **The base ingredients set moves to 2.2.1** (developer, 2026-10-08): kinds of flour, sugars, starches, seeds, oils — new database entries through the review page; for recipes, and needed by 2.7. The same round adds densities for the database's drinks (2.1.1).
+
+### 2.3 — Mom's data, verified · 📝 planned — **after local-first** (developer, 2026-10-05)
+Her import comes **after local-first (2.0) and sets (2.2)**, as sets plus her own rows, so it's built once (developer chose this over an earlier import into the bundled database, 2026-10-05). The release number stays; it ships after local-first.
 Spec rules: memory of the import decisions (2026-09-29) + the review page.
 - **Database content:** every item of hers with a genuine match (~90, incl. olives black + green, trout + salmon, beef/pork heart raw + boiled, cocoa), under proper names — **plus the raw/cooked partner** of each wherever the source has both.
 - **Ingredients her dishes likely need** — estimated from each dish, added to the database so she can compose them later. **Her dishes themselves are not recalculated:** her value is kept and the dish is flagged «потрібно скласти рецепт».
 - **Her own sheet:** branded packaging items (her values) and values we couldn't verify (kept as she has them, marked «неперевірено»); her dishes with the flag. **Not added:** items without a genuine match and the dropped ones (кукурудза варена, гірчиця американська, тунець, fructose sweets, calculation leftovers).
 - Import mechanism (how the rows get into her sheet) to be decided at the start of this release.
 
-### 2.3 — Google Picker · 📝 planned (needed for the public launch)
+### 2.4 — Google Picker · 📝 planned (needed for the public launch)
 - **The connected sheet in the connect window** (developer, 2026-10-06): listed first, marked «Підключена зараз», with no connect button. Today it's left out, so it looks missing.
 Spec: "Planned: spreadsheet detection + Google Picker". Detection and removing the test-sheet fallback moved to 1.7.1; left here: the Picker for sheets the app didn't create (replaces pasting a link), then dropping the `spreadsheets` scope. Research first: Picker inside the Android WebView. Needs Google Cloud setup by the developer.
 
-### 2.4 — Food families in the dish composer · 📝 planned
+### 2.5 — Food families in the dish composer · 📝 planned
 Spec: "Planned: food families with cooking states". Raw weight + state in the finished dish; carbs by mass balance, GI from the cooked state; published whole-dish GI shown only as a check. The data already exists from 1.8/2.0.
-- **Dry products get their GI through the family** (developer, 2026-10-05): until 2.4, dry grains, pasta and legumes carry the GI of their cooked form (labelled «після варіння»), so dishes composed from pack values keep a GI. With families, the composer asks how the product is cooked and takes the GI from the family's cooked entry; the dry entries then stop storing a GI of their own (one source per value).
+- **Dry products get their GI through the family** (developer, 2026-10-05): until 2.5, dry grains, pasta and legumes carry the GI of their cooked form (labelled «після варіння»), so dishes composed from pack values keep a GI. With families, the composer asks how the product is cooked and takes the GI from the family's cooked entry; the dry entries then stop storing a GI of their own (one source per value).
 
-### 2.5 — Reading labels from a photo · 📝 planned
+### 2.6 — Reading labels from a photo · 📝 planned
 - A photo of the pack → the nutrition table and «Склад» are read on the device (text recognition, free and offline) → she checks every value before saving; «неперевірено» stays.
 - Merges the two label-reading entries (2026-10-05 intake; "Label photos + zoom → drafts → 3-day update window", spec: "Label photos, drafts and the 3-day update window", which records the reading options, costs, privacy and boundaries).
 - Ukrainian breads were the trigger: too many brands to add to the database, and mom picks the rye bread with the lowest sugar on the label.
 
-### 2.6 — GI from ingredients · 📝 planned — **after the research below confirms the method** (mom's idea, 2026-10-07)
+### 2.7 — GI from ingredients · 📝 planned — **after the research below confirms the method** (mom's idea, 2026-10-07)
 Packs never list GI, but they list «Склад». A packaged product is a dish with an unknown recipe; dishes already get their GI from their ingredients (carb-weighted).
 - **The ingredient list:** the app builds it from «Склад»; **she checks it and can edit any ingredient** (developer). Each ingredient is looked up in her products, then the verified database, then USDA; anything still missing is shown for her to add. A missing ingredient with a tiny carbohydrate share is left out (the recipes' rule); otherwise the app says it can't estimate yet.
 - **The recipe:** the shares that keep the label's order (largest first) and any stated percentages, and best reproduce the label's nutrition table (fitted on dry weight; baking loses water).
@@ -83,8 +93,8 @@ Packs never list GI, but they list «Склад». A packaged product is a dish 
 - **Next to it, the closest measured product** with its source, chosen by processing cues in the list (закваска, цільнозернове, пластівці) through simple rules.
 - Its own reliability level, the ingredients and shares used, and the reasoning are shown and stored (rule 5). It's arithmetic on the label, not a measurement.
 
-### 2.7 — AI looks up GI and nutrients · 📝 planned (developer, 2026-10-07)
-- For products not in our database, AI does the work we did by hand for the database: finds published values, gives the source, reliability, reasoning and date, and picks the closest measured product where processing is unclear (for 2.6).
+### 2.8 — AI looks up GI and nutrients · 📝 planned (developer, 2026-10-07)
+- For products not in our database, AI does the work we did by hand for the database: finds published values, gives the source, reliability, reasoning and date, and picks the closest measured product where processing is unclear (for 2.7).
 - She confirms; the value is marked as found by AI, not checked by us.
 - **A worked case (developer, 2026-10-08): two grocery sandwiches with no label**, logged with only a name and weight (Montreal smoked meat 180 г, maple turkey 170 г). Estimated by hand:
   - **Steps:** name and weight in → a typical recipe with grams (bread, filling, spread) → each ingredient matched to a USDA record → totals per sandwich and a carb-weighted GI from the bread → each assumption shown with its reliability.
@@ -94,16 +104,16 @@ Packs never list GI, but they list «Склад». A packaged product is a dish 
   - **Ties in with saving it:** the result goes in as a fixed-value dish (2.0.2's «Також зберегти в «Страви»»), so the next time it's one tap.
 - **Needs a decision on AI costs first:** free/paid, or a daily cap like translation's. Looking up a vendor's own recipe isn't part of it (expensive; people can do that in their own AI assistant).
 
-### 2.8 — English version · 📝 planned (developer, 2026-10-07: before the public launch — she lives in Canada and her own circle is English-speaking)
+### 2.9 — English version · 📝 planned (developer, 2026-10-07: before the public launch — she lives in Canada and her own circle is English-speaking)
 Spec: "Planned: English version" (the decisions are made: device language first, a switch in Settings, new sheets' readable names in the app's language, meal types kept as stored keys).
 
 ### 3.0 — Public launch · 📝 planned
 - **Closed testing first:** Play won't publish to a closed track until the Dashboard steps are done — full description and store listing, category and contact details, content rating, target audience, Data safety, financial features, the health declaration, the privacy policy, government apps (found 2026-10-06). Then mom moves to a closed track and internal testing becomes the developer's own.
 - New personal Play accounts need a closed test with 12 testers for 14 days before production.
-- Google OAuth verification (with the narrower scopes after 2.3), store listing (app-designer wording, no medical claims), a check of the privacy policy, free/paid and payments.
+- Google OAuth verification (with the narrower scopes after 2.4), store listing (app-designer wording, no medical claims), a check of the privacy policy, free/paid and payments.
 
 ### Research — GI from ingredients, by hand · 📝 any time, no code (developer, 2026-10-07)
-Before building 2.6: run the method by hand on products sold in Ukraine that have published GI values, across **different kinds of food, not only bread** (breads, cereals and granola, crackers and biscuits, pasta, sweetened yogurts, snack bars). Record each range against the measured value. If the ranges usually contain it, build 2.6; if not, rethink it first. Needs the base ingredients' values (2.1's set, or researched for the test).
+Before building 2.7: run the method by hand on products sold in Ukraine that have published GI values, across **different kinds of food, not only bread** (breads, cereals and granola, crackers and biscuits, pasta, sweetened yogurts, snack bars). Record each range against the measured value. If the ranges usually contain it, build 2.7; if not, rethink it first. Needs the base ingredients' values (2.2.1's set, or researched for the test).
 
 ### Product decisions still open (from the local-first design notes)
 - **Free vs paid** (only what costs the developer goes paid): free = local app, our verified database as sets (built in the local-first version, kept on the device; Ukrainian search from 1.9), manual entry, meals, blood sugar, reminders; paid = USDA search with translation (Translation API), AI label reading, and sync across devices (Sheets itself costs nothing — a product choice). Payments: **Google Play billing** first (Android only, 15%); a paid web version would need its own accounts and payments.

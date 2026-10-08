@@ -505,7 +505,7 @@ Deferred by the developer; the decisions are already made:
 
 **File structure:**
 - `sources` — registry of datasets (name, edition/version, full citation, URL). Entries refer to a key here, so a citation is written once. Today: `usda-sr-legacy`, `gi-2021-st1`, `gi-2021-st2`, `gi-2008`, `calculation` (our own arithmetic; its description says what was computed from which entries).
-- `categories` — every entry belongs to one (Крупи та макарони, Хліб, Молочні продукти, М'ясо і птиця, Риба, Яйця, Бобові, Овочі, Гриби, Фрукти та ягоди, Горіхи, Олії та жири, Напої), so the database can be offered as **sets** (local-first, roadmap 2.1).
+- `categories` — every entry belongs to one (Крупи та макарони, Хліб, Молочні продукти, М'ясо і птиця, Риба, Яйця, Бобові, Овочі, Гриби, Фрукти та ягоди, Горіхи, Олії та жири, Напої), so the database can be offered as **sets** (local-first, roadmap 2.2).
 - `entries` — one per food in one state:
   - `id` — the permanent `B` ID (never changed or reused; a replaced entry stays as `status: "retired"` with `replacedBy`).
   - `family` + `state` — what the food is across states (`buckwheat`: `dry` and `boiled`); states: raw, dry, boiled, baked, fried, steamed, canned, dried, fermented, processed, brewed (coffee).
@@ -537,7 +537,7 @@ Deferred by the developer; the decisions are already made:
 
 ## Search and GI suggestions (release 1.9, designed 2026-10-05)
 
-Only what works the same wherever her data lives — the database is bundled in the app; sets come with local-first (roadmap 2.1).
+Only what works the same wherever her data lives — the database is bundled in the app; sets come with local-first (roadmap 2.2).
 
 **Matching** (`src/lib/foodSearch.ts`, pure, unit-tested) — one function behind every search: the Продукти/Страви lists, the add-product form, the meal picker and the dish composer.
 - Text is normalised (lower case, apostrophes and punctuation dropped, «ё»→«е»); words match by **word start** (a query word matches a name word that starts with it, or that it starts with, from 4 letters — so «гречки» finds «Гречка», «макаронні» finds «Макарони»).
@@ -589,7 +589,7 @@ Today's Продукти screen with the tabs swapped: **dishes** first, **produ
 On the developer's devices, the emulator and a Ukrainian-locale test sheet — never relying on mom's phone.
 
 
-## Local-first app (2.0, sets in 2.1; designed 2026-10-05)
+## Local-first app (2.0, sets in 2.2; designed 2026-10-05)
 
 > **Status:** 📝 Designed with the developer 2026-10-05; proof passed the same day; not built. Roadmap → 2.0 and 2.1.
 
@@ -686,7 +686,7 @@ The person decides where their data lives, with plain wording about each choice.
 ### Releases
 0. ✅ **Proof: SQLite in the browser and the app's WebView** (2026-10-05, see Storage).
 1. **2.0, one release** (developer, 2026-10-05), built in three internal checkpoints: **A** reading from the device (row IDs, one sheet upgrade adding `Id`, `UpdatedAt` and «Видалені»); **B** offline saving and full sync; **C** Android without Google. **Safeguards:** an automatic sheet copy before the first sync. (A week on Play's internal testing track "before production and mom" was planned too, but there's no production track yet and mom is an internal tester, so uploads reach her directly — developer, 2026-10-06.)
-2. **2.1 — Sets + clean start + moving mom over.** Then 2.2 (mom's data, verified) as sets plus her own rows.
+2. **2.1 — one product list** (see "One product list (2.1)"). **2.2 — Sets + clean start + moving mom over.** Then 2.3 (mom's data, verified) as sets plus her own rows.
 
 **Free/paid** is decided separately, before the public launch. Nothing above depends on it: sync, USDA search and label reading are separable features that can be switched on or off later.
 
@@ -746,3 +746,50 @@ Four things that make logging quicker. Builds on 2.0.1's measures (`measure.ts`)
 - The field shows the result under it («= 150») while typing; the result is stored, never the formula.
 - The phone's number keyboard has no × or ÷ (checked on the emulator's Gboard: only − , . and space). So while a value field is focused, a row of keys «+ − × ÷» sits under it and adds the sign at the cursor; the number keyboard stays.
 - Applies to the meal editor's portion and custom-entry fields, and the product form's value fields.
+
+## One product list (2.1, designed 2026-10-08)
+
+The split into «Продукти» and «Страви» mixed two independent things: **where an item's values come from** and **what the item is**. Cooked buckwheat is typed values when it comes from the database, and composed when it comes from her own pot. Homemade mayonnaise is composed, and it's an ingredient of a salad. USDA makes no product/dish distinction either: every entry is a food with measured values per 100 g, raw or cooked (developer, 2026-10-08).
+
+### Definitions
+- **An item** (продукт) is anything that can be logged or put in a recipe. Every item has:
+  - **values:** **typed** (from a pack label, the database, USDA, her own numbers; today's products and fixed-value dishes) or **composed** (a recipe of other items plus a final weight or count; today's dishes);
+  - **labels:** none, one or several of **інгредієнт, страва, напій, соус/заправка, перекус** (developer; «продукт» isn't a label, since every item is one). Labels are for finding and filtering only; they never change the maths.
+- **Any item can be a recipe line,** composed ones included (homemade mayonnaise in a salad).
+  - **No loops:** an item can't contain itself, directly or through another recipe; the composer leaves such items out of its picker.
+  - **Changes carry upward:** saving any item, typed or composed, recalculates every composed item made with it (and those made with them, inner ones first — `recipeGraph.ts`), saves them, and the list says «Перераховано за новими значеннями: «…»». Since 2.1 editing a typed product updates the dishes made with it too (before, their stored values stayed).
+  - **Deleting** an item that's in another recipe is blocked, with links to those recipes (as for products before); the texts say «продукт», not «страва».
+- **Database items are typed items.** They get labels from their category: Напої → напій; the cooked foods (гречка варена…) → страва; the rest → інгредієнт.
+
+### Millilitres — moved to 2.1.1 (developer, 2026-10-08: 2.1 ships the list, labels and items inside recipes; database densities for drinks join 2.2.1's review round)
+- A third basis beside per 100 g and per piece: **per 100 ml** (or per any amount in ml, as a drink's label gives it: «на 250 мл»).
+- In a recipe, ml needs no conversion: nutrients add up line by line, and the final weight is weighed.
+- Between ml and g (logging juice in ml from values per 100 g, or a recipe weight) the app needs a density: an optional pair like «Вага штук», **«100 мл = 103 г»**. The database supplies it for drinks from USDA's household measures ("1 cup = 244 g", 240 ml). Without it, an ml item is logged in ml only.
+
+### Screens (as built)
+- **The tab is «Продукти»** (developer): one list, composed items first (marked «· за рецептом»), then typed ones (favourites first; best match first while searching). Filter chips: Усі · Інгредієнти · Страви · Напої · Соуси · Перекуси · За рецептом.
+- **Adding:** «Додати продукт» (typed values) and «Скласти за рецептом».
+- **One editor:** above the form, «Значення: Вказані / За рецептом» picks the form, and the label chips (інгредієнт, страва, напій, соус/заправка, перекус; «Лише для пошуку й фільтрів — на розрахунки не впливають»). A database item that isn't hers yet can't switch (editing it saves her copy first).
+- **Changing typed ↔ composed** on a saved item is a field change: it keeps its name, labels, ID and the meals logged with it. The other side's data is kept in its columns, so switching back loses nothing. Switching to «Вказані» starts from the item's current values; switching to «За рецептом» starts with an empty recipe. Nothing changes until it's saved.
+- **A fixed-value dish** (2.0.2's saved meal box) is a typed item labelled страва, measured per portion (its portion weight read from the former YieldGrams). «Також зберегти в «Страви»» in the meal editor now saves such an item.
+- **The meal editor** lists composed items first, then her typed items labelled страва, then the rest.
+
+### Storage: one tab (developer chose this, 2026-10-08)
+- **An item's ID is its identity and never changes** (developer's question: what happens to the ID when an item switches between typed and composed?). Two tabs would have meant moving the row under a new ID and rewriting every link on each switch, which breaks links held by another device's pending changes.
+- **One `Products` tab** holds every item: one row per item, with every column — typed values (today's Ingredients columns), the recipe (today's Dishes columns: ingredients, yield weight and count, weighed pieces), `Values` (`typed` | `recipe`), `Labels` (comma-separated keys: `ingredient,dish,drink,sauce,snack`), and the ml density pair `WeighedMl` / `WeighedMlGrams` (the ml basis is `100ml` in the existing `Basis` column). Row 2 keeps readable Ukrainian names.
+- **IDs:** existing `I…` and `D…` IDs stay valid and unchanged (they're unique across both tabs). Links (recipe lines, meal rows' `ItemId`) don't change. Until the screens become one list (checkpoint 2), new products still get `I…` and new dishes `D…`; a blank `Values` cell (a row saved by an older version) is read by that prefix.
+- **The merge is automatic, with a notice** (developer, 2026-10-08: no «Пізніше» — the app then deals with one storage model only). On the first open of 2.1:
+  - the sheet copy to Drive first (2.0's `makeBackupCopy`);
+  - «Оновлюємо таблицю…», then a notice: «Тепер продукти й страви — в одній вкладці «Продукти». Копію таблиці збережено в Google Drive.»;
+  - a new `Products` tab is written: Ingredients rows with `Values = typed`, no label; Dishes rows with `Values = recipe` (or `typed` for a fixed-value dish, one with no recipe) and the label страва;
+  - **nothing is overwritten or deleted:** the old tabs are renamed «Інгредієнти (архів)» and «Страви (архів)» and no longer read; deleting them is the person's choice;
+  - the device's copy is rebuilt from the new tab; changes waiting to sync for an `Ingredients` or `Dishes` row are moved to the same ID in `Products`.
+- **For mom's sheet:** the developer opens 2.1 on it first, once her phone runs 2.1.
+- **Another device on an older app version** (2.0.4 or earlier) has no guard against a newer structure. Its sheet check reports the missing Ingredients and Dishes tabs as needing a fix, and its fix would create them again, empty, and save new items there. So:
+  - **leftover rows are absorbed:** whenever the app finds rows in an `Ingredients` or `Dishes` tab after the merge, it moves them into `Products` (same IDs; a row already there by ID keeps the newer `UpdatedAt`) and empties that tab;
+  - **a guard for the future:** a `SheetFormat` key row in Settings (`sheetFormat.ts`; 1 = two tabs, 2 = Products). An app that finds a higher number than it knows doesn't write (the check and sync stop with «Таблицю оновлено новішою версією застосунку. Оновіть застосунок…»). 2.1 writes 2 at the merge, so later structure changes are protected (2.0.4 and earlier can't read it);
+- **Sync:** pending changes made before the merge for `Ingredients` or `Dishes` rows apply to the same IDs in `Products`.
+
+### Not in 2.1
+- Sets, the clean start and moving mom over: **2.2** (the earlier draft, adjusted to this model: picking a database item adds it to «Продукти»).
+- The base-ingredients set: **2.2.1**.

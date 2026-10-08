@@ -17,7 +17,9 @@ export function upgradeNoticeLines(summary: UpgradeSummary): string[] {
   for (const m of summary.migrated) lines.push(t.migrated(m.to, m.from));
   if (summary.idsFilled > 0) lines.push(t.idsFilled);
   if (summary.idsRenumbered > 0) lines.push(t.idsRenumbered(summary.idsRenumbered));
-  else lines.push(t.onlyEmptyCells);
+  if (summary.productsMerged) lines.push(t.productsMerged, t.backupSaved);
+  if (summary.productsAbsorbed > 0) lines.push(t.productsAbsorbed(summary.productsAbsorbed));
+  if (summary.idsRenumbered === 0 && !summary.productsMerged && summary.productsAbsorbed === 0) lines.push(t.onlyEmptyCells);
   lines.push(t.history);
   return lines;
 }

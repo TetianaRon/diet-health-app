@@ -4,7 +4,7 @@
 // label replaces it).
 import { uk } from "../i18n/uk";
 import { evaluateInput } from "../lib/mathInput";
-import { formatDecimal } from "../lib/numberFormat";
+import { fieldDecimal, formatDecimal } from "../lib/numberFormat";
 import { DEFAULT_SIZE_LABELS, MAX_OWN_SIZES, type PortionSize } from "../lib/portionSizes";
 import MathInput from "./MathInput";
 
@@ -19,7 +19,7 @@ const t = uk.foods.sizes;
 export function sizeRowsFrom(sizes: readonly PortionSize[]): SizeRow[] {
   return sizes
     .filter((s) => !s.fromDatabase)
-    .map((s) => (s.grams !== undefined ? { label: s.label, amount: String(s.grams), unit: "grams" as const } : { label: s.label, amount: String(s.pieces), unit: "pieces" as const }));
+    .map((s) => (s.grams !== undefined ? { label: s.label, amount: fieldDecimal(s.grams), unit: "grams" as const } : { label: s.label, amount: s.pieces !== undefined ? fieldDecimal(s.pieces) : "", unit: "pieces" as const }));
 }
 
 /** Her sizes from the rows (empty rows dropped), or the problem to show. */

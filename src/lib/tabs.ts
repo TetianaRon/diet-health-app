@@ -2,4 +2,5 @@
 // (sync included) can use it without import cycles.
 // Medications, MedicationLog and Weight since 1.7, Deleted since 2.0 — on an
 // existing sheet they're created silently by the upgrade (a missing tab is additive).
-export const REQUIRED_TABS = ["Ingredients", "Dishes", "DailyLog", "BloodSugar", "Medications", "MedicationLog", "Weight", "Deleted", "Settings"] as const;
+// Products since 2.1: one tab for what were Ingredients and Dishes (products.ts).
+export const REQUIRED_TABS = ["Products", "DailyLog", "BloodSugar", "Medications", "MedicationLog", "Weight", "Deleted", "Settings"] as const;
