@@ -478,7 +478,7 @@ function requireSpreadsheetId(): string {
 }
 
 /**
- * Spreadsheets built into the app (mom's, the testers' and the dev sheet,
+ * Spreadsheets built into the app (the Ukrainian-locale test sheet that was mom's, the testers' and the dev sheet,
  * plus any in VITE_KNOWN_SPREADSHEET_IDS). The connect window lists only
  * those the signed-in account can actually open (getSpreadsheetTitle) —
  * so access decides who sees which, without any emails in the app. Rule:
