@@ -13,7 +13,7 @@ The workflow (intake → release branch → verify → release) and the standing
 ## Next session — start here (set 2026-10-07)
 1. **2.0 released** to Play's internal testing track and the web (2026-10-06, builds 19–23). Nothing is public; mom is an internal tester, so **an upload is a release to her**. Still worth checking on the developer's devices: the `online` event on a real phone, two tabs, switching sheets.
 2. **Plan reviewed with the developer (2026-10-07):** 2.0.1 → 2.0.2 faster food entry → 2.0.3 reminders → 2.0.4 sign-in choices (+ privacy policy) → 2.1 one product list → 2.1.1 millilitres → 2.2 sets → 2.3 mom's data → 2.4 Picker → 2.5 food families → 2.6 label photos → 2.7 GI from ingredients (after the research) → 2.8 AI lookup → 2.9 English → 3.0 public launch.
-3. **2.0.1 released** (2026-10-07, versionCode 24). **2.0.2 released** (2026-10-08, versionCode 25). **2.0.3 released** (2026-10-08, versionCode 26); still to do: check mom's notification volume and tone. **2.0.4 released** (2026-10-08, versionCode 27, with the privacy policy update on roncreator.com). **2.1 — one product list built** (2026-10-08, versionCode 28): release order — upload to Play, confirm mom's phone shows 2.1, then push `main`. Next: **2.1.1 — millilitres**.
+3. **2.0.1 released** (2026-10-07, versionCode 24). **2.0.2 released** (2026-10-08, versionCode 25). **2.0.3 released** (2026-10-08, versionCode 26); still to do: check mom's notification volume and tone. **2.0.4 released** (2026-10-08, versionCode 27, with the privacy policy update on roncreator.com). **2.1 — one product list built** (2026-10-08). Build 28 reached Play's internal track and failed to merge a sheet with a «Sheet1» tab (nothing written); **build 29** fixes it (versionCode 29). Release order — upload build 29 to Play, confirm mom's phone shows build 29, then push `main`. Next: **2.1.1 — millilitres**.
 4. Chromium issue 569300356: reply sent 2026-10-05 — check for answers now and then.
 5. Plugin issue [capacitor-local-notifications#15](https://github.com/ionic-team/capacitor-local-notifications/issues/15) (reminders lost during a restart; reported 2026-10-08, our patch in `patches/`): check for answers now and then; drop the patch once a fixed version ships.
 
@@ -146,6 +146,8 @@ Before building 2.7: run the method by hand on products sold in Ukraine that hav
 ## Intake (new feedback, not yet placed)
 
 - **TMM: content shows through the Android status bar** (2026-10-08): when a list scrolls, rows pass under the clock and battery icons; the safe-area fix (1.5) padded the content but left the bar transparent. Old, low priority design fix. Place: any small release.
+
+- **TMM: the Android connect window doesn't list sheets the web app created** (2026-10-08, developer's report on build 28): with `drive.file`, Google shows each client only its own files. Workaround: «За посиланням». Place: 2.4 Google Picker (its research note already asks whether a grant on one client reaches the other).
 
 New items land here with a one-line note, then get placed above.
 

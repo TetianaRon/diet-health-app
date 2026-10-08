@@ -425,3 +425,16 @@ Answering "did we review only products?": the 69 home dishes were on the page bu
   - an older app version on a merged sheet.
 - **Release order (mom's sheet merges on the first open by any 2.1 app):** upload the Play bundle first, confirm her phone shows 2.1, then push `main` (the web).
 - 431 tests, `tsc -b`, `npm run build`. Version 2.1, versionCode 28.
+
+**2.1 build 29 — hotfix (2026-10-08, branch `release/2.1-build29`):** the developer installed 2.1 (build 28) from Play's internal track and reported that her sheet wasn't listed in the connect window.
+- **What happened on her phone:** at 17:48 the merge on «Мої дані — Трекер харчування» made its copy and stopped. The copy was empty (one blank «Sheet1») and nothing in her sheet changed (its last change was 17:09).
+- **Cause 1 — a tab named like Google's default:** her sheet has a «Sheet1» tab. The copy step creates a spreadsheet, adds a tab per source tab, then deletes the new file's default «Sheet1». Adding a second «Sheet1» failed, so the copy stayed empty and the merge stopped. Since the screens read the `Products` tab, the app couldn't load her data, and every open would retry and leave another empty copy. **Fix:** the new file's default tab is renamed first; tab names are quoted in ranges; a copy that can't be completed goes to Drive's trash.
+- **Cause 2 — an older tab format (found on the test sheet):** the merge runs before the silent upgrade, and its reader refused an Ingredients tab missing newer columns. **Fix:** a lenient reader for the old tabs (missing columns read as blank; a tab that isn't the app's layout, or has a column twice, is still refused).
+- **A failed sheet update is now said on every screen** («Не вдалося оновити таблицю для нової версії застосунку», the reason under «Детальніше», «Ваші дані в таблиці не змінено», «Спробувати ще раз»); before, it was shown only in Settings.
+- **Verified (local web app, `trackmymealstemplate-test` with an added empty «Sheet1» and an older Ingredients tab):**
+  - the first try failed visibly with the notice, and the sheet was unchanged;
+  - after the reader fix, the merge went through: all 11 items in `Products` with IDs, archives, `SheetFormat` 2, the merge notice titled and staying until «Зрозуміло»;
+  - the copy (18:02) holds all 10 tabs with their rows, «Sheet1» included.
+- **Not the cause, and older than 2.1:** the connect window on Android doesn't list «Мої дані» because the web app created it. With `drive.file`, Google shows the Android client only the files the Android client created; the web lists it. Workaround: «За посиланням»; the fix is the Google Picker (2.4).
+- **Left in her Drive:** the empty copy from 17:48 (created before the trash-on-failure fix, so never registered for clean-up).
+- 432 tests, `tsc -b`, `npm run build`. Version 2.1, versionCode 29.
