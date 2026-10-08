@@ -679,13 +679,13 @@ Packs print nutrients per portion (per 30 g) or per piece (dumplings per 12), no
 Two separate things (developer, 2026-10-07: values per 100 g from the database, plus 12 home-cooked dumplings weighed at 300 g):
 - **«Значення вказано на»:** grams or pieces, and the amount as the pack says it («на 100 г», «на 30 г», «на 12 шт.»). The values are typed for that amount. Default: «на 100 г».
 - **«Вага штук» (optional):** any weighed count of pieces and its weight («12 шт. = 300 г»). It gives the product a piece weight, so it can be logged both by count and by weight.
-- **Dishes:** the yield is a weight («Вага готової страви, г»), a count («Вийшло, шт.»), or both — the same batch, so with both the dish has a piece weight. The main one decides how the dish is measured.
+- **Dishes:** the yield is a weight («Вага готової страви, г»), a count («Вийшло, шт.»), or both — the same batch. The main one decides how the dish is measured. **«Вага штук» (optional), like products** (2.0.2, developer: a stack of a few dozen pancakes isn't counted): any weighed handful, «10 млинців = 400 г», gives the piece weight; without it, the batch's weight and count give it when both are known.
 - The form shows what will be stored («Буде збережено на 100 г: …» or «на 1 шт.: …») and one piece's weight.
 - Editing a database product saves her own copy (as before), which replaces it in lists.
 
 ### Stored (new columns, added by the silent upgrade)
 - **Ingredients:** `Basis` (`100g` or `piece`; blank reads as `100g`, so every existing row stays as it is), `ValuesPer` (the amount the values were typed for; blank = 100 g or 1 piece), `WeighedPieces` and `WeighedGrams` (the weighed count; blank = no piece weight).
-- **Dishes:** `Basis` and `YieldPieces` (blank = none); `YieldGrams` may be 0 for a dish measured per piece.
+- **Dishes:** `Basis` and `YieldPieces` (blank = none); `YieldGrams` may be 0 for a dish measured per piece; `WeighedPieces` and `WeighedGrams` (2.0.2) for the weighed handful.
 - **Values:** per 100 g for `100g` (every value except GI recalculated from the typed amount), per 1 piece for `piece`, to 4 decimals.
 - **A dish's ingredient** (`IngredientsJson`) can be given as `pieces` instead of `grams`: its contribution is the values per piece × pieces, or through the piece weight.
 - **DailyLog:** `PortionPieces` (blank = logged by weight). When the weight isn't known, `PortionGrams` is 0 and `UnknownFields` lists `portionGrams`, so a meal's total weight never counts it as 0.

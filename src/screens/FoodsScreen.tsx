@@ -57,6 +57,7 @@ import PackAmountFields, { measureFromPackFields, type PackFields } from "./Pack
 import ProductMeasureFields, { isMeasure, measureFromProductFields, productFieldsFromMeasure, type ProductFields } from "./ProductMeasureFields";
 import PortionSizesFields, { sizeRowsFrom, sizesFromRows, type SizeRow } from "./PortionSizesFields";
 import FixedDishForm from "./FixedDishForm";
+import WeighedPiecesFields, { weighedPair } from "./WeighedPiecesFields";
 import { pieceGrams, round2, toStoredValues, toTypedValues, valuesAmount, PER_100G, type Measure } from "../lib/measure";
 import { measureOf, refFactor } from "../lib/dishes";
 
@@ -827,6 +828,8 @@ function ComposeDishForm({
   }));
   const [giVerified, setGiVerified] = useState(existingDish?.giVerified ?? false);
   const [sizeRows, setSizeRows] = useState<SizeRow[]>(() => sizeRowsFrom(existingDish?.portionSizes ?? []));
+  const [weighedPieces, setWeighedPieces] = useState(existingDish?.weighedPieces ? String(existingDish.weighedPieces) : "");
+  const [weighedGrams, setWeighedGrams] = useState(existingDish?.weighedGrams ? String(existingDish.weighedGrams) : "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -855,6 +858,9 @@ function ComposeDishForm({
   const resolvedRefs: DishIngredientRef[] = rows.map(toRef).filter((ref): ref is DishIngredientRef => ref !== null);
 
   const yieldMeasure = measureFromPackFields(yieldFields);
+  const weighedNow = weighedPair(weighedPieces, weighedGrams);
+  const dishHasPieceWeight =
+    (!("problem" in weighedNow) && weighedNow.weighedPieces !== null) || (yieldMeasure !== null && pieceGrams(yieldMeasure) !== null);
   const dishNutrition = (refs: DishIngredientRef[], y: Measure) =>
     computeDishNutrition(refs, y.weighedGrams ?? 0, findIngredient, y.basis === "piece" ? y.weighedPieces : null);
   const preview =
@@ -885,6 +891,11 @@ function ComposeDishForm({
       setError(portionSizes.problem);
       return;
     }
+    const weighed = weighedPair(weighedPieces, weighedGrams);
+    if ("problem" in weighed) {
+      setError(weighed.problem);
+      return;
+    }
     if (nameMatch) return;
 
     setSaving(true);
@@ -901,6 +912,7 @@ function ComposeDishForm({
         yieldGrams: yieldMeasure.weighedGrams ?? 0,
         basis: yieldMeasure.basis,
         yieldPieces: yieldMeasure.weighedPieces,
+        ...weighed,
         portionSizes,
         ...nutrition,
         source: existingDish?.source ?? "manual",
@@ -1032,11 +1044,20 @@ function ComposeDishForm({
         hints={{ grams: uk.dishes.composeForm.yieldGramsHint, pieces: uk.dishes.composeForm.yieldPiecesHint }}
       />
       <p className="food-form-hint">{uk.dishes.composeForm.yieldHint}</p>
+      <WeighedPiecesFields
+        pieces={weighedPieces}
+        grams={weighedGrams}
+        onChange={(pieces, grams) => {
+          setWeighedPieces(pieces);
+          setWeighedGrams(grams);
+        }}
+        hint={uk.dishes.composeForm.weighedHint}
+      />
       <PortionSizesFields
         rows={sizeRows}
         onChange={setSizeRows}
-        allowGrams={yieldFields.main !== "piece" || (yieldMeasure !== null && pieceGrams(yieldMeasure) !== null)}
-        allowPieces={yieldFields.main === "piece" || (yieldMeasure !== null && pieceGrams(yieldMeasure) !== null)}
+        allowGrams={yieldFields.main !== "piece" || dishHasPieceWeight}
+        allowPieces={yieldFields.main === "piece" || dishHasPieceWeight}
       />
 
       {preview && (

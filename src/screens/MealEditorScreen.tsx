@@ -256,6 +256,8 @@ function AddDishToMealForm({
         yieldGrams: parsedPortion,
         basis: "piece",
         yieldPieces: 1,
+        weighedPieces: null,
+        weighedGrams: null,
         portionSizes: [{ label: uk.today.form.portionSizeLabel, pieces: 1 }],
         carbsG: values.carbsG ?? 0,
         gi: values.gi ?? 0,
