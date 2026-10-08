@@ -149,6 +149,8 @@ Before building 2.7: run the method by hand on products sold in Ukraine that hav
 
 - **TMM: the Android connect window doesn't list sheets the web app created** (2026-10-08, developer's report on build 28): with `drive.file`, Google shows each client only its own files. Workaround: «За посиланням». Place: 2.4 Google Picker (its research note already asks whether a grant on one client reaches the other).
 
+- **TMM: favourites are half-built** (2026-10-08, developer): only typed items have the ☆ (composed ones don't, a gap the one list makes visible), and there's no way to see your favourites (no «Улюблені» filter or list; they only sort first). Redesign favourites as a whole. Not urgent, nothing breaks. Place: before 3.0 — fits with 2.2 sets (the lists change there anyway).
+
 New items land here with a one-line note, then get placed above.
 
 ---
