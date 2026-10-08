@@ -5,7 +5,7 @@ export const uk = {
   tabs: {
     today: "Сьогодні",
     history: "Історія",
-    foods: "Страви",
+    foods: "Продукти",
     settings: "Налаштування",
   },
   // Release 1.7 — the day's body records on Сьогодні and in Історія.
@@ -366,7 +366,31 @@ export const uk = {
     divide: "Додати знак ділення",
   },
   foods: {
-    title: "Страви",
+    title: "Продукти",
+    // One list since 2.1 (FoodsScreen.tsx).
+    filters: {
+      label: "Показати",
+      all: "Усі",
+      ingredient: "Інгредієнти",
+      dish: "Страви",
+      drink: "Напої",
+      sauce: "Соуси",
+      snack: "Перекуси",
+      recipe: "За рецептом",
+    },
+    labels: {
+      legend: "Мітки",
+      names: { ingredient: "інгредієнт", dish: "страва", drink: "напій", sauce: "соус/заправка", snack: "перекус" },
+      hint: "Лише для пошуку й фільтрів — на розрахунки не впливають.",
+    },
+    valuesMode: {
+      legend: "Значення",
+      typed: "Вказані",
+      recipe: "За рецептом",
+      switchHint: "Можна перемкнути — назва, мітки й записані прийоми їжі залишаться. Зміни збережуться лише після «Зберегти».",
+    },
+    addRecipeButton: "Скласти за рецептом",
+    recipeMark: "· за рецептом",
     // «Розміри порцій» (2.0.2, PortionSizesFields.tsx and the meal editor).
     sizes: {
       legend: "Розміри порцій",

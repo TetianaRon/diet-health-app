@@ -5,6 +5,7 @@
 // read-only list). An on-screen order toggle decides newest/oldest first;
 // yesterday's records sit at the end of their block (or the start, oldest
 // first). Everything is read in one batch request (loadDayData).
+import { isBuiltInId } from "../lib/itemIds";
 import SignInPanel from "./SignInPanel";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { syncIfStale } from "../lib/sync";
@@ -156,13 +157,12 @@ export default function TodayScreen({
   // Meal logging picks from her dishes first, then all products (built-in
   // database + her own, favourites first) — nothing needs to be "added" first
   // just to be loggable. Built-in cooked foods are products since 1.8.
-  const foods = useMemo<PickableFood[]>(
-    () => [
-      ...(data?.dishes ?? []).map(toPickable),
-      ...sortFavoritesFirst(mergeWithBuiltInFoods(data?.ingredients ?? [])).map(toPickable),
-    ],
-    [data],
-  );
+  // Since 2.1 her typed items labelled страва (e.g. a saved meal box) come right after the composed ones.
+  const foods = useMemo<PickableFood[]>(() => {
+    const typed = sortFavoritesFirst(mergeWithBuiltInFoods(data?.ingredients ?? []));
+    const isHerDish = (i: (typeof typed)[number]) => !isBuiltInId(i.id) && (i.labels ?? []).includes("dish");
+    return [...(data?.dishes ?? []), ...typed.filter(isHerDish), ...typed.filter((i) => !isHerDish(i))].map(toPickable);
+  }, [data]);
 
   if (initializing) {
     return (

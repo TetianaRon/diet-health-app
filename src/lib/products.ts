@@ -6,7 +6,8 @@
 // merge of the two old tabs; the IO is in productsMerge.ts.
 import { buildColumnIndex, buildRow, cell, parseTab, type ColumnIndex } from "./sheetRow";
 import { ingredientFields, INGREDIENTS_HEADERS, rowToIngredient } from "./ingredients";
-import { dishFields, DISHES_HEADERS, rowToDish } from "./dishes";
+import { dishFields, DISHES_HEADERS, parseIngredientsJson, rowToDish } from "./dishes";
+import { serializeLabels } from "./labels";
 
 export const PRODUCTS_TAB = "Products";
 /** The tabs 2.0.4 and earlier used; after the merge they're renamed to these archives and no longer read. */
@@ -54,18 +55,7 @@ export const PRODUCTS_COLUMN_INDEX: ColumnIndex = buildColumnIndex(PRODUCTS_HEAD
 /** Where an item's values come from: typed (a label, the database, her own numbers) or composed by a recipe. */
 export type ValuesKind = "typed" | "recipe";
 
-/** Labels for finding and filtering (never part of the maths); stored as these keys. */
-export const LABEL_KEYS = ["ingredient", "dish", "drink", "sauce", "snack"] as const;
-export type LabelKey = (typeof LABEL_KEYS)[number];
-
-export function parseLabels(value: unknown): LabelKey[] {
-  const wanted = new Set(String(value ?? "").split(",").map((s) => s.trim()));
-  return LABEL_KEYS.filter((key) => wanted.has(key));
-}
-
-export function serializeLabels(labels: readonly LabelKey[]): string {
-  return LABEL_KEYS.filter((key) => labels.includes(key)).join(",");
-}
+export { LABEL_KEYS, parseLabels, serializeLabels, type LabelKey } from "./labels";
 
 export function parseValuesKind(value: unknown): ValuesKind | null {
   const v = String(value ?? "").trim();
@@ -73,16 +63,15 @@ export function parseValuesKind(value: unknown): ValuesKind | null {
 }
 
 /**
- * Whether a Products row is shown as a dish in 2.1's first checkpoint, while
- * the screens are still split (checkpoint 2 makes one list): composed by a
- * recipe, labelled страва, or — a row whose Values cell is blank, e.g. saved by
- * an older version — an old `D…` ID.
+ * Whether a Products row is composed by a recipe (read as a Dish, edited in the
+ * composer); otherwise its values are typed (read as an Ingredient). A row
+ * whose Values cell is blank — saved by an older version, or typed in by hand —
+ * counts as composed when it has a recipe.
  */
 export function isDishRow(row: readonly unknown[], columnIndex: ColumnIndex): boolean {
   const kind = parseValuesKind(cell(row, columnIndex, "Values"));
-  if (kind === "recipe") return true;
-  if (parseLabels(cell(row, columnIndex, "Labels")).includes("dish")) return true;
-  return kind === null && String(cell(row, columnIndex, "Id") ?? "").trim().startsWith("D");
+  if (kind !== null) return kind === "recipe";
+  return parseIngredientsJson(cell(row, columnIndex, "IngredientsJson")).length > 0;
 }
 
 /** A Products row's fields for an Ingredients row (typed values, no label). */

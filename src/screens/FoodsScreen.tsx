@@ -10,6 +10,7 @@ import VerifiedInfoDialog from "./VerifiedInfoDialog";
 import { builtInMatch, giSourceEntry } from "../lib/builtInStatus";
 import type { VerifiedFoodEntry } from "../data/verifiedFoods";
 import { useEffect, useState } from "react";
+import { LABEL_KEYS, type LabelKey } from "../lib/labels";
 import { uk } from "../i18n/uk";
 import MathInput from "./MathInput";
 import { evaluateInput } from "../lib/mathInput";
@@ -56,7 +57,6 @@ import { findNameMatch, isBuiltInId, suggestFreeName } from "../lib/itemIds";
 import PackAmountFields, { measureFromPackFields, type PackFields } from "./PackAmountFields";
 import ProductMeasureFields, { isMeasure, measureFromProductFields, productFieldsFromMeasure, type ProductFields } from "./ProductMeasureFields";
 import PortionSizesFields, { sizeRowsFrom, sizesFromRows, type SizeRow } from "./PortionSizesFields";
-import FixedDishForm from "./FixedDishForm";
 import WeighedPiecesFields, { weighedPair } from "./WeighedPiecesFields";
 import { pieceGrams, round2, toStoredValues, toTypedValues, valuesAmount, PER_100G, type Measure } from "../lib/measure";
 import { measureOf, refFactor } from "../lib/dishes";
@@ -222,12 +222,15 @@ async function saveDishCopy(dish: Dish, glycemicFlag: GlycemicFlag): Promise<Dis
 
 function AddFoodForm({
   availableFoods,
+  labels,
   existingItems,
   onSaved,
   onCancel,
   onUseExisting,
 }: {
   availableFoods: Ingredient[];
+  /** Labels chosen above the form (2.1). */
+  labels: LabelKey[];
   // Every item a new name could be confused with (built-in + saved,
   // ingredients and dishes) — see DuplicateNameNotice.
   existingItems: NamedItem[];
@@ -428,6 +431,7 @@ function AddFoodForm({
         giFrom: giFromIfStill(giFrom, parsed.gi, unknownFields),
         ...measure,
         portionSizes,
+        labels,
       });
       onSaved(saved);
     } catch (err) {
@@ -617,11 +621,14 @@ function AddFoodForm({
 // principle as favoriting one (see handleToggleFavorite in FoodsScreen).
 function EditIngredientForm({
   ingredient,
+  labels,
   existingItems,
   onSaved,
   onCancel,
 }: {
   ingredient: Ingredient;
+  /** Labels chosen above the form (2.1). */
+  labels: LabelKey[];
   existingItems: NamedItem[];
   onSaved: (updated: Ingredient) => void;
   onCancel: () => void;
@@ -672,6 +679,7 @@ function EditIngredientForm({
         giFrom: giFromIfStill(isDatabaseValues ? ingredient.basedOn || ingredient.id : giFrom, parsed.gi, unknownFields),
         ...measure,
         portionSizes,
+        labels,
       };
       if (isBuiltInId(ingredient.id)) {
         // Editing a built-in item saves her own copy, which takes its place.
@@ -791,6 +799,7 @@ function rowUnits(ingredient: Ingredient | null): { grams: boolean; pieces: bool
 // dishes.test.ts), never hand-typed, matching how starter dishes are built.
 function ComposeDishForm({
   ingredients,
+  labels,
   existingItems,
   existingDish,
   onSaved,
@@ -798,6 +807,8 @@ function ComposeDishForm({
   onUseExisting,
 }: {
   ingredients: Ingredient[];
+  /** Labels chosen above the form (2.1). */
+  labels: LabelKey[];
   existingItems: NamedItem[];
   // Present only when editing an already-composed Dish — pre-fills the form
   // from it and updates that row in place on save (or, if it was a
@@ -914,6 +925,7 @@ function ComposeDishForm({
         yieldPieces: yieldMeasure.weighedPieces,
         ...weighed,
         portionSizes,
+        labels,
         ...nutrition,
         source: existingDish?.source ?? "manual",
         giVerified: giVerified && !unknownFields.includes("gi"),
@@ -1096,29 +1108,137 @@ function ComposeDishForm({
   );
 }
 
-type FoodsSubTab = "ingredients" | "dishes";
+// One «Продукти» list (release 2.1, spec → "One product list (2.1)"): every
+// item, typed or composed, with filter chips by label; one editor where
+// «Значення: вказані / за рецептом» picks the form. Switching an existing item
+// keeps its ID — the save writes the other side's fields to the same row.
+type ListFilter = "all" | LabelKey | "recipe";
+const FILTERS: ListFilter[] = ["all", "ingredient", "dish", "drink", "sauce", "snack", "recipe"];
+type Editing = { mode: "typed"; item: Ingredient } | { mode: "recipe"; item: Dish };
+
+/** A composed item seen as a typed one (its current values, same ID) — for «Значення: вказані». */
+function dishAsIngredient(dish: Dish): Ingredient {
+  return {
+    id: dish.id,
+    basedOn: dish.basedOn,
+    nameUk: dish.nameUk,
+    nameEn: dish.nameEn,
+    carbsG: dish.carbsG,
+    gi: dish.gi,
+    fiberG: dish.fiberG,
+    sugarsG: dish.sugarsG,
+    proteinG: dish.proteinG,
+    fatG: dish.fatG,
+    caloriesKcal: dish.caloriesKcal,
+    sodiumMg: dish.sodiumMg,
+    source: "manual",
+    dateAdded: dish.dateAdded,
+    favorite: false,
+    glycemicFlag: dish.glycemicFlag,
+    giVerified: false,
+    unknownFields: dish.unknownFields,
+    giFrom: "",
+    basis: dish.basis,
+    valuesPer: null,
+    weighedPieces: dish.weighedPieces ?? dish.yieldPieces,
+    weighedGrams: dish.weighedGrams ?? (dish.yieldPieces ? dish.yieldGrams || null : null),
+    portionSizes: dish.portionSizes,
+    labels: dish.labels,
+  };
+}
+
+/** A typed item seen as a composed one with an empty recipe (same ID) — for «Значення: за рецептом». */
+function ingredientAsDish(item: Ingredient): Dish {
+  return {
+    id: item.id,
+    basedOn: item.basedOn,
+    nameUk: item.nameUk,
+    nameEn: item.nameEn,
+    ingredients: [],
+    yieldGrams: 0,
+    basis: "100g",
+    yieldPieces: null,
+    weighedPieces: item.weighedPieces,
+    weighedGrams: item.weighedGrams,
+    portionSizes: item.portionSizes.filter((s) => !s.fromDatabase),
+    labels: item.labels,
+    carbsG: item.carbsG,
+    gi: item.gi,
+    fiberG: item.fiberG,
+    sugarsG: item.sugarsG,
+    proteinG: item.proteinG,
+    fatG: item.fatG,
+    caloriesKcal: item.caloriesKcal,
+    sodiumMg: item.sodiumMg,
+    source: "manual",
+    dateAdded: item.dateAdded,
+    glycemicFlag: item.glycemicFlag,
+    giVerified: false,
+    unknownFields: item.unknownFields,
+  };
+}
+
+function LabelsField({ labels, onChange }: { labels: LabelKey[]; onChange: (labels: LabelKey[]) => void }) {
+  return (
+    <fieldset className="labels-field">
+      <legend>
+        {uk.foods.labels.legend} <span className="pack-optional">{uk.foods.pack.optional}</span>
+      </legend>
+      <div className="label-chips">
+        {LABEL_KEYS.map((key) => (
+          <label key={key} className={labels.includes(key) ? "label-chip active" : "label-chip"}>
+            <input
+              type="checkbox"
+              checked={labels.includes(key)}
+              onChange={(e) => onChange(e.target.checked ? [...labels, key] : labels.filter((k) => k !== key))}
+            />
+            {uk.foods.labels.names[key]}
+          </label>
+        ))}
+      </div>
+      <p className="food-form-hint">{uk.foods.labels.hint}</p>
+    </fieldset>
+  );
+}
+
+function ValuesModeSwitch({ mode, onChange }: { mode: "typed" | "recipe"; onChange: (mode: "typed" | "recipe") => void }) {
+  return (
+    <div className="values-mode" role="radiogroup" aria-label={uk.foods.valuesMode.legend}>
+      <span className="values-mode-legend">{uk.foods.valuesMode.legend}:</span>
+      {(["typed", "recipe"] as const).map((m) => (
+        <button
+          key={m}
+          type="button"
+          role="radio"
+          aria-checked={mode === m}
+          className={mode === m ? "food-subtab active" : "food-subtab"}
+          onClick={() => onChange(m)}
+        >
+          {uk.foods.valuesMode[m]}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 export default function FoodsScreen() {
   const { signedIn, initializing, sessionExpired } = useAuth();
-  // Dishes first since 1.7 (Страви screen) — what most meals are.
-  const [subTab, setSubTab] = useState<FoodsSubTab>("dishes");
+  const [filter, setFilter] = useState<ListFilter>("all");
   const [ingredients, setIngredients] = useState<Ingredient[] | null>(null);
   const [dishes, setDishes] = useState<Dish[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [editingIngredient, setEditingIngredient] = useState<Ingredient | null>(null);
-  const [editingDish, setEditingDish] = useState<Dish | null>(null);
-  // A dish opened from a product's «used in» list: Android's back returns to that product.
-  const [dishOpenedFrom, setDishOpenedFrom] = useState<Ingredient | null>(null);
+  const [adding, setAdding] = useState<"typed" | "recipe" | null>(null);
+  const [editing, setEditing] = useState<Editing | null>(null);
+  const [labelsDraft, setLabelsDraft] = useState<LabelKey[]>([]);
+  // A composed item opened from a typed item's «used in» list: Android's back returns to that item.
+  const [openedFrom, setOpenedFrom] = useState<Ingredient | null>(null);
   useEffect(() => {
-    if (!editingDish) setDishOpenedFrom(null);
-  }, [editingDish]);
-  useBackHandler(editingDish !== null && dishOpenedFrom !== null, () => {
-    const product = dishOpenedFrom;
-    setEditingDish(null);
-    setSubTab("ingredients");
-    setEditingIngredient(product);
+    if (!editing) setOpenedFrom(null);
+  }, [editing]);
+  useBackHandler(editing !== null && openedFrom !== null, () => {
+    const item = openedFrom;
+    if (item) startEditing({ mode: "typed", item });
   });
   const [infoEntry, setInfoEntry] = useState<{ entry: VerifiedFoodEntry; giOnly: boolean } | null>(null);
   const openInfo = (entry: VerifiedFoodEntry, giOnly = false) => setInfoEntry({ entry, giOnly });
@@ -1136,29 +1256,49 @@ export default function FoodsScreen() {
       .catch((err: unknown) => setLoadError(err instanceof Error ? err.message : String(err)));
   }, [signedIn, sessionExpired]);
 
-  const switchSubTab = (tab: FoodsSubTab) => {
-    setSubTab(tab);
-    setShowAddForm(false);
-    setSearch("");
+  const startEditing = (next: Editing) => {
+    setEditing(next);
+    setLabelsDraft(next.item.labels ?? []);
+  };
+  const startAdding = (mode: "typed" | "recipe") => {
+    setAdding(mode);
+    setLabelsDraft(mode === "recipe" ? ["dish"] : []);
+  };
+  // «Значення: вказані / за рецептом» on an open form: the same item in the other form, same ID; nothing saved yet.
+  const switchMode = (mode: "typed" | "recipe") => {
+    if (adding) {
+      setAdding(mode);
+      return;
+    }
+    if (!editing || editing.mode === mode) return;
+    const labels = labelsDraft;
+    setEditing(
+      editing.mode === "typed"
+        ? { mode: "recipe", item: { ...ingredientAsDish(editing.item), labels } }
+        : { mode: "typed", item: { ...dishAsIngredient(editing.item), labels } },
+    );
   };
 
-  // A built-in ingredient (never saved to the personal sheet) has no row for
-  // setIngredientFavorite to update — favouriting it saves her copy, the one
-  // implicit "add" the app performs (same for flags below).
-  const replaceIngredient = (updated: Ingredient, replacesId: string) =>
+  // Saved as the other kind (a switch): the item leaves one list and joins the other.
+  const placeIngredient = (updated: Ingredient, replacesId: string) => {
     setIngredients((prev) => [...(prev ?? []).filter((i) => i.id !== replacesId && i.id !== updated.id), updated]);
+    setDishes((prev) => (prev ?? []).filter((d) => d.id !== updated.id));
+  };
+  const placeDish = (updated: Dish, replacesId: string) => {
+    setDishes((prev) => [...(prev ?? []).filter((d) => d.id !== replacesId && d.id !== updated.id), updated]);
+    setIngredients((prev) => (prev ?? []).filter((i) => i.id !== updated.id));
+  };
 
   const handleToggleFavorite = async (ingredient: Ingredient) => {
     const nextFavorite = !ingredient.favorite;
     if (isBuiltInId(ingredient.id)) {
       try {
-        replaceIngredient(await saveIngredientCopy({ ...ingredient, favorite: nextFavorite }), ingredient.id);
+        placeIngredient(await saveIngredientCopy({ ...ingredient, favorite: nextFavorite }), ingredient.id);
       } catch (err) {
         setLoadError(err instanceof Error ? err.message : String(err));
       }
       return;
     }
-
     setIngredients((prev) => (prev ?? []).map((i) => (i.id === ingredient.id ? { ...i, favorite: nextFavorite } : i)));
     try {
       await setIngredientFavorite(ingredient.id, nextFavorite);
@@ -1172,25 +1312,21 @@ export default function FoodsScreen() {
     const nextFlag = cycleGlycemicFlag(ingredient.glycemicFlag);
     if (isBuiltInId(ingredient.id)) {
       try {
-        replaceIngredient(await saveIngredientCopy({ ...ingredient, glycemicFlag: nextFlag }), ingredient.id);
+        placeIngredient(await saveIngredientCopy({ ...ingredient, glycemicFlag: nextFlag }), ingredient.id);
       } catch (err) {
         setLoadError(err instanceof Error ? err.message : String(err));
       }
       return;
     }
-
     setIngredients((prev) => (prev ?? []).map((i) => (i.id === ingredient.id ? { ...i, glycemicFlag: nextFlag } : i)));
     try {
       await setIngredientGlycemicFlag(ingredient.id, nextFlag);
     } catch (err) {
-      setIngredients((prev) =>
-        (prev ?? []).map((i) => (i.id === ingredient.id ? { ...i, glycemicFlag: ingredient.glycemicFlag } : i)),
-      );
+      setIngredients((prev) => (prev ?? []).map((i) => (i.id === ingredient.id ? { ...i, glycemicFlag: ingredient.glycemicFlag } : i)));
       setLoadError(err instanceof Error ? err.message : String(err));
     }
   };
 
-  // Mirrors handleCycleIngredientFlag for Dishes.
   const handleCycleDishFlag = async (dish: Dish) => {
     const nextFlag = cycleGlycemicFlag(dish.glycemicFlag);
     if (isBuiltInId(dish.id)) {
@@ -1202,7 +1338,6 @@ export default function FoodsScreen() {
       }
       return;
     }
-
     setDishes((prev) => (prev ?? []).map((d) => (d.id === dish.id ? { ...d, glycemicFlag: nextFlag } : d)));
     try {
       await setDishGlycemicFlag(dish.id, nextFlag);
@@ -1231,185 +1366,148 @@ export default function FoodsScreen() {
     );
   }
 
-  // The whole bundle is browsable/pickable by default, merged with whatever
-  // is actually saved to the personal sheet — no need to "add" a bundle item
-  // just to make it available for browsing, dish composition, or meal
-  // logging. See mergeWithBuiltInFoods; built-in cooked foods are products since 1.8.
+  // The database is browsable/pickable together with her own items (see
+  // mergeWithBuiltInFoods); built-in cooked foods are typed items.
   const availableIngredients = mergeWithBuiltInFoods(ingredients ?? []);
   const availableDishes = dishes ?? [];
 
-  // Favourites first while browsing; best match first while searching (1.9, see foodSearch.ts).
-  const filteredIngredients = search.trim()
-    ? searchFoods(search, availableIngredients, (i) => verifiedEntry(i.basedOn || i.id))
-    : sortFavoritesFirst(availableIngredients);
-  const filteredDishes = searchFoods(search, availableDishes, () => null);
+  const matchesFilter = (labels: LabelKey[] | undefined, composed: boolean) =>
+    filter === "all" || (filter === "recipe" ? composed : (labels ?? []).includes(filter));
+  // Composed items first (what most meals are), then typed ones — favourites first while browsing, best match first while searching (1.9).
+  const shownDishes = searchFoods(search, availableDishes, () => null).filter((d) => matchesFilter(d.labels, true));
+  const shownIngredients = (
+    search.trim() ? searchFoods(search, availableIngredients, (i) => verifiedEntry(i.basedOn || i.id)) : sortFavoritesFirst(availableIngredients)
+  ).filter((i) => matchesFilter(i.labels, false));
 
-  // Live cross-reference for the derived "contains a flagged ingredient"
-  // hint — see dishContainsFlaggedIngredient in lib/dishes.ts.
-  const lookupIngredientFlag = (ref: DishIngredientRef): GlycemicFlag | null =>
-    resolveItemRef(ref, availableIngredients)?.glycemicFlag ?? null;
+  const lookupIngredientFlag = (ref: DishIngredientRef): GlycemicFlag | null => resolveItemRef(ref, availableIngredients)?.glycemicFlag ?? null;
 
-  // For the duplicate-name check — every item a new name could be confused
-  // with: built-in and saved, ingredients and dishes (they share the meal picker).
+  // For the duplicate-name check — every item a new name could be confused with.
   const existingItems: NamedItem[] = [
     ...availableIngredients.map((i) => ({ ...i, kind: "ingredient" as const })),
     ...availableDishes.map((d) => ({ ...d, kind: "dish" as const })),
   ];
-  // «Це він — використати наявний»: close the form and show that item in its list.
+  // «Це він — використати наявний»: close the form and show that item in the list.
   const showExistingItem = (item: NamedItem) => {
-    setShowAddForm(false);
-    setSubTab(item.kind === "dish" ? "dishes" : "ingredients");
+    setAdding(null);
+    setFilter("all");
     setSearch(item.nameUk);
   };
 
-  // While an add/edit form is open it replaces the title and sub-tabs with a
-  // breadcrumb at the top — the way back must never depend on scrolling down
-  // to the form's own Cancel button.
-  const closeAddForm = () => setShowAddForm(false);
-  const listCrumb = (label: string, close: () => void): Crumb => ({ label, onClick: close });
+  const closeForm = () => {
+    setAdding(null);
+    setEditing(null);
+  };
   let breadcrumb: { trail: Crumb[]; current: string } | null = null;
-  if (editingIngredient) {
-    breadcrumb = {
-      trail: [listCrumb(uk.foods.subTabs.ingredients, () => setEditingIngredient(null))],
-      current: uk.foods.editForm.title,
-    };
-  } else if (editingDish) {
-    breadcrumb = {
-      trail: [listCrumb(uk.foods.subTabs.dishes, () => setEditingDish(null))],
-      current: uk.dishes.editTitle,
-    };
-  } else if (showAddForm && subTab === "ingredients") {
-    breadcrumb = { trail: [listCrumb(uk.foods.subTabs.ingredients, closeAddForm)], current: uk.foods.addButton };
-  } else if (showAddForm && subTab === "dishes") {
-    // Since 1.8 there are no built-in dishes to pick from: adding a dish is composing one.
-    breadcrumb = { trail: [listCrumb(uk.foods.subTabs.dishes, closeAddForm)], current: uk.dishes.customRecipeCrumb };
-  }
+  if (editing) breadcrumb = { trail: [{ label: uk.foods.title, onClick: () => setEditing(null) }], current: uk.foods.editForm.title };
+  else if (adding) breadcrumb = { trail: [{ label: uk.foods.title, onClick: () => setAdding(null) }], current: uk.foods.addButton };
+
+  const formMode = editing?.mode ?? adding;
+  // A database item that isn't hers yet can't switch: editing it saves her copy first.
+  const canSwitch = adding !== null || (editing !== null && !isBuiltInId(editing.item.id));
 
   return (
     <section className="screen">
       {breadcrumb ? (
         <Breadcrumb trail={breadcrumb.trail} current={breadcrumb.current} />
       ) : (
-        <>
-          <h1>{uk.foods.title}</h1>
+        <h1>{uk.foods.title}</h1>
+      )}
 
-          <div className="food-subtabs">
-            <button
-              type="button"
-              className={subTab === "dishes" ? "food-subtab active" : "food-subtab"}
-              onClick={() => switchSubTab("dishes")}
-            >
-              {uk.foods.subTabs.dishes}
-            </button>
-            <button
-              type="button"
-              className={subTab === "ingredients" ? "food-subtab active" : "food-subtab"}
-              onClick={() => switchSubTab("ingredients")}
-            >
-              {uk.foods.subTabs.ingredients}
-            </button>
-          </div>
+      {formMode && (
+        <>
+          {canSwitch && <ValuesModeSwitch mode={formMode} onChange={switchMode} />}
+          {canSwitch && editing && <p className="food-form-hint">{uk.foods.valuesMode.switchHint}</p>}
+          <LabelsField labels={labelsDraft} onChange={setLabelsDraft} />
         </>
       )}
 
-      {editingIngredient && (
+      {editing?.mode === "typed" && (
         <EditIngredientForm
-          ingredient={editingIngredient}
+          key={`typed-${editing.item.id}`}
+          ingredient={editing.item}
+          labels={labelsDraft}
           existingItems={existingItems}
           onSaved={(updated) => {
-            replaceIngredient(updated, editingIngredient.id);
-            setEditingIngredient(null);
+            placeIngredient(updated, editing.item.id);
+            setEditing(null);
           }}
-          onCancel={() => setEditingIngredient(null)}
+          onCancel={() => setEditing(null)}
         />
       )}
-      {editingIngredient && !isBuiltInId(editingIngredient.id) && (
+      {editing?.mode === "typed" && !isBuiltInId(editing.item.id) && (
         <DeleteItem
           kind="ingredient"
-          name={editingIngredient.nameUk}
-          isCopy={editingIngredient.basedOn !== ""}
-          usedIn={dishesUsingIngredient(editingIngredient, availableDishes)}
+          name={editing.item.nameUk}
+          isCopy={editing.item.basedOn !== ""}
+          usedIn={dishesUsingIngredient(editing.item, availableDishes)}
           onConfirm={async () => {
-            await deleteIngredient(editingIngredient.id);
-            setIngredients((prev) => (prev ?? []).filter((i) => i.id !== editingIngredient.id));
-            setEditingIngredient(null);
+            await deleteIngredient(editing.item.id);
+            setIngredients((prev) => (prev ?? []).filter((i) => i.id !== editing.item.id));
+            setEditing(null);
           }}
           onEditDish={(dish) => {
-            setDishOpenedFrom(editingIngredient);
-            setEditingIngredient(null);
-            setSubTab("dishes");
-            setEditingDish(dish);
+            setOpenedFrom(editing.item);
+            startEditing({ mode: "recipe", item: dish });
           }}
         />
       )}
 
-      {editingDish && (
-        editingDish.ingredients.length === 0 && !isBuiltInId(editingDish.id) ? (
-          <FixedDishForm
-            dish={editingDish}
-            existingItems={existingItems}
-            onSaved={(updated) => {
-              setDishes((prev) => [...(prev ?? []).filter((d) => d.id !== editingDish.id), updated]);
-              setEditingDish(null);
-            }}
-            onCancel={() => setEditingDish(null)}
-          />
-        ) : (
-          <ComposeDishForm
-            ingredients={availableIngredients}
-            existingItems={existingItems}
-            existingDish={editingDish}
-            onSaved={(updated) => {
-              setDishes((prev) => [...(prev ?? []).filter((d) => d.id !== editingDish.id && d.id !== updated.id), updated]);
-              setEditingDish(null);
-            }}
-            onCancel={() => setEditingDish(null)}
-          />
-        )
+      {editing?.mode === "recipe" && (
+        <ComposeDishForm
+          key={`recipe-${editing.item.id}`}
+          ingredients={availableIngredients}
+          labels={labelsDraft}
+          existingItems={existingItems}
+          existingDish={editing.item}
+          onSaved={(updated) => {
+            placeDish(updated, editing.item.id);
+            setEditing(null);
+          }}
+          onCancel={() => setEditing(null)}
+        />
       )}
-      {editingDish && !isBuiltInId(editingDish.id) && (
+      {editing?.mode === "recipe" && !isBuiltInId(editing.item.id) && (
         <DeleteItem
           kind="dish"
-          name={editingDish.nameUk}
+          name={editing.item.nameUk}
           onConfirm={async () => {
-            await deleteDish(editingDish.id);
-            setDishes((prev) => (prev ?? []).filter((d) => d.id !== editingDish.id));
-            setEditingDish(null);
+            await deleteDish(editing.item.id);
+            setDishes((prev) => (prev ?? []).filter((d) => d.id !== editing.item.id));
+            setEditing(null);
           }}
         />
       )}
 
-      {!editingIngredient && !editingDish && showAddForm && subTab === "ingredients" && (
+      {!editing && adding === "typed" && (
         <AddFoodForm
           availableFoods={availableIngredients}
+          labels={labelsDraft}
           existingItems={existingItems}
           onUseExisting={showExistingItem}
           onSaved={(ingredient) => {
             setIngredients((prev) => [...(prev ?? []), ingredient]);
-            setShowAddForm(false);
+            closeForm();
             setSearch("");
           }}
-          onCancel={() => setShowAddForm(false)}
+          onCancel={closeForm}
+        />
+      )}
+      {!editing && adding === "recipe" && (
+        <ComposeDishForm
+          ingredients={availableIngredients}
+          labels={labelsDraft}
+          existingItems={existingItems}
+          onUseExisting={showExistingItem}
+          onSaved={(dish) => {
+            setDishes((prev) => [...(prev ?? []), dish]);
+            closeForm();
+            setSearch("");
+          }}
+          onCancel={closeForm}
         />
       )}
 
-      {!editingIngredient && !editingDish && showAddForm && subTab === "dishes" && (
-        <>
-          <ComposeDishForm
-            ingredients={availableIngredients}
-            existingItems={existingItems}
-            onUseExisting={showExistingItem}
-            onSaved={(dish) => {
-              setDishes((prev) => [...(prev ?? []), dish]);
-              setShowAddForm(false);
-              setSearch("");
-            }}
-            onCancel={() => setShowAddForm(false)}
-          />
-        </>
-      )}
-
-      {!editingIngredient && !editingDish && !showAddForm && subTab === "ingredients" && (
+      {!formMode && (
         <>
           <input
             className="food-search"
@@ -1418,96 +1516,38 @@ export default function FoodsScreen() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
-          <button type="button" onClick={() => setShowAddForm(true)}>
-            {uk.foods.addButton}
-          </button>
+          <div className="food-filters" role="group" aria-label={uk.foods.filters.label}>
+            {FILTERS.map((f) => (
+              <button key={f} type="button" className={filter === f ? "food-subtab active" : "food-subtab"} aria-pressed={filter === f} onClick={() => setFilter(f)}>
+                {uk.foods.filters[f]}
+              </button>
+            ))}
+          </div>
+          <div className="food-add-buttons">
+            <button type="button" onClick={() => startAdding("typed")}>
+              {uk.foods.addButton}
+            </button>
+            <button type="button" className="button-secondary" onClick={() => startAdding("recipe")}>
+              {uk.foods.addRecipeButton}
+            </button>
+          </div>
           <p className="food-list-hint">{uk.foods.giLegend}</p>
 
           {loadError && <p className="food-form-error">{loadError}</p>}
-          {filteredIngredients.length === 0 && <p>{uk.foods.noResults}</p>}
+          {shownDishes.length === 0 && shownIngredients.length === 0 && <p>{uk.foods.noResults}</p>}
 
           <ul className="food-list">
-            {filteredIngredients.map((ingredient) => {
-              const entry = builtInMatch(ingredient);
-              const giEntry = entry ? null : giSourceEntry(ingredient);
-              return (
-              <li key={ingredient.id} className="food-list-item-with-action">
-                <span>
-                  <strong>{ingredient.nameUk}</strong> {ingredient.nameEn && <span className="food-name-en">({ingredient.nameEn})</span>} —{" "}
-                  {foodMetaText(ingredient, entry ?? giEntry)} <SourceBadge entry={entry} giEntry={giEntry} name={ingredient.nameUk} onOpen={openInfo} />
-                </span>
-                <div className="food-list-actions">
-                  <button
-                    type="button"
-                    className="edit-toggle"
-                    onClick={() => setEditingIngredient(ingredient)}
-                    aria-label={uk.foods.editLabel}
-                    title={uk.foods.editLabel}
-                  >
-                    ✎
-                  </button>
-                  <button
-                    type="button"
-                    className={`glycemic-badge ${ingredient.glycemicFlag}`}
-                    onClick={() => void handleCycleIngredientFlag(ingredient)}
-                    aria-label={uk.foods.glycemicFlag.toggleLabel(ingredient.glycemicFlag)}
-                    title={uk.foods.glycemicFlag.toggleLabel(ingredient.glycemicFlag)}
-                  >
-                    {GLYCEMIC_FLAG_SYMBOL[ingredient.glycemicFlag]}
-                  </button>
-                  <button
-                    type="button"
-                    className={ingredient.favorite ? "favorite-toggle active" : "favorite-toggle"}
-                    onClick={() => void handleToggleFavorite(ingredient)}
-                    aria-label={ingredient.favorite ? uk.foods.unfavoriteLabel : uk.foods.favoriteLabel}
-                    title={ingredient.favorite ? uk.foods.unfavoriteLabel : uk.foods.favoriteLabel}
-                  >
-                    {ingredient.favorite ? "★" : "☆"}
-                  </button>
-                </div>
-              </li>
-              );
-            })}
-          </ul>
-        </>
-      )}
-
-      {!editingIngredient && !editingDish && !showAddForm && subTab === "dishes" && (
-        <>
-          <input
-            className="food-search"
-            placeholder={uk.foods.searchPlaceholder}
-            aria-label={uk.foods.searchPlaceholder}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-          <button type="button" onClick={() => setShowAddForm(true)}>
-            {uk.dishes.addButton}
-          </button>
-          <p className="food-list-hint">{uk.foods.giLegend}</p>
-
-          {loadError && <p className="food-form-error">{loadError}</p>}
-          {filteredDishes.length === 0 && <p>{uk.dishes.noResults}</p>}
-
-          <ul className="food-list">
-            {filteredDishes.map((dish) => {
+            {shownDishes.map((dish) => {
               const containsFlagged = dishContainsFlaggedIngredient(dish, lookupIngredientFlag);
               return (
                 <li key={dish.id}>
                   <div className="food-list-item-with-action">
                     <span>
-                      <strong>{dish.nameUk}</strong> {dish.nameEn && <span className="food-name-en">({dish.nameEn})</span>} —{" "}
-                      {foodMetaText(dish)}
-                      {dish.basis !== "piece" && ` (${uk.foods.pack.per("100g")})`}
+                      <strong>{dish.nameUk}</strong> {dish.nameEn && <span className="food-name-en">({dish.nameEn})</span>} — {foodMetaText(dish)}
+                      {dish.basis !== "piece" && ` (${uk.foods.pack.per("100g")})`} <span className="food-recipe-mark">{uk.foods.recipeMark}</span>
                     </span>
                     <div className="food-list-actions">
-                      <button
-                        type="button"
-                        className="edit-toggle"
-                        onClick={() => setEditingDish(dish)}
-                        aria-label={uk.dishes.editLabel}
-                        title={uk.dishes.editLabel}
-                      >
+                      <button type="button" className="edit-toggle" onClick={() => startEditing({ mode: "recipe", item: dish })} aria-label={uk.dishes.editLabel} title={uk.dishes.editLabel}>
                         ✎
                       </button>
                       <button
@@ -1521,9 +1561,7 @@ export default function FoodsScreen() {
                       </button>
                     </div>
                   </div>
-
                   {containsFlagged && <p className="glycemic-hint">{uk.dishes.containsFlaggedIngredientHint}</p>}
-
                   {dish.glycemicFlag !== "none" && dish.ingredients.length > 0 && (
                     <div className="dish-ingredient-flags">
                       <p className="food-form-hint">{uk.dishes.flagIngredientsPrompt.title}</p>
@@ -1549,6 +1587,41 @@ export default function FoodsScreen() {
                       </ul>
                     </div>
                   )}
+                </li>
+              );
+            })}
+            {shownIngredients.map((ingredient) => {
+              const entry = builtInMatch(ingredient);
+              const giEntry = entry ? null : giSourceEntry(ingredient);
+              return (
+                <li key={ingredient.id} className="food-list-item-with-action">
+                  <span>
+                    <strong>{ingredient.nameUk}</strong> {ingredient.nameEn && <span className="food-name-en">({ingredient.nameEn})</span>} —{" "}
+                    {foodMetaText(ingredient, entry ?? giEntry)} <SourceBadge entry={entry} giEntry={giEntry} name={ingredient.nameUk} onOpen={openInfo} />
+                  </span>
+                  <div className="food-list-actions">
+                    <button type="button" className="edit-toggle" onClick={() => startEditing({ mode: "typed", item: ingredient })} aria-label={uk.foods.editLabel} title={uk.foods.editLabel}>
+                      ✎
+                    </button>
+                    <button
+                      type="button"
+                      className={`glycemic-badge ${ingredient.glycemicFlag}`}
+                      onClick={() => void handleCycleIngredientFlag(ingredient)}
+                      aria-label={uk.foods.glycemicFlag.toggleLabel(ingredient.glycemicFlag)}
+                      title={uk.foods.glycemicFlag.toggleLabel(ingredient.glycemicFlag)}
+                    >
+                      {GLYCEMIC_FLAG_SYMBOL[ingredient.glycemicFlag]}
+                    </button>
+                    <button
+                      type="button"
+                      className={ingredient.favorite ? "favorite-toggle active" : "favorite-toggle"}
+                      onClick={() => void handleToggleFavorite(ingredient)}
+                      aria-label={ingredient.favorite ? uk.foods.unfavoriteLabel : uk.foods.favoriteLabel}
+                      title={ingredient.favorite ? uk.foods.unfavoriteLabel : uk.foods.favoriteLabel}
+                    >
+                      {ingredient.favorite ? "★" : "☆"}
+                    </button>
+                  </div>
                 </li>
               );
             })}

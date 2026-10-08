@@ -7,7 +7,8 @@ import MathInput from "./MathInput";
 import { evaluateInput } from "../lib/mathInput";
 import { useBackHandler } from "../lib/useBackHandler";
 import { classifyGl } from "../lib/health";
-import { addDish, itemMeasure, type IngredientNutrition, type NutritionKey } from "../lib/dishes";
+import { itemMeasure, type IngredientNutrition, type NutritionKey } from "../lib/dishes";
+import { addIngredient } from "../lib/ingredients";
 import { normalizeItemName } from "../lib/itemIds";
 import { pieceGrams, positiveOrNull, round2, type Measure } from "../lib/measure";
 import { sizeAmount, sizeLabel, type PortionSize } from "../lib/portionSizes";
@@ -249,16 +250,15 @@ function AddDishToMealForm({
     setSaving(true);
     try {
       const unknownFields = CUSTOM_FIELDS.filter((field) => !filledCustomFields.includes(field));
-      const dish = await addDish({
+      // A typed item labelled страва, measured per portion (2.1; 2.0.2 saved a fixed-value dish).
+      const dish = await addIngredient({
         nameUk: name,
         nameEn: "",
-        ingredients: [],
-        yieldGrams: parsedPortion,
         basis: "piece",
-        yieldPieces: 1,
-        weighedPieces: null,
-        weighedGrams: null,
+        weighedPieces: parsedPortion > 0 ? 1 : null,
+        weighedGrams: parsedPortion > 0 ? parsedPortion : null,
         portionSizes: [{ label: uk.today.form.portionSizeLabel, pieces: 1 }],
+        labels: ["dish"],
         carbsG: values.carbsG ?? 0,
         gi: values.gi ?? 0,
         fiberG: values.fiberG ?? 0,

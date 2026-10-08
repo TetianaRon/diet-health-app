@@ -7,6 +7,7 @@
 // Schema is deliberately kept consistent with Ingredient: NameUk/NameEn
 // first, Source/DateAdded last, same nutrient column names in between —
 // only IngredientsJson/YieldGrams are Dish-specific, inserted in the middle.
+import { parseLabels, serializeLabels, type LabelKey } from "./labels";
 import { isDishRow, PRODUCTS_HEADERS, PRODUCTS_TAB } from "./products";
 import { readRange } from "./sheets";
 import { deleteRecord, upsertRecord } from "./recordStore";
@@ -115,6 +116,8 @@ export interface Dish extends IngredientNutrition {
   weighedGrams: number | null;
   // Her named portion sizes (2.0.2, portionSizes.ts).
   portionSizes: PortionSize[];
+  // For finding and filtering only (2.1, labels.ts); undefined = not read (nothing is written).
+  labels?: LabelKey[];
   source: DishSource;
   dateAdded: string;
   glycemicFlag: GlycemicFlag;
@@ -383,6 +386,7 @@ export function rowToDish(row: unknown[], columnIndex: ColumnIndex = DEFAULT_COL
     weighedPieces: positiveOrNull(cell(row, columnIndex, "WeighedPieces")),
     weighedGrams: positiveOrNull(cell(row, columnIndex, "WeighedGrams")),
     portionSizes: parsePortionSizes(cell(row, columnIndex, "PortionSizes")),
+    labels: parseLabels(cell(row, columnIndex, "Labels")),
     carbsG: toNumber(cell(row, columnIndex, "Carbs_g")),
     gi: toNumber(cell(row, columnIndex, "GI")),
     fiberG: toNumber(cell(row, columnIndex, "Fiber_g")),
@@ -411,6 +415,7 @@ export function dishFields(dish: Dish): Record<string, unknown> {
       WeighedPieces: dish.weighedPieces ?? "",
       WeighedGrams: dish.weighedGrams ?? "",
       PortionSizes: serializePortionSizes(dish.portionSizes),
+      Labels: dish.labels ? serializeLabels(dish.labels) : undefined,
       Carbs_g: dish.carbsG,
       GI: dish.gi,
       Fiber_g: dish.fiberG,
@@ -456,8 +461,15 @@ export async function addDish(
   dish: Omit<Dish, "dateAdded" | "glycemicFlag" | "id" | "basedOn"> & { basedOn?: string },
   glycemicFlag: GlycemicFlag = "none",
 ): Promise<Dish> {
-  const saved: Dish = { ...dish, id: newRecordId("dish"), basedOn: dish.basedOn ?? "", dateAdded: new Date().toISOString().slice(0, 10), glycemicFlag };
-  await upsertRecord(PRODUCTS_TAB, saved.id, { ...productFields(saved), Labels: "dish" });
+  const saved: Dish = {
+    ...dish,
+    labels: dish.labels ?? ["dish"],
+    id: newRecordId("dish"),
+    basedOn: dish.basedOn ?? "",
+    dateAdded: new Date().toISOString().slice(0, 10),
+    glycemicFlag,
+  };
+  await upsertRecord(PRODUCTS_TAB, saved.id, productFields(saved));
   return saved;
 }
 

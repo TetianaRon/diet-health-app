@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { absorbLeftovers, isDishRow, parseLabels, planProductsMerge, PRODUCTS_COLUMN_INDEX, PRODUCTS_HEADERS, serializeLabels } from "./products";
-import { INGREDIENTS_HEADERS } from "./ingredients";
+import { INGREDIENTS_HEADERS, rowToIngredient } from "./ingredients";
 import { DISHES_HEADERS } from "./dishes";
 import { cell } from "./sheetRow";
 
@@ -36,14 +36,22 @@ describe("merging Ingredients and Dishes into Products (2.1)", () => {
     expect(plan.rows.every((r) => r.length <= PRODUCTS_HEADERS.length)).toBe(true);
   });
 
-  it("shows dishes as dishes while the screens are still split", () => {
+  it("reads only items with a recipe as composed; a fixed-value dish is a typed item labelled страва", () => {
     const plan = planProductsMerge(ingredients, dishes, () => "X1");
-    expect(plan.rows.map((r) => isDishRow(r, PRODUCTS_COLUMN_INDEX))).toEqual([false, false, true, true]);
-    // A row saved by an older version (Values blank) is told apart by its ID.
+    expect(plan.rows.map((r) => isDishRow(r, PRODUCTS_COLUMN_INDEX))).toEqual([false, false, true, false]);
+    // A row with a blank Values cell (an older version, or typed by hand) counts as composed when it has a recipe.
     const blank = [...plan.rows[2]];
     blank[PRODUCTS_COLUMN_INDEX.get("Values")!] = "";
-    blank[PRODUCTS_COLUMN_INDEX.get("Labels")!] = "";
     expect(isDishRow(blank, PRODUCTS_COLUMN_INDEX)).toBe(true);
+    const blankTyped = [...plan.rows[3]];
+    blankTyped[PRODUCTS_COLUMN_INDEX.get("Values")!] = "";
+    expect(isDishRow(blankTyped, PRODUCTS_COLUMN_INDEX)).toBe(false);
+  });
+
+  it("keeps a former fixed-value dish's portion weight when read as a typed item", () => {
+    const plan = planProductsMerge(ingredients, dishes, () => "X1");
+    const box = rowToIngredient(plan.rows[3], PRODUCTS_COLUMN_INDEX);
+    expect([box.basis, box.weighedPieces, box.weighedGrams, box.caloriesKcal, box.labels]).toEqual(["piece", 1, 450, 600, ["dish"]]);
   });
 
   it("works with one tab missing or empty", () => {

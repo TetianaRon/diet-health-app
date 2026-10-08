@@ -3,6 +3,7 @@
 // read/written by column HEADER NAME (see sheetRow.ts), not fixed position,
 // so a reordered sheet — deliberately or by someone dragging a column in the
 // Sheets UI — still parses correctly.
+import { parseLabels, serializeLabels, type LabelKey } from "./labels";
 import { isDishRow, PRODUCTS_HEADERS, PRODUCTS_TAB } from "./products";
 import { readRange } from "./sheets";
 import { deleteRecord, upsertRecord } from "./recordStore";
@@ -64,6 +65,8 @@ export interface Ingredient {
   weighedGrams: number | null;
   // Her named portion sizes (2.0.2, portionSizes.ts); database sizes are added when shown.
   portionSizes: PortionSize[];
+  // For finding and filtering only (2.1, labels.ts); undefined = not read (nothing is written).
+  labels?: LabelKey[];
 }
 
 // Canonical column order — what a brand-new sheet gets initialized with (see
@@ -139,9 +142,11 @@ export function rowToIngredient(row: unknown[], columnIndex: ColumnIndex = DEFAU
     giFrom: String(cell(row, columnIndex, "GiFrom") ?? "").trim(),
     basis: toBasis(cell(row, columnIndex, "Basis")),
     valuesPer: positiveOrNull(cell(row, columnIndex, "ValuesPer")),
-    weighedPieces: positiveOrNull(cell(row, columnIndex, "WeighedPieces")),
-    weighedGrams: positiveOrNull(cell(row, columnIndex, "WeighedGrams")),
+    // A typed item that was a fixed-value dish (2.0.2) keeps its portion weight in YieldGrams (2.1).
+    weighedPieces: positiveOrNull(cell(row, columnIndex, "WeighedPieces")) ?? (positiveOrNull(cell(row, columnIndex, "YieldGrams")) ? (positiveOrNull(cell(row, columnIndex, "YieldPieces")) ?? 1) : null),
+    weighedGrams: positiveOrNull(cell(row, columnIndex, "WeighedGrams")) ?? positiveOrNull(cell(row, columnIndex, "YieldGrams")),
     portionSizes: parsePortionSizes(cell(row, columnIndex, "PortionSizes")),
+    labels: parseLabels(cell(row, columnIndex, "Labels")),
   };
 }
 
@@ -173,6 +178,7 @@ export function ingredientFields(ingredient: Ingredient): Record<string, unknown
       WeighedPieces: ingredient.weighedPieces ?? "",
       WeighedGrams: ingredient.weighedGrams ?? "",
       PortionSizes: serializePortionSizes(ingredient.portionSizes),
+      Labels: ingredient.labels ? serializeLabels(ingredient.labels) : undefined,
   };
 }
 
@@ -226,7 +232,7 @@ function productFields(ingredient: Ingredient): Record<string, unknown> {
 /** Adds a new ingredient with a new `I…` ID and returns it as saved. */
 export async function addIngredient(
   ingredient: Omit<Ingredient, "dateAdded" | "favorite" | "glycemicFlag" | "id" | "basedOn" | "giFrom" | "basis" | "valuesPer" | "weighedPieces" | "weighedGrams" | "portionSizes"> &
-    Partial<Pick<Ingredient, "basedOn" | "giFrom" | "basis" | "valuesPer" | "weighedPieces" | "weighedGrams" | "portionSizes">>,
+    Partial<Pick<Ingredient, "basedOn" | "giFrom" | "basis" | "valuesPer" | "weighedPieces" | "weighedGrams" | "portionSizes" | "labels">>,
   favorite = false,
   glycemicFlag: GlycemicFlag = "none",
 ): Promise<Ingredient> {
@@ -240,6 +246,7 @@ export async function addIngredient(
     weighedPieces: ingredient.weighedPieces ?? null,
     weighedGrams: ingredient.weighedGrams ?? null,
     portionSizes: ingredient.portionSizes ?? [],
+    labels: ingredient.labels ?? [],
     dateAdded: new Date().toISOString().slice(0, 10),
     favorite,
     glycemicFlag,
