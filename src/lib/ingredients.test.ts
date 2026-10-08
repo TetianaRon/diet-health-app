@@ -42,7 +42,7 @@ describe("rowToIngredient", () => {
       glycemicFlag: "watch",
       giVerified: true,
       unknownFields: [],
-      giFrom: "", basis: "100g" as const, valuesPer: null, weighedPieces: null, weighedGrams: null,
+      giFrom: "", basis: "100g" as const, valuesPer: null, weighedPieces: null, weighedGrams: null, portionSizes: [],
     });
   });
 
@@ -92,7 +92,7 @@ describe("ingredientToRow", () => {
     glycemicFlag: "none",
     giVerified: false,
     unknownFields: [],
-    giFrom: "", basis: "100g" as const, valuesPer: null, weighedPieces: null, weighedGrams: null,
+    giFrom: "", basis: "100g" as const, valuesPer: null, weighedPieces: null, weighedGrams: null, portionSizes: [],
   };
 
   it("round-trips through rowToIngredient", () => {
@@ -146,7 +146,7 @@ describe("sortFavoritesFirst", () => {
     glycemicFlag: "none" as const,
     giVerified: false,
     unknownFields: [],
-    giFrom: "", basis: "100g" as const, valuesPer: null, weighedPieces: null, weighedGrams: null,
+    giFrom: "", basis: "100g" as const, valuesPer: null, weighedPieces: null, weighedGrams: null, portionSizes: [],
   };
 
   it("moves favorites to the front, preserving relative order within each group", () => {
@@ -198,7 +198,7 @@ describe("mergeWithBuiltInFoods", () => {
       glycemicFlag: "none",
       giVerified: false,
       unknownFields: [],
-      giFrom: "", basis: "100g" as const, valuesPer: null, weighedPieces: null, weighedGrams: null,
+      giFrom: "", basis: "100g" as const, valuesPer: null, weighedPieces: null, weighedGrams: null, portionSizes: [],
     };
 
     const merged = mergeWithBuiltInFoods([savedVersion]);
@@ -228,7 +228,7 @@ describe("mergeWithBuiltInFoods", () => {
       glycemicFlag: "none",
       giVerified: false,
       unknownFields: [],
-      giFrom: "", basis: "100g" as const, valuesPer: null, weighedPieces: null, weighedGrams: null,
+      giFrom: "", basis: "100g" as const, valuesPer: null, weighedPieces: null, weighedGrams: null, portionSizes: [],
     };
     const merged = mergeWithBuiltInFoods([custom]);
     expect(merged).toHaveLength(BUILT_IN_FOODS.length + 1);

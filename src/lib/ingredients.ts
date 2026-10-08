@@ -11,6 +11,7 @@ import { toGlycemicFlag, type GlycemicFlag } from "./glycemicFlag";
 import { parseUnknownNutritionFields, type NutritionKey } from "./dishes";
 import { mergeBuiltInsById, newRecordId } from "./itemIds";
 import { positiveOrNull, toBasis, type Basis } from "./measure";
+import { parsePortionSizes, serializePortionSizes, type PortionSize } from "./portionSizes";
 
 export type IngredientSource = "starter" | "usda" | "manual";
 
@@ -60,6 +61,8 @@ export interface Ingredient {
   valuesPer: number | null;
   weighedPieces: number | null;
   weighedGrams: number | null;
+  // Her named portion sizes (2.0.2, portionSizes.ts); database sizes are added when shown.
+  portionSizes: PortionSize[];
 }
 
 // Canonical column order — what a brand-new sheet gets initialized with (see
@@ -91,6 +94,7 @@ export const INGREDIENTS_HEADERS = [
   "ValuesPer",
   "WeighedPieces",
   "WeighedGrams",
+  "PortionSizes",
   "UpdatedAt",
 ] as const;
 const DEFAULT_COLUMN_INDEX = buildColumnIndex(INGREDIENTS_HEADERS);
@@ -136,6 +140,7 @@ export function rowToIngredient(row: unknown[], columnIndex: ColumnIndex = DEFAU
     valuesPer: positiveOrNull(cell(row, columnIndex, "ValuesPer")),
     weighedPieces: positiveOrNull(cell(row, columnIndex, "WeighedPieces")),
     weighedGrams: positiveOrNull(cell(row, columnIndex, "WeighedGrams")),
+    portionSizes: parsePortionSizes(cell(row, columnIndex, "PortionSizes")),
   };
 }
 
@@ -166,6 +171,7 @@ export function ingredientFields(ingredient: Ingredient): Record<string, unknown
       ValuesPer: ingredient.valuesPer ?? "",
       WeighedPieces: ingredient.weighedPieces ?? "",
       WeighedGrams: ingredient.weighedGrams ?? "",
+      PortionSizes: serializePortionSizes(ingredient.portionSizes),
   };
 }
 
@@ -208,8 +214,8 @@ export async function listIngredients(): Promise<Ingredient[]> {
 
 /** Adds a new ingredient with a new `I…` ID and returns it as saved. */
 export async function addIngredient(
-  ingredient: Omit<Ingredient, "dateAdded" | "favorite" | "glycemicFlag" | "id" | "basedOn" | "giFrom" | "basis" | "valuesPer" | "weighedPieces" | "weighedGrams"> &
-    Partial<Pick<Ingredient, "basedOn" | "giFrom" | "basis" | "valuesPer" | "weighedPieces" | "weighedGrams">>,
+  ingredient: Omit<Ingredient, "dateAdded" | "favorite" | "glycemicFlag" | "id" | "basedOn" | "giFrom" | "basis" | "valuesPer" | "weighedPieces" | "weighedGrams" | "portionSizes"> &
+    Partial<Pick<Ingredient, "basedOn" | "giFrom" | "basis" | "valuesPer" | "weighedPieces" | "weighedGrams" | "portionSizes">>,
   favorite = false,
   glycemicFlag: GlycemicFlag = "none",
 ): Promise<Ingredient> {
@@ -222,6 +228,7 @@ export async function addIngredient(
     valuesPer: ingredient.valuesPer ?? null,
     weighedPieces: ingredient.weighedPieces ?? null,
     weighedGrams: ingredient.weighedGrams ?? null,
+    portionSizes: ingredient.portionSizes ?? [],
     dateAdded: new Date().toISOString().slice(0, 10),
     favorite,
     glycemicFlag,

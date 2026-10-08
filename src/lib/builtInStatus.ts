@@ -108,6 +108,7 @@ export function dishCopyUpdates(
         yieldGrams: 100,
         basis: "100g",
         yieldPieces: null,
+        portionSizes: copy.portionSizes ?? [],
         ...Object.fromEntries(VALUE_FIELDS.map((f) => [f, fresh[f]])),
         unknownFields: fresh.unknownFields,
         giVerified: copy.giVerified && copy.gi === fresh.gi,

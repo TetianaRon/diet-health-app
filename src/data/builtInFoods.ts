@@ -48,6 +48,7 @@ export function entryToIngredient(entry: VerifiedFoodEntry): Ingredient {
     valuesPer: null,
     weighedPieces: null,
     weighedGrams: null,
+    portionSizes: [],
   };
 }
 

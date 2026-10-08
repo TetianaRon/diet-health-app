@@ -1601,3 +1601,27 @@ select {
 .math-result-error {
   color: #b3261e;
 }
+
+/* Named portion sizes (2.0.2) */
+.size-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: flex-end;
+  margin-bottom: 8px;
+}
+.size-pick {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 4px 0 8px;
+}
+.size-pick-label {
+  font-size: 0.95rem;
+  color: #4a4a4a;
+}
+.size-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

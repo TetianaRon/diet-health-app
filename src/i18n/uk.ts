@@ -130,8 +130,12 @@ export const uk = {
     // A dish's line inside a meal on Today — weight only; the meal's own
     // line carries the full stats (see mealStat below).
     // A meal row's amount (2.0.1): «7,5 шт.», «3 шт. (15 г)», «150 г».
-    dishAmount: (grams: number | null, pieces: number | null) =>
-      pieces !== null ? `${n(pieces)} шт.${grams !== null ? ` (${n(grams)} г)` : ""}` : `${n(grams ?? 0)} г`,
+    dishAmount: (grams: number | null, pieces: number | null, size = "") =>
+      size
+        ? `${size} (≈${grams !== null ? `${n(grams)} г` : `${n(pieces ?? 0)} шт.`})`
+        : pieces !== null
+          ? `${n(pieces)} шт.${grams !== null ? ` (${n(grams)} г)` : ""}`
+          : `${n(grams ?? 0)} г`,
     carbsValue: (g: number) => `${n(g)} г вуглеводів`,
     caloriesValue: (kcal: number) => `${n(kcal)} ккал`,
     unknownValueLabel: "невідомо",
@@ -354,6 +358,21 @@ export const uk = {
   },
   foods: {
     title: "Страви",
+    // «Розміри порцій» (2.0.2, PortionSizesFields.tsx and the meal editor).
+    sizes: {
+      legend: "Розміри порцій",
+      hint: "Напр. скибка ≈ 45 г, середнє яблуко ≈ 180 г. У прийомі їжі розмір обирається одним натиском.",
+      addButton: "+ Додати розмір",
+      removeButton: "Прибрати",
+      labelLabel: "Назва",
+      amountGramsLabel: "Грамів",
+      amountPiecesLabel: "Штук",
+      database: "З бази:",
+      invalid: "Для кожного розміру вкажіть назву й кількість (або приберіть рядок).",
+      pickLabel: "Розмір порції",
+      countLabel: "Скільки",
+      chip: (label: string, amount: string) => `${label} ≈ ${amount}`,
+    },
     // «Значення вказано на … г / … шт.» (2.0.1, PackAmountFields.tsx).
     pack: {
       legend: "Значення вказано на",
@@ -653,6 +672,7 @@ export const uk = {
       ValuesPer: "Значення на (г або шт.)",
       WeighedPieces: "Зважено штук",
       WeighedGrams: "Вага зважених штук, г",
+      PortionSizes: "Розміри порцій",
       Carbs_g: "Вуглеводи, г",
       GI: "Глікемічний індекс",
       Fiber_g: "Клітковина, г",
@@ -672,6 +692,7 @@ export const uk = {
       ItemName: "Назва продукту/страви",
       PortionGrams: "Порція, г",
       PortionPieces: "Порція, шт.",
+      PortionSize: "Розмір порції",
       GL: "Глікемічне навантаження",
       Notes: "Примітки",
       MealId: "Ідентифікатор прийому їжі",

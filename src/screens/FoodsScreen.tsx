@@ -55,6 +55,7 @@ import DuplicateNameNotice, { type NamedItem } from "./DuplicateNameNotice";
 import { findNameMatch, isBuiltInId, suggestFreeName } from "../lib/itemIds";
 import PackAmountFields, { measureFromPackFields, type PackFields } from "./PackAmountFields";
 import ProductMeasureFields, { isMeasure, measureFromProductFields, productFieldsFromMeasure, type ProductFields } from "./ProductMeasureFields";
+import PortionSizesFields, { sizeRowsFrom, sizesFromRows, type SizeRow } from "./PortionSizesFields";
 import { pieceGrams, round2, toStoredValues, toTypedValues, valuesAmount, PER_100G, type Measure } from "../lib/measure";
 import { measureOf, refFactor } from "../lib/dishes";
 
@@ -117,6 +118,13 @@ function PackSummary({ pack, values }: { pack: ProductFields; values: FormValues
   const carbs = unknownFields.includes("carbsG") ? `вуглеводи ${uk.today.unknownValueLabel}` : uk.today.carbsValue(round2(stored.carbsG));
   const calories = unknownFields.includes("caloriesKcal") ? `калорії ${uk.today.unknownValueLabel}` : uk.today.caloriesValue(round2(stored.caloriesKcal));
   return <p className="food-form-source">{uk.foods.pack.storedPreview(measure.basis, carbs, calories)}</p>;
+}
+
+// Which units her portion sizes can use: grams unless counted per piece without a weight, pieces when per piece or weighed.
+function sizeUnits(pack: ProductFields): { allowGrams: boolean; allowPieces: boolean } {
+  const measure = measureFromProductFields(pack);
+  const weighed = isMeasure(measure) && pieceGrams(measure) !== null;
+  return { allowGrams: pack.main !== "piece" || weighed, allowPieces: pack.main === "piece" || weighed };
 }
 
 // «Значення на 30 г» above the value fields.
@@ -236,6 +244,7 @@ function AddFoodForm({
   const [resolvedNameEn, setResolvedNameEn] = useState("");
   const [values, setValues] = useState<FormValues>(EMPTY_FORM_VALUES);
   const [pack, setPack] = useState<ProductFields>(() => productFieldsFromMeasure(PER_100G));
+  const [sizeRows, setSizeRows] = useState<SizeRow[]>([]);
   const [source, setSource] = useState<IngredientSource>("manual");
   // Always starts unchecked, even for a bundle/USDA-sourced estimate —
   // "we researched it" isn't the same as "a person confirmed it against a
@@ -392,6 +401,11 @@ function AddFoodForm({
       setError(measure.problem);
       return;
     }
+    const portionSizes = sizesFromRows(sizeRows);
+    if (!Array.isArray(portionSizes)) {
+      setError(portionSizes.problem);
+      return;
+    }
 
     // Ambiguous searches (e.g. "квасоля") can surface several distinct
     // matches that would all default to the same save name — the
@@ -410,6 +424,7 @@ function AddFoodForm({
         ...toStoredValues(parsed, measure),
         giFrom: giFromIfStill(giFrom, parsed.gi, unknownFields),
         ...measure,
+        portionSizes,
       });
       onSaved(saved);
     } catch (err) {
@@ -567,6 +582,7 @@ function AddFoodForm({
       ))}
 
       <PackSummary pack={pack} values={values} />
+      <PortionSizesFields rows={sizeRows} onChange={setSizeRows} {...sizeUnits(pack)} />
 
       <label className="settings-checkbox">
         <input
@@ -611,6 +627,7 @@ function EditIngredientForm({
   const [nameEn, setNameEn] = useState(ingredient.nameEn);
   const [values, setValues] = useState<FormValues>(() => typedFormValues(ingredient));
   const [pack, setPack] = useState<ProductFields>(() => productFieldsFromMeasure(measureOf(ingredient)));
+  const [sizeRows, setSizeRows] = useState<SizeRow[]>(() => sizeRowsFrom(ingredient.portionSizes));
   const [giVerified, setGiVerified] = useState(ingredient.giVerified);
   const [giFrom, setGiFrom] = useState(ingredient.giFrom);
   const [saving, setSaving] = useState(false);
@@ -632,6 +649,11 @@ function EditIngredientForm({
       setError(measure.problem);
       return;
     }
+    const portionSizes = sizesFromRows(sizeRows);
+    if (!Array.isArray(portionSizes)) {
+      setError(portionSizes.problem);
+      return;
+    }
     if (nameMatch) return;
 
     setSaving(true);
@@ -646,6 +668,7 @@ function EditIngredientForm({
         ...toStoredValues(parsed, measure),
         giFrom: giFromIfStill(isDatabaseValues ? ingredient.basedOn || ingredient.id : giFrom, parsed.gi, unknownFields),
         ...measure,
+        portionSizes,
       };
       if (isBuiltInId(ingredient.id)) {
         // Editing a built-in item saves her own copy, which takes its place.
@@ -713,6 +736,7 @@ function EditIngredientForm({
       ))}
 
       <PackSummary pack={pack} values={values} />
+      <PortionSizesFields rows={sizeRows} onChange={setSizeRows} {...sizeUnits(pack)} />
 
       <label className="settings-checkbox">
         <input
@@ -800,6 +824,7 @@ function ComposeDishForm({
     pieces: existingDish?.yieldPieces ? String(existingDish.yieldPieces) : "",
   }));
   const [giVerified, setGiVerified] = useState(existingDish?.giVerified ?? false);
+  const [sizeRows, setSizeRows] = useState<SizeRow[]>(() => sizeRowsFrom(existingDish?.portionSizes ?? []));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -853,6 +878,11 @@ function ComposeDishForm({
       setError(uk.dishes.composeForm.validationError);
       return;
     }
+    const portionSizes = sizesFromRows(sizeRows);
+    if (!Array.isArray(portionSizes)) {
+      setError(portionSizes.problem);
+      return;
+    }
     if (nameMatch) return;
 
     setSaving(true);
@@ -869,6 +899,7 @@ function ComposeDishForm({
         yieldGrams: yieldMeasure.weighedGrams ?? 0,
         basis: yieldMeasure.basis,
         yieldPieces: yieldMeasure.weighedPieces,
+        portionSizes,
         ...nutrition,
         source: existingDish?.source ?? "manual",
         giVerified: giVerified && !unknownFields.includes("gi"),
@@ -999,6 +1030,12 @@ function ComposeDishForm({
         hints={{ grams: uk.dishes.composeForm.yieldGramsHint, pieces: uk.dishes.composeForm.yieldPiecesHint }}
       />
       <p className="food-form-hint">{uk.dishes.composeForm.yieldHint}</p>
+      <PortionSizesFields
+        rows={sizeRows}
+        onChange={setSizeRows}
+        allowGrams={yieldFields.main !== "piece" || (yieldMeasure !== null && pieceGrams(yieldMeasure) !== null)}
+        allowPieces={yieldFields.main === "piece" || (yieldMeasure !== null && pieceGrams(yieldMeasure) !== null)}
+      />
 
       {preview && (
         <>

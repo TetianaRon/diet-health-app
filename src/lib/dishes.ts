@@ -13,6 +13,7 @@ import { newRecordId } from "./itemIds";
 import { buildColumnIndex, buildRow, cell, parseTab, SCAN_LAST_COLUMN, type ColumnIndex, type ParsedTab } from "./sheetRow";
 import { toGlycemicFlag, type GlycemicFlag } from "./glycemicFlag";
 import { positiveOrNull, resolveAmount, toBasis, PER_100G, type Basis, type Measure } from "./measure";
+import { parsePortionSizes, serializePortionSizes, type PortionSize } from "./portionSizes";
 
 export type DishSource = "starter" | "manual";
 
@@ -107,6 +108,8 @@ export interface Dish extends IngredientNutrition {
   // may be 0 (unknown).
   basis: Basis;
   yieldPieces: number | null;
+  // Her named portion sizes (2.0.2, portionSizes.ts).
+  portionSizes: PortionSize[];
   source: DishSource;
   dateAdded: string;
   glycemicFlag: GlycemicFlag;
@@ -345,6 +348,7 @@ export const DISHES_HEADERS = [
   "UnknownFields",
   "Id",
   "BasedOn",
+  "PortionSizes",
   "UpdatedAt",
 ] as const;
 const DEFAULT_COLUMN_INDEX = buildColumnIndex(DISHES_HEADERS);
@@ -361,6 +365,7 @@ export function rowToDish(row: unknown[], columnIndex: ColumnIndex = DEFAULT_COL
     yieldGrams: toNumber(cell(row, columnIndex, "YieldGrams")),
     basis: toBasis(cell(row, columnIndex, "Basis")),
     yieldPieces: positiveOrNull(cell(row, columnIndex, "YieldPieces")),
+    portionSizes: parsePortionSizes(cell(row, columnIndex, "PortionSizes")),
     carbsG: toNumber(cell(row, columnIndex, "Carbs_g")),
     gi: toNumber(cell(row, columnIndex, "GI")),
     fiberG: toNumber(cell(row, columnIndex, "Fiber_g")),
@@ -386,6 +391,7 @@ export function dishFields(dish: Dish): Record<string, unknown> {
       YieldGrams: dish.yieldGrams || "",
       Basis: dish.basis === "piece" ? "piece" : "",
       YieldPieces: dish.yieldPieces ?? "",
+      PortionSizes: serializePortionSizes(dish.portionSizes),
       Carbs_g: dish.carbsG,
       GI: dish.gi,
       Fiber_g: dish.fiberG,
