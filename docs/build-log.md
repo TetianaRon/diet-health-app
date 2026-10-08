@@ -326,3 +326,5 @@ Answering "did we review only products?": the 69 home dishes were on the page bu
   - editing a fixed-value dish on the phone;
   - the duplicates review with sized items.
 - 406 tests, `tsc -b`, `npm run build`. Version 2.0.2, versionCode 25.
+
+✅ **2.0.2 released 2026-10-08:** main pushed (web) and the bundle uploaded to the internal testing track (versionCode 25).

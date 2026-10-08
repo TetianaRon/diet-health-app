@@ -13,7 +13,7 @@ The workflow (intake → release branch → verify → release) and the standing
 ## Next session — start here (set 2026-10-07)
 1. **2.0 released** to Play's internal testing track and the web (2026-10-06, builds 19–23). Nothing is public; mom is an internal tester, so **an upload is a release to her**. Still worth checking on the developer's devices: the `online` event on a real phone, two tabs, switching sheets.
 2. **Plan reviewed with the developer (2026-10-07):** 2.0.1 → 2.0.2 faster food entry → 2.0.3 reminders → 2.0.4 sign-in choices (+ privacy policy) → 2.1 sets → 2.2 mom's data → 2.3 Picker → 2.4 food families → 2.5 label photos → 2.6 GI from ingredients (after the research) → 2.7 AI lookup → 2.8 English → 3.0 public launch.
-3. **2.0.1 released** (2026-10-07, versionCode 24). **2.0.2 — faster food entry built** (2026-10-08, versionCode 25), waiting for the push and the upload. Next: **2.0.3 — reminders**.
+3. **2.0.1 released** (2026-10-07, versionCode 24). **2.0.2 released** (2026-10-08, versionCode 25). Next: **2.0.3 — reminders**.
 4. Chromium issue 569300356: reply sent 2026-10-05 — check for answers now and then.
 
 ## Current and upcoming releases
@@ -26,7 +26,7 @@ Packs list nutrients per portion (per 30 g) or per piece (dumplings per 12), not
 - **Maths:** every nutrient, GI and GL work without weight. GL = GI × grams of carbs eaten; a dish's GI is already weighted by carbs; a dish needs only its ingredients' total nutrients and its yield. A pieces-main product goes into a recipe by count.
 - **Checks against:** dumplings (pack per 12 шт.), potato dumplings from the database with 12 шт. = 300 г weighed at home, pancakes (dish yield as a count), nuts (per 100 г with 20 шт. = 100 г, logged as 3 горіхи), a 30 г portion pack.
 
-### 2.0.2 — Faster food entry · ✅ built (2026-10-08) — spec → "Faster food entry (2.0.2)"
+### 2.0.2 — Faster food entry · ✅ released (2026-10-08, web + Play internal testing) — spec → "Faster food entry (2.0.2)"
 **Built:** everything below, plus «Вага штук» for dishes (weigh a few pieces instead of counting the batch) and the «+ − × ÷» keys under a focused value field (the phone's number keyboard has neither × nor ÷). Database: 18 nuts and seeds (B0099–B0116), sizes on 39 entries; review accepted, nut GI 24 kept at low reliability.
 - **Named portion sizes:** up to 3 approximate sizes per product or dish, each a label and grams («скибка ~45 г», «маленьке / середнє / велике яблуко», «чашка ~250 г»); default labels маленька / середня / велика, renamable. The meal editor offers them as one tap plus a count (2 × середнє); grams shown as approximate («≈»). **The verified database ships typical sizes** for common foods, each with a source, reliability, reasoning and date (rule 5; USDA lists portion weights, e.g. "1 medium apple"); her own sizes override or add to them.
 - **Common nuts in the verified database:** almonds, pistachios, hazelnuts, cashews, peanuts, pecans, Brazil nuts, pine nuts, sunflower and pumpkin seeds, walnuts; **roasted, unsalted and salted** where sources allow (salted pistachios carry far more sodium); Brazil nuts and pine nuts dried; walnuts raw and roasted with salt. Each with the typical weight of one nut («1 мигдалина ≈ 1,2 г»), logged by count (mom eats a few at a time).
