@@ -5,7 +5,7 @@ import { useState } from "react";
 import { uk } from "../i18n/uk";
 import { fromDatetimeLocalValue, toDatetimeLocalValue } from "../lib/dateFormat";
 import type { Settings } from "../lib/settings";
-import { parseDecimal } from "../lib/numberFormat";
+import { fieldDecimal, parseDecimal } from "../lib/numberFormat";
 import { DateTimeInput } from "./TimeInput";
 import {
   BLOOD_SUGAR_CONTEXTS,
@@ -26,7 +26,7 @@ export default function BloodSugarForm({
   onSaved: (entry: BloodSugarEntry) => void;
   onCancel: () => void;
 }) {
-  const [value, setValue] = useState(original ? String(original.valueMmolL) : "");
+  const [value, setValue] = useState(original ? fieldDecimal(original.valueMmolL) : "");
   const [context, setContext] = useState<BloodSugarContext>(original?.context ?? "fasting");
   const [notes, setNotes] = useState(original?.notes ?? "");
   const [time, setTime] = useState(() => toDatetimeLocalValue(original?.timestamp ?? new Date().toISOString()));

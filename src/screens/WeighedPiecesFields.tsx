@@ -37,11 +37,11 @@ export default function WeighedPiecesFields({
       <div className="pack-amounts">
         <label>
           {t.weighedPiecesLabel}
-          <input type="number" inputMode="decimal" step="1" value={pieces} onChange={(e) => onChange(e.target.value, grams)} />
+          <input type="text" inputMode="decimal" value={pieces} onChange={(e) => onChange(e.target.value, grams)} />
         </label>
         <label>
           {t.weighedGramsLabel}
-          <input type="number" inputMode="decimal" step="0.1" value={grams} onChange={(e) => onChange(pieces, e.target.value)} />
+          <input type="text" inputMode="decimal" value={grams} onChange={(e) => onChange(pieces, e.target.value)} />
         </label>
       </div>
       <p className="food-form-hint">{weight !== null ? t.pieceWeight(round2(weight)) : hint}</p>

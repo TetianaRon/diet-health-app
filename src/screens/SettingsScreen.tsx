@@ -1,3 +1,4 @@
+import { fieldDecimal, parseDecimal } from "../lib/numberFormat";
 import LocalDataSection from "./LocalDataSection";
 import { useEffect, useState } from "react";
 import { Browser } from "@capacitor/browser";
@@ -209,7 +210,7 @@ function SpreadsheetSection({ signedIn }: { signedIn: boolean }) {
 // numbers are edited: the derived snack share, and both in the person's own
 // units. Purely arithmetic (see mealShares) — never advice.
 function SnackShareHint({ values }: { values: Record<string, string> }) {
-  const num = (key: string) => (values[key] ?? "").trim() !== "" ? Number(values[key]) : NaN;
+  const num = (key: string) => (values[key] ?? "").trim() !== "" ? parseDecimal(values[key]) : NaN;
   const settings = {
     mealsPerDay: num("mealsPerDay"),
     snacksPerDay: num("snacksPerDay"),
@@ -247,7 +248,7 @@ export default function SettingsScreen() {
     getSettings()
       .then((s) => {
         setValues({
-          ...Object.fromEntries(FIELDS.map((field) => [field, String(s[field])])),
+          ...Object.fromEntries(FIELDS.map((field) => [field, typeof s[field] === "number" ? fieldDecimal(s[field]) : String(s[field])])),
           timeFormat: s.timeFormat,
           wakeTime: normalizeTime(s.wakeTime),
           sleepTime: normalizeTime(s.sleepTime),
@@ -258,7 +259,7 @@ export default function SettingsScreen() {
   }, [signedIn, sessionExpired]);
 
   const handleSave = async () => {
-    const numericParsed = Object.fromEntries(NUMERIC_FIELDS.map((field) => [field, Number(values[field])])) as Record<
+    const numericParsed = Object.fromEntries(NUMERIC_FIELDS.map((field) => [field, parseDecimal(values[field] ?? "")])) as Record<
       NumericField,
       number
     >;
@@ -382,9 +383,8 @@ export default function SettingsScreen() {
                     {uk.settings.fields[field]}
                     {field === "fullMealSharePercent" && <SnackShareHint values={values} />}
                     <input
-                      type={(TIME_FIELDS as readonly string[]).includes(field) ? "time" : "number"}
+                      type={(TIME_FIELDS as readonly string[]).includes(field) ? "time" : "text"}
                       inputMode={(TIME_FIELDS as readonly string[]).includes(field) ? undefined : "decimal"}
-                      step={(TIME_FIELDS as readonly string[]).includes(field) ? undefined : "0.1"}
                       value={values[field] ?? ""}
                       onChange={(e) => setValues({ ...values, [field]: e.target.value })}
                     />

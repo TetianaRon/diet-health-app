@@ -58,9 +58,8 @@ export default function PackAmountFields({
           {gramsLabel}
           {fields.main === "piece" && <span className="pack-optional"> {t.optional}</span>}
           <input
-            type="number"
+            type="text"
             inputMode="decimal"
-            step="0.1"
             value={fields.grams}
             onChange={(e) => onChange({ ...fields, grams: e.target.value })}
           />
@@ -69,9 +68,8 @@ export default function PackAmountFields({
           {piecesLabel}
           {fields.main === "100g" && <span className="pack-optional"> {t.optional}</span>}
           <input
-            type="number"
+            type="text"
             inputMode="decimal"
-            step="0.1"
             value={fields.pieces}
             onChange={(e) => onChange({ ...fields, pieces: e.target.value })}
           />

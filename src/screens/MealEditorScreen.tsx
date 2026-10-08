@@ -1,4 +1,4 @@
-import { formatDecimal } from "../lib/numberFormat";
+import { fieldDecimal, formatDecimal } from "../lib/numberFormat";
 import { verifiedEntry } from "../data/builtInFoods";
 import { searchFoods } from "../lib/foodSearch";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -177,21 +177,21 @@ function AddDishToMealForm({
     const count = positiveOrNull(countText) ?? 1;
     const amount = sizeAmount(size, count, selected.measure);
     if (!amount) return;
-    setPortionGrams(amount.grams === null ? "" : String(round2(amount.grams)));
-    setPortionPieces(amount.pieces === null ? "" : String(round2(amount.pieces)));
+    setPortionGrams(amount.grams === null ? "" : fieldDecimal(round2(amount.grams)));
+    setPortionPieces(amount.pieces === null ? "" : fieldDecimal(round2(amount.pieces)));
   };
   const usableSizes = mode === "pick" && selected ? selected.portionSizes.filter((s) => sizeAmount(s, 1, selected.measure) !== null) : [];
   const changeGrams = (value: string) => {
     setPickedSize(null);
     setPortionGrams(value);
     const grams = positiveOrNull(value);
-    if (weightOfPiece !== null) setPortionPieces(grams === null ? "" : String(round2(grams / weightOfPiece)));
+    if (weightOfPiece !== null) setPortionPieces(grams === null ? "" : fieldDecimal(round2(grams / weightOfPiece)));
   };
   const changePieces = (value: string) => {
     setPickedSize(null);
     setPortionPieces(value);
     const pieces = positiveOrNull(value);
-    if (weightOfPiece !== null) setPortionGrams(pieces === null ? "" : String(round2(pieces * weightOfPiece)));
+    if (weightOfPiece !== null) setPortionGrams(pieces === null ? "" : fieldDecimal(round2(pieces * weightOfPiece)));
   };
   const pickedEntry =
     mode === "pick" && selected
@@ -451,12 +451,12 @@ function EditDishForm({
 }) {
   const [itemName, setItemName] = useState(entry.itemName);
   const weightUnknown = entry.unknownFields.includes("portionGrams");
-  const [portionGrams, setPortionGrams] = useState(weightUnknown ? "" : String(entry.portionGrams));
-  const [portionPieces, setPortionPieces] = useState(entry.portionPieces !== null ? String(entry.portionPieces) : "");
+  const [portionGrams, setPortionGrams] = useState(weightUnknown ? "" : fieldDecimal(entry.portionGrams));
+  const [portionPieces, setPortionPieces] = useState(entry.portionPieces !== null ? fieldDecimal(entry.portionPieces) : "");
   const [values, setValues] = useState<Record<keyof IngredientNutrition, string>>(() => {
     const initial = { ...EMPTY_CUSTOM_VALUES };
     for (const field of CUSTOM_FIELDS) {
-      if (!entry.unknownFields.includes(field)) initial[field] = String(entry[field]);
+      if (!entry.unknownFields.includes(field)) initial[field] = fieldDecimal(entry[field]);
     }
     return initial;
   });

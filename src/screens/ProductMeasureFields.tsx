@@ -2,6 +2,7 @@
 //   «Значення вказано на» — grams or pieces, and the amount, as the pack says;
 //   «Вага штук» (optional) — any weighed count of pieces, e.g. 12 шт. = 300 г,
 //   which lets the product be logged both by count and by weight.
+import { fieldDecimal } from "../lib/numberFormat";
 import { uk } from "../i18n/uk";
 import { positiveOrNull, valuesAmount, type Basis, type Measure } from "../lib/measure";
 import WeighedPiecesFields, { weighedPair } from "./WeighedPiecesFields";
@@ -18,9 +19,9 @@ const t = uk.foods.pack;
 export function productFieldsFromMeasure(measure: Measure): ProductFields {
   return {
     main: measure.basis,
-    amount: String(valuesAmount(measure)),
-    weighedPieces: measure.weighedPieces !== null ? String(measure.weighedPieces) : "",
-    weighedGrams: measure.weighedGrams !== null ? String(measure.weighedGrams) : "",
+    amount: fieldDecimal(valuesAmount(measure)),
+    weighedPieces: measure.weighedPieces !== null ? fieldDecimal(measure.weighedPieces) : "",
+    weighedGrams: measure.weighedGrams !== null ? fieldDecimal(measure.weighedGrams) : "",
   };
 }
 
@@ -59,7 +60,7 @@ export default function ProductMeasureFields({ fields, onChange }: { fields: Pro
         </div>
         <label>
           {fields.main === "piece" ? t.amountPiecesLabel : t.amountGramsLabel}
-          <input type="number" inputMode="decimal" step="0.1" value={fields.amount} onChange={(e) => onChange({ ...fields, amount: e.target.value })} />
+          <input type="text" inputMode="decimal" value={fields.amount} onChange={(e) => onChange({ ...fields, amount: e.target.value })} />
         </label>
         <p className="food-form-hint">{fields.main === "piece" ? t.piecesMainHint : t.gramsMainHint}</p>
       </fieldset>

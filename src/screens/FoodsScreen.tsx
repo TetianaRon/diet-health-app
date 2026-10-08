@@ -5,7 +5,7 @@ import { deleteDish, dishesUsingIngredient } from "../lib/dishes";
 import GiSuggestions from "./GiSuggestions";
 import { verifiedEntry } from "../data/builtInFoods";
 import { searchFoods } from "../lib/foodSearch";
-import { formatDecimal } from "../lib/numberFormat";
+import { fieldDecimal, formatDecimal } from "../lib/numberFormat";
 import VerifiedInfoDialog from "./VerifiedInfoDialog";
 import { builtInMatch, giSourceEntry } from "../lib/builtInStatus";
 import type { VerifiedFoodEntry } from "../data/verifiedFoods";
@@ -101,7 +101,7 @@ function parseFormValues(values: FormValues): {
 
 function formValuesFromItem(item: { unknownFields: NutritionKey[] } & Record<NumericField, number>): FormValues {
   return Object.fromEntries(
-    NUMERIC_FIELDS.map((field) => [field, item.unknownFields.includes(field) ? "" : String(item[field])]),
+    NUMERIC_FIELDS.map((field) => [field, item.unknownFields.includes(field) ? "" : fieldDecimal(item[field])]),
   ) as FormValues;
 }
 
@@ -296,7 +296,7 @@ function AddFoodForm({
     if (estimate) {
       const unknown = estimate.unknownFields ?? [];
       const show = (field: NumericField, value: number | null) =>
-        value === null || unknown.includes(field) ? "" : String(value);
+        value === null || unknown.includes(field) ? "" : fieldDecimal(value);
       setValues({
         carbsG: show("carbsG", estimate.carbsG),
         gi: show("gi", estimate.gi),
@@ -828,7 +828,7 @@ function ComposeDishForm({
       ? existingDish.ingredients.map((ref) => ({
           id: ref.id,
           nameUk: resolveItemRef(ref, ingredients)?.nameUk ?? ref.nameUk,
-          amount: String(ref.pieces ?? ref.grams),
+          amount: fieldDecimal(ref.pieces ?? ref.grams),
           unit: ref.pieces ? ("pieces" as const) : ("grams" as const),
         }))
       : [EMPTY_ROW],
@@ -836,13 +836,13 @@ function ComposeDishForm({
   // The yield: a weight, a count («Вийшло 10 млинців») or both; the main one decides how the dish is measured (2.0.1).
   const [yieldFields, setYieldFields] = useState<PackFields>(() => ({
     main: existingDish?.basis ?? "100g",
-    grams: existingDish && existingDish.yieldGrams > 0 ? String(existingDish.yieldGrams) : "",
-    pieces: existingDish?.yieldPieces ? String(existingDish.yieldPieces) : "",
+    grams: existingDish && existingDish.yieldGrams > 0 ? fieldDecimal(existingDish.yieldGrams) : "",
+    pieces: existingDish?.yieldPieces ? fieldDecimal(existingDish.yieldPieces) : "",
   }));
   const [giVerified, setGiVerified] = useState(existingDish?.giVerified ?? false);
   const [sizeRows, setSizeRows] = useState<SizeRow[]>(() => sizeRowsFrom(existingDish?.portionSizes ?? []));
-  const [weighedPieces, setWeighedPieces] = useState(existingDish?.weighedPieces ? String(existingDish.weighedPieces) : "");
-  const [weighedGrams, setWeighedGrams] = useState(existingDish?.weighedGrams ? String(existingDish.weighedGrams) : "");
+  const [weighedPieces, setWeighedPieces] = useState(existingDish?.weighedPieces ? fieldDecimal(existingDish.weighedPieces) : "");
+  const [weighedGrams, setWeighedGrams] = useState(existingDish?.weighedGrams ? fieldDecimal(existingDish.weighedGrams) : "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
