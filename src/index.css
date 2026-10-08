@@ -1601,6 +1601,20 @@ select {
 .math-result-error {
   color: #b3261e;
 }
+.math-keys {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.4rem;
+}
+.math-key {
+  min-width: 3rem;
+  min-height: 2.75rem;
+  font-size: 1.3rem;
+  border: 1px solid #2f7a4f;
+  border-radius: 8px;
+  background: #fff;
+  color: #2f7a4f;
+}
 
 /* Named portion sizes (2.0.2) */
 .size-row {

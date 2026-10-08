@@ -725,4 +725,5 @@ Four things that make logging quicker. Builds on 2.0.1's measures (`measure.ts`)
 ### Maths in value fields
 - Number fields accept a short calculation: `200*3/4`, `150+30`, «200 ккал * 3/4». Allowed: numbers with a decimal comma or point, `+ − * / ( )`; unit words are ignored.
 - The field shows the result under it («= 150») while typing; the result is stored, never the formula.
+- The phone's number keyboard has no × or ÷ (checked on the emulator's Gboard: only − , . and space). So while a value field is focused, a row of keys «+ − × ÷» sits under it and adds the sign at the cursor; the number keyboard stays.
 - Applies to the meal editor's portion and custom-entry fields, and the product form's value fields.
