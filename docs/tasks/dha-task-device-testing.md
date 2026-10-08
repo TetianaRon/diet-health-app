@@ -18,7 +18,7 @@ Mom's phone and her own sheet (on her Drive, unknown to the app) are never part 
 - **The developer signs in, never Claude.** Ask, then wait for "signed in".
 - The token lives only in memory: a page reload, or a hot reload after editing `src/i18n/uk.ts` or a context provider, signs out. Finish edits before asking for a sign-in, and plan the check to need as few reloads as possible.
 - Name test data so it's obviously temporary, e.g. «Хліб житній (тест 1.9)», and delete it at the end of the check through the app's own delete flows.
-- To confirm what reached the sheet, read it back through the app's own modules in the page, e.g. `await (await import("/src/lib/ingredients.ts")).listIngredients()`.
+- To confirm what reached the sheet, read it back through the app's own modules, which the local dev server puts on `window.__tmm` (`src/devHandle.ts`), e.g. `await window.__tmm.ingredients.listIngredients()` or `await window.__tmm.sheets.fetchTabsLive(["DailyLog"])`.
 - Never type into the sheet itself (standing rule 6).
 - The dev server answers only on IPv6 (`[::1]:5173`). To open it from the phone over USB, start a second one on IPv4, `npx vite --host 127.0.0.1 --port 5174 --strictPort`, then `adb reverse tcp:5174 tcp:5174` and open `http://localhost:5174/` on the phone. Stop it afterwards.
 
