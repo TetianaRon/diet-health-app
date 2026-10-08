@@ -13,18 +13,18 @@ The workflow (intake → release branch → verify → release) and the standing
 ## Next session — start here (set 2026-10-07)
 1. **2.0 released** to Play's internal testing track and the web (2026-10-06, builds 19–23). Nothing is public; mom is an internal tester, so **an upload is a release to her**. Still worth checking on the developer's devices: the `online` event on a real phone, two tabs, switching sheets.
 2. **Plan reviewed with the developer (2026-10-07):** 2.0.1 → 2.0.2 faster food entry → 2.0.3 reminders → 2.0.4 sign-in choices (+ privacy policy) → 2.1 sets → 2.2 mom's data → 2.3 Picker → 2.4 food families → 2.5 label photos → 2.6 GI from ingredients (after the research) → 2.7 AI lookup → 2.8 English → 3.0 public launch.
-3. **Now: 2.0.1 — pack values.** Branch `release/2.0.1`; design in the spec ("Pack values: per [n] g and per [n] pieces"). **Waiting for the developer's OK on that design before building.**
+3. **2.0.1 built** (2026-10-07, versionCode 24): waiting for the developer to push `main` and upload the bundle. Next: **2.0.2 — faster food entry**.
 4. Chromium issue 569300356: reply sent 2026-10-05 — check for answers now and then.
 
 ## Current and upcoming releases
 
-### 2.0.1 — Pack values: per [n] g and per [n] pieces · 🔨 designed, branch `release/2.0.1` (developer, 2026-10-06 — needed in her own use) — spec → "Pack values"
+### 2.0.1 — Pack values: per [n] g and per [n] pieces · ✅ built (2026-10-07) — spec → "Pack values"
 Packs list nutrients per portion (per 30 g) or per piece (dumplings per 12), not always per 100 g. Values are entered exactly as printed.
-- **Item editor (products and dishes):** «на … г» and «на … шт.» side by side, with a radio button marking the main one: the amount the values are entered for, required. The other is optional and states the same amount the other way (values per 12 шт. with 200 г: 12 шт. = 200 г, a piece weight of ≈16,7 г). A dish's yield is a weight, a count («Вийшло 10 млинців») or both. The form shows what will be stored.
-- **Stored:** grams-main items stay per 100 g as today (every value except GI recalculated). Pieces-main items store values per 1 piece. Either can carry a piece weight. New columns arrive through the silent upgrade; the sync, the duplicates review and the database search learn them.
+- **Item editor (products and dishes):** two separate parts (developer, 2026-10-07). «Значення вказано на»: grams or pieces and the amount, as the pack says it (на 100 г, на 30 г, на 12 шт.). «Вага штук» (optional): any weighed count, e.g. 12 home-cooked dumplings = 300 г, which works for database products too (her copy is saved). A dish's yield is a weight, a count («Вийшло 10 млинців») or both. The form shows what will be stored.
+- **Stored:** grams-main items stay per 100 g as today (every value except GI recalculated). Pieces-main items store values per 1 piece. New columns `Basis`, `ValuesPer`, `WeighedPieces`, `WeighedGrams` (Ingredients), `Basis`, `YieldPieces` (Dishes), `PortionPieces` (DailyLog) arrive through the silent upgrade; the sync, the duplicates review and the database search learn them.
 - **Meal editor:** grams and pieces are linked. Type one and the app fills in the other when a piece weight is known (210 г → 12,6 шт.). Counts allow decimals (7,5). Without a piece weight only the main field shows; a pieces-main entry's weight is unknown, never 0.
 - **Maths:** every nutrient, GI and GL work without weight. GL = GI × grams of carbs eaten; a dish's GI is already weighted by carbs; a dish needs only its ingredients' total nutrients and its yield. A pieces-main product goes into a recipe by count.
-- **Checks against:** dumplings (pack per 12 шт.), pancakes (dish yield as a count), nuts (per 100 г with 100 г = 20 шт., logged as 3 горіхи), a 30 г portion pack.
+- **Checks against:** dumplings (pack per 12 шт.), potato dumplings from the database with 12 шт. = 300 г weighed at home, pancakes (dish yield as a count), nuts (per 100 г with 20 шт. = 100 г, logged as 3 горіхи), a 30 г portion pack.
 
 ### 2.0.2 — Faster food entry · 📝 planned (developer, 2026-10-06/07)
 - **Named portion sizes:** up to 3 approximate sizes per product or dish, each a label and grams («скибка ~45 г», «маленьке / середнє / велике яблуко», «чашка ~250 г»); default labels маленька / середня / велика, renamable. The meal editor offers them as one tap plus a count (2 × середнє); grams shown as approximate («≈»). **The verified database ships typical sizes** for common foods, each with a source, reliability, reasoning and date (rule 5; USDA lists portion weights, e.g. "1 medium apple"); her own sizes override or add to them.

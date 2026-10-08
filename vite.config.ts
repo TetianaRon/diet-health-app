@@ -46,6 +46,9 @@ export default defineConfig(({ mode }) => {
   optimizeDeps: { exclude: ["@sqlite.org/sqlite-wasm"] },
   worker: { format: "es" },
   server: {
+    // An Android build writes copies of the web app under android/; watching them
+    // reloaded the open dev page (and signed it out) mid-check.
+    watch: { ignored: ["**/android/**"] },
     proxy: {
       "/api/usda": {
         target: "https://api.nal.usda.gov",

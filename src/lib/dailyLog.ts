@@ -10,6 +10,7 @@ import { deleteRecord, upsertRecord } from "./recordStore";
 import { buildColumnIndex, buildRow, cell, columnLetter, parseTab, SCAN_LAST_COLUMN, type ColumnIndex, type ParsedTab } from "./sheetRow";
 import { calcGlycemicLoad } from "./health";
 import type { IngredientNutrition, NutritionKey } from "./dishes";
+import { positiveOrNull, resolveAmount, scaleNutrition, type Amount, type Measure } from "./measure";
 
 export const MEAL_TYPES = ["Сніданок", "Обід", "Вечеря", "Перекус"] as const;
 export type MealType = (typeof MEAL_TYPES)[number];
@@ -18,7 +19,8 @@ export type MealType = (typeof MEAL_TYPES)[number];
 // 7 IngredientNutrition fields (GI included) plus the derived GL, which is
 // treated as unknown whenever GI or Carbs_g is (see buildCustomLogEntry) —
 // a glycemic load can't be meaningfully computed without both.
-export type NutritionField = keyof IngredientNutrition | "gl";
+/** A meal row value that can be unknown: a nutrient, GL, or the portion's weight (an item counted in pieces without a known piece weight, 2.0.1). */
+export type NutritionField = keyof IngredientNutrition | "gl" | "portionGrams";
 
 export interface DailyLogEntry extends IngredientNutrition {
   /** Row ID (release 2.0), shared across devices; absent only on a row not yet given one. */
@@ -32,6 +34,9 @@ export interface DailyLogEntry extends IngredientNutrition {
   // Readable snapshot of the item's name when it was logged.
   itemName: string;
   portionGrams: number;
+  // Pieces eaten, for an item counted in pieces (2.0.1), else null. When the
+  // weight isn't known, portionGrams is 0 and unknownFields has "portionGrams".
+  portionPieces: number | null;
   gl: number;
   notes: string;
   // Ties multiple items eaten in one sitting together as a single meal
@@ -75,6 +80,7 @@ export const DAILY_LOG_HEADERS = [
   "MealId",
   "UnknownFields",
   "ItemId",
+  "PortionPieces",
   "Id",
   "UpdatedAt",
 ] as const;
@@ -115,6 +121,7 @@ const NUTRITION_FIELD_SET: ReadonlySet<string> = new Set<NutritionField>([
   "caloriesKcal",
   "sodiumMg",
   "gl",
+  "portionGrams",
 ]);
 
 /** Parses the UnknownFields cell (comma-separated field names) back into a typed list, dropping anything unrecognized. */
@@ -173,6 +180,54 @@ export function buildLogEntry(
     itemId,
     itemName,
     portionGrams,
+    portionPieces: null,
+    ...portion,
+    gl: glUnknown ? 0 : round2(calcGlycemicLoad(portion.gi, portion.carbsG)),
+    notes,
+    mealId,
+    unknownFields,
+  };
+}
+
+/**
+ * A log entry for an item measured per 100 g or per piece (2.0.1), from an
+ * amount in grams, pieces or both (see measure.ts → resolveAmount). Null when
+ * the amount can't be used for this item (pieces without a piece weight for a
+ * per-100 g item, or grams without one for a per-piece item). A weight that
+ * can't be known is stored as 0 and listed as unknown, never read as 0.
+ */
+export function buildLogEntryForAmount(
+  mealType: MealType,
+  item: { id: string; nameUk: string; stored: IngredientNutrition; unknownFields: NutritionKey[]; measure: Measure },
+  amount: Amount,
+  notes: string,
+  mealId: string,
+  timestamp: string = new Date().toISOString(),
+): DailyLogEntry | null {
+  const resolved = resolveAmount(item.measure, amount);
+  if (!resolved) return null;
+  const scaled = scaleNutrition(item.stored, resolved.factor);
+  const portion: IngredientNutrition = {
+    carbsG: round2(scaled.carbsG),
+    gi: scaled.gi,
+    fiberG: round2(scaled.fiberG),
+    sugarsG: round2(scaled.sugarsG),
+    proteinG: round2(scaled.proteinG),
+    fatG: round2(scaled.fatG),
+    caloriesKcal: round2(scaled.caloriesKcal),
+    sodiumMg: round2(scaled.sodiumMg),
+  };
+  const unknownFields: NutritionField[] = [...item.unknownFields];
+  const glUnknown = item.unknownFields.includes("gi") || item.unknownFields.includes("carbsG");
+  if (glUnknown) unknownFields.push("gl");
+  if (resolved.grams === null) unknownFields.push("portionGrams");
+  return {
+    timestamp,
+    mealType,
+    itemId: item.id,
+    itemName: item.nameUk,
+    portionGrams: resolved.grams === null ? 0 : round2(resolved.grams),
+    portionPieces: resolved.pieces === null ? null : round2(resolved.pieces),
     ...portion,
     gl: glUnknown ? 0 : round2(calcGlycemicLoad(portion.gi, portion.carbsG)),
     notes,
@@ -233,6 +288,7 @@ export function buildCustomLogEntry(
     itemId: "",
     itemName,
     portionGrams,
+    portionPieces: null,
     ...portion,
     gl: glUnknown ? 0 : round2(calcGlycemicLoad(portion.gi, portion.carbsG)),
     notes,
@@ -332,7 +388,7 @@ export function groupIntoMeals(entries: DailyLogEntry[]): MealGroup[] {
       timestamp: sorted[0].timestamp,
       entries: sorted,
       totals,
-      totalGrams: round2(sorted.reduce((sum, e) => sum + e.portionGrams, 0)),
+      totalGrams: sumKnownField(sorted, "portionGrams").total,
       hasUnknownValues: sorted.some((e) => e.unknownFields.length > 0),
     };
   });
@@ -388,6 +444,7 @@ export function rowToLogEntry(row: unknown[], columnIndex: ColumnIndex = DEFAULT
     itemId: String(cell(row, columnIndex, "ItemId") ?? "").trim(),
     itemName: String(cell(row, columnIndex, "ItemName") ?? ""),
     portionGrams: toNumber(cell(row, columnIndex, "PortionGrams")),
+    portionPieces: positiveOrNull(cell(row, columnIndex, "PortionPieces")),
     carbsG: toNumber(cell(row, columnIndex, "Carbs_g")),
     gi: toNumber(cell(row, columnIndex, "GI")),
     fiberG: toNumber(cell(row, columnIndex, "Fiber_g")),
@@ -424,6 +481,7 @@ export function logEntryFields(entry: DailyLogEntry): Record<string, unknown> {
       MealId: entry.mealId,
       UnknownFields: entry.unknownFields.join(","),
       ItemId: entry.itemId,
+      PortionPieces: entry.portionPieces ?? "",
     Id: entry.id || null, // missing id → nothing written, so a rewrite keeps the row's ID
   };
 }

@@ -71,7 +71,8 @@ export function entryStatItems(entry: DailyLogEntry, settings: StatToggles | nul
     protein: { value: entry.proteinG, unknown: entry.unknownFields.includes("proteinG") },
     sodium: { value: entry.sodiumMg, unknown: entry.unknownFields.includes("sodiumMg") },
   };
-  const stats: MealStat[] = [{ key: "weight", value: Math.round(entry.portionGrams * 10) / 10 }];
+  const weightUnknown = entry.unknownFields.includes("portionGrams");
+  const stats: MealStat[] = [{ key: "weight", value: weightUnknown ? null : Math.round(entry.portionGrams * 10) / 10 }];
   if (!settings) return stats;
   for (const { key, toggle } of STATS) {
     if (settings[toggle]) stats.push({ key, value: fields[key].unknown ? null : Math.round(fields[key].value) });

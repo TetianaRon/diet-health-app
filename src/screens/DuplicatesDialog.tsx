@@ -14,7 +14,7 @@ const t = uk.localMode.duplicates;
 
 function num(v: unknown): string {
   const n = Number(String(v ?? "").replace(",", "."));
-  return Number.isFinite(n) ? formatDecimal(n) : String(v ?? "");
+  return Number.isFinite(n) ? formatDecimal(Math.round(n * 100) / 100) : String(v ?? "");
 }
 
 /** The values that tell the two versions apart, in a few words. */
@@ -23,7 +23,11 @@ function summary(d: Duplicate, fields: Record<string, unknown>): string {
   if (d.tab === "Medications") return [fields.Dose, fields.Unit].filter((v) => v !== undefined && v !== "").map(String).join(" ") || String(fields.Name ?? "");
   // A blank-on-purpose value is stored as 0; it reads «невідомо», never as a real zero.
   const unknown = new Set(String(fields.UnknownFields ?? "").split(",").map((f) => f.trim()));
-  return t.itemSummary(unknown.has("caloriesKcal") ? null : num(fields.Calories_kcal), unknown.has("carbsG") ? null : num(fields.Carbs_g));
+  return t.itemSummary(
+    unknown.has("caloriesKcal") ? null : num(fields.Calories_kcal),
+    unknown.has("carbsG") ? null : num(fields.Carbs_g),
+    String(fields.Basis ?? "") === "piece" ? "piece" : "100g",
+  );
 }
 
 export default function DuplicatesDialog() {

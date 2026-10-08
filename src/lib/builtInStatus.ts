@@ -106,6 +106,8 @@ export function dishCopyUpdates(
         nameEn: renamed ? fresh.nameEn : copy.nameEn,
         ingredients: [{ id: fresh.id, nameUk: fresh.nameUk, grams: 100 }],
         yieldGrams: 100,
+        basis: "100g",
+        yieldPieces: null,
         ...Object.fromEntries(VALUE_FIELDS.map((f) => [f, fresh[f]])),
         unknownFields: fresh.unknownFields,
         giVerified: copy.giVerified && copy.gi === fresh.gi,

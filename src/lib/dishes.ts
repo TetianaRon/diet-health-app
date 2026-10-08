@@ -12,6 +12,7 @@ import { deleteRecord, upsertRecord } from "./recordStore";
 import { newRecordId } from "./itemIds";
 import { buildColumnIndex, buildRow, cell, parseTab, SCAN_LAST_COLUMN, type ColumnIndex, type ParsedTab } from "./sheetRow";
 import { toGlycemicFlag, type GlycemicFlag } from "./glycemicFlag";
+import { positiveOrNull, resolveAmount, toBasis, PER_100G, type Basis, type Measure } from "./measure";
 
 export type DishSource = "starter" | "manual";
 
@@ -23,7 +24,15 @@ export interface DishIngredientRef {
   // Readable snapshot of the ingredient's name when the recipe was saved
   // (and the pre-1.6 link).
   nameUk: string;
+  /** Grams in the recipe (0 when given by count only). */
   grams: number;
+  /** Pieces in the recipe, for an item measured per piece (2.0.1), else absent. */
+  pieces?: number;
+}
+
+/** A recipe line's amount as the factor on the ingredient's stored values (per 100 g or per piece); null if it can't be used. */
+export function refFactor(ref: DishIngredientRef, measure: Measure | undefined): number | null {
+  return resolveAmount(measure ?? PER_100G, { grams: ref.grams, pieces: ref.pieces ?? null })?.factor ?? null;
 }
 
 /** What a recipe ingredient points at: anything with an ID, the built-in ID it copies (if any), and a name. */
@@ -93,6 +102,11 @@ export interface Dish extends IngredientNutrition {
   nameEn: string;
   ingredients: DishIngredientRef[];
   yieldGrams: number;
+  // Measured per 100 g (as before) or per 1 piece (2.0.1); a count yield
+  // («Вийшло 10 млинців») is YieldPieces. A per-piece dish's yield weight
+  // may be 0 (unknown).
+  basis: Basis;
+  yieldPieces: number | null;
   source: DishSource;
   dateAdded: string;
   glycemicFlag: GlycemicFlag;
@@ -133,11 +147,16 @@ function round2(value: number): number {
  * `lookupIngredient` returning null for a reference it can't resolve skips
  * that ingredient's contribution — callers should validate all references
  * resolve before treating the result as final.
+ *
+ * A dish measured per piece (2.0.1) passes `yieldPieces`: its values are then
+ * per 1 piece (the totals ÷ pieces), and `yieldGrams` isn't needed. A recipe
+ * line given by count uses the ingredient's measure (see refFactor).
  */
 export function computeDishNutrition(
   ingredients: DishIngredientRef[],
   yieldGrams: number,
-  lookupIngredient: (ref: DishIngredientRef) => (IngredientNutrition & { unknownFields?: NutritionKey[] }) | null,
+  lookupIngredient: (ref: DishIngredientRef) => (IngredientNutrition & { unknownFields?: NutritionKey[] } & Partial<Measure>) | null,
+  yieldPieces: number | null = null,
 ): IngredientNutrition {
   let totalCarbs = 0;
   let totalFiber = 0;
@@ -153,7 +172,8 @@ export function computeDishNutrition(
     const nutrition = lookupIngredient(ref);
     if (!nutrition) continue;
 
-    const factor = ref.grams / 100;
+    const factor = refFactor(ref, measureOf(nutrition));
+    if (factor === null) continue;
     const carbsContribution = nutrition.carbsG * factor;
 
     totalCarbs += carbsContribution;
@@ -170,7 +190,7 @@ export function computeDishNutrition(
     }
   }
 
-  const scale = yieldGrams > 0 ? 100 / yieldGrams : 0;
+  const scale = yieldPieces ? 1 / yieldPieces : yieldGrams > 0 ? 100 / yieldGrams : 0;
 
   return {
     carbsG: round2(totalCarbs * scale),
@@ -193,7 +213,18 @@ export function computeDishNutrition(
  */
 export const SMALL_UNKNOWN_GI_SHARE = 0.05;
 
-type WithUnknown = IngredientNutrition & { unknownFields: NutritionKey[] };
+type WithUnknown = IngredientNutrition & { unknownFields: NutritionKey[] } & Partial<Measure>;
+
+/** A product's or dish's measure: a dish's yield (weight and count) gives its piece weight. */
+export function itemMeasure(item: Partial<Measure> & { yieldGrams?: number; yieldPieces?: number | null }): Measure {
+  if (item.yieldGrams !== undefined) return { basis: item.basis ?? "100g", valuesPer: null, weighedPieces: item.yieldPieces ?? null, weighedGrams: item.yieldGrams || null };
+  return measureOf(item);
+}
+
+/** An item's measure, when it carries one (built-in and older items are per 100 g). */
+export function measureOf(item: Partial<Measure>): Measure {
+  return { basis: item.basis ?? "100g", valuesPer: item.valuesPer ?? null, weighedPieces: item.weighedPieces ?? null, weighedGrams: item.weighedGrams ?? null };
+}
 
 /** Share (0–1) of the dish's carbohydrate that comes from ingredients with an unknown GI. */
 export function unknownGiCarbShare(ingredients: DishIngredientRef[], lookupIngredient: (ref: DishIngredientRef) => WithUnknown | null): number {
@@ -202,7 +233,9 @@ export function unknownGiCarbShare(ingredients: DishIngredientRef[], lookupIngre
   for (const ref of ingredients) {
     const ingredient = lookupIngredient(ref);
     if (!ingredient || ingredient.unknownFields.includes("carbsG")) continue;
-    const carbs = (ingredient.carbsG * ref.grams) / 100;
+    const factor = refFactor(ref, measureOf(ingredient));
+    if (factor === null) continue;
+    const carbs = ingredient.carbsG * factor;
     total += carbs;
     if (ingredient.unknownFields.includes("gi")) unknownGi += carbs;
   }
@@ -268,10 +301,11 @@ export function parseIngredientsJson(value: unknown): DishIngredientRef[] {
     const parsed = JSON.parse(String(value ?? "[]"));
     if (!Array.isArray(parsed)) return [];
     return parsed
-      .filter((item): item is { id?: unknown; name: string; grams: number } => typeof item?.name === "string")
+      .filter((item): item is { id?: unknown; name: string; grams: number; pieces?: unknown } => typeof item?.name === "string")
       .map((item) => {
         const id = typeof item.id === "string" && item.id.trim() !== "" ? item.id.trim() : undefined;
-        return { ...(id ? { id } : {}), nameUk: item.name, grams: toNumber(item.grams) };
+        const pieces = positiveOrNull(item.pieces);
+        return { ...(id ? { id } : {}), nameUk: item.name, grams: toNumber(item.grams), ...(pieces ? { pieces } : {}) };
       });
   } catch {
     return [];
@@ -279,7 +313,7 @@ export function parseIngredientsJson(value: unknown): DishIngredientRef[] {
 }
 
 export function serializeIngredientsJson(ingredients: readonly DishIngredientRef[]): string {
-  return JSON.stringify(ingredients.map((i) => ({ ...(i.id ? { id: i.id } : {}), name: i.nameUk, grams: i.grams })));
+  return JSON.stringify(ingredients.map((i) => ({ ...(i.id ? { id: i.id } : {}), name: i.nameUk, grams: i.grams, ...(i.pieces ? { pieces: i.pieces } : {}) })));
 }
 
 // Canonical column order — what a brand-new sheet gets initialized with (see
@@ -294,6 +328,8 @@ export const DISHES_HEADERS = [
   "NameEn",
   "IngredientsJson",
   "YieldGrams",
+  "Basis",
+  "YieldPieces",
   "Carbs_g",
   "GI",
   "Fiber_g",
@@ -323,6 +359,8 @@ export function rowToDish(row: unknown[], columnIndex: ColumnIndex = DEFAULT_COL
     nameEn: String(cell(row, columnIndex, "NameEn") ?? ""),
     ingredients: parseIngredientsJson(cell(row, columnIndex, "IngredientsJson")),
     yieldGrams: toNumber(cell(row, columnIndex, "YieldGrams")),
+    basis: toBasis(cell(row, columnIndex, "Basis")),
+    yieldPieces: positiveOrNull(cell(row, columnIndex, "YieldPieces")),
     carbsG: toNumber(cell(row, columnIndex, "Carbs_g")),
     gi: toNumber(cell(row, columnIndex, "GI")),
     fiberG: toNumber(cell(row, columnIndex, "Fiber_g")),
@@ -345,7 +383,9 @@ export function dishFields(dish: Dish): Record<string, unknown> {
       NameUk: dish.nameUk,
       NameEn: dish.nameEn,
       IngredientsJson: serializeIngredientsJson(dish.ingredients),
-      YieldGrams: dish.yieldGrams,
+      YieldGrams: dish.yieldGrams || "",
+      Basis: dish.basis === "piece" ? "piece" : "",
+      YieldPieces: dish.yieldPieces ?? "",
       Carbs_g: dish.carbsG,
       GI: dish.gi,
       Fiber_g: dish.fiberG,
