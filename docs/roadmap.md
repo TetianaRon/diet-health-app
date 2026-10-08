@@ -13,8 +13,9 @@ The workflow (intake → release branch → verify → release) and the standing
 ## Next session — start here (set 2026-10-07)
 1. **2.0 released** to Play's internal testing track and the web (2026-10-06, builds 19–23). Nothing is public; mom is an internal tester, so **an upload is a release to her**. Still worth checking on the developer's devices: the `online` event on a real phone, two tabs, switching sheets.
 2. **Plan reviewed with the developer (2026-10-07):** 2.0.1 → 2.0.2 faster food entry → 2.0.3 reminders → 2.0.4 sign-in choices (+ privacy policy) → 2.1 sets → 2.2 mom's data → 2.3 Picker → 2.4 food families → 2.5 label photos → 2.6 GI from ingredients (after the research) → 2.7 AI lookup → 2.8 English → 3.0 public launch.
-3. **2.0.1 released** (2026-10-07, versionCode 24). **2.0.2 released** (2026-10-08, versionCode 25). **2.0.3 — reminders built** (2026-10-08, versionCode 26), waiting for the push and the upload; still to do: check mom's notification volume and tone, and report the plugin's restart issue upstream. Next: **2.0.4 — sign-in choices**.
+3. **2.0.1 released** (2026-10-07, versionCode 24). **2.0.2 released** (2026-10-08, versionCode 25). **2.0.3 — reminders built** (2026-10-08, versionCode 26), waiting for the push and the upload; still to do: check mom's notification volume and tone. Next: **2.0.4 — sign-in choices**.
 4. Chromium issue 569300356: reply sent 2026-10-05 — check for answers now and then.
+5. Plugin issue [capacitor-local-notifications#15](https://github.com/ionic-team/capacitor-local-notifications/issues/15) (reminders lost during a restart; reported 2026-10-08, our patch in `patches/`): check for answers now and then; drop the patch once a fixed version ships.
 
 ## Current and upcoming releases
 

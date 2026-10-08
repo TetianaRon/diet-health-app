@@ -348,6 +348,7 @@ Answering "did we review only products?": the 69 home dishes were on the page bu
   - deleting the test meals cancelled the pending follow-ups;
   - channel settings: importance high, the default notification sound, vibration on. The first sound check was silent with Do Not Disturb on; the second (DND off) vibrated, and the system log shows the sound playing, at notification volume 3 of 7 with the short «Kernel» tone. The developer missed that sound and heard it on a third try.
 - **For mom's phone (the developer, not the app):** Do Not Disturb silences the reminder, and a low notification volume or a short tone makes it easy to miss. Check her notification volume and tone.
-- **Not checked:** the `catchUpUntil` limit (no catch-up after a restart in quiet hours) on a device; the plugin issue isn't reported upstream yet.
+- **Not checked:** the `catchUpUntil` limit (no catch-up after a restart in quiet hours) on a device.
+- **Reported upstream (2026-10-08):** https://github.com/ionic-team/capacitor-local-notifications/issues/15, with a minimal reproduction (https://github.com/TetianaRon/capacitor-local-notifications-reboot-repro, the unpatched plugin 8.3.1), confirmed on the developer's Pixel 10 (Android 16): a notification due at 10:56 while the phone was off didn't show after an 11:06 boot. When the plugin fixes it, drop our patch.
 - **Test data:** three apple meals deleted (the one from the day before by the developer, in the sheet), and the dev sheet's sleep time restored to 00:00.
 - 410 tests, `tsc -b`, `npm run build`. Version 2.0.3, versionCode 26.
