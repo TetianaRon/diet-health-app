@@ -386,3 +386,5 @@ Answering "did we review only products?": the 69 home dishes were on the page bu
   - «Увійти іншим обліковим записом» with a second account;
   - starting without Google past the acknowledgement (unchanged code after it).
 - 412 tests, `tsc -b`, `npm run build`. Version 2.0.4, versionCode 27.
+
+✅ **2.0.4 released 2026-10-08:** main pushed (web), the bundle uploaded to the internal testing track (versionCode 27), and the privacy policy update pushed (roncreator-site).
