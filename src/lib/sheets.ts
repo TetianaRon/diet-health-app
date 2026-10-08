@@ -485,7 +485,9 @@ export function signOut(): void {
   offlineSession = false;
   accessTokenExpiresAt = null;
   sessionExpired = false;
+  // «Вийти» also forgets the «Продовжити як …» address; the choice to remember stays.
   currentEmail = null;
+  setRememberedEmail(null);
   // No-op if never set (e.g. on web) — removeItem on a missing key is safe.
   dropRefreshToken();
 }
