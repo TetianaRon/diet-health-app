@@ -55,7 +55,7 @@ The person decides where their data lives, with plain wording about each choice.
 - **Dishes inside dishes:** any item can be a recipe line (homemade mayonnaise in a salad), with no loops and changes carried upward.
 - **Millilitres:** a third basis (per 100 ml), with an optional density «100 мл = 103 г»; the database supplies densities for drinks.
 - **One «Продукти» tab** with filter chips; one editor («Значення: вказані / за рецептом»).
-- **One sheet tab, `Products`** (developer, 2026-10-08): IDs never change; a one-time, announced merge with the sheet copy first; the old Dishes tab kept as «Страви (архів)».
+- **One sheet tab, `Products`** (developer, 2026-10-08): IDs never change; an automatic merge on the first open of 2.1, with the sheet copy first and a notice; the old tabs kept as «Інгредієнти (архів)» and «Страви (архів)».
 
 ### 2.2 — Sets, clean start, moving mom over · 📝 planned (2.1's one product list first)
 The verified database offered as sets; new data starts empty; built-in items she used become her rows; the generalised update offer.

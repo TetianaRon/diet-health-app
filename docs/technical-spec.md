@@ -774,15 +774,16 @@ The split into «Продукти» and «Страви» mixed two independent t
 - **An item's ID is its identity and never changes** (developer's question: what happens to the ID when an item switches between typed and composed?). Two tabs would have meant moving the row under a new ID and rewriting every link on each switch, which breaks links held by another device's pending changes.
 - **One `Products` tab** holds every item: one row per item, with every column — typed values (today's Ingredients columns), the recipe (today's Dishes columns: ingredients, yield weight and count, weighed pieces), `Values` (`typed` | `recipe`), `Labels` (comma-separated keys: `ingredient,dish,drink,sauce,snack`), and the ml density pair `WeighedMl` / `WeighedMlGrams` (the ml basis is `100ml` in the existing `Basis` column). Row 2 keeps readable Ukrainian names.
 - **IDs:** existing `I…` and `D…` IDs stay valid and unchanged (they're unique across both tabs); new items get `P…`. Links (recipe lines, meal rows' `ItemId`) don't change.
-- **The merge is a one-time, announced upgrade**, not a silent one (it moves rows):
-  - the automatic sheet copy first (2.0's safeguard);
-  - one question: «Об'єднати «Продукти» й «Страви» в одну вкладку?», saying what happens, with «Так, об'єднати» and «Пізніше» (until then the app keeps working on the two tabs; the new features — dishes inside dishes, switching, labels — wait for the merge);
-  - Ingredients rows become `Products` rows (the tab is renamed), Dishes rows are appended with `Values = recipe` (or `typed` for today's fixed-value dishes) and label страва; today's products get `Values = typed` and no label;
-  - the old Dishes tab is renamed «Страви (архів)» and is no longer read; deleting it is the person's choice.
+- **The merge is automatic, with a notice** (developer, 2026-10-08: no «Пізніше» — the app then deals with one storage model only). On the first open of 2.1:
+  - the sheet copy to Drive first (2.0's `makeBackupCopy`);
+  - «Оновлюємо таблицю…», then a notice: «Тепер продукти й страви — в одній вкладці «Продукти». Копію таблиці збережено в Google Drive.»;
+  - a new `Products` tab is written: Ingredients rows with `Values = typed`, no label; Dishes rows with `Values = recipe` (or `typed` for a fixed-value dish, one with no recipe) and the label страва;
+  - **nothing is overwritten or deleted:** the old tabs are renamed «Інгредієнти (архів)» and «Страви (архів)» and no longer read; deleting them is the person's choice;
+  - the device's copy is rebuilt from the new tab; changes waiting to sync for an `Ingredients` or `Dishes` row are moved to the same ID in `Products`.
+- **For mom's sheet:** the developer opens 2.1 on it first, once her phone runs 2.1.
 - **Another device on an older app version** (2.0.4 or earlier) has no guard against a newer structure. Its sheet check reports the missing Ingredients and Dishes tabs as needing a fix, and its fix would create them again, empty, and save new items there. So:
   - **leftover rows are absorbed:** whenever the app finds rows in an `Ingredients` or `Dishes` tab after the merge, it moves them into `Products` (same IDs; a row already there by ID keeps the newer `UpdatedAt`) and empties that tab;
   - **a guard for the future:** a `MinAppVersion` key in Settings; an app older than it opens the sheet read-only with «Таблицю оновлено новішою версією застосунку — оновіть застосунок». 2.1 sets it at the merge, so later structure changes are protected (2.0.4 and earlier can't read it);
-  - **for mom's sheet:** the developer accepts the merge only once her phone runs 2.1 (Play updates it; check the version in Play first).
 - **Sync:** pending changes made before the merge for `Ingredients` or `Dishes` rows apply to the same IDs in `Products`.
 
 ### Not in 2.1
