@@ -352,3 +352,5 @@ Answering "did we review only products?": the 69 home dishes were on the page bu
 - **Reported upstream (2026-10-08):** https://github.com/ionic-team/capacitor-local-notifications/issues/15, with a minimal reproduction (https://github.com/TetianaRon/capacitor-local-notifications-reboot-repro, the unpatched plugin 8.3.1), confirmed on the developer's Pixel 10 (Android 16): a notification due at 10:56 while the phone was off didn't show after an 11:06 boot. When the plugin fixes it, drop our patch.
 - **Test data:** three apple meals deleted (the one from the day before by the developer, in the sheet), and the dev sheet's sleep time restored to 00:00.
 - 410 tests, `tsc -b`, `npm run build`. Version 2.0.3, versionCode 26.
+
+✅ **2.0.3 released 2026-10-08:** main pushed (web) and the bundle uploaded to the internal testing track (versionCode 26). The repro app stays on the developer's phone for now, in case the plugin maintainers ask for more.

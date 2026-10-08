@@ -13,7 +13,7 @@ The workflow (intake → release branch → verify → release) and the standing
 ## Next session — start here (set 2026-10-07)
 1. **2.0 released** to Play's internal testing track and the web (2026-10-06, builds 19–23). Nothing is public; mom is an internal tester, so **an upload is a release to her**. Still worth checking on the developer's devices: the `online` event on a real phone, two tabs, switching sheets.
 2. **Plan reviewed with the developer (2026-10-07):** 2.0.1 → 2.0.2 faster food entry → 2.0.3 reminders → 2.0.4 sign-in choices (+ privacy policy) → 2.1 sets → 2.2 mom's data → 2.3 Picker → 2.4 food families → 2.5 label photos → 2.6 GI from ingredients (after the research) → 2.7 AI lookup → 2.8 English → 3.0 public launch.
-3. **2.0.1 released** (2026-10-07, versionCode 24). **2.0.2 released** (2026-10-08, versionCode 25). **2.0.3 — reminders built** (2026-10-08, versionCode 26), waiting for the push and the upload; still to do: check mom's notification volume and tone. Next: **2.0.4 — sign-in choices**.
+3. **2.0.1 released** (2026-10-07, versionCode 24). **2.0.2 released** (2026-10-08, versionCode 25). **2.0.3 released** (2026-10-08, versionCode 26); still to do: check mom's notification volume and tone. Next: **2.0.4 — sign-in choices**.
 4. Chromium issue 569300356: reply sent 2026-10-05 — check for answers now and then.
 5. Plugin issue [capacitor-local-notifications#15](https://github.com/ionic-team/capacitor-local-notifications/issues/15) (reminders lost during a restart; reported 2026-10-08, our patch in `patches/`): check for answers now and then; drop the patch once a fixed version ships.
 
@@ -34,7 +34,7 @@ Packs list nutrients per portion (per 30 g) or per piece (dumplings per 12), not
 - **Save a custom meal entry to «Страви»** («Зберегти в мої страви»): a fixed-value dish (values per portion, weight optional).
 - **Maths in value fields:** `200*3/4` or «200 ккал * 3/4», to log part of a meal box. Numbers, `+ − * / ( )`, a decimal comma, unit words ignored; the field shows the result, and the result is stored.
 
-### 2.0.3 — Reminders · ✅ built (2026-10-08) — spec → "Meal-time reminder" → "Follow-ups and restarts"
+### 2.0.3 — Reminders · ✅ released (2026-10-08, web + Play internal testing) — spec → "Meal-time reminder" → "Follow-ups and restarts"
 **Decided (developer, 2026-10-08):** 2 follow-ups at +30 and +60 min; no re-fire on opening; vibration plus the usual notification sound.
 - **Follow-ups:** the reminder + 1–2 follow-ups (e.g. +30 and +60 min), cancelled by logging a meal, none in quiet hours, all scheduled ahead so they survive a restart. Open: how many / how far apart; keep or drop the re-fire on opening.
 - **Missed during a phone restart:** `@capacitor/local-notifications` 8.3.1's restore receiver drops a one-shot whose time passed while the phone was off. Patch it (patch-package): one due after the last boot started counts as missed and shows 15 s after boot; report upstream.
