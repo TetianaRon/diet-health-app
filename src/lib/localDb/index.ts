@@ -12,7 +12,7 @@
 // read only after sign-in. Android keeps its copy: the phone is personal.
 // A page load is a new session because the sign-in lives in memory only; if
 // sign-in ever survives a reload, clear at the start of a session instead.
-import { Capacitor } from "@capacitor/core";
+import { rememberMe } from "../rememberMe";
 import { LOCAL_SHEET_ID } from "../localModeId";
 import type { StoredChange, TabSnapshot, WithoutId, WorkerRequest, WorkerResponse } from "./protocol";
 
@@ -166,6 +166,7 @@ async function acquireLockSoon(): Promise<boolean> {
 /** How long the web keeps saves that never reached the sheet (the tab was closed offline). */
 export const WEB_PENDING_KEEP_DAYS = 14;
 let copiesClearedThisPage = false;
+let forgetOnNextOpen = false;
 
 function forgetCopiesRequest(): WithoutId<WorkerRequest> {
   const since = new Date(Date.now() - WEB_PENDING_KEEP_DAYS * 24 * 60 * 60 * 1000).toISOString();
@@ -174,9 +175,12 @@ function forgetCopiesRequest(): WithoutId<WorkerRequest> {
 }
 
 async function openWorkerStore(spreadsheetId: string): Promise<void> {
-  if (!Capacitor.isNativePlatform() && !copiesClearedThisPage) {
+  // A session that isn't remembered starts without the last one's copy: on the
+  // web by default, and in the app when «Запам'ятати мене» is off (2.0.4).
+  if ((!rememberMe() || forgetOnNextOpen) && !copiesClearedThisPage) {
     await workerCall(forgetCopiesRequest());
     copiesClearedThisPage = true;
+    forgetOnNextOpen = false;
   }
   await workerCall({ op: "open", spreadsheetId });
   store = workerStore;
@@ -229,9 +233,18 @@ async function openLocalDbNow(spreadsheetId: string): Promise<LocalDbStatus> {
   return status;
 }
 
-/** «Вийти» on the web: clears every stored sheet copy now (saves not yet in the sheet stay). */
+/**
+ * «Вийти», or another account signing in: clears every stored sheet copy now
+ * (saves not yet in the sheet stay; so does the data of working without
+ * Google). On every platform since 2.0.4: the copy is kept until «Вийти».
+ */
 export async function forgetDeviceCopies(): Promise<void> {
-  if (Capacitor.isNativePlatform() || status !== "ready") return;
+  if (status !== "ready") {
+    // Not open yet: the next open clears instead.
+    copiesClearedThisPage = false;
+    forgetOnNextOpen = true;
+    return;
+  }
   await workerCall(forgetCopiesRequest());
 }
 

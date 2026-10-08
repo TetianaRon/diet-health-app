@@ -495,7 +495,7 @@ Deferred by the developer; the decisions are already made:
 - **Connecting an existing sheet the app didn't create** (e.g. mom's, or one shared by someone else) goes through the **Google Picker** — a Google dialog where the user picks the file, which grants `drive.file` access to that one file. Replaces pasting a link (easier for older users). A wider Drive scope (e.g. `drive.readonly`) is **rejected**: it's *restricted* and would need a paid security assessment.
 - **Remove the shared test-sheet fallback** from the web build once detection exists.
 - **Later, before a public launch:** drop the `spreadsheets` scope entirely (`drive.file` + Picker cover everything) → only non-sensitive scopes. Mom picks her sheet once through the Picker first. Changing scopes means updating the OAuth consent screen's Data Access list and a re-consent for existing users.
-- **Web sign-in stays per-session** (token in memory, re-sign-in each session). Persisting it needs a server-side token exchange — only worth it with real user volume. The Android app already stays signed in (refresh token on the device).
+- **Web sign-in:** the access token stays in memory (no long-lived pass on the web; that would need a server-side token exchange). Since 2.0.4, «Запам'ятати мене» makes each visit one tap, «Продовжити як …» (see "Sign-in choices (2.0.4)"). The Android app stays signed in with a refresh token while «Запам'ятати мене» is on.
 
 **To research before building:** the Picker runs inside a Google page; inside the Android app's WebView there may be no Google session, so on Android it may have to open in the system browser (a small picker page on the web app's domain, returning the file ID to the app via a deep link) — verify that the per-file grant made there applies to the Android OAuth client too (same Cloud project). **Setup the developer does in Google Cloud:** enable the Google Picker API, create a browser API key restricted to the app's origins, note the project number (Picker "App ID").
 
@@ -658,12 +658,24 @@ Every screen reads its tabs from Sheets (Today and History read them in one `bat
   - «Вийти» syncs first, then clears the copy.
   - Closing the tab with changes not yet in the sheet shows the browser's own "leave site?" message.
   - The connected sheet and recent-sheets list belong to one Google account (Drive's opaque permission ID; no email or name is stored). When another account signs in, they're forgotten before any screen shows them.
-  - If sign-in ever survives a reload, the clearing moves to the start of a session.
+  - With «Запам'ятати мене» on (2.0.4), the copy is kept between visits instead, until «Вийти» or another account signing in.
 - **Android keeps its copy between sessions** (the phone is personal). Opened without a connection, it stays signed in on the device copy (the stored refresh token can't be exchanged offline). The first request once online gets a fresh access token; a refresh token Google refuses ends the session.
 - **No backup file** (developer, 2026-10-06): the app's own storage is enough. An .xlsx backup was built in checkpoint C and removed.
 - **Joining Google later** (developer's redesign, 2026-10-06): «Синхронізувати з Google Таблицею» signs in and opens the usual connect window. A new sheet or an existing one gets the phone's data (`localAttach.ts`): the phone's records become ordinary pending changes for that sheet, and the normal sync uploads them (IDs are unique per device). A new sheet also gets the phone's Settings; an existing one keeps its own.
   - Duplicates: same-name products, dishes and medicines (normalised names), and a weight on a day the sheet already has. «Знайдено однакові записи» asks for each: keep the sheet's (the phone's records that used it point to the sheet's item), keep the phone's (the sheet's item takes the phone's values), or keep both under names she sets, which must differ. Meals, sugar readings and medicine taken are events, never duplicates. Unknown values read «невідомо». The texts say «цей пристрій», not «телефон» (developer, 2026-10-06: the same screens can run on other devices).
   - «Скасувати — залишитися без Google» uploads nothing. After a successful join, the phone's own copy is cleared, so starting without Google again begins empty.
+
+### Sign-in choices (2.0.4, developer 2026-10-07/08)
+The person decides where their data lives, with plain wording about each choice.
+- **«Запам'ятати мене на цьому пристрої»** (`rememberMe.ts`), a checkbox under the sign-in button and in Settings while signed in. **On by default in the Android app, off on the web** (developer). Changing it takes effect at once (`applyRememberMe`).
+  - **On:** the device keeps its sheet copy and its sign-in until «Вийти». Android stores the refresh token (as before 2.0.4). The web stores the account's email address and offers **«Продовжити як <email>»**: Google's window opens with `prompt: ""` and `login_hint`, and closes by itself when consent was already given. Browsers need that one tap; it can't be silent without a server. «Увійти іншим обліковим записом» opens Google's account chooser.
+  - **Off:** the sign-in lasts while the app or the tab is open. Android keeps the refresh token in memory only, so closing the app (swiping it away, a restart) ends the session; switching apps doesn't (developer). The copy is cleared when the next session opens the database (`forgetCopies`, the web's 2.0 behaviour); saves not yet in the sheet stay for up to 14 days.
+  - **«Вийти»** clears the copy on every platform (before 2.0.4, only on the web).
+  - **Another account signing in** on the web: the previous account's sheet, recent list and, now, its copy are forgotten before any screen opens them.
+- **The email is stored only while «Запам'ятати мене» is on**, only on that device, and only to show «Продовжити як …». Turning it off removes it. The account check (Drive's permission ID) is unchanged.
+- **Without Google (Android):** «Почати без Google» first shows what that means (`SignInPanel`): the records stay only on this phone; anyone with access to the phone can read them; deleting the app, clearing its data or losing the phone loses them; they can be moved to a Google sheet later. «Зрозуміло — почати без Google» starts, «Назад до входу через Google» returns.
+- **The privacy policy** (roncreator.com) is updated in the same release: what each choice keeps on the device, and the stored email.
+- One shared panel (`SignInPanel.tsx`) replaces the separate sign-in buttons on Today, History, Foods and Settings.
 
 ### Sets and the clean start
 - The verified database stays bundled in the app (works offline). Later, updates come from a static file on the roncreator site, the same file the public pages are built from.

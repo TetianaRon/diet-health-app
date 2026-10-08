@@ -28,6 +28,7 @@ import { applyChanges, type RecordChange } from "./sync/merge";
 import { sliceGrid, tabsOfRanges } from "./localDb/a1";
 import { isLocalSheetId } from "./localModeId";
 import { structureReady } from "./structureGate";
+import { rememberMe, rememberedEmail, setRememberMe, setRememberedEmail } from "./rememberMe";
 import { BACKUP_APP_PROPERTY, isBackupCopyName } from "./backupTag";
 
 const SHEETS_API_BASE = "https://sheets.googleapis.com/v4/spreadsheets";
@@ -61,7 +62,7 @@ interface TokenResponse {
 
 interface TokenClient {
   callback: (response: TokenResponse) => void;
-  requestAccessToken: (options?: { prompt?: string }) => void;
+  requestAccessToken: (options?: { prompt?: string; login_hint?: string }) => void;
 }
 
 declare global {
@@ -184,6 +185,24 @@ let pendingNativeSignIn: { verifier: string; resolve: () => void; reject: (err: 
 // moving to "In production" (a separate step from Play Store distribution)
 // would lift that, but needs its own verification review.
 const REFRESH_TOKEN_STORAGE_KEY = "trackmymeals.refreshToken";
+// The refresh token is always kept for the session; it's stored on the device
+// only while «Запам'ятати мене» is on (2.0.4), so with it off, closing the app
+// ends the session.
+let sessionRefreshToken: string | null = null;
+
+function storedRefreshToken(): string | null {
+  return sessionRefreshToken ?? localStorage.getItem(REFRESH_TOKEN_STORAGE_KEY);
+}
+
+function keepRefreshToken(token: string): void {
+  sessionRefreshToken = token;
+  if (rememberMe()) localStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, token);
+}
+
+function dropRefreshToken(): void {
+  sessionRefreshToken = null;
+  localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
+}
 
 function base64UrlEncode(bytes: Uint8Array): string {
   let binary = "";
@@ -227,7 +246,7 @@ async function exchangeCodeForToken(code: string, verifier: string): Promise<str
 
   const data = await response.json();
   if (!data.access_token) throw new Error("Token exchange: no access_token returned");
-  if (data.refresh_token) localStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, data.refresh_token);
+  if (data.refresh_token) keepRefreshToken(data.refresh_token);
   return data.access_token as string;
 }
 
@@ -241,7 +260,7 @@ async function exchangeCodeForToken(code: string, verifier: string): Promise<str
  * throwing, so callers can fall back to a normal interactive sign-in.
  */
 async function refreshAccessToken(): Promise<boolean> {
-  const refreshToken = localStorage.getItem(REFRESH_TOKEN_STORAGE_KEY);
+  const refreshToken = storedRefreshToken();
   if (!refreshToken) return false;
 
   const clientId = import.meta.env.VITE_GOOGLE_ANDROID_CLIENT_ID;
@@ -252,13 +271,13 @@ async function refreshAccessToken(): Promise<boolean> {
   });
 
   if (!response.ok) {
-    localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
+    dropRefreshToken();
     return false;
   }
 
   const data = await response.json();
   if (!data.access_token) {
-    localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
+    dropRefreshToken();
     return false;
   }
   startSession(data.access_token as string);
@@ -346,7 +365,7 @@ export async function initGoogleAuth(): Promise<void> {
       await refreshAccessToken();
     } catch (err) {
       // fetch() throws a TypeError only when it can't reach Google at all.
-      if (!(err instanceof TypeError) || !localStorage.getItem(REFRESH_TOKEN_STORAGE_KEY)) throw err;
+      if (!(err instanceof TypeError) || !storedRefreshToken()) throw err;
       offlineSession = true;
     }
     return;
@@ -369,10 +388,24 @@ export async function initGoogleAuth(): Promise<void> {
   });
 }
 
-export function signIn(): Promise<void> {
+export interface SignInOptions {
+  /** «Продовжити як …» (web): this account, with no account chooser or consent screen. */
+  hint?: string;
+  /** «Увійти іншим обліковим записом» (web): always show Google's account chooser. */
+  chooseAccount?: boolean;
+}
+
+export function signIn(request: SignInOptions = {}): Promise<void> {
   if (Capacitor.isNativePlatform()) return signInNative();
   // After an expiry, skip the consent screen she already went through.
-  const options = sessionExpired ? { prompt: "" } : undefined;
+  const hint = request.hint ?? (sessionExpired ? (currentEmail ?? undefined) : undefined);
+  const options = request.chooseAccount
+    ? { prompt: "select_account" }
+    : hint
+      ? { prompt: "", login_hint: hint }
+      : sessionExpired
+        ? { prompt: "" }
+        : undefined;
 
   return new Promise((resolve, reject) => {
     if (!tokenClient) {
@@ -407,16 +440,44 @@ const WEB_ACCOUNT_STORAGE_KEY = "trackmymeals.webAccount";
  * email or name is stored.
  */
 async function bindWebAccount(): Promise<void> {
-  const response = await authorizedFetchUrl("https://www.googleapis.com/drive/v3/about?fields=user(permissionId)");
-  const data = (await response.json()) as { user?: { permissionId?: string } };
+  const response = await authorizedFetchUrl("https://www.googleapis.com/drive/v3/about?fields=user(permissionId,emailAddress)");
+  const data = (await response.json()) as { user?: { permissionId?: string; emailAddress?: string } };
   const account = data.user?.permissionId;
   if (!account) throw new Error(uk.auth.accountCheckFailed);
   const previous = localStorage.getItem(WEB_ACCOUNT_STORAGE_KEY);
   if (previous && previous !== account) {
     if (!isLocalSheetId(getSpreadsheetId())) localStorage.removeItem(SPREADSHEET_ID_STORAGE_KEY);
     localStorage.removeItem(RECENT_SHEETS_STORAGE_KEY);
+    // With «Запам'ятати мене» on, the previous person's copy outlived the page
+    // load; it goes before any screen opens it (2.0.4).
+    await forgetSheetCopies();
   }
   localStorage.setItem(WEB_ACCOUNT_STORAGE_KEY, account);
+  currentEmail = data.user?.emailAddress ?? null;
+  setRememberedEmail(currentEmail);
+}
+
+// The signed-in address, in memory for this page; stored only while «Запам'ятати мене» is on.
+let currentEmail: string | null = null;
+
+/** The web's «Продовжити як …» address, or null (remember off, or nobody signed in here before). */
+export function getRememberedEmail(): string | null {
+  return Capacitor.isNativePlatform() ? null : rememberedEmail();
+}
+
+/**
+ * Changes «Запам'ятати мене на цьому пристрої». On keeps this session's sign-in
+ * (Android: the refresh token; web: the address for «Продовжити як …»). Off
+ * forgets them; the sheet copy is then cleared when the next session starts.
+ */
+export function applyRememberMe(on: boolean): void {
+  setRememberMe(on);
+  if (on) {
+    if (sessionRefreshToken) localStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, sessionRefreshToken);
+    setRememberedEmail(currentEmail);
+  } else {
+    localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
+  }
 }
 
 export function signOut(): void {
@@ -424,8 +485,9 @@ export function signOut(): void {
   offlineSession = false;
   accessTokenExpiresAt = null;
   sessionExpired = false;
+  currentEmail = null;
   // No-op if never set (e.g. on web) — removeItem on a missing key is safe.
-  localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
+  dropRefreshToken();
 }
 
 export function isSignedIn(): boolean {

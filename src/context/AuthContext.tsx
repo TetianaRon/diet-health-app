@@ -22,7 +22,7 @@ interface AuthContextValue {
    * requests fail with SessionExpiredError until then.
    */
   sessionExpired: boolean;
-  signIn: () => Promise<void>;
+  signIn: (options?: sheets.SignInOptions) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -67,8 +67,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [signedIn, sessionExpired]);
 
-  const signIn = async () => {
-    await sheets.signIn();
+  const signIn = async (options?: sheets.SignInOptions) => {
+    await sheets.signIn(options);
     setSignedIn(sheets.isSignedIn());
     setSessionExpired(false);
   };

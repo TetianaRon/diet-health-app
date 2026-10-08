@@ -1,7 +1,7 @@
 // Історія — every day's records together, read-only (release 1.7): daily
 // totals, weight, blood sugar + medicine, meals. Days that have any record,
 // 14 at a time («Показати ще»), with its own on-screen order toggle.
-import { canOfferLocalMode } from "../lib/localMode";
+import SignInPanel from "./SignInPanel";
 import { useEffect, useState } from "react";
 import { uk } from "../i18n/uk";
 import { useAuth } from "../context/AuthContext";
@@ -17,7 +17,7 @@ import { MealsWithItems } from "./MealsReadOnly";
 const PAGE_DAYS = 14;
 
 export default function HistoryScreen() {
-  const { signedIn, initializing, signIn, sessionExpired, startWithoutGoogle } = useAuth();
+  const { signedIn, initializing, sessionExpired } = useAuth();
   const [data, setData] = useState<DayData | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [visibleDays, setVisibleDays] = useState(PAGE_DAYS);
@@ -45,14 +45,7 @@ export default function HistoryScreen() {
       <section className="screen">
         <h1>{uk.history.title}</h1>
         <p>{uk.history.signIn.message}</p>
-        <button type="button" onClick={() => void signIn()}>
-          {uk.history.signIn.button}
-        </button>
-        {canOfferLocalMode() && (
-          <button type="button" className="button-secondary" onClick={() => void startWithoutGoogle()}>
-            {uk.localMode.startButton}
-          </button>
-        )}
+        <SignInPanel buttonLabel={uk.history.signIn.button} />
       </section>
     );
   }

@@ -41,7 +41,8 @@ Packs list nutrients per portion (per 30 g) or per piece (dumplings per 12), not
 - **Easy to miss:** a new channel with vibration on (a channel's sound and vibration can't change after creation), maybe a more noticeable sound; check mom's notification volume.
 - **Two permission asks feel like one failed:** one short explanation screen, then both permissions one after the other; the notice only if exact alarms are still off (since 2.0 build 22 the app never opens the alarm settings by itself).
 
-### 2.0.4 — Sign-in choices · 📝 planned (developer, 2026-10-07)
+### 2.0.4 — Sign-in choices · 🔨 in progress (2026-10-08) — spec → "Sign-in choices (2.0.4)"
+**Decided (developer, 2026-10-08):** remember on by default in the app, off on the web; «Продовжити як» shows the email; on Android with remember off, closing the app ends the session.
 The person decides where their data lives, with plain wording about each choice.
 - **«Запам'ятати мене на цьому пристрої»** at sign-in. On: the device keeps its copy of the sheet until «Вийти». Off: sign in every time, and the copy is cleared when the session ends (the web's behaviour today).
 - **Web:** one tap «Продовжити як …» on each visit (Google skips the password while the person is signed in to Google in that browser); no long-lived pass is stored (developer: works for now). **Android:** already remembered; this adds the choice not to.

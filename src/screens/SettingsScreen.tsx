@@ -13,6 +13,7 @@ import { formatDateTime } from "../lib/dateFormat";
 import { useSheetHealth } from "../context/SheetHealthContext";
 import { useNotifications } from "../context/NotificationsContext";
 import { SheetHealthIssueList, summarizeIssues } from "./SheetHealthIssues";
+import SignInPanel, { RememberMeSetting } from "./SignInPanel";
 
 const NUMERIC_FIELDS = [
   "dailyCarbsTarget",
@@ -230,7 +231,7 @@ function SnackShareHint({ values }: { values: Record<string, string> }) {
 }
 
 export default function SettingsScreen() {
-  const { signedIn, initializing, signIn, signOut, sessionExpired, localMode } = useAuth();
+  const { signedIn, initializing, signOut, sessionExpired, localMode } = useAuth();
   const [values, setValues] = useState<Record<string, string>>({});
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
@@ -321,6 +322,7 @@ export default function SettingsScreen() {
         ) : signedIn ? (
           <>
             <p>{uk.settings.account.signedIn}</p>
+            {!localMode && <RememberMeSetting />}
             <button type="button" onClick={() => void signOut()}>
               {uk.settings.account.signOutButton}
             </button>
@@ -328,9 +330,7 @@ export default function SettingsScreen() {
         ) : (
           <>
             <p>{uk.settings.account.notSignedIn}</p>
-            <button type="button" onClick={() => void signIn()}>
-              {uk.settings.account.signInButton}
-            </button>
+            <SignInPanel buttonLabel={uk.settings.account.signInButton} offerLocalMode={false} />
           </>
         )}
       </div>
