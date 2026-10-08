@@ -1,0 +1,109 @@
+diff --git a/node_modules/@capacitor/local-notifications/android/src/main/kotlin/com/capacitorjs/plugins/localnotifications/LocalNotificationRestoreReceiver.kt b/node_modules/@capacitor/local-notifications/android/src/main/kotlin/com/capacitorjs/plugins/localnotifications/LocalNotificationRestoreReceiver.kt
+index 4a3f1c4..fb28126 100644
+--- a/node_modules/@capacitor/local-notifications/android/src/main/kotlin/com/capacitorjs/plugins/localnotifications/LocalNotificationRestoreReceiver.kt
++++ b/node_modules/@capacitor/local-notifications/android/src/main/kotlin/com/capacitorjs/plugins/localnotifications/LocalNotificationRestoreReceiver.kt
+@@ -6,6 +6,7 @@ import android.content.Intent
+ import android.os.UserManager
+ import com.getcapacitor.CapConfig
+ import java.util.Date
++import org.json.JSONObject
+ 
+ class LocalNotificationRestoreReceiver : BroadcastReceiver() {
+ 
+@@ -18,6 +19,13 @@ class LocalNotificationRestoreReceiver : BroadcastReceiver() {
+ 
+         val notifications = ArrayList<LocalNotification>(ids.size)
+         val updatedNotifications = ArrayList<LocalNotification>()
++        // Track My Meals patch: one-shots that came due while the phone was off.
++        // Upstream treats every past one-shot as fired (isTriggered() only
++        // compares `at` with now), so these were silently dropped. Only the
++        // latest missed one is shown, and none after its extra.catchUpUntil
++        // (the app's quiet hours: a night-time update restart stays silent).
++        val missed = ArrayList<LocalNotification>()
++        val now = Date().time
+         for (id in ids) {
+             val notification = storage.getSavedNotification(id) ?: continue
+ 
+@@ -36,7 +44,18 @@ class LocalNotificationRestoreReceiver : BroadcastReceiver() {
+                 // re-arm it on boot, or it re-fires after every reboot. Same guard the
+                 // migrator's reconcileOwnStorage already uses.
+                 if (!schedule.isPerpetual() && notification.isTriggered()) {
+-                    if (notification.cancelled) storage.deleteNotification(id)
++                    if (notification.cancelled) {
++                        storage.deleteNotification(id)
++                        continue
++                    }
++                    val at = schedule.at!!.time
++                    if (storage.getFiredAt(id) == at) continue
++                    val catchUpUntil = (notification.extra as? JSONObject)?.optLong("catchUpUntil", 0L) ?: 0L
++                    if (catchUpUntil > 0L && now >= catchUpUntil) {
++                        storage.setFiredAt(id, at)
++                        continue
++                    }
++                    missed.add(notification)
+                     continue
+                 }
+                 val at = schedule.at
+@@ -52,6 +71,20 @@ class LocalNotificationRestoreReceiver : BroadcastReceiver() {
+             notifications.add(notification)
+         }
+ 
++        val latestMissed = missed.maxByOrNull { it.schedule!!.at!!.time }
++        for (notification in missed) {
++            val id = notification.id?.toString() ?: continue
++            if (notification !== latestMissed) {
++                storage.setFiredAt(id, notification.schedule!!.at!!.time)
++                continue
++            }
++            val schedule = notification.schedule!!
++            schedule.at = Date(now + 15 * 1000)
++            notification.schedule = schedule
++            updatedNotifications.add(notification)
++            notifications.add(notification)
++        }
++
+         if (updatedNotifications.isNotEmpty()) {
+             storage.appendNotifications(updatedNotifications)
+         }
+diff --git a/node_modules/@capacitor/local-notifications/android/src/main/kotlin/com/capacitorjs/plugins/localnotifications/NotificationStorage.kt b/node_modules/@capacitor/local-notifications/android/src/main/kotlin/com/capacitorjs/plugins/localnotifications/NotificationStorage.kt
+index b7ff07b..4be96cd 100644
+--- a/node_modules/@capacitor/local-notifications/android/src/main/kotlin/com/capacitorjs/plugins/localnotifications/NotificationStorage.kt
++++ b/node_modules/@capacitor/local-notifications/android/src/main/kotlin/com/capacitorjs/plugins/localnotifications/NotificationStorage.kt
+@@ -94,6 +94,24 @@ class NotificationStorage(private val context: Context) {
+         editor.apply()
+     }
+ 
++    /**
++     * Track My Meals patch: records that a one-shot actually fired at `at`, so
++     * reboot-restore can tell a fired one from one that came due while the
++     * phone was off. Rescheduling the id replaces the record (and this mark).
++     */
++    fun setFiredAt(id: String, at: Long) {
++        val json = getSavedNotificationAsJSObject(id) ?: return
++        json.put("firedAt", at)
++        val editor = getStorage(NOTIFICATION_STORE_ID).edit()
++        editor.putString(id, json.toString())
++        editor.apply()
++    }
++
++    fun getFiredAt(id: String): Long? {
++        val json = getSavedNotificationAsJSObject(id) ?: return null
++        return if (json.has("firedAt")) json.optLong("firedAt") else null
++    }
++
+     private fun getStorage(key: String): SharedPreferences =
+         context.getSharedPreferences(key, Context.MODE_PRIVATE)
+ 
+diff --git a/node_modules/@capacitor/local-notifications/android/src/main/kotlin/com/capacitorjs/plugins/localnotifications/TimedNotificationPublisher.kt b/node_modules/@capacitor/local-notifications/android/src/main/kotlin/com/capacitorjs/plugins/localnotifications/TimedNotificationPublisher.kt
+index 52def58..aac49f7 100644
+--- a/node_modules/@capacitor/local-notifications/android/src/main/kotlin/com/capacitorjs/plugins/localnotifications/TimedNotificationPublisher.kt
++++ b/node_modules/@capacitor/local-notifications/android/src/main/kotlin/com/capacitorjs/plugins/localnotifications/TimedNotificationPublisher.kt
+@@ -39,6 +39,8 @@ class TimedNotificationPublisher : BroadcastReceiver() {
+         val notificationJson = storage.getSavedNotificationAsJSObject(id.toString())
+         LocalNotificationsPlugin.fireReceived(notificationJson)
+         notificationManager.notify(id, notification)
++        // Track My Meals patch: mark the one-shot fired (see NotificationStorage.setFiredAt).
++        storage.getSavedNotification(id.toString())?.schedule?.at?.let { storage.setFiredAt(id.toString(), it.time) }
+         rescheduleNotificationIfNeeded(context, intent, id)
+         // The notification's record stays in storage after firing (matching the
+         // legacy plugin) so a triggered notification's full data — sound, extra,

@@ -328,3 +328,26 @@ Answering "did we review only products?": the 69 home dishes were on the page bu
 - 406 tests, `tsc -b`, `npm run build`. Version 2.0.2, versionCode 25.
 
 ✅ **2.0.2 released 2026-10-08:** main pushed (web) and the bundle uploaded to the internal testing track (versionCode 25).
+
+**Release 2.0.3 — reminders (2026-10-08, branch `release/2.0.3`):**
+- **Decided (developer):** 2 follow-ups at +30 and +60 min; no re-fire on opening; vibration plus the phone's usual notification sound.
+- **Built** (spec → "Meal-time reminder" → "Follow-ups and restarts"):
+  - `planMealReminders()` (`reminders.ts`, unit-tested) plans the reminder and its follow-ups ahead (ids 1001–1003). Ones already due or in quiet hours are left out, so opening the app while overdue sends nothing.
+  - **Plugin patch** (`patches/@capacitor+local-notifications+8.3.1.patch`, patch-package via `postinstall`): the restore receiver treated every past one-shot as fired, because `isTriggered()` only compares `at` with now, so a reminder due while the phone was off was lost. Now a fired one-shot records `firedAt`; on boot, a past one-shot without it was missed. Only the latest missed one shows, 15 s after boot, and none once its `extra.catchUpUntil` (the next start of quiet hours) has passed. That last limit wasn't asked for: it applies "none in quiet hours" to a night-time update restart.
+  - **Channel** `meal-reminders-2` with vibration and the default sound; the old `meal-reminders` is deleted.
+  - **One explained ask:** no permission prompt at startup. Today's card explains the reminder and the two permissions; «Увімкнути нагадування» asks for notifications, then opens «Будильники й нагадування».
+- **Verified (emulator):**
+  - the new channel (vibration on) replaced the old one;
+  - opening while overdue sent nothing;
+  - a meal at 21:37 scheduled 00:37 / 01:07 / 01:37 with `catchUpUntil` at the next sleep time, and 00:37 fired;
+  - after a cold boot the follow-ups were re-armed.
+- **Verified (developer's Pixel 10, fresh debug install, dev sheet):**
+  - no prompt at startup; the card led into both permissions, which the developer said "felt like one flow"; the card went away once both were on;
+  - exact reminders at 09:33 / 10:03 / 10:33, and 09:33 fired and was marked fired;
+  - with the phone powered off across 09:39, the missed reminder was re-armed for 15 s after boot and showed; it was then marked fired, and the follow-ups were re-armed;
+  - deleting the test meals cancelled the pending follow-ups;
+  - channel settings: importance high, the default notification sound, vibration on. The first sound check was silent with Do Not Disturb on; the second (DND off) vibrated, and the system log shows the sound playing, at notification volume 3 of 7 with the short «Kernel» tone. The developer missed that sound and heard it on a third try.
+- **For mom's phone (the developer, not the app):** Do Not Disturb silences the reminder, and a low notification volume or a short tone makes it easy to miss. Check her notification volume and tone.
+- **Not checked:** the `catchUpUntil` limit (no catch-up after a restart in quiet hours) on a device; the plugin issue isn't reported upstream yet.
+- **Test data:** three apple meals deleted (the one from the day before by the developer, in the sheet), and the dev sheet's sleep time restored to 00:00.
+- 410 tests, `tsc -b`, `npm run build`. Version 2.0.3, versionCode 26.
