@@ -270,6 +270,7 @@ export const uk = {
     title: "Джерело значень",
     nutrients: "Поживні речовини, на 100 г",
     gi: "Глікемічний індекс (ГІ)",
+    portions: "Розміри порцій",
     reliability: { high: "висока надійність", medium: "середня надійність", low: "низька надійність" } as Record<string, string>,
     giStatus: { measured: "виміряне", conventional: "умовне", unknown: "немає даних", notApplicable: "не застосовується" } as Record<string, string>,
     giNotApplicable: "ГІ не застосовується",

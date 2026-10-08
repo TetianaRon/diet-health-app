@@ -62,6 +62,14 @@ export interface GiPart extends Provenance {
   source: SourceRef | null;
 }
 
+/** A typical portion of this food (release 2.0.2): a label and its weight, with its own provenance. */
+export interface PortionPart extends Provenance {
+  labelUk: string;
+  labelEn: string;
+  grams: number;
+  source: SourceRef;
+}
+
 export interface VerifiedFoodEntry {
   /** Permanent built-in ID (B + 4 digits): never changed, never reused. */
   id: string;
@@ -83,9 +91,11 @@ export interface VerifiedFoodEntry {
   nameEn: string;
   nutrients: NutrientsPart;
   gi: GiPart;
+  /** Typical portion sizes («середнє ≈ 182 г», «1 мигдалина ≈ 1,29 г»), each sourced. */
+  portions?: PortionPart[];
 }
 
-export const FOOD_STATES = ["raw", "dry", "boiled", "baked", "fried", "steamed", "canned", "dried", "fermented", "processed", "brewed"] as const;
+export const FOOD_STATES = ["raw", "dry", "boiled", "baked", "fried", "roasted", "steamed", "canned", "dried", "fermented", "processed", "brewed"] as const;
 export type FoodState = (typeof FOOD_STATES)[number];
 
 export interface DatasetInfo {
@@ -180,6 +190,17 @@ export function validateVerifiedFoods(file: VerifiedFoodsFile, today: string): s
       }
       checkSource(`${at} nutrients`, n.source);
       checkProvenance(`${at} nutrients`, n);
+    }
+
+    const labels = new Set<string>();
+    for (const [i, portion] of (e.portions ?? []).entries()) {
+      const where = `${at} portion ${i + 1}`;
+      if (!filled(portion.labelUk) || !filled(portion.labelEn)) problems.push(`${where}: Ukrainian and English labels are required`);
+      if (labels.has(portion.labelUk)) problems.push(`${where}: duplicate label "${portion.labelUk}"`);
+      labels.add(portion.labelUk);
+      if (typeof portion.grams !== "number" || !Number.isFinite(portion.grams) || portion.grams <= 0) problems.push(`${where}: grams must be a number > 0`);
+      checkSource(where, portion.source);
+      checkProvenance(where, portion);
     }
 
     const gi = e.gi;

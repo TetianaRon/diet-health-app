@@ -6,12 +6,12 @@
 import { readRange } from "./sheets";
 import { deleteRecord, upsertRecord } from "./recordStore";
 import { buildColumnIndex, buildRow, cell, parseTab, SCAN_LAST_COLUMN, type ColumnIndex, type ParsedTab } from "./sheetRow";
-import { BUILT_IN_ALIASES, BUILT_IN_FOODS } from "../data/builtInFoods";
+import { BUILT_IN_ALIASES, BUILT_IN_FOODS, databasePortionSizes, verifiedEntry } from "../data/builtInFoods";
 import { toGlycemicFlag, type GlycemicFlag } from "./glycemicFlag";
 import { parseUnknownNutritionFields, type NutritionKey } from "./dishes";
 import { mergeBuiltInsById, newRecordId } from "./itemIds";
 import { positiveOrNull, toBasis, type Basis } from "./measure";
-import { parsePortionSizes, serializePortionSizes, type PortionSize } from "./portionSizes";
+import { mergePortionSizes, parsePortionSizes, serializePortionSizes, type PortionSize } from "./portionSizes";
 
 export type IngredientSource = "starter" | "usda" | "manual";
 
@@ -197,7 +197,10 @@ export function sortFavoritesFirst<T extends { favorite: boolean }>(items: T[]):
  * own, that it isn't a real saved row.
  */
 export function mergeWithBuiltInFoods(sheetIngredients: Ingredient[]): Ingredient[] {
-  return mergeBuiltInsById(BUILT_IN_FOODS, sheetIngredients, BUILT_IN_ALIASES);
+  // Her copy of a database product keeps the database's portion sizes, with hers added (2.0.2).
+  return mergeBuiltInsById(BUILT_IN_FOODS, sheetIngredients, BUILT_IN_ALIASES).map((item) =>
+    item.basedOn ? { ...item, portionSizes: mergePortionSizes(databasePortionSizes(verifiedEntry(item.basedOn)), item.portionSizes) } : item,
+  );
 }
 
 async function readIngredientsSheet(): Promise<ParsedTab> {

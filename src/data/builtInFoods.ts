@@ -14,6 +14,7 @@ import type { Ingredient } from "../lib/ingredients";
 import type { NutritionKey } from "../lib/dishes";
 import type { VerifiedFoodEntry, VerifiedFoodsFile } from "./verifiedFoods";
 import { LEGACY_BUILT_INS } from "./legacyBuiltIns";
+import type { PortionSize } from "../lib/portionSizes";
 
 const DATABASE = file as VerifiedFoodsFile;
 
@@ -48,8 +49,13 @@ export function entryToIngredient(entry: VerifiedFoodEntry): Ingredient {
     valuesPer: null,
     weighedPieces: null,
     weighedGrams: null,
-    portionSizes: [],
+    portionSizes: databasePortionSizes(entry),
   };
+}
+
+/** The database's portion sizes for an entry (2.0.2), marked as database sizes (ⓘ). */
+export function databasePortionSizes(entry: VerifiedFoodEntry | null): PortionSize[] {
+  return (entry?.portions ?? []).map((p) => ({ label: p.labelUk, grams: p.grams, fromDatabase: true }));
 }
 
 const ACTIVE = DATABASE.entries.filter((e) => e.status === "active");

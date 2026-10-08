@@ -738,7 +738,7 @@ function EditIngredientForm({
       ))}
 
       <PackSummary pack={pack} values={values} />
-      <PortionSizesFields rows={sizeRows} onChange={setSizeRows} {...sizeUnits(pack)} />
+      <PortionSizesFields rows={sizeRows} onChange={setSizeRows} databaseSizes={ingredient.portionSizes.filter((p) => p.fromDatabase)} {...sizeUnits(pack)} />
 
       <label className="settings-checkbox">
         <input

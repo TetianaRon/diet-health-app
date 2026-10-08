@@ -365,6 +365,121 @@ COFFEE_ITEMS = [
 NEW_ITEMS += COFFEE_ITEMS
 
 
+# --- 2.0.2 additions (developer, 2026-10-06/07): nuts and seeds, and portion sizes.
+# Mom eats nuts often, a few at a time; the developer chose roasted nuts, without
+# and with salt wherever USDA has both (salted pistachios carry far more sodium),
+# and walnuts in the core set. Brazil nuts and pine nuts are only in USDA dried.
+# GI: cashews and peanuts were measured; the other nuts weren't, and take the
+# mixed-nuts value the existing walnut entry uses (low reliability) — a question
+# for the developer's review; pine nuts and seeds have no study, so unknown.
+NUT_VER = "2026-10-07"
+MIXED_NUTS = lambda nut_uk, nut_en: ("m", "ST1", [1433], "low", (f"Окремо {nut_uk} не вимірювали; значення для суміші горіхів (смажених, солоних), як і для волоських горіхів.", f"{nut_en} weren't measured on their own; the value is for mixed nuts (roasted, salted), as for walnuts."))
+NO_GI_STUDY = lambda what_uk, what_en: ("u", (f"Досліджень ГІ для {what_uk} немає в міжнародних таблицях 2021 року.", f"The 2021 international tables have no GI study of {what_en}."))
+CASHEW_GI = ("m", "ST1", [1431], "medium", ("Одне дослідження солоного кешью (Австралія); сіль на ГІ не впливає.", "One study of salted cashews (Australia); salt doesn't affect GI."))
+PEANUT_GI = ("m", "ST2", [3244, 3245], "low", ("Лише Таблиця 2: два давні дослідження (1981, 1984) з малою кількістю учасників.", "Table 2 only: two old studies (1981, 1984) with few participants."))
+NUT_ITEMS = [
+    dict(id="B0099", ver=NUT_VER, cat="nuts", fam="almond", st="roasted", uk="Мигдаль смажений, без солі", en="Almonds, dry roasted, without salt", n=170158, nr="high", gi=MIXED_NUTS("мигдаль", "Almonds")),
+    dict(id="B0100", ver=NUT_VER, cat="nuts", fam="almond", st="roasted", uk="Мигдаль смажений, з сіллю", en="Almonds, dry roasted, with salt", n=168596, nr="high", gi=MIXED_NUTS("мигдаль", "Almonds")),
+    dict(id="B0101", ver=NUT_VER, cat="nuts", fam="pistachio", st="roasted", uk="Фісташки смажені, без солі", en="Pistachios, dry roasted, without salt", n=170185, nr="high", gi=MIXED_NUTS("фісташки", "Pistachios")),
+    dict(id="B0102", ver=NUT_VER, cat="nuts", fam="pistachio", st="roasted", uk="Фісташки смажені, з сіллю", en="Pistachios, dry roasted, with salt", n=169426, nr="high", gi=MIXED_NUTS("фісташки", "Pistachios")),
+    dict(id="B0103", ver=NUT_VER, cat="nuts", fam="hazelnut", st="roasted", uk="Фундук смажений, без солі", en="Hazelnuts, dry roasted, without salt", n=170583, nr="high",
+         nn=("Солоного фундуку в USDA немає.", "USDA has no salted hazelnuts."), gi=MIXED_NUTS("фундук", "Hazelnuts")),
+    dict(id="B0104", ver=NUT_VER, cat="nuts", fam="cashew", st="roasted", uk="Кешью смажений, без солі", en="Cashews, dry roasted, without salt", n=170571, nr="high", gi=CASHEW_GI),
+    dict(id="B0105", ver=NUT_VER, cat="nuts", fam="cashew", st="roasted", uk="Кешью смажений, з сіллю", en="Cashews, dry roasted, with salt", n=169421, nr="high", gi=CASHEW_GI),
+    dict(id="B0106", ver=NUT_VER, cat="nuts", fam="peanut", st="roasted", uk="Арахіс смажений, без солі", en="Peanuts, dry roasted, without salt", n=173806, nr="high", gi=PEANUT_GI),
+    dict(id="B0107", ver=NUT_VER, cat="nuts", fam="peanut", st="roasted", uk="Арахіс смажений, з сіллю", en="Peanuts, dry roasted, with salt", n=174262, nr="high", gi=PEANUT_GI),
+    dict(id="B0108", ver=NUT_VER, cat="nuts", fam="pecan", st="roasted", uk="Пекан смажений, без солі", en="Pecans, dry roasted, without salt", n=170183, nr="high", gi=MIXED_NUTS("пекан", "Pecans")),
+    dict(id="B0109", ver=NUT_VER, cat="nuts", fam="pecan", st="roasted", uk="Пекан смажений, з сіллю", en="Pecans, dry roasted, with salt", n=169424, nr="high", gi=MIXED_NUTS("пекан", "Pecans")),
+    dict(id="B0110", ver=NUT_VER, cat="nuts", fam="brazil-nut", st="dried", uk="Бразильський горіх, сушений", en="Brazil nuts, dried", n=170569, nr="high",
+         nn=("Смаженого бразильського горіха в USDA немає.", "USDA has no roasted Brazil nuts."), gi=MIXED_NUTS("бразильський горіх", "Brazil nuts")),
+    dict(id="B0111", ver=NUT_VER, cat="nuts", fam="pine-nut", st="dried", uk="Кедрові горішки, сушені", en="Pine nuts, dried", n=170591, nr="high",
+         nn=("Смажених кедрових горішків у USDA немає.", "USDA has no roasted pine nuts."), gi=NO_GI_STUDY("кедрових горішків", "pine nuts")),
+    dict(id="B0112", ver=NUT_VER, cat="nuts", fam="sunflower-seed", st="roasted", uk="Насіння соняшнику смажене, очищене, без солі", en="Sunflower seed kernels, dry roasted, without salt", n=170563, nr="high", gi=NO_GI_STUDY("насіння соняшнику", "sunflower seeds")),
+    dict(id="B0113", ver=NUT_VER, cat="nuts", fam="sunflower-seed", st="roasted", uk="Насіння соняшнику смажене, очищене, з сіллю", en="Sunflower seed kernels, dry roasted, with salt", n=169418, nr="high", gi=NO_GI_STUDY("насіння соняшнику", "sunflower seeds")),
+    dict(id="B0114", ver=NUT_VER, cat="nuts", fam="pumpkin-seed", st="roasted", uk="Гарбузове насіння смажене, очищене, без солі", en="Pumpkin seed kernels, roasted, without salt", n=170557, nr="high", gi=NO_GI_STUDY("гарбузового насіння", "pumpkin seeds")),
+    dict(id="B0115", ver=NUT_VER, cat="nuts", fam="pumpkin-seed", st="roasted", uk="Гарбузове насіння смажене, очищене, з сіллю", en="Pumpkin seed kernels, roasted, with salt", n=169415, nr="high", gi=NO_GI_STUDY("гарбузового насіння", "pumpkin seeds")),
+    dict(id="B0116", ver=NUT_VER, cat="nuts", fam="walnut", st="roasted", uk="Волоські горіхи смажені, з сіллю", en="Walnuts, dry roasted, with salt", n=170594, nr="high",
+         nn=("Смажених волоських горіхів без солі в USDA немає.", "USDA has no roasted walnuts without salt."), gi=MIXED_NUTS("волоські горіхи", "Walnuts")),
+]
+NEW_ITEMS += NUT_ITEMS
+
+# Portion sizes (spec → "Faster food entry"): typical weights from USDA's own
+# portion data for the same entry (or, where it lists none, the nearest USDA
+# entry of the same food, stated). (label uk, label en, grams, reliability,
+# (dataset, entry, USDA's portion text), (reason uk, reason en)).
+def usda_portion(entry, text):
+    return ("usda-sr-legacy", str(entry), text)
+
+SAME = ("Вага з даних USDA для цього ж запису.", "The weight from USDA's portion data for this same entry.")
+PER_COUNT = lambda count_uk, count_en: (f"Поділено з даних USDA: {count_uk}.", f"Divided from USDA's portion data: {count_en}.")
+PORTIONS = {
+    "B0047": [("маленьке", "small", 149, "high", usda_portion(171688, '1 small (2-3/4" dia) = 149 g'), SAME),
+              ("середнє", "medium", 182, "high", usda_portion(171688, '1 medium (3" dia) = 182 g'), SAME),
+              ("велике", "large", 223, "high", usda_portion(171688, '1 large (3-1/4" dia) = 223 g'), SAME)],
+    "B0048": [("маленька", "small", 148, "high", usda_portion(169118, "1 small = 148 g"), SAME),
+              ("середня", "medium", 178, "high", usda_portion(169118, "1 medium = 178 g"), SAME),
+              ("велика", "large", 230, "high", usda_portion(169118, "1 large = 230 g"), SAME)],
+    "B0049": [("маленький", "small", 101, "high", usda_portion(173944, '1 small (6" to 6-7/8" long) = 101 g'), SAME),
+              ("середній", "medium", 118, "high", usda_portion(173944, '1 medium (7" to 7-7/8" long) = 118 g'), SAME),
+              ("великий", "large", 136, "high", usda_portion(173944, '1 large (8" to 8-7/8" long) = 136 g'), SAME)],
+    "B0050": [("маленький", "small", 96, "high", usda_portion(169097, '1 small (2-3/8" dia) = 96 g'), SAME),
+              ("середній", "medium", 131, "high", usda_portion(169097, '1 fruit (2-5/8" dia) = 131 g'), SAME),
+              ("великий", "large", 184, "high", usda_portion(169097, '1 large (3-1/16" dia) = 184 g'), SAME)],
+    "B0024": [("1 яйце", "1 egg", 50, "high", usda_portion(173424, "1 large = 50 g"), ("Вага великого яйця з даних USDA для цього ж запису.", "A large egg's weight from USDA's portion data for this same entry."))],
+    "B0010": [("скибка", "slice", 32, "high", usda_portion(172684, "1 slice, regular = 32 g"), SAME),
+              ("тонка скибка", "thin slice", 25, "high", usda_portion(172684, "1 slice, thin = 25 g"), SAME)],
+    "B0011": [("скибка", "slice", 29, "high", usda_portion(174924, "1 slice = 29 g"), SAME),
+              ("тонка скибка", "thin slice", 20, "high", usda_portion(174924, "1 slice, thin = 20 g"), SAME)],
+    "B0090": [("скибка", "slice", 26, "high", usda_portion(174918, "1 slice, regular = 26 g"), SAME),
+              ("тонка скибка", "thin slice", 20, "high", usda_portion(174918, "1 slice, thin = 20 g"), SAME)],
+    "B0033": [("маленька", "small", 125, "high", usda_portion(170440, '1 small (1-3/4" to 2-1/2" dia.) = 125 g'), SAME),
+              ("середня", "medium", 167, "high", usda_portion(170440, '1 medium (2-1/4" to 3-1/4" dia.) = 167 g'), SAME),
+              ("велика", "large", 300, "high", usda_portion(170440, '1 large (3" to 4-1/4" dia.) = 300 g'), SAME)],
+    "B0030": [("маленька", "small", 50, "high", usda_portion(170393, '1 small (5-1/2" long) = 50 g'), SAME),
+              ("середня", "medium", 61, "high", usda_portion(170393, "1 medium = 61 g"), SAME),
+              ("велика", "large", 72, "high", usda_portion(170393, '1 large (7-1/4" to 8-1/2" long) = 72 g'), SAME)],
+    "B0035": [("черрі", "cherry", 17, "high", usda_portion(170457, "1 cherry = 17 g"), SAME),
+              ("середній", "medium", 123, "high", usda_portion(170457, '1 medium whole (2-3/5" dia) = 123 g'), SAME),
+              ("великий", "large", 182, "high", usda_portion(170457, '1 large whole (3" dia) = 182 g'), SAME)],
+    "B0013": [("склянка (240 мл)", "cup (240 ml)", 244, "high", usda_portion(171267, "1 cup = 244 g"), SAME)],
+    "B0012": [("склянка (240 мл)", "cup (240 ml)", 243, "high", usda_portion(170904, "1 cup = 243 g"), SAME)],
+    "B0096": [("склянка (240 мл)", "cup (240 ml)", 243, "medium", usda_portion(170904, "1 cup = 243 g"), ("Вага склянки кефіру 1% з даних USDA; жирність на вагу склянки майже не впливає.", "The weight of a cup of 1% kefir from USDA; fat content barely changes it."))],
+    # nuts: the weight of one nut or kernel
+    "B0054": [("1 половинка", "1 half", 2.0, "high", usda_portion(170187, "1 oz (14 halves) = 28.35 g"), PER_COUNT("28,35 г = 14 половинок", "28.35 g = 14 halves")),
+              ("1 горіх", "1 nut", 4.0, "high", usda_portion(170187, "1 cup, in shell, edible yield (7 nuts) = 28 g"), PER_COUNT("28 г ядер = 7 горіхів", "28 g of kernels = 7 nuts"))],
+    "B0116": [("1 половинка", "1 half", 2.0, "medium", usda_portion(170187, "1 oz (14 halves) = 28.35 g"), ("З даних USDA для сирих волоських горіхів (28,35 г = 14 половинок): для смажених кількість штук не вказана.", "From USDA's data for raw walnuts (28.35 g = 14 halves): the roasted entry gives no count."))],
+    "B0099": [("1 мигдалина", "1 almond", 1.29, "high", usda_portion(170158, "1 oz (22 whole kernels) = 28.35 g"), PER_COUNT("28,35 г = 22 ядра", "28.35 g = 22 kernels"))],
+    "B0100": [("1 мигдалина", "1 almond", 1.29, "high", usda_portion(168596, "1 oz (22 whole kernels) = 28.35 g"), PER_COUNT("28,35 г = 22 ядра", "28.35 g = 22 kernels"))],
+    "B0101": [("1 фісташка", "1 pistachio", 0.7, "high", usda_portion(170185, "1 kernel = 0.7 g"), SAME)],
+    "B0102": [("1 фісташка", "1 pistachio", 0.7, "high", usda_portion(169426, "1 kernel = 0.7 g"), SAME)],
+    "B0103": [("1 горіх", "1 nut", 1.4, "medium", usda_portion(170581, "10 nuts = 14 g"), ("З даних USDA для сирого фундуку (10 горіхів = 14 г): для смаженого кількість штук не вказана.", "From USDA's data for raw hazelnuts (10 nuts = 14 g): the roasted entry gives no count."))],
+    "B0104": [("1 горіх", "1 nut", 1.5, "medium", ("usda-fndds", "2707497", "Cashews, unsalted: 1 nut = 1.5 g"), ("З даних USDA FNDDS для кешью (1 горіх = 1,5 г): у записі SR Legacy кількість штук не вказана.", "From USDA FNDDS data for cashews (1 nut = 1.5 g): the SR Legacy entry gives no count."))],
+    "B0105": [("1 горіх", "1 nut", 1.5, "medium", ("usda-fndds", "2707497", "Cashews, unsalted: 1 nut = 1.5 g"), ("З даних USDA FNDDS для кешью (1 горіх = 1,5 г): у записі SR Legacy кількість штук не вказана.", "From USDA FNDDS data for cashews (1 nut = 1.5 g): the SR Legacy entry gives no count."))],
+    "B0106": [("1 горішок", "1 peanut", 1.0, "high", usda_portion(173806, "1 peanut = 1 g"), SAME)],
+    "B0107": [("1 горішок", "1 peanut", 1.0, "high", usda_portion(174262, "1 peanut = 1 g"), SAME)],
+    "B0108": [("1 половинка", "1 half", 1.49, "medium", usda_portion(170182, "1 oz (19 halves) = 28.35 g"), ("З даних USDA для сирого пекану (28,35 г = 19 половинок): для смаженого кількість штук не вказана.", "From USDA's data for raw pecans (28.35 g = 19 halves): the roasted entry gives no count."))],
+    "B0109": [("1 половинка", "1 half", 1.49, "medium", usda_portion(170182, "1 oz (19 halves) = 28.35 g"), ("З даних USDA для сирого пекану (28,35 г = 19 половинок): для смаженого кількість штук не вказана.", "From USDA's data for raw pecans (28.35 g = 19 halves): the roasted entry gives no count."))],
+    "B0110": [("1 горіх", "1 nut", 5.0, "high", usda_portion(170569, "1 kernel = 5 g"), SAME)],
+    "B0111": [("10 горішків", "10 nuts", 1.7, "high", usda_portion(170591, "10 nuts = 1.7 g"), SAME)],
+    "B0112": [("столова ложка", "tablespoon", 8.0, "medium", usda_portion(170563, "1 cup = 128 g"), ("Склянка з даних USDA, поділена на 16 столових ложок (128 г ÷ 16).", "USDA's cup divided into 16 tablespoons (128 g ÷ 16)."))],
+    "B0113": [("столова ложка", "tablespoon", 8.0, "medium", usda_portion(169418, "1 cup = 128 g"), ("Склянка з даних USDA, поділена на 16 столових ложок (128 г ÷ 16).", "USDA's cup divided into 16 tablespoons (128 g ÷ 16)."))],
+    "B0114": [("столова ложка", "tablespoon", 7.4, "medium", usda_portion(170557, "1 cup = 118 g"), ("Склянка з даних USDA, поділена на 16 столових ложок (118 г ÷ 16).", "USDA's cup divided into 16 tablespoons (118 g ÷ 16)."))],
+    "B0115": [("столова ложка", "tablespoon", 7.4, "medium", usda_portion(169415, "1 cup = 118 g"), ("Склянка з даних USDA, поділена на 16 столових ложок (118 г ÷ 16).", "USDA's cup divided into 16 tablespoons (118 g ÷ 16)."))],
+}
+PORTIONS["B0080"] = PORTIONS["B0033"]
+for banana in ("B0091", "B0092", "B0093"):
+    PORTIONS[banana] = PORTIONS["B0049"]
+for pear in ("B0094", "B0095"):
+    PORTIONS[pear] = PORTIONS["B0048"]
+
+
+def portions_part(entry_id):
+    return [{"labelUk": uk, "labelEn": en, "grams": grams, "reliability": rel, "verified": NUT_VER,
+             "reason": {"uk": reason[0], "en": reason[1]},
+             "source": {"dataset": src[0], "entryId": src[1], "description": src[2]}}
+            for uk, en, grams, rel, src, reason in PORTIONS.get(entry_id, [])]
+
+
 # --- helpers ----------------------------------------------------------------
 # The cautious GI rule (developer, 2026-10-05): when an entry combines several
 # measurements — the range comes from type, variety, brand, ripeness or cooking
@@ -531,8 +646,12 @@ def main():
         if item.get("ver"):  # checked later than the 1.8 set
             nutrients["verified"] = gi["verified"] = item["ver"]
         out.append({"id": item["id"], "status": "active", "category": item["cat"], "family": item["fam"], **({"variant": item["variant"]} if item.get("variant") else {}), "state": item["st"],
-                    "nameUk": item["uk"], "nameEn": item["en"], "nutrients": nutrients, "gi": gi})
+                    "nameUk": item["uk"], "nameEn": item["en"], "nutrients": nutrients, "gi": gi,
+                    **({"portions": portions_part(item["id"])} if item["id"] in PORTIONS else {})})
     db = json.load(open(DB, encoding="utf-8"))
+    db["sources"]["usda-fndds"] = {"name": "USDA FoodData Central — Food and Nutrient Database for Dietary Studies (FNDDS)", "version": "2021-2023",
+                                   "citation": "U.S. Department of Agriculture, Agricultural Research Service. FoodData Central: Food and Nutrient Database for Dietary Studies 2021-2023.",
+                                   "url": "https://fdc.nal.usda.gov/"}
     db["entries"] = out
     json.dump(db, open(DB, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
     open(DB, "a", encoding="utf-8").write("\n")
