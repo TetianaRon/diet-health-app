@@ -33,7 +33,8 @@ Packs list nutrients per portion (per 30 g) or per piece (dumplings per 12), not
 - **Save a custom meal entry to «Страви»** («Зберегти в мої страви»): a fixed-value dish (values per portion, weight optional).
 - **Maths in value fields:** `200*3/4` or «200 ккал * 3/4», to log part of a meal box. Numbers, `+ − * / ( )`, a decimal comma, unit words ignored; the field shows the result, and the result is stored.
 
-### 2.0.3 — Reminders · 📝 planned
+### 2.0.3 — Reminders · 🔨 in progress (2026-10-08) — spec → "Meal-time reminder" → "Follow-ups and restarts"
+**Decided (developer, 2026-10-08):** 2 follow-ups at +30 and +60 min; no re-fire on opening; vibration plus the usual notification sound.
 - **Follow-ups:** the reminder + 1–2 follow-ups (e.g. +30 and +60 min), cancelled by logging a meal, none in quiet hours, all scheduled ahead so they survive a restart. Open: how many / how far apart; keep or drop the re-fire on opening.
 - **Missed during a phone restart:** `@capacitor/local-notifications` 8.3.1's restore receiver drops a one-shot whose time passed while the phone was off. Patch it (patch-package): one due after the last boot started counts as missed and shows 15 s after boot; report upstream.
 - **Easy to miss:** a new channel with vibration on (a channel's sound and vibration can't change after creation), maybe a more noticeable sound; check mom's notification volume.
