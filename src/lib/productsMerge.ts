@@ -73,7 +73,7 @@ export async function mergeProductsIfNeeded(onStart?: () => void): Promise<Produ
 
   if (!hasProducts) {
     onStart?.();
-    await makeBackupCopy("products-merge", `${BACKUP_NAME_PREFIX} ${stamp()}`, grids);
+    await makeBackupCopy("products-merge", `${BACKUP_NAME_PREFIX} ${stamp()} (перед об'єднанням вкладок)`, grids);
     await addSheetTabs([PRODUCTS_TAB]);
     const values = [[...PRODUCTS_HEADERS], PRODUCTS_HEADERS.map((h) => labelFor(h)), ...plan.rows.map((r) => PRODUCTS_HEADERS.map((_, i) => r[i] ?? ""))];
     await batchUpdateRanges([{ range: `${PRODUCTS_TAB}!A1:${columnLetter(PRODUCTS_HEADERS.length - 1)}${values.length}`, values }]);

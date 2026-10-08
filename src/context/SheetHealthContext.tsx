@@ -130,14 +130,16 @@ export function SheetHealthProvider({ children }: { children: ReactNode }) {
         checkAndUpgradeSpreadsheet({ onUpgradeStart: () => id === latestCheck.current && setUpgrading(true) }),
         getSpreadsheetName().catch(() => null),
       ]);
+      // What an upgrade changed is shown even when a newer check has started since:
+      // that check finds nothing left to do (2.1's merge notice was lost this way).
+      if (result.upgrade) {
+        setUpgradeSummary(result.upgrade);
+        setVersion((v) => v + 1);
+      }
       if (id === latestCheck.current) {
         setReports(result.reports);
         setSpreadsheetName(name);
         rememberConnectedSheet(name);
-        if (result.upgrade) {
-          setUpgradeSummary(result.upgrade);
-          setVersion((v) => v + 1);
-        }
       }
     } catch (err) {
       if (id === latestCheck.current) {
