@@ -51,6 +51,9 @@ import {
 import Breadcrumb, { type Crumb } from "./Breadcrumb";
 import DuplicateNameNotice, { type NamedItem } from "./DuplicateNameNotice";
 import { findNameMatch, isBuiltInId, suggestFreeName } from "../lib/itemIds";
+import PackAmountFields, { measureFromPackFields, packFieldsFromMeasure, type PackFields } from "./PackAmountFields";
+import { pieceGrams, round2, toStoredValues, toTypedValues, PER_100G, type Measure } from "../lib/measure";
+import { measureOf, refFactor } from "../lib/dishes";
 
 const NUMERIC_FIELDS = ["carbsG", "gi", "fiberG", "sugarsG", "proteinG", "fatG", "caloriesKcal", "sodiumMg"] as const;
 type NumericField = (typeof NUMERIC_FIELDS)[number];
@@ -94,10 +97,36 @@ function formValuesFromItem(item: { unknownFields: NutritionKey[] } & Record<Num
   ) as FormValues;
 }
 
+// The values as the pack states them («на 30 г», «на 12 шт.»), for the editor (2.0.1).
+function typedFormValues(item: Ingredient): FormValues {
+  const typed = toTypedValues(item, measureOf(item));
+  const shown = Object.fromEntries(NUMERIC_FIELDS.map((field) => [field, field === "gi" ? item.gi : round2(typed[field])])) as Record<NumericField, number>;
+  return formValuesFromItem({ ...shown, unknownFields: item.unknownFields });
+}
+
+// «Буде збережено на 100 г: …» under the fields when the values were typed for another amount (2.0.1).
+function PackSummary({ pack, values }: { pack: PackFields; values: FormValues }) {
+  const measure = measureFromPackFields(pack);
+  if (!measure) return <p className="food-form-error">{uk.foods.pack.mainMissing}</p>;
+  const { parsed, unknownFields, valid } = parseFormValues(values);
+  const typedForPack = measure.basis === "piece" ? measure.packPieces !== 1 : measure.packGrams !== 100;
+  if (!valid || !typedForPack) return null;
+  const stored = toStoredValues(parsed, measure);
+  const carbs = unknownFields.includes("carbsG") ? `вуглеводи ${uk.today.unknownValueLabel}` : uk.today.carbsValue(round2(stored.carbsG));
+  const calories = unknownFields.includes("caloriesKcal") ? `калорії ${uk.today.unknownValueLabel}` : uk.today.caloriesValue(round2(stored.caloriesKcal));
+  return <p className="food-form-source">{uk.foods.pack.storedPreview(measure.basis, carbs, calories)}</p>;
+}
+
+// «Значення на 30 г» above the value fields.
+function valuesHeading(pack: PackFields): string | null {
+  const measure = measureFromPackFields(pack);
+  return measure ? uk.foods.pack.valuesHeading(uk.foods.pack.amount(measure.packGrams, measure.packPieces, measure.basis)) : null;
+}
+
 // One-line "carbs, GI" summary for a list row — "невідомо" (never a
 // misleading 0) for a field the person left blank.
 function foodMetaText(
-  item: { carbsG: number; gi: number; giVerified: boolean; unknownFields: NutritionKey[] },
+  item: { carbsG: number; gi: number; giVerified: boolean; unknownFields: NutritionKey[] } & Partial<Measure>,
   entry: VerifiedFoodEntry | null = null,
 ): string {
   const carbs = item.unknownFields.includes("carbsG")
@@ -115,7 +144,8 @@ function foodMetaText(
           : entry?.state === "dry"
             ? `ГІ ${item.gi} (${uk.verified.afterCooking}, ${uk.health.gi[classifyGi(item.gi)]})`
             : `${item.giVerified || entry ? "" : "≈"}ГІ ${item.gi} (${uk.health.gi[classifyGi(item.gi)]})`;
-  return `${carbs}, ${gi}`;
+  const perPiece = item.basis === "piece" ? ` ${uk.foods.pack.per("piece")}` : "";
+  return `${carbs}${perPiece}, ${gi}`;
 }
 
 /** The GI's database source to store: kept only while the GI still equals that entry's (1.9). */
@@ -203,6 +233,7 @@ function AddFoodForm({
   const [saveNameUk, setSaveNameUk] = useState("");
   const [resolvedNameEn, setResolvedNameEn] = useState("");
   const [values, setValues] = useState<FormValues>(EMPTY_FORM_VALUES);
+  const [pack, setPack] = useState<PackFields>(() => packFieldsFromMeasure(PER_100G));
   const [source, setSource] = useState<IngredientSource>("manual");
   // Always starts unchecked, even for a bundle/USDA-sourced estimate —
   // "we researched it" isn't the same as "a person confirmed it against a
@@ -242,6 +273,7 @@ function AddFoodForm({
     setLookupAttempted(true);
     setGiVerified(false); // a new pick hasn't been confirmed, even if a previous one was
     setGiFrom("");
+    setPack(packFieldsFromMeasure(PER_100G)); // database and USDA values are per 100 g
     if (estimate) {
       const unknown = estimate.unknownFields ?? [];
       const show = (field: NumericField, value: number | null) =>
@@ -348,9 +380,14 @@ function AddFoodForm({
     // Number("") is 0, so blanks are detected via .trim() there and recorded
     // in unknownFields instead of silently passing as a real 0.
     const { parsed, unknownFields, valid } = parseFormValues(values);
+    const measure = measureFromPackFields(pack);
 
     if (saveNameUk.trim() === "" || !valid) {
       setError(uk.foods.form.validationError);
+      return;
+    }
+    if (!measure) {
+      setError(uk.foods.pack.mainMissing);
       return;
     }
 
@@ -368,8 +405,9 @@ function AddFoodForm({
         source,
         giVerified: giVerified && !unknownFields.includes("gi"),
         unknownFields,
-        ...parsed,
+        ...toStoredValues(parsed, measure),
         giFrom: giFromIfStill(giFrom, parsed.gi, unknownFields),
+        ...measure,
       });
       onSaved(saved);
     } catch (err) {
@@ -497,6 +535,8 @@ function AddFoodForm({
       )}
       <p className="food-form-hint">{uk.foods.form.saveNameHint}</p>
 
+      <PackAmountFields fields={pack} onChange={setPack} legend={uk.foods.pack.legend} />
+      {valuesHeading(pack) && <h3 className="pack-values-heading">{valuesHeading(pack)}</h3>}
       <p className="food-form-hint">{uk.foods.form.unknownHint}</p>
       {NUMERIC_FIELDS.map((field) => (
         <label key={field}>
@@ -527,6 +567,7 @@ function AddFoodForm({
         </label>
       ))}
 
+      <PackSummary pack={pack} values={values} />
 
       <label className="settings-checkbox">
         <input
@@ -569,7 +610,8 @@ function EditIngredientForm({
 }) {
   const [nameUk, setNameUk] = useState(ingredient.nameUk);
   const [nameEn, setNameEn] = useState(ingredient.nameEn);
-  const [values, setValues] = useState<FormValues>(() => formValuesFromItem(ingredient));
+  const [values, setValues] = useState<FormValues>(() => typedFormValues(ingredient));
+  const [pack, setPack] = useState<PackFields>(() => packFieldsFromMeasure(measureOf(ingredient)));
   const [giVerified, setGiVerified] = useState(ingredient.giVerified);
   const [giFrom, setGiFrom] = useState(ingredient.giFrom);
   const [saving, setSaving] = useState(false);
@@ -581,9 +623,14 @@ function EditIngredientForm({
 
   const handleSave = async () => {
     const { parsed, unknownFields, valid } = parseFormValues(values);
+    const measure = measureFromPackFields(pack);
 
     if (nameUk.trim() === "" || !valid) {
       setError(uk.foods.editForm.validationError);
+      return;
+    }
+    if (!measure) {
+      setError(uk.foods.pack.mainMissing);
       return;
     }
     if (nameMatch) return;
@@ -597,8 +644,9 @@ function EditIngredientForm({
         nameEn: nameEn.trim(),
         giVerified: giVerified && !unknownFields.includes("gi"),
         unknownFields,
-        ...parsed,
+        ...toStoredValues(parsed, measure),
         giFrom: giFromIfStill(isDatabaseValues ? ingredient.basedOn || ingredient.id : giFrom, parsed.gi, unknownFields),
+        ...measure,
       };
       if (isBuiltInId(ingredient.id)) {
         // Editing a built-in item saves her own copy, which takes its place.
@@ -633,6 +681,8 @@ function EditIngredientForm({
         <input value={nameEn} onChange={(e) => setNameEn(e.target.value)} />
       </label>
 
+      <PackAmountFields fields={pack} onChange={setPack} legend={uk.foods.pack.legend} />
+      {valuesHeading(pack) && <h3 className="pack-values-heading">{valuesHeading(pack)}</h3>}
       <p className="food-form-hint">{uk.foods.form.unknownHint}</p>
       {NUMERIC_FIELDS.map((field) => (
         <label key={field}>
@@ -666,6 +716,7 @@ function EditIngredientForm({
         </label>
       ))}
 
+      <PackSummary pack={pack} values={values} />
 
       <label className="settings-checkbox">
         <input
@@ -697,10 +748,19 @@ interface ComposeRow {
   // typed name is then matched by name (see findIngredient below).
   id?: string;
   nameUk: string;
-  grams: string;
+  // The amount in grams or in pieces (2.0.1: a product counted per piece goes in by count).
+  amount: string;
+  unit: "grams" | "pieces";
 }
 
-const EMPTY_ROW: ComposeRow = { nameUk: "", grams: "" };
+const EMPTY_ROW: ComposeRow = { nameUk: "", amount: "", unit: "grams" };
+
+/** Which units a recipe line can use for this product: grams unless it's counted per piece without a weight, pieces when it's per piece or has a piece weight. */
+function rowUnits(ingredient: Ingredient | null): { grams: boolean; pieces: boolean } {
+  if (!ingredient) return { grams: true, pieces: false };
+  const weight = pieceGrams(measureOf(ingredient));
+  return { grams: ingredient.basis !== "piece" || weight !== null, pieces: ingredient.basis === "piece" || weight !== null };
+}
 
 // Compose a real multi-ingredient recipe from existing Ingredients rows —
 // the "real" Dishes feature deferred since the Foods screen was first built.
@@ -729,10 +789,20 @@ function ComposeDishForm({
   const [nameUk, setNameUk] = useState(existingDish?.nameUk ?? "");
   const [rows, setRows] = useState<ComposeRow[]>(
     existingDish && existingDish.ingredients.length > 0
-      ? existingDish.ingredients.map((ref) => ({ id: ref.id, nameUk: resolveItemRef(ref, ingredients)?.nameUk ?? ref.nameUk, grams: String(ref.grams) }))
+      ? existingDish.ingredients.map((ref) => ({
+          id: ref.id,
+          nameUk: resolveItemRef(ref, ingredients)?.nameUk ?? ref.nameUk,
+          amount: String(ref.pieces ?? ref.grams),
+          unit: ref.pieces ? ("pieces" as const) : ("grams" as const),
+        }))
       : [EMPTY_ROW],
   );
-  const [yieldGrams, setYieldGrams] = useState(existingDish ? String(existingDish.yieldGrams) : "");
+  // The yield: a weight, a count («Вийшло 10 млинців») or both; the main one decides how the dish is measured (2.0.1).
+  const [yieldFields, setYieldFields] = useState<PackFields>(() => ({
+    main: existingDish?.basis ?? "100g",
+    grams: existingDish && existingDish.yieldGrams > 0 ? String(existingDish.yieldGrams) : "",
+    pieces: existingDish?.yieldPieces ? String(existingDish.yieldPieces) : "",
+  }));
   const [giVerified, setGiVerified] = useState(existingDish?.giVerified ?? false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -753,17 +823,20 @@ function ComposeDishForm({
 
   const toRef = (row: ComposeRow): DishIngredientRef | null => {
     const ingredient = findIngredient(row);
-    return ingredient && Number(row.grams) > 0 ? { id: ingredient.id, nameUk: ingredient.nameUk, grams: Number(row.grams) } : null;
+    const amount = Number(row.amount);
+    if (!ingredient || !(amount > 0)) return null;
+    const ref: DishIngredientRef =
+      row.unit === "pieces" ? { id: ingredient.id, nameUk: ingredient.nameUk, grams: 0, pieces: amount } : { id: ingredient.id, nameUk: ingredient.nameUk, grams: amount };
+    return refFactor(ref, measureOf(ingredient)) === null ? null : ref;
   };
   const resolvedRefs: DishIngredientRef[] = rows.map(toRef).filter((ref): ref is DishIngredientRef => ref !== null);
 
-  const parsedYield = Number(yieldGrams);
+  const yieldMeasure = measureFromPackFields(yieldFields);
+  const dishNutrition = (refs: DishIngredientRef[], y: Measure) =>
+    computeDishNutrition(refs, y.packGrams ?? 0, findIngredient, y.basis === "piece" ? y.packPieces : null);
   const preview =
-    resolvedRefs.length === rows.filter((r) => r.nameUk.trim()).length &&
-    resolvedRefs.length > 0 &&
-    Number.isFinite(parsedYield) &&
-    parsedYield > 0
-      ? computeDishNutrition(resolvedRefs, parsedYield, findIngredient)
+    resolvedRefs.length === rows.filter((r) => r.nameUk.trim()).length && resolvedRefs.length > 0 && yieldMeasure
+      ? dishNutrition(resolvedRefs, yieldMeasure)
       : null;
 
   const previewUnknown = preview ? computeDishUnknownFields(resolvedRefs, findIngredient) : [];
@@ -777,11 +850,10 @@ function ComposeDishForm({
       nameUk.trim() !== "" &&
       filledRows.length > 0 &&
       allResolved &&
-      filledRows.every((row) => Number(row.grams) > 0) &&
-      Number.isFinite(parsedYield) &&
-      parsedYield > 0;
+      filledRows.every((row) => toRef(row) !== null) &&
+      yieldMeasure !== null;
 
-    if (!allValid) {
+    if (!allValid || !yieldMeasure) {
       setError(uk.dishes.composeForm.validationError);
       return;
     }
@@ -791,14 +863,16 @@ function ComposeDishForm({
     setError(null);
     try {
       const refs = filledRows.map(toRef).filter((ref): ref is DishIngredientRef => ref !== null);
-      const nutrition = computeDishNutrition(refs, parsedYield, findIngredient);
+      const nutrition = dishNutrition(refs, yieldMeasure);
       const unknownFields = computeDishUnknownFields(refs, findIngredient);
       const nameEn = (await translateUkToEn(nameUk.trim())) ?? "";
       const dish: Omit<Dish, "dateAdded" | "glycemicFlag" | "id" | "basedOn"> = {
         nameUk: nameUk.trim(),
         nameEn,
         ingredients: refs,
-        yieldGrams: parsedYield,
+        yieldGrams: yieldMeasure.packGrams ?? 0,
+        basis: yieldMeasure.basis,
+        yieldPieces: yieldMeasure.packPieces,
         ...nutrition,
         source: existingDish?.source ?? "manual",
         giVerified: giVerified && !unknownFields.includes("gi"),
@@ -870,7 +944,10 @@ function ComposeDishForm({
                       <strong>{ingredient.nameUk}</strong>{" "}
                       {ingredient.nameEn && <span className="food-name-en">({ingredient.nameEn})</span>}
                     </span>
-                    <button type="button" onClick={() => updateRow(index, { id: ingredient.id, nameUk: ingredient.nameUk })}>
+                    <button
+                      type="button"
+                      onClick={() => updateRow(index, { id: ingredient.id, nameUk: ingredient.nameUk, unit: ingredient.basis === "piece" ? "pieces" : "grams" })}
+                    >
                       {uk.foods.form.pickButton}
                     </button>
                   </li>
@@ -881,16 +958,31 @@ function ComposeDishForm({
               <p className="food-form-error">{uk.dishes.composeForm.unresolvedIngredient}</p>
             )}
 
-            <label>
-              {uk.dishes.composeForm.gramsLabel}
-              <input
-                type="number"
-                inputMode="decimal"
-                step="0.1"
-                value={row.grams}
-                onChange={(e) => updateRow(index, { grams: e.target.value })}
-              />
-            </label>
+            <div className="compose-amount">
+              <label>
+                {row.unit === "pieces" ? uk.dishes.composeForm.amountLabel : uk.dishes.composeForm.gramsLabel}
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  step="0.1"
+                  value={row.amount}
+                  onChange={(e) => updateRow(index, { amount: e.target.value })}
+                />
+              </label>
+              {rowUnits(resolvedIngredient).grams && rowUnits(resolvedIngredient).pieces && (
+                <div className="compose-unit" role="radiogroup">
+                  {(["grams", "pieces"] as const).map((unit) => (
+                    <label key={unit} className="pack-option">
+                      <input type="radio" checked={row.unit === unit} onChange={() => updateRow(index, { unit })} />
+                      {unit === "grams" ? uk.dishes.composeForm.amountUnitGrams : uk.dishes.composeForm.amountUnitPieces}
+                    </label>
+                  ))}
+                </div>
+              )}
+              {!(rowUnits(resolvedIngredient).grams && rowUnits(resolvedIngredient).pieces) && row.unit === "pieces" && (
+                <span className="compose-unit">{uk.dishes.composeForm.amountUnitPieces}</span>
+              )}
+            </div>
 
             {rows.length > 1 && (
               <button type="button" onClick={() => removeRow(index)}>
@@ -905,22 +997,20 @@ function ComposeDishForm({
         {uk.dishes.composeForm.addIngredientButton}
       </button>
 
-      <label>
-        {uk.dishes.composeForm.yieldLabel}
-        <input
-          type="number"
-          inputMode="decimal"
-          step="0.1"
-          value={yieldGrams}
-          onChange={(e) => setYieldGrams(e.target.value)}
-        />
-      </label>
+      <PackAmountFields
+        fields={yieldFields}
+        onChange={setYieldFields}
+        legend={uk.dishes.composeForm.yieldLegend}
+        gramsLabel={uk.dishes.composeForm.yieldGramsLabel}
+        piecesLabel={uk.dishes.composeForm.yieldPiecesLabel}
+        hints={{ grams: uk.dishes.composeForm.yieldGramsHint, pieces: uk.dishes.composeForm.yieldPiecesHint }}
+      />
       <p className="food-form-hint">{uk.dishes.composeForm.yieldHint}</p>
 
       {preview && (
         <>
           <p className="food-form-source">
-            {uk.dishes.composeForm.preview(preview.carbsG, preview.caloriesKcal, preview.gi, giVerified ? "" : "≈")}
+            {uk.dishes.composeForm.preview(preview.carbsG, preview.caloriesKcal, preview.gi, giVerified ? "" : "≈", yieldMeasure?.basis)}
           </p>
           <p className="food-form-hint">{uk.dishes.approximateGiNote}</p>
           {omittedGiShare > 0 && <p className="food-form-hint">{uk.dishes.composeForm.smallUnknownGi(Math.max(1, Math.round(omittedGiShare * 100)))}</p>}
@@ -1349,7 +1439,7 @@ export default function FoodsScreen() {
                   <div className="food-list-item-with-action">
                     <span>
                       <strong>{dish.nameUk}</strong> {dish.nameEn && <span className="food-name-en">({dish.nameEn})</span>} —{" "}
-                      {foodMetaText(dish)} (на 100г)
+                      {foodMetaText(dish)} ({uk.foods.pack.per(dish.basis)})
                     </span>
                     <div className="food-list-actions">
                       <button

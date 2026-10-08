@@ -35,7 +35,7 @@ export function MealsWithItems({ meals, settings }: { meals: MealGroup[]; settin
           <ul className="food-list">
             {meal.entries.map((entry, i) => (
               <li key={`${entry.timestamp}-${i}`}>
-                <strong>{entry.itemName}</strong> — {uk.today.dishWeight(entry.portionGrams)}
+                <strong>{entry.itemName}</strong> — {uk.today.dishAmount(entry.unknownFields.includes("portionGrams") ? null : entry.portionGrams, entry.portionPieces)}
               </li>
             ))}
           </ul>

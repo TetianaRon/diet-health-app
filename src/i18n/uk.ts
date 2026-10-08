@@ -129,7 +129,9 @@ export const uk = {
     latestBloodSugar: (valueMmolL: number, contextLabel: string) => `${n(valueMmolL)} ммоль/л (${contextLabel})`,
     // A dish's line inside a meal on Today — weight only; the meal's own
     // line carries the full stats (see mealStat below).
-    dishWeight: (portionGrams: number) => `${n(portionGrams)} г`,
+    // A meal row's amount (2.0.1): «7,5 шт.», «3 шт. (15 г)», «150 г».
+    dishAmount: (grams: number | null, pieces: number | null) =>
+      pieces !== null ? `${n(pieces)} шт.${grams !== null ? ` (${n(grams)} г)` : ""}` : `${n(grams ?? 0)} г`,
     carbsValue: (g: number) => `${n(g)} г вуглеводів`,
     caloriesValue: (kcal: number) => `${n(kcal)} ккал`,
     unknownValueLabel: "невідомо",
@@ -218,6 +220,10 @@ export const uk = {
       itemLabel: "Продукт або страва",
       itemPlaceholder: "Пошук продукту...",
       portionLabel: "Порція (г)",
+      portionPiecesLabel: "Порція (шт.)",
+      portionLinkedHint: (pieceGrams: string) => `Введіть грами або штуки — друге поле заповниться само (1 шт. ≈ ${pieceGrams} г).`,
+      portionPiecesOnlyHint: "Вага однієї штуки невідома — вкажіть кількість штук.",
+      perBasis: (basis: "100g" | "piece") => (basis === "piece" ? "/1 шт." : "/100г"),
       notesLabel: "Примітка",
       notesPlaceholder: "необов'язково",
       noMatches: "Нічого не знайдено. Спочатку додайте продукт на вкладці «Продукти».",
@@ -290,8 +296,8 @@ export const uk = {
       weightLine: (date: string) => `Вага за ${date}`,
       weightSummary: (kg: string) => `${kg} кг`,
       /** null: the value was left unknown on purpose. */
-      itemSummary: (kcal: string | null, carbsG: string | null) =>
-        `${kcal === null ? "калорії невідомо" : `${kcal} ккал`}, ${carbsG === null ? "вуглеводи невідомо" : `${carbsG} г вуглеводів`} на 100 г`,
+      itemSummary: (kcal: string | null, carbsG: string | null, basis: "100g" | "piece" = "100g") =>
+        `${kcal === null ? "калорії невідомо" : `${kcal} ккал`}, ${carbsG === null ? "вуглеводи невідомо" : `${carbsG} г вуглеводів`} ${basis === "piece" ? "на 1 шт." : "на 100 г"}`,
       keepSheet: (summary: string) => `Залишити з таблиці: ${summary}`,
       keepPhone: (summary: string) => `Залишити з цього пристрою: ${summary}`,
       keepBoth: "Залишити обидва під різними назвами",
@@ -345,6 +351,27 @@ export const uk = {
   },
   foods: {
     title: "Страви",
+    // «Значення вказано на … г / … шт.» (2.0.1, PackAmountFields.tsx).
+    pack: {
+      legend: "Значення вказано на",
+      gramsOption: "грами",
+      piecesOption: "штуки",
+      gramsLabel: "Грамів",
+      piecesLabel: "Штук",
+      optional: "(необов'язково)",
+      gramsMainHint: "Значення — для цієї ваги. Кількість штук необов'язкова: це та сама кількість у штуках (напр. 100 г = 20 шт.), тоді страву можна записувати й поштучно.",
+      piecesMainHint: "Значення — для цієї кількості штук. Вага необов'язкова: це та сама кількість у грамах (напр. 12 шт. = 200 г), тоді страву можна записувати й у грамах.",
+      valuesHeading: (amount: string) => `Значення на ${amount}`,
+      amount: (grams: number | null, pieces: number | null, main: "100g" | "piece") =>
+        main === "piece"
+          ? `${n(pieces ?? 1)} шт.${grams !== null ? ` (${n(grams)} г)` : ""}`
+          : `${n(grams ?? 100)} г${pieces !== null ? ` (${n(pieces)} шт.)` : ""}`,
+      per: (basis: "100g" | "piece") => (basis === "piece" ? "на 1 шт." : "на 100 г"),
+      storedPreview: (basis: "100g" | "piece", carbs: string, calories: string) =>
+        `Буде збережено ${basis === "piece" ? "на 1 шт." : "на 100 г"}: ${carbs}, ${calories}`,
+      pieceWeight: (grams: number) => `1 шт. ≈ ${n(grams)} г`,
+      mainMissing: "Вкажіть кількість, на яку подано значення (грами або штуки).",
+    },
     subTabs: {
       ingredients: "Продукти",
       dishes: "Страви",
@@ -444,6 +471,14 @@ export const uk = {
       addIngredientButton: "Додати інгредієнт",
       removeIngredientButton: "Прибрати",
       yieldLabel: "Вага готової страви (г)",
+      yieldLegend: "Рахувати страву на",
+      yieldGramsHint: "Значення страви рахуватимуться на 100 г. Кількість штук необов'язкова (напр. вийшло 10 млинців) — тоді страву можна записувати й поштучно.",
+      yieldPiecesHint: "Значення страви рахуватимуться на 1 шт. Вага готової страви необов'язкова — тоді страву можна записувати й у грамах.",
+      yieldGramsLabel: "Вага готової страви, г",
+      yieldPiecesLabel: "Вийшло, шт.",
+      amountUnitGrams: "г",
+      amountUnitPieces: "шт.",
+      amountLabel: "Кількість",
       yieldHint: "Загальна вага після приготування — вода додає вагу, але не калорії.",
       smallUnknownGi: (percent: number) =>
         `ГІ страви не враховує ${n(percent)}% вуглеводів — з продуктів, для яких ГІ невідомий (їх так мало, що на результат вони майже не впливають).`,
@@ -451,10 +486,10 @@ export const uk = {
         `Деякі інгредієнти мають невідомі значення (${fields}) — для страви вони теж збережуться як невідомі.`,
       unresolvedIngredient: "Такого продукту немає в базі — спочатку додайте його на вкладці «Продукти».",
       // giVerifiedMarker: "" once she's checked "Я перевірив(ла)...", "≈" until then.
-      preview: (carbsG: number, caloriesKcal: number, gi: number, giVerifiedMarker: string) =>
-        `На 100 г готової страви: ${n(carbsG)} г вуглеводів, ${Math.round(caloriesKcal)} ккал, ${giVerifiedMarker}ГІ ${gi}`,
+      preview: (carbsG: number, caloriesKcal: number, gi: number, giVerifiedMarker: string, basis: "100g" | "piece" = "100g") =>
+        `${basis === "piece" ? "На 1 шт." : "На 100 г"} готової страви: ${n(carbsG)} г вуглеводів, ${Math.round(caloriesKcal)} ккал, ${giVerifiedMarker}ГІ ${gi}`,
       saveButton: "Зберегти",
-      validationError: "Заповніть назву страви, оберіть інгредієнти з бази з коректними грамами та вкажіть вагу готової страви.",
+      validationError: "Заповніть назву страви, оберіть інгредієнти з бази з коректною кількістю та вкажіть, скільки вийшло (вагу або кількість штук).",
     },
   },
   bloodSugar: {

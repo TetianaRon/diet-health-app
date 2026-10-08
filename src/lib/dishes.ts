@@ -215,6 +215,12 @@ export const SMALL_UNKNOWN_GI_SHARE = 0.05;
 
 type WithUnknown = IngredientNutrition & { unknownFields: NutritionKey[] } & Partial<Measure>;
 
+/** A product's or dish's measure: a dish's yield (weight and count) gives its piece weight. */
+export function itemMeasure(item: Partial<Measure> & { yieldGrams?: number; yieldPieces?: number | null }): Measure {
+  if (item.yieldGrams !== undefined) return { basis: item.basis ?? "100g", packPieces: item.yieldPieces ?? null, packGrams: item.yieldGrams || null };
+  return measureOf(item);
+}
+
 /** An item's measure, when it carries one (built-in and older items are per 100 g). */
 export function measureOf(item: Partial<Measure>): Measure {
   return { basis: item.basis ?? "100g", packPieces: item.packPieces ?? null, packGrams: item.packGrams ?? null };

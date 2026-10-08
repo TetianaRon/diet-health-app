@@ -1542,3 +1542,48 @@ select {
 .settings-account > button + .food-form-hint {
   margin-top: 8px;
 }
+
+/* «Значення вказано на … г / … шт.» (2.0.1) */
+.pack-fields {
+  border: 1px solid #d9d9d9;
+  border-radius: 8px;
+  padding: 8px 12px 4px;
+  margin: 8px 0;
+}
+.pack-fields legend {
+  padding: 0 4px;
+  font-weight: 600;
+}
+.pack-options,
+.compose-unit {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.pack-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: normal;
+}
+.pack-amounts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.pack-optional {
+  font-weight: normal;
+  color: #6b6b6b;
+  font-size: 0.9em;
+}
+.pack-values-heading {
+  font-size: 1rem;
+  margin: 12px 0 4px;
+}
+.compose-amount {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
