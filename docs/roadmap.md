@@ -64,7 +64,7 @@ The person decides where their data lives, with plain wording about each choice.
 - **Composed items in millilitres** (2026-10-08, developer): mixed drinks are composed — airan (yogurt, sparkling water, mustard and salt), smoothies, homemade dressings, soups by the ladle. A yield in ml («Вийшло, мл») beside the weight and the count; values per 100 ml when that's the main yield; the optional «мл = г» density; then ml sizes and logging follow (2.1.1's maths).
 - **Content shows through the Android status bar** (2026-10-08): when a list scrolls, rows pass under the clock and battery icons; the safe-area fix (1.5) padded the content but left the bar transparent. A solid bar behind the status bar on Android.
 
-### 2.1.3 — Reminders you choose · 📝 planned (developer, 2026-10-09)
+### 2.1.3 — Reminders you choose · 🔨 in progress (2026-10-09)
 Today the reminders notice («Застосунок може нагадувати…», `ReminderAccessNotice`) sits in Today's main body: long, not dismissable, and there's no way to say "no reminders" — they're simply on once allowed.
 - **A reminders toggle in Settings** («Нагадування про їжу»): turning it on asks for the missing phone permissions (notifications, then «Будильники й нагадування»); turning it off cancels the scheduled reminders. The setting is kept per device, like «Запам'ятати мене».
 - **An offer instead of the notice:** after the first sign-in, a popup in the same style as the other notices offers to turn reminders on, with buttons naming the outcome (e.g. «Увімкнути нагадування» / «Не зараз»). Dismissed, it says reminders can always be turned on in Settings, and it never appears again. The notice leaves Today's body.

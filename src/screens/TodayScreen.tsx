@@ -17,13 +17,13 @@ import { mergeWithBuiltInFoods, sortFavoritesFirst } from "../lib/ingredients";
 import { wasLastReadFromCache } from "../lib/sheets";
 import { formatTime } from "../lib/dateFormat";
 import { scheduleMealReminder } from "../lib/reminderScheduler";
+import { useReminderChoice } from "../lib/reminderChoice";
 import { loadDayData, type DayData } from "../lib/dayData";
 import { dayRecords, inOrder, lastIntakeOfDay, previousDateKey } from "../lib/records";
 import { groupIntoMeals, isSameLocalDate, localDateKey, sumKnownField, type DailyLogEntry, type MealGroup } from "../lib/dailyLog";
 import type { BloodSugarEntry } from "../lib/bloodSugar";
 import type { MedicationIntake } from "../lib/medications";
 import type { WeightEntry } from "../lib/weight";
-import ReminderAccessNotice from "./ReminderAccessNotice";
 import MealEditorScreen, { toPickable, type PickableFood } from "./MealEditorScreen";
 import MealStatsLine from "./MealStatsLine";
 import Breadcrumb from "./Breadcrumb";
@@ -148,11 +148,13 @@ export default function TodayScreen({
   const settings = data?.settings ?? null;
 
   // (Re)schedules the meal reminder whenever the latest meal or the settings change.
+  // Turning reminders on or off (Settings, a popup) reschedules or cancels them (2.1.3).
+  const reminders = useReminderChoice();
   useEffect(() => {
     if (!entries || !settings) return;
     const lastEntry = entries.reduce<DailyLogEntry | null>((latest, e) => (!latest || e.timestamp > latest.timestamp ? e : latest), null);
     if (lastEntry) void scheduleMealReminder(new Date(lastEntry.timestamp), settings);
-  }, [entries, settings]);
+  }, [entries, settings, reminders]);
 
   // Meal logging picks from her dishes first, then all products (built-in
   // database + her own, favourites first) — nothing needs to be "added" first
@@ -296,7 +298,6 @@ export default function TodayScreen({
           day's status and records sit in a column beside the meals. */}
       <div className="today-layout">
         <div className="today-summary">
-          <ReminderAccessNotice />
           {loadError && <p className="food-form-error">{loadError}</p>}
           {showingCachedData && <p className="today-warning">{uk.today.offlineNotice}</p>}
 

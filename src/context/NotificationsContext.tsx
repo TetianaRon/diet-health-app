@@ -9,8 +9,8 @@
 //            closed; if closed while the problem remains, it comes back at
 //            the next sign-in / app start (the owner decides — see
 //            AppNotifications).
-// Messages tied to one spot (form errors, the search's translation notice,
-// Today's reminder-access notice) stay where they are.
+// Messages tied to one spot (form errors, the search's translation notice)
+// stay where they are. The reminder popups (2.1.3) are in ReminderPopups.
 import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from "react";
 
 export interface NoticeAction {
