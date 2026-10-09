@@ -6709,8 +6709,8 @@
         "reliability": "low",
         "verified": "2026-10-09",
         "reason": {
-          "uk": "Пшеничне борошно самого по собі не їдять; ГІ вимірюють для страв із нього (хліб, млинці, каші), і він залежить від рецепта та приготування. Вимірювання для самого борошна в таблицях 2021 року немає.",
-          "en": "Wheat flour isn't eaten as it is; GI is measured for dishes made with it (bread, pancakes, porridge), and it depends on the recipe and cooking. The 2021 tables have no measurement of the flour itself."
+          "uk": "Сире пшеничне борошно, розмішане у воді, виміряно двічі — ГІ 20 і 22 (Таблиця 1, #706, #707), але сирий крохмаль перетравлюється повільно, і так борошно не їдять; каша з білого пшеничного борошна — 55 (Таблиця 2, #2503), а білий хліб — близько 73–76. ГІ страви з борошна залежить від рецепта й приготування, тому для самого борошна значення не вказано.",
+          "en": "Raw wheat flour stirred into water was measured twice — GI 20 and 22 (Table 1, #706, #707), but raw starch digests slowly and flour isn't eaten that way; porridge from white wheat flour is 55 (Table 2, #2503), and white bread about 73–76. A dish's GI depends on the recipe and cooking, so no value is given for the flour itself."
         }
       }
     },
@@ -6752,8 +6752,8 @@
         "reliability": "low",
         "verified": "2026-10-09",
         "reason": {
-          "uk": "Цільнозернове борошно самого по собі не їдять; ГІ вимірюють для страв із нього (хліб, млинці, каші), і він залежить від рецепта та приготування. Вимірювання для самого борошна в таблицях 2021 року немає.",
-          "en": "Whole-grain flour isn't eaten as it is; GI is measured for dishes made with it (bread, pancakes, porridge), and it depends on the recipe and cooking. The 2021 tables have no measurement of the flour itself."
+          "uk": "Окремих вимірювань цільнозернового пшеничного борошна немає; хліб із нього — 69–78 (Таблиця 1, #316–#318). ГІ страви з борошна залежить від рецепта й приготування, тому для самого борошна значення не вказано.",
+          "en": "Whole-grain wheat flour wasn't measured on its own; bread made from it is 69–78 (Table 1, #316–#318). A dish's GI depends on the recipe and cooking, so no value is given for the flour itself."
         }
       }
     },
@@ -6794,8 +6794,8 @@
         "reliability": "low",
         "verified": "2026-10-09",
         "reason": {
-          "uk": "Житнє борошно самого по собі не їдять; ГІ вимірюють для страв із нього (хліб, млинці, каші), і він залежить від рецепта та приготування. Вимірювання для самого борошна в таблицях 2021 року немає.",
-          "en": "Rye flour isn't eaten as it is; GI is measured for dishes made with it (bread, pancakes, porridge), and it depends on the recipe and cooking. The 2021 tables have no measurement of the flour itself."
+          "uk": "Житнє борошно вимірювали лише в сумішах із пшеничним — каші 50–51 (Таблиця 2, #2504, #2505) і хліби; для самого житнього борошна вимірювання немає. ГІ страви з борошна залежить від рецепта й приготування, тому для самого борошна значення не вказано.",
+          "en": "Rye flour was measured only mixed with wheat flour — porridges 50–51 (Table 2, #2504, #2505) and breads; there's no measurement of rye flour alone. A dish's GI depends on the recipe and cooking, so no value is given for the flour itself."
         }
       }
     },
@@ -6836,8 +6836,8 @@
         "reliability": "low",
         "verified": "2026-10-09",
         "reason": {
-          "uk": "Гречане борошно самого по собі не їдять; ГІ вимірюють для страв із нього (хліб, млинці, каші), і він залежить від рецепта та приготування. Вимірювання для самого борошна в таблицях 2021 року немає.",
-          "en": "Buckwheat flour isn't eaten as it is; GI is measured for dishes made with it (bread, pancakes, porridge), and it depends on the recipe and cooking. The 2021 tables have no measurement of the flour itself."
+          "uk": "Гречане борошно трапляється в таблицях лише у складі виробів (печиво, вареники); окремого вимірювання немає. ГІ страви з борошна залежить від рецепта й приготування, тому для самого борошна значення не вказано.",
+          "en": "Buckwheat flour appears in the tables only in products (biscuits, dumplings); it wasn't measured on its own. A dish's GI depends on the recipe and cooking, so no value is given for the flour itself."
         }
       }
     },
@@ -6878,8 +6878,8 @@
         "reliability": "low",
         "verified": "2026-10-09",
         "reason": {
-          "uk": "Кукурудзяне борошно самого по собі не їдять; ГІ вимірюють для страв із нього (хліб, млинці, каші), і він залежить від рецепта та приготування. Вимірювання для самого борошна в таблицях 2021 року немає.",
-          "en": "Corn flour isn't eaten as it is; GI is measured for dishes made with it (bread, pancakes, porridge), and it depends on the recipe and cooking. The 2021 tables have no measurement of the flour itself."
+          "uk": "Каша з кукурудзяного борошна (на кшталт мамалиги) — 71 із цільного й 75 з рафінованого (Таблиця 1, #1954, #1955), але з цього борошна печуть і хліб та коржі, де ГІ інший. ГІ страви з борошна залежить від рецепта й приготування, тому для самого борошна значення не вказано.",
+          "en": "Porridge from maize flour (like mamalyga) is 71 from whole and 75 from refined flour (Table 1, #1954, #1955), but the same flour is also baked into bread and flatbreads, whose GI differs. A dish's GI depends on the recipe and cooking, so no value is given for the flour itself."
         }
       }
     },
@@ -6920,8 +6920,8 @@
         "reliability": "low",
         "verified": "2026-10-09",
         "reason": {
-          "uk": "Вівсяне борошно самого по собі не їдять; ГІ вимірюють для страв із нього (хліб, млинці, каші), і він залежить від рецепта та приготування. Вимірювання для самого борошна в таблицях 2021 року немає.",
-          "en": "Oat flour isn't eaten as it is; GI is measured for dishes made with it (bread, pancakes, porridge), and it depends on the recipe and cooking. The 2021 tables have no measurement of the flour itself."
+          "uk": "Каша з цільного вівсяного борошна — 75 (одне дослідження, Таблиця 2, #2506), але з борошна печуть і млинці та випічку, де ГІ інший. ГІ страви з борошна залежить від рецепта й приготування, тому для самого борошна значення не вказано.",
+          "en": "Porridge from wholemeal oat flour is 75 (one study, Table 2, #2506), but the flour is also used for pancakes and baking, whose GI differs. A dish's GI depends on the recipe and cooking, so no value is given for the flour itself."
         }
       }
     },
@@ -6962,8 +6962,8 @@
         "reliability": "low",
         "verified": "2026-10-09",
         "reason": {
-          "uk": "Рисове борошно самого по собі не їдять; ГІ вимірюють для страв із нього (хліб, млинці, каші), і він залежить від рецепта та приготування. Вимірювання для самого борошна в таблицях 2021 року немає.",
-          "en": "Rice flour isn't eaten as it is; GI is measured for dishes made with it (bread, pancakes, porridge), and it depends on the recipe and cooking. The 2021 tables have no measurement of the flour itself."
+          "uk": "Рисове борошно вимірювали лише у виробах (кекс — 79, рисові коржі — 51–81) і як спеціальне борошно з резистентним крохмалем (56); простого рисового борошна немає. ГІ страви з борошна залежить від рецепта й приготування, тому для самого борошна значення не вказано.",
+          "en": "Rice flour was measured only in products (a muffin — 79, rice cakes — 51–81) and as a special flour with resistant starch (56); plain rice flour wasn't measured. A dish's GI depends on the recipe and cooking, so no value is given for the flour itself."
         }
       }
     },
@@ -7247,8 +7247,8 @@
         "reliability": "low",
         "verified": "2026-10-09",
         "reason": {
-          "uk": "Досліджень ГІ для насіння льону немає в міжнародних таблицях 2021 року.",
-          "en": "The 2021 international tables have no GI study of flaxseed."
+          "uk": "Досліджень ГІ для самого насіння льону в таблицях 2021 року немає: воно трапляється лише у складі виробів (хліб, крекери, батончики).",
+          "en": "The 2021 tables have no GI study of flaxseed itself: it appears only in products (bread, crackers, bars)."
         }
       }
     },
@@ -7289,8 +7289,8 @@
         "reliability": "low",
         "verified": "2026-10-09",
         "reason": {
-          "uk": "Досліджень ГІ для кунжуту немає в міжнародних таблицях 2021 року.",
-          "en": "The 2021 international tables have no GI study of sesame seeds."
+          "uk": "Досліджень ГІ для самого кунжуту в таблицях 2021 року немає: він трапляється лише у складі виробів (хліб, крекери).",
+          "en": "The 2021 tables have no GI study of sesame itself: it appears only in products (bread, crackers)."
         }
       }
     },
@@ -7334,8 +7334,8 @@
         "reliability": "low",
         "verified": "2026-10-09",
         "reason": {
-          "uk": "Досліджень ГІ для насіння чіа немає в міжнародних таблицях 2021 року.",
-          "en": "The 2021 international tables have no GI study of chia seeds."
+          "uk": "Досліджень ГІ для самого насіння чіа в таблицях 2021 року немає: воно трапляється лише у складі виробів (хліб, крекери, батончики).",
+          "en": "The 2021 tables have no GI study of chia seeds itself: it appears only in products (bread, crackers, bars)."
         }
       }
     },
@@ -7418,8 +7418,8 @@
         "reliability": "low",
         "verified": "2026-10-09",
         "reason": {
-          "uk": "Досліджень ГІ для самого какао-порошку в таблицях 2021 року немає.",
-          "en": "The 2021 tables have no GI study of cocoa powder itself."
+          "uk": "Досліджень ГІ для самого какао-порошку в таблицях 2021 року немає: є лише шоколад і вироби з какао, де основне — цукор і жир.",
+          "en": "The 2021 tables have no GI study of cocoa powder itself: only chocolate and cocoa products, which are mostly sugar and fat."
         }
       }
     }
