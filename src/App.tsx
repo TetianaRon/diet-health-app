@@ -8,6 +8,7 @@ import { LocalNotifications } from "@capacitor/local-notifications";
 import { StatusBar, Style } from "@capacitor/status-bar";
 import { uk } from "./i18n/uk";
 import AppNotifications from "./screens/AppNotifications";
+import ReminderPopups from "./screens/ReminderPopups";
 import Toaster from "./screens/Toaster";
 import { NotificationsProvider } from "./context/NotificationsContext";
 import { AuthProvider } from "./context/AuthContext";
@@ -96,6 +97,7 @@ export default function App() {
       <SheetHealthProvider>
       <NotificationsProvider>
       <AppNotifications />
+      <ReminderPopups />
       <div className="app">
         {/* A solid strip behind Android's status bar, so a scrolled list doesn't show
             through under the clock (2.1.2). Zero height where there's no status bar. */}

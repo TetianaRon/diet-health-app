@@ -15,6 +15,7 @@ import { useSheetHealth } from "../context/SheetHealthContext";
 import { useNotifications } from "../context/NotificationsContext";
 import { SheetHealthIssueList, summarizeIssues } from "./SheetHealthIssues";
 import SignInPanel, { RememberMeSetting } from "./SignInPanel";
+import ReminderSetting from "./ReminderSetting";
 
 const NUMERIC_FIELDS = [
   "dailyCarbsTarget",
@@ -339,6 +340,8 @@ export default function SettingsScreen() {
       <SpreadsheetSection signedIn={signedIn} />
       </>
       )}
+
+      <ReminderSetting />
 
       {signedIn && (
         <div className="settings-targets">

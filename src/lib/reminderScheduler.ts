@@ -5,6 +5,7 @@ import { Capacitor } from "@capacitor/core";
 import { LocalNotifications } from "@capacitor/local-notifications";
 import { uk } from "../i18n/uk";
 import { FOLLOW_UP_MINUTES, planMealReminders } from "./reminders";
+import { initialReminderChoice, reminderChoice, setReminderChoice, type ReminderChoice } from "./reminderChoice";
 import type { Settings } from "./settings";
 
 // The reminder is 1001, its follow-ups 1002 and 1003 (2.0.3).
@@ -17,8 +18,8 @@ const OLD_CHANNEL_IDS = ["meal-reminders"];
 /**
  * Creates the high-importance, lock-screen-visible, vibrating channel (with the
  * phone's usual notification sound). Call once at app startup; no-op outside a
- * native (Android) build. It doesn't ask for any permission: that's
- * ReminderAccessNotice's one explained ask (2.0.3).
+ * native (Android) build. It doesn't ask for any permission: that's the
+ * offer's or the Settings toggle's explained ask (2.1.3).
  */
 export async function initMealReminders(): Promise<void> {
   if (!Capacitor.isNativePlatform()) return;
@@ -46,7 +47,9 @@ export async function initMealReminders(): Promise<void> {
 export async function scheduleMealReminder(lastMealTime: Date, settings: Settings): Promise<void> {
   if (!Capacitor.isNativePlatform()) return;
 
-  await LocalNotifications.cancel({ notifications: MEAL_REMINDER_NOTIFICATION_IDS.map((id) => ({ id })) });
+  await cancelMealReminders();
+  // Reminders turned off (2.1.3): nothing is scheduled.
+  if ((await resolveReminderChoice()) !== "on") return;
 
   const plan = planMealReminders(lastMealTime, settings, new Date());
   if (plan.length === 0) return;
@@ -54,8 +57,8 @@ export async function scheduleMealReminder(lastMealTime: Date, settings: Setting
   // Exact only when «Будильники й нагадування» is already allowed. Asking for
   // an exact alarm without it makes the plugin (8.3.1) open that settings
   // screen on every schedule — each app open and meal save — and pressing
-  // back from it reopened it on the app's return (build 22). Asking is
-  // ReminderAccessNotice's job, on her tap.
+  // back from it reopened it on the app's return (build 22). Asking happens
+  // only on her tap (the offer, the toggle, the missing-permission popup).
   const exact = await LocalNotifications.checkExactNotificationSetting()
     .then((s) => s.exact_alarm === "granted")
     .catch(() => false);
@@ -74,6 +77,50 @@ export async function scheduleMealReminder(lastMealTime: Date, settings: Setting
       extra: { screen: "today", action: "addMeal", catchUpUntil: reminder.catchUpUntil?.getTime() ?? 0 },
     })),
   });
+}
+
+/** Cancels the reminder and its follow-ups (a meal was logged, or reminders were turned off). */
+export async function cancelMealReminders(): Promise<void> {
+  if (!Capacitor.isNativePlatform()) return;
+  await LocalNotifications.cancel({ notifications: MEAL_REMINDER_NOTIFICATION_IDS.map((id) => ({ id })) });
+}
+
+/**
+ * The reminders choice, settled on first use (2.1.3): someone who had already
+ * allowed notifications before the toggle existed keeps reminders on and is
+ * never offered them. Null = not chosen yet (the offer decides).
+ */
+export async function resolveReminderChoice(): Promise<ReminderChoice> {
+  const stored = reminderChoice();
+  if (stored !== null || !Capacitor.isNativePlatform()) return stored;
+  const permissions = await LocalNotifications.checkPermissions().catch(() => null);
+  const choice = initialReminderChoice(null, permissions?.display === "granted");
+  if (choice !== null) setReminderChoice(choice);
+  return choice;
+}
+
+/**
+ * Turns reminders on after asking for what's missing (the offer's and the
+ * toggle's «Увімкнути»). Notifications refused: reminders stay off
+ * ("denied"). «Будильники й нагадування» opens a system screen and isn't
+ * waited for: if it's still off on return, the missing-permission popup asks.
+ */
+export async function turnRemindersOn(): Promise<"on" | "denied"> {
+  const access = await getReminderAccess();
+  if (access) await requestReminderAccess(access);
+  const after = await getReminderAccess();
+  if (after && !after.notifications) {
+    setReminderChoice("off");
+    return "denied";
+  }
+  setReminderChoice("on");
+  return "on";
+}
+
+/** Turns reminders off and cancels any already scheduled. */
+export async function turnRemindersOff(): Promise<void> {
+  setReminderChoice("off");
+  await cancelMealReminders();
 }
 
 /**

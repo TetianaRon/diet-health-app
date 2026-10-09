@@ -475,3 +475,18 @@ Answering "did we review only products?": the 69 home dishes were on the page bu
 - 440 tests, `tsc -b`, `npm run build`. Version 2.1.2, versionCode 31.
 
 ✅ **2.1.2 released 2026-10-09:** main pushed (web) and the bundle uploaded to the internal testing track (versionCode 31).
+
+**Release 2.1.3 — reminders you choose (2026-10-09, branch `release/2.1.3`):**
+- **Built** (spec → "Meal-time reminder" → "Reminders you choose (2.1.3)"):
+  - A per-device choice (`reminderChoice.ts`): on, off or not chosen. Only «on» schedules; turning off cancels what's scheduled. Someone who had allowed notifications before 2.1.3 (mom) starts on, with no offer.
+  - Settings → «Нагадування»: the «Нагадування про їжу» toggle (Android only). Turning it on asks for notifications, then «Будильники й нагадування»; a refusal leaves it off and says where to allow them in the phone's settings. A missing permission is named, with «Дозволити нагадування».
+  - In the shared notice queue: the one-time offer after sign-in («Увімкнути нагадування» / «Не зараз»; ✕ counts as «Не зараз», which says Settings can turn them on and never offers again), and, when reminders are on but a permission is missing, «Дозволити нагадування» / «Вимкнути нагадування» (✕ closes it until the next app start).
+  - Today's reminders notice is removed.
+- **Verified (developer's Pixel 10, debug build, dev sheet):**
+  - mom's path: notifications granted before the first launch → the choice set itself to «on», no offer;
+  - a fresh install (data cleared): the offer appeared after sign-in; «Не зараз» showed the Settings message, saved «off», and the offer didn't return after a restart;
+  - the toggle on: both permissions asked and granted, no warning;
+  - notifications revoked (adb): the missing popup on opening, «Детальніше» named «показувати сповіщення»; «Дозволити нагадування» granted it and the popup closed; revoked again, «Вимкнути нагадування» turned the toggle off, and no popup after a restart.
+- **Not checked:** an actual reminder arriving after the toggle (the scheduling itself is unchanged from 2.0.3); notifications refused at the prompt (the «denied» hint); the web Settings (the section renders nothing there).
+- **Known limit:** after two refusals Android shows no prompt, so «Дозволити» can't help; the Settings hint names the phone's path.
+- 446 tests, `tsc -b`, `npm run build`. Version 2.1.3, versionCode 32.
