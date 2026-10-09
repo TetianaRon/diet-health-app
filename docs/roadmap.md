@@ -12,8 +12,8 @@ The workflow (intake → release branch → verify → release) and the standing
 
 ## Next session — start here (set 2026-10-07)
 1. **2.0 released** to Play's internal testing track and the web (2026-10-06, builds 19–23). Nothing is public; mom is an internal tester, so **an upload is a release to her**. Still worth checking on the developer's devices: the `online` event on a real phone, two tabs, switching sheets.
-2. **Plan reviewed with the developer (2026-10-07):** 2.0.1 → 2.0.2 faster food entry → 2.0.3 reminders → 2.0.4 sign-in choices (+ privacy policy) → 2.1 one product list → 2.1.1 millilitres → 2.2 sets → 2.3 mom's data → 2.4 Picker → 2.5 food families → 2.6 label photos → 2.7 GI from ingredients (after the research) → 2.8 AI lookup → 2.9 English → 3.0 public launch.
-3. **2.0.1 released** (2026-10-07, versionCode 24). **2.0.2 released** (2026-10-08, versionCode 25). **2.0.3 released** (2026-10-08, versionCode 26); still to do: check mom's notification volume and tone. **2.0.4 released** (2026-10-08, versionCode 27, with the privacy policy update on roncreator.com). **2.1 released** (2026-10-08, build 29, versionCode 29; build 28 failed to merge a sheet with a «Sheet1» tab, nothing written). Mom's sheet merges on her first open; check in the morning that her phone has build 29 and her data loads. **2.1.1 released** (2026-10-08, versionCode 30). Next: **2.2 — sets**. Next: **2.1.1 — millilitres**.
+2. **Plan reviewed with the developer (2026-10-07):** 2.0.1 → 2.0.2 faster food entry → 2.0.3 reminders → 2.0.4 sign-in choices (+ privacy policy) → 2.1 one product list → 2.1.1 millilitres → 2.1.2 drinks you mix + status bar → 2.2 sets (+ favourites) → 2.3 mom's data → 2.4 Picker → 2.5 food families → 2.6 label photos → 2.7 GI from ingredients (after the research) → 2.8 AI lookup → 2.9 English → 3.0 public launch.
+3. **2.0.1 released** (2026-10-07, versionCode 24). **2.0.2 released** (2026-10-08, versionCode 25). **2.0.3 released** (2026-10-08, versionCode 26); still to do: check mom's notification volume and tone. **2.0.4 released** (2026-10-08, versionCode 27, with the privacy policy update on roncreator.com). **2.1 released** (2026-10-08, build 29, versionCode 29; build 28 failed to merge a sheet with a «Sheet1» tab, nothing written). Mom's sheet merges on her first open; check in the morning that her phone has build 29 and her data loads. **2.1.1 released** (2026-10-08, versionCode 30). Intake placed (2026-10-09). Next: **2.1.2 — drinks you mix, and the status bar**. Next: **2.1.1 — millilitres**.
 4. Chromium issue 569300356: reply sent 2026-10-05 — check for answers now and then.
 5. Plugin issue [capacitor-local-notifications#15](https://github.com/ionic-team/capacitor-local-notifications/issues/15) (reminders lost during a restart; reported 2026-10-08, our patch in `patches/`): check for answers now and then; drop the patch once a fixed version ships.
 
@@ -60,8 +60,13 @@ The person decides where their data lives, with plain wording about each choice.
 - A third basis, «на 100 мл» (or «на 250 мл» as a label gives it), for her own items; logging in ml (a `PortionMl` meal-log column, so a drink without a known density keeps its amount); recipe lines in ml.
 - An optional density «100 мл = 103 г» linking ml and grams. **Database densities for drinks** (milk, kefir, coffee; USDA household measures, with source and reliability) go through **2.2.1's review round**.
 
+### 2.1.2 — Drinks you mix, and the status bar · 📝 planned (developer, 2026-10-09, from Intake)
+- **Composed items in millilitres** (2026-10-08, developer): mixed drinks are composed — airan (yogurt, sparkling water, mustard and salt), smoothies, homemade dressings, soups by the ladle. A yield in ml («Вийшло, мл») beside the weight and the count; values per 100 ml when that's the main yield; the optional «мл = г» density; then ml sizes and logging follow (2.1.1's maths).
+- **Content shows through the Android status bar** (2026-10-08): when a list scrolls, rows pass under the clock and battery icons; the safe-area fix (1.5) padded the content but left the bar transparent. A solid bar behind the status bar on Android.
+
 ### 2.2 — Sets, clean start, moving mom over · 📝 planned (2.1's one product list first)
 The verified database offered as sets; new data starts empty; built-in items she used become her rows; the generalised update offer.
+- **Favourites, redesigned** (2026-10-08, developer, from Intake): only typed items have the ☆ (composed ones don't — a gap the one list makes visible), and there's no way to see favourites (no «Улюблені» filter or list; they only sort first). Redesign them with the list changes here: a ☆ for every item, an «Улюблені» filter.
 - **The base ingredients set moves to 2.2.1** (developer, 2026-10-08): kinds of flour, sugars, starches, seeds, oils — new database entries through the review page; for recipes, and needed by 2.7. The same round adds densities for the database's drinks (2.1.1).
 
 ### 2.3 — Mom's data, verified · 📝 planned — **after local-first** (developer, 2026-10-05)
@@ -74,6 +79,7 @@ Spec rules: memory of the import decisions (2026-09-29) + the review page.
 
 ### 2.4 — Google Picker · 📝 planned (needed for the public launch)
 - **The connected sheet in the connect window** (developer, 2026-10-06): listed first, marked «Підключена зараз», with no connect button. Today it's left out, so it looks missing.
+- **The Android connect window doesn't list sheets the web app created** (2026-10-08, developer's report on build 28, from Intake): with `drive.file`, Google shows each client only the files it created (the web lists «Мої дані», the phone doesn't). Workaround until then: «За посиланням». The Picker grants per-file access — check it reaches the Android client (the research note below).
 Spec: "Planned: spreadsheet detection + Google Picker". Detection and removing the test-sheet fallback moved to 1.7.1; left here: the Picker for sheets the app didn't create (replaces pasting a link), then dropping the `spreadsheets` scope. Research first: Picker inside the Android WebView. Needs Google Cloud setup by the developer.
 
 ### 2.5 — Food families in the dish composer · 📝 planned
@@ -145,13 +151,7 @@ Before building 2.7: run the method by hand on products sold in Ukraine that hav
 
 ## Intake (new feedback, not yet placed)
 
-- **TMM: content shows through the Android status bar** (2026-10-08): when a list scrolls, rows pass under the clock and battery icons; the safe-area fix (1.5) padded the content but left the bar transparent. Old, low priority design fix. Place: any small release.
-
-- **TMM: the Android connect window doesn't list sheets the web app created** (2026-10-08, developer's report on build 28): with `drive.file`, Google shows each client only its own files. Workaround: «За посиланням». Place: 2.4 Google Picker (its research note already asks whether a grant on one client reaches the other).
-
-- **TMM: favourites are half-built** (2026-10-08, developer): only typed items have the ☆ (composed ones don't, a gap the one list makes visible), and there's no way to see your favourites (no «Улюблені» filter or list; they only sort first). Redesign favourites as a whole. Not urgent, nothing breaks. Place: before 3.0 — fits with 2.2 sets (the lists change there anyway).
-
-- **TMM: composed items can't be measured in millilitres** (2026-10-08, developer): 2.1.1 gave ml to typed items only. Mixed drinks are composed — airan (yogurt, sparkling water, mustard and salt — developer), smoothies, homemade dressings, soups by the ladle. Needs a yield in ml («Вийшло, мл»), values per 100 ml when that's the main yield, the optional «мл = г» density, then ml sizes and logging follow. Place: 2.1.2 (small, the maths exists) or with 2.2.
+(empty — everything is placed in the releases above, 2026-10-09)
 
 New items land here with a one-line note, then get placed above.
 
