@@ -1,6 +1,6 @@
 import DuplicatesDialog from "./screens/DuplicatesDialog";
 import OtherTabNotice from "./screens/OtherTabNotice";
-import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { App as CapacitorApp } from "@capacitor/app";
 import { handleBack } from "./lib/backStack";
 import { Capacitor } from "@capacitor/core";
@@ -17,6 +17,7 @@ import { SheetHealthProvider, useSheetHealth } from "./context/SheetHealthContex
 import SheetHealthDialog from "./screens/SheetHealthDialog";
 import ConnectSheetDialog from "./screens/ConnectSheetDialog";
 import CopyUpdateOffer from "./screens/CopyUpdateOffer";
+import DatabaseMove from "./screens/DatabaseMove";
 import { initMealReminders } from "./lib/reminderScheduler";
 import TodayScreen from "./screens/TodayScreen";
 import FoodsScreen from "./screens/FoodsScreen";
@@ -51,6 +52,9 @@ export default function App() {
     tabHistory.current = [...tabHistory.current, activeTabRef.current].slice(-MAX_HISTORY);
     setActiveTab(tab);
   };
+  // «Переглянути набори» from the first-run offer (2.2): FoodsScreen opens the sets itself.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const openSets = useCallback(() => goTo("foods"), []);
   const [autoOpenAddForm, setAutoOpenAddForm] = useState(false);
   // The meal editor is a dedicated screen: while it's open the tab bar and
   // settings gear are hidden, so a stray tap can't navigate away mid-draft.
@@ -143,6 +147,7 @@ export default function App() {
         <SheetHealthDialog onOpenSettings={() => goTo("settings")} />
         <ConnectSheetDialog />
         <CopyUpdateOffer />
+        <DatabaseMove onOpenSets={openSets} />
         <OtherTabNotice />
         <DuplicatesDialog />
         <Toaster />

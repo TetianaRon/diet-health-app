@@ -6,7 +6,9 @@
 //   • copyUpdates — her saved copies (BasedOn = B…) that still hold the
 //     pre-1.8 built-in values, i.e. she never changed them: these are offered
 //     the verified values once («Для N продуктів є уточнені значення»).
-//     Copies she edited are never offered or touched. The same goes for her
+//     Copies she edited are never offered or touched. Since 2.2 the same
+//     goes for any copy that still holds the database values it was made
+//     from (BasedOnValues), when the database corrects them. The same goes for her
 //     copies of the pre-1.8 built-in *dishes* (B0058–B0069, «Гречка варена»…),
 //     whose IDs are products since 1.8 (dishCopyUpdates).
 import type { Ingredient } from "./ingredients";
@@ -15,6 +17,7 @@ import type { NutritionKey } from "./dishes";
 import type { VerifiedFoodEntry } from "../data/verifiedFoods";
 import { entryToIngredient, verifiedEntry } from "../data/builtInFoods";
 import { LEGACY_BUILT_INS, type LegacyBuiltIn } from "../data/legacyBuiltIns";
+import { valuesFingerprint } from "./databaseItems";
 
 const VALUE_FIELDS = ["carbsG", "gi", "fiberG", "sugarsG", "proteinG", "fatG", "caloriesKcal", "sodiumMg"] as const;
 const LEGACY_BY_ID = new Map(LEGACY_BUILT_INS.map((l) => [l.id, l]));
@@ -51,6 +54,27 @@ export function copyUpdates(
   const updates: CopyUpdate[] = [];
   for (const copy of sheetIngredients) {
     if (!copy.basedOn) continue;
+    // Since 2.2 a copy keeps the database values it was made from: while it still holds them
+    // (she didn't change it), a database correction is offered. Her name stays.
+    if (copy.basedOnValues) {
+      const entry = lookup(copy.basedOn);
+      if (!entry || valuesFingerprint(copy) !== copy.basedOnValues) continue;
+      const fresh = entryToIngredient(entry);
+      const freshValues = valuesFingerprint(fresh);
+      if (freshValues === copy.basedOnValues) continue;
+      updates.push({
+        copy,
+        entry,
+        updated: {
+          ...copy,
+          ...Object.fromEntries(VALUE_FIELDS.map((f) => [f, fresh[f]])),
+          unknownFields: fresh.unknownFields,
+          giVerified: copy.giVerified && copy.gi === fresh.gi,
+          basedOnValues: freshValues,
+        } as Ingredient,
+      });
+      continue;
+    }
     const old = legacy.get(copy.basedOn);
     const entry = lookup(copy.basedOn);
     if (!old || !entry || old.kind !== "food") continue;
@@ -69,6 +93,7 @@ export function copyUpdates(
         unknownFields: fresh.unknownFields,
         // Her "I checked this GI" was about the old value.
         giVerified: copy.giVerified && copy.gi === fresh.gi,
+        basedOnValues: valuesFingerprint(fresh),
       } as Ingredient,
     });
   }

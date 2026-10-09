@@ -70,6 +70,8 @@ export interface Ingredient {
   // A measured volume and its weight («100 мл = 103 г», 2.1.1); null or absent when unknown.
   densityMl?: number | null;
   densityGrams?: number | null;
+  // The database values this copy was made from (2.2, `valuesFingerprint`); "" or absent when unknown.
+  basedOnValues?: string;
 }
 
 // Canonical column order — what a brand-new sheet gets initialized with (see
@@ -152,6 +154,7 @@ export function rowToIngredient(row: unknown[], columnIndex: ColumnIndex = DEFAU
     labels: parseLabels(cell(row, columnIndex, "Labels")),
     densityMl: positiveOrNull(cell(row, columnIndex, "WeighedMl")),
     densityGrams: positiveOrNull(cell(row, columnIndex, "WeighedMlGrams")),
+    basedOnValues: String(cell(row, columnIndex, "BasedOnValues") ?? "").trim(),
   };
 }
 
@@ -186,6 +189,7 @@ export function ingredientFields(ingredient: Ingredient): Record<string, unknown
       Labels: ingredient.labels ? serializeLabels(ingredient.labels) : undefined,
       WeighedMl: ingredient.densityMl === undefined ? undefined : (ingredient.densityMl ?? ""),
       WeighedMlGrams: ingredient.densityGrams === undefined ? undefined : (ingredient.densityGrams ?? ""),
+      BasedOnValues: ingredient.basedOnValues === undefined ? undefined : ingredient.basedOnValues,
   };
 }
 
@@ -239,7 +243,7 @@ function productFields(ingredient: Ingredient): Record<string, unknown> {
 /** Adds a new ingredient with a new `I…` ID and returns it as saved. */
 export async function addIngredient(
   ingredient: Omit<Ingredient, "dateAdded" | "favorite" | "glycemicFlag" | "id" | "basedOn" | "giFrom" | "basis" | "valuesPer" | "weighedPieces" | "weighedGrams" | "portionSizes"> &
-    Partial<Pick<Ingredient, "basedOn" | "giFrom" | "basis" | "valuesPer" | "weighedPieces" | "weighedGrams" | "portionSizes" | "labels" | "densityMl" | "densityGrams">>,
+    Partial<Pick<Ingredient, "basedOn" | "giFrom" | "basis" | "valuesPer" | "weighedPieces" | "weighedGrams" | "portionSizes" | "labels" | "densityMl" | "densityGrams" | "basedOnValues">>,
   favorite = false,
   glycemicFlag: GlycemicFlag = "none",
 ): Promise<Ingredient> {

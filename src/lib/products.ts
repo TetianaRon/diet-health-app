@@ -53,6 +53,9 @@ export const PRODUCTS_HEADERS = [
   "Id",
   "BasedOn",
   "UpdatedAt",
+  // The database values a copy was made from (2.2, databaseItems.ts): while her copy still
+  // holds them, a later database correction is offered to it.
+  "BasedOnValues",
 ] as const;
 
 export const PRODUCTS_COLUMN_INDEX: ColumnIndex = buildColumnIndex(PRODUCTS_HEADERS);

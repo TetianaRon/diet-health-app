@@ -4,6 +4,15 @@ import { formatDecimal as n } from "../lib/numberFormat";
 type Basis = "100g" | "piece" | "100ml";
 /** «на 100 г», «на 1 шт.», «на 100 мл» (2.1.1). */
 const perText = (basis: Basis) => (basis === "piece" ? "на 1 шт." : basis === "100ml" ? "на 100 мл" : "на 100 г");
+/** «1 продукт», «3 продукти», «7 продуктів», «12 продуктів» — the nominative count form. */
+function productsCount(n: number): string {
+  const tens = n % 100;
+  const ones = n % 10;
+  if (ones === 1 && tens !== 11) return `${n} продукт`;
+  if (ones >= 2 && ones <= 4 && (tens < 12 || tens > 14)) return `${n} продукти`;
+  return `${n} продуктів`;
+}
+
 export const uk = {
   appName: "Трекер харчування",
   tabs: {
@@ -12,6 +21,31 @@ export const uk = {
     foods: "Продукти",
     medications: "Ліки",
     settings: "Налаштування",
+  },
+  // The verified database as sets (2.2): her «Продукти» hold only her own rows.
+  databaseSets: {
+    addButton: "+ Додати з бази",
+    title: "Набори з бази",
+    intro: "Перевірені продукти, згруповані за видом. Додані стають вашими — їх можна змінювати. Під час пошуку продукти з бази теж знаходяться.",
+    setLine: (total: number, added: number) => (added > 0 ? `${productsCount(total)}, додано ${added}` : productsCount(total)),
+    allAdded: "усі додано",
+    alreadyAdded: "вже додано",
+    addSelected: (n: number) => `Додати вибрані: ${n}`,
+    nothingSelected: "Нічого не вибрано",
+    added: (n: number) => `Додано у «Продукти»: ${n}.`,
+    fromDatabase: "з бази",
+    addOne: "+ Додати",
+    searchDatabaseTitle: "З бази",
+    moved: (n: number) => `Продукти з бази, які ви вже використовували, тепер у ваших «Продуктах»: ${n}.`,
+    movedDetails: "Решту бази можна додати наборами: «Продукти» → «+ Додати з бази». Під час пошуку продукти з бази теж знаходяться, і вибраний додається у ваші «Продукти».",
+    movedDismiss: "Зрозуміло",
+    offerTitle: "Почати з продуктів із бази?",
+    offerDetails: "Додайте готові набори: крупи, овочі, молочні продукти… Значення перевірені, їх можна змінити. Або додавайте продукти по одному, коли знадобляться.",
+    offerOpen: "Переглянути набори",
+    openSet: "Переглянути",
+    offerLater: "Не зараз",
+    offerLaterNote: "Набори можна додати будь-коли: «Продукти» → «+ Додати з бази».",
+    failed: (reason: string) => `Не вдалося додати продукти з бази: ${reason}`,
   },
   // The «Ліки» tab (2.1.4): her medicines, like Продукти — for now a plain list to edit.
   medicationsScreen: {
@@ -402,6 +436,7 @@ export const uk = {
     filters: {
       label: "Показати",
       all: "Усі",
+      favorite: "Улюблені",
       ingredient: "Інгредієнти",
       dish: "Страви",
       drink: "Напої",
@@ -795,6 +830,7 @@ export const uk = {
       Tab: "Вкладка",
       DeletedAt: "Видалено",
       BasedOn: "Копія вбудованого",
+      BasedOnValues: "Значення бази на час копіювання",
       GiFrom: "ГІ з бази",
       ItemId: "Ідентифікатор продукту/страви",
       Name: "Назва",

@@ -157,13 +157,15 @@ export default function TodayScreen({
   }, [entries, settings, reminders]);
 
   // Meal logging picks from her dishes first, then all products (built-in
-  // database + her own, favourites first) — nothing needs to be "added" first
-  // just to be loggable. Built-in cooked foods are products since 1.8.
+  // database + her own, favourites first). Since 2.2 browsing shows hers and a
+  // search also finds the database; a picked database item becomes hers on
+  // save (MealEditorScreen). Built-in cooked foods are products since 1.8.
   // Since 2.1 her typed items labelled страва (e.g. a saved meal box) come right after the composed ones.
   const foods = useMemo<PickableFood[]>(() => {
     const typed = sortFavoritesFirst(mergeWithBuiltInFoods(data?.ingredients ?? []));
     const isHerDish = (i: (typeof typed)[number]) => !isBuiltInId(i.id) && (i.labels ?? []).includes("dish");
-    return [...(data?.dishes ?? []), ...typed.filter(isHerDish), ...typed.filter((i) => !isHerDish(i))].map(toPickable);
+    const composed = sortFavoritesFirst((data?.dishes ?? []).map((d) => ({ ...d, favorite: d.favorite ?? false })));
+    return [...composed, ...typed.filter(isHerDish), ...typed.filter((i) => !isHerDish(i))].map(toPickable);
   }, [data]);
 
   if (initializing) {

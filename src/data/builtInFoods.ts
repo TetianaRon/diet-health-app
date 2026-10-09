@@ -78,3 +78,4 @@ export function verifiedEntry(id: string): VerifiedFoodEntry | null {
 export const BUILT_IN_ALIASES: ReadonlyMap<string, readonly string[]> = new Map(
   LEGACY_BUILT_INS.map((legacy) => [legacy.id, [legacy.nameUk]]),
 );
+

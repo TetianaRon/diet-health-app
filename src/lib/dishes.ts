@@ -126,6 +126,8 @@ export interface Dish extends IngredientNutrition {
   source: DishSource;
   dateAdded: string;
   glycemicFlag: GlycemicFlag;
+  // ☆ for composed items too (2.2, the favourites redesign); undefined = not read (nothing is written).
+  favorite?: boolean;
   // Same meaning as Ingredient.giVerified — true only once a person has
   // explicitly confirmed this GI against a trusted source. Defaults false
   // even for starter dishes, since a computed carb-weighted average (see
@@ -418,6 +420,7 @@ export function rowToDish(row: unknown[], columnIndex: ColumnIndex = DEFAULT_COL
     source: toDishSource(cell(row, columnIndex, "Source")),
     dateAdded: String(cell(row, columnIndex, "DateAdded") ?? ""),
     glycemicFlag: toGlycemicFlag(cell(row, columnIndex, "GlycemicFlag")),
+    favorite: String(cell(row, columnIndex, "Favorite") ?? "").trim().toUpperCase() === "TRUE",
     giVerified: toBoolean(cell(row, columnIndex, "GiVerified")),
     unknownFields: parseUnknownNutritionFields(cell(row, columnIndex, "UnknownFields")),
   };
@@ -448,6 +451,7 @@ export function dishFields(dish: Dish): Record<string, unknown> {
       Source: dish.source,
       DateAdded: dish.dateAdded,
       GlycemicFlag: dish.glycemicFlag,
+      Favorite: dish.favorite === undefined ? undefined : dish.favorite,
       GiVerified: dish.giVerified,
       UnknownFields: dish.unknownFields.join(","),
       Id: dish.id,
@@ -492,6 +496,11 @@ export async function addDish(
   };
   await upsertRecord(PRODUCTS_TAB, saved.id, productFields(saved));
   return saved;
+}
+
+/** Sets a composed item's Favorite mark (2.2). */
+export async function setDishFavorite(id: string, favorite: boolean): Promise<void> {
+  await upsertRecord(PRODUCTS_TAB, id, { Favorite: favorite });
 }
 
 /** Sets a dish's GlycemicFlag. */
