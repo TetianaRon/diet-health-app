@@ -1717,3 +1717,16 @@ select {
   color: #5a6b60;
   font-size: 0.9em;
 }
+
+/* Behind Android's status bar (2.1.2): content scrolled up used to show through
+   under the clock and battery icons. env() is 0 on the web and on computers. */
+.status-bar-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: env(safe-area-inset-top, 0px);
+  background: #ffffff;
+  z-index: 50;
+  pointer-events: none;
+}

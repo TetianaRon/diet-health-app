@@ -40,6 +40,8 @@ export function dishAsIngredient(dish: Dish): Ingredient {
     // Only a full pair: a batch weight without a count isn't a piece weight.
     weighedPieces: measure.weighedPieces && measure.weighedGrams ? measure.weighedPieces : null,
     weighedGrams: measure.weighedPieces && measure.weighedGrams ? measure.weighedGrams : null,
+    densityMl: measure.densityMl ?? null,
+    densityGrams: measure.densityGrams ?? null,
     portionSizes: dish.portionSizes,
     labels: dish.labels,
   };
@@ -71,7 +73,13 @@ export function recipeCandidates(editingId: string | null, dishes: readonly Dish
 
 /** Recalculates a composed item from its recipe (the composer's own maths). */
 export function recomputeDish(dish: Dish, lookup: (ref: DishIngredientRef) => Ingredient | null): Dish {
-  const nutrition = computeDishNutrition(dish.ingredients, dish.yieldGrams, lookup, dish.basis === "piece" ? dish.yieldPieces : null);
+  const nutrition = computeDishNutrition(
+    dish.ingredients,
+    dish.yieldGrams,
+    lookup,
+    dish.basis === "piece" ? dish.yieldPieces : null,
+    dish.basis === "100ml" ? (dish.yieldMl ?? null) : null,
+  );
   return { ...dish, ...nutrition, unknownFields: computeDishUnknownFields(dish.ingredients, lookup) };
 }
 

@@ -60,7 +60,7 @@ import PackAmountFields, { measureFromPackFields, type PackFields } from "./Pack
 import ProductMeasureFields, { isMeasure, measureFromProductFields, productFieldsFromMeasure, type ProductFields } from "./ProductMeasureFields";
 import PortionSizesFields, { sizeRowsFrom, sizesFromRows, type SizeRow } from "./PortionSizesFields";
 import WeighedPiecesFields, { weighedPair } from "./WeighedPiecesFields";
-import { gramsPerMl, pieceGrams, round2, toStoredValues, toTypedValues, valuesAmount, PER_100G, type Measure } from "../lib/measure";
+import { gramsPerMl, pieceGrams, round2, toStoredValues, toTypedValues, valuesAmount, PER_100G, type Basis, type Measure } from "../lib/measure";
 import { measureOf, refFactor } from "../lib/dishes";
 
 const NUMERIC_FIELDS = ["carbsG", "gi", "fiberG", "sugarsG", "proteinG", "fatG", "caloriesKcal", "sodiumMg"] as const;
@@ -124,8 +124,13 @@ function PackSummary({ pack, values }: { pack: ProductFields; values: FormValues
   return <p className="food-form-source">{uk.foods.pack.storedPreview(measure.basis, carbs, calories)}</p>;
 }
 
+/** The size unit that matches a basis (2.1.2): a new size starts in the item's main unit. */
+function basisUnit(basis: Basis): SizeRow["unit"] {
+  return basis === "piece" ? "pieces" : basis === "100ml" ? "ml" : "grams";
+}
+
 // Which units her portion sizes can use: grams unless counted per piece without a weight, pieces when per piece or weighed.
-function sizeUnits(pack: ProductFields): { allowGrams: boolean; allowPieces: boolean; allowMl: boolean } {
+function sizeUnits(pack: ProductFields): { allowGrams: boolean; allowPieces: boolean; allowMl: boolean; preferredUnit: SizeRow["unit"] } {
   const measure = measureFromProductFields(pack);
   const weighed = isMeasure(measure) && pieceGrams(measure) !== null;
   const density = isMeasure(measure) && gramsPerMl(measure) !== null;
@@ -133,6 +138,7 @@ function sizeUnits(pack: ProductFields): { allowGrams: boolean; allowPieces: boo
     allowGrams: pack.main === "100g" || weighed || density,
     allowPieces: pack.main === "piece" || weighed,
     allowMl: pack.main === "100ml" || density,
+    preferredUnit: basisUnit(pack.main),
   };
 }
 
@@ -858,11 +864,12 @@ function ComposeDishForm({
         }))
       : [EMPTY_ROW],
   );
-  // The yield: a weight, a count («Вийшло 10 млинців») or both; the main one decides how the dish is measured (2.0.1).
+  // The yield: a weight, a count («Вийшло 10 млинців»), a volume (2.1.2) or several; the main one decides how the dish is measured (2.0.1).
   const [yieldFields, setYieldFields] = useState<PackFields>(() => ({
     main: existingDish?.basis ?? "100g",
     grams: existingDish && existingDish.yieldGrams > 0 ? fieldDecimal(existingDish.yieldGrams) : "",
     pieces: existingDish?.yieldPieces ? fieldDecimal(existingDish.yieldPieces) : "",
+    ml: existingDish?.yieldMl ? fieldDecimal(existingDish.yieldMl) : "",
   }));
   const [giVerified, setGiVerified] = useState(existingDish?.giVerified ?? false);
   const [sizeRows, setSizeRows] = useState<SizeRow[]>(() => sizeRowsFrom(existingDish?.portionSizes ?? []));
@@ -903,8 +910,10 @@ function ComposeDishForm({
   const weighedNow = weighedPair(weighedPieces, weighedGrams);
   const dishHasPieceWeight =
     (!("problem" in weighedNow) && weighedNow.weighedPieces !== null) || (yieldMeasure !== null && pieceGrams(yieldMeasure) !== null);
-  const dishNutrition = (refs: DishIngredientRef[], y: Measure) =>
-    computeDishNutrition(refs, y.weighedGrams ?? 0, findIngredient, y.basis === "piece" ? y.weighedPieces : null);
+  // Weight and volume of the batch both measured: it can be logged in ml and in g (2.1.2).
+  const dishHasDensity = yieldMeasure !== null && gramsPerMl(yieldMeasure) !== null;
+  const dishNutrition = (refs: DishIngredientRef[], y: Measure & { yieldMl: number | null }) =>
+    computeDishNutrition(refs, y.weighedGrams ?? 0, findIngredient, y.basis === "piece" ? y.weighedPieces : null, y.basis === "100ml" ? y.yieldMl : null);
   const preview =
     resolvedRefs.length === rows.filter((r) => r.nameUk.trim()).length && resolvedRefs.length > 0 && yieldMeasure
       ? dishNutrition(resolvedRefs, yieldMeasure)
@@ -954,6 +963,7 @@ function ComposeDishForm({
         yieldGrams: yieldMeasure.weighedGrams ?? 0,
         basis: yieldMeasure.basis,
         yieldPieces: yieldMeasure.weighedPieces,
+        yieldMl: yieldMeasure.yieldMl,
         ...weighed,
         portionSizes,
         labels,
@@ -1084,7 +1094,8 @@ function ComposeDishForm({
         legend={uk.dishes.composeForm.yieldLegend}
         gramsLabel={uk.dishes.composeForm.yieldGramsLabel}
         piecesLabel={uk.dishes.composeForm.yieldPiecesLabel}
-        hints={{ grams: uk.dishes.composeForm.yieldGramsHint, pieces: uk.dishes.composeForm.yieldPiecesHint }}
+        mlLabel={uk.dishes.composeForm.yieldMlLabel}
+        hints={{ grams: uk.dishes.composeForm.yieldGramsHint, pieces: uk.dishes.composeForm.yieldPiecesHint, ml: uk.dishes.composeForm.yieldMlHint }}
       />
       <p className="food-form-hint">{uk.dishes.composeForm.yieldHint}</p>
       <WeighedPiecesFields
@@ -1099,8 +1110,10 @@ function ComposeDishForm({
       <PortionSizesFields
         rows={sizeRows}
         onChange={setSizeRows}
-        allowGrams={yieldFields.main !== "piece" || dishHasPieceWeight}
+        allowGrams={yieldFields.main === "100g" || dishHasPieceWeight || dishHasDensity}
         allowPieces={yieldFields.main === "piece" || dishHasPieceWeight}
+        allowMl={yieldFields.main === "100ml" || dishHasDensity}
+        preferredUnit={basisUnit(yieldFields.main)}
       />
 
       {preview && (
@@ -1573,7 +1586,7 @@ export default function FoodsScreen() {
                   <div className="food-list-item-with-action">
                     <span>
                       <strong>{dish.nameUk}</strong> {dish.nameEn && <span className="food-name-en">({dish.nameEn})</span>} — {foodMetaText(dish)}
-                      {dish.basis !== "piece" && ` (${uk.foods.pack.per("100g")})`} <span className="food-recipe-mark">{uk.foods.recipeMark}</span>
+                      {dish.basis === "100g" && ` (${uk.foods.pack.per("100g")})`} <span className="food-recipe-mark">{uk.foods.recipeMark}</span>
                     </span>
                     <div className="food-list-actions">
                       <button type="button" className="edit-toggle" onClick={() => startEditing({ mode: "recipe", item: dish })} aria-label={uk.dishes.editLabel} title={uk.dishes.editLabel}>

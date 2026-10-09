@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  itemMeasure,
   computeDishNutrition,
   computeDishUnknownFields,
   unknownGiCarbShare,
@@ -114,7 +115,7 @@ describe("rowToDish / dishToRow", () => {
       nameUk: "Гречка варена",
       nameEn: "buckwheat, cooked",
       ingredients: [{ nameUk: "Гречка суха", grams: 100 }],
-      yieldGrams: 360, basis: "100g" as const, yieldPieces: null, weighedPieces: null, weighedGrams: null, portionSizes: [], labels: [],
+      yieldGrams: 360, basis: "100g" as const, yieldPieces: null, weighedPieces: null, weighedGrams: null, portionSizes: [], labels: [], yieldMl: null,
       carbsG: 19.86,
       gi: 54,
       fiberG: 2.78,
@@ -140,7 +141,7 @@ describe("rowToDish / dishToRow", () => {
       nameUk: "Гречка варена",
       nameEn: "buckwheat, cooked",
       ingredients: [{ nameUk: "Гречка суха", grams: 100 }],
-      yieldGrams: 360, basis: "100g" as const, yieldPieces: null, weighedPieces: null, weighedGrams: null, portionSizes: [], labels: [],
+      yieldGrams: 360, basis: "100g" as const, yieldPieces: null, weighedPieces: null, weighedGrams: null, portionSizes: [], labels: [], yieldMl: null,
       carbsG: 19.86,
       gi: 54,
       fiberG: 2.78,
@@ -186,7 +187,7 @@ describe("rowToDish / dishToRow", () => {
       nameUk: "Борщ",
       nameEn: "borscht",
       ingredients: [],
-      yieldGrams: 1000, basis: "100g" as const, yieldPieces: null, weighedPieces: null, weighedGrams: null, portionSizes: [], labels: [],
+      yieldGrams: 1000, basis: "100g" as const, yieldPieces: null, weighedPieces: null, weighedGrams: null, portionSizes: [], labels: [], yieldMl: null,
       carbsG: 5,
       gi: 40,
       fiberG: 1,
@@ -235,7 +236,7 @@ describe("dishContainsFlaggedIngredient", () => {
       { nameUk: "Буряк", grams: 100 },
       { nameUk: "Картопля", grams: 100 },
     ],
-    yieldGrams: 500, basis: "100g" as const, yieldPieces: null, weighedPieces: null, weighedGrams: null, portionSizes: [], labels: [],
+    yieldGrams: 500, basis: "100g" as const, yieldPieces: null, weighedPieces: null, weighedGrams: null, portionSizes: [], labels: [], yieldMl: null,
     carbsG: 5,
     gi: 40,
     fiberG: 1,
@@ -361,5 +362,22 @@ describe("dishesUsingIngredient", () => {
 
   it("doesn't count a line that points at the built-in item her copy stands for", () => {
     expect(dishesUsingIngredient({ id: "I3", nameUk: "Гречка суха" }, [dish("D1", [{ id: "B0001", nameUk: "Гречка суха" }])])).toEqual([]);
+  });
+});
+
+describe("composed items in millilitres (2.1.2)", () => {
+  it("gives values per 100 ml from the yield in ml, and its yield in ml and g links them", () => {
+    // Airan: 300 g yogurt (60 kcal/100 g) + 300 g sparkling water; 600 ml, 612 g.
+    const yogurt = { carbsG: 4, gi: 35, fiberG: 0, sugarsG: 4, proteinG: 3, fatG: 2, caloriesKcal: 60, sodiumMg: 50, unknownFields: [] };
+    const water = { carbsG: 0, gi: 0, fiberG: 0, sugarsG: 0, proteinG: 0, fatG: 0, caloriesKcal: 0, sodiumMg: 5, unknownFields: [] };
+    const refs = [
+      { id: "I1", nameUk: "йогурт", grams: 300 },
+      { id: "I2", nameUk: "вода", grams: 300 },
+    ];
+    const lookup = (ref: { id?: string }) => (ref.id === "I1" ? yogurt : water);
+    const perMl = computeDishNutrition(refs, 612, lookup, null, 600);
+    expect(perMl.caloriesKcal).toBeCloseTo((300 * 0.6) / 6, 2); // 180 kcal in 600 ml → 30 per 100 ml
+    const measure = itemMeasure({ basis: "100ml", yieldGrams: 612, yieldPieces: null, yieldMl: 600 });
+    expect([measure.basis, measure.densityMl, measure.densityGrams]).toEqual(["100ml", 600, 612]);
   });
 });

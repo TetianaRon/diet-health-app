@@ -112,6 +112,9 @@ export interface Dish extends IngredientNutrition {
   // may be 0 (unknown).
   basis: Basis;
   yieldPieces: number | null;
+  // The yield in ml (2.1.2), for a mixed drink, a soup, a dressing; null when not measured.
+  // With the yield weight it's also the item's density («1,2 л = 1 236 г»).
+  yieldMl?: number | null;
   // A weighed handful of pieces («10 млинців = 400 г», 2.0.2), so the whole
   // batch never has to be counted; both null when not given.
   weighedPieces: number | null;
@@ -170,6 +173,7 @@ export function computeDishNutrition(
   yieldGrams: number,
   lookupIngredient: (ref: DishIngredientRef) => (IngredientNutrition & { unknownFields?: NutritionKey[] } & Partial<Measure>) | null,
   yieldPieces: number | null = null,
+  yieldMl: number | null = null,
 ): IngredientNutrition {
   let totalCarbs = 0;
   let totalFiber = 0;
@@ -203,7 +207,8 @@ export function computeDishNutrition(
     }
   }
 
-  const scale = yieldPieces ? 1 / yieldPieces : yieldGrams > 0 ? 100 / yieldGrams : 0;
+  // Per piece, per 100 ml (2.1.2) or per 100 g — whichever yield the caller passes as the main one.
+  const scale = yieldPieces ? 1 / yieldPieces : yieldMl ? 100 / yieldMl : yieldGrams > 0 ? 100 / yieldGrams : 0;
 
   return {
     carbsG: round2(totalCarbs * scale),
@@ -233,11 +238,13 @@ type WithUnknown = IngredientNutrition & { unknownFields: NutritionKey[] } & Par
  * pieces («10 млинців = 400 г») when given, else from its yield when both the
  * weight and the count of the whole batch are known.
  */
-export function itemMeasure(item: Partial<Measure> & { yieldGrams?: number; yieldPieces?: number | null }): Measure {
+export function itemMeasure(item: Partial<Measure> & { yieldGrams?: number; yieldPieces?: number | null; yieldMl?: number | null }): Measure {
   if (item.yieldGrams !== undefined) {
     const basis = item.basis ?? "100g";
-    if (item.weighedPieces && item.weighedGrams) return { basis, valuesPer: null, weighedPieces: item.weighedPieces, weighedGrams: item.weighedGrams };
-    return { basis, valuesPer: null, weighedPieces: item.yieldPieces ?? null, weighedGrams: item.yieldGrams || null };
+    // The batch's volume and weight, both measured, link ml and g (2.1.2).
+    const density = item.yieldMl && item.yieldGrams ? { densityMl: item.yieldMl, densityGrams: item.yieldGrams } : { densityMl: null, densityGrams: null };
+    if (item.weighedPieces && item.weighedGrams) return { basis, valuesPer: null, weighedPieces: item.weighedPieces, weighedGrams: item.weighedGrams, ...density };
+    return { basis, valuesPer: null, weighedPieces: item.yieldPieces ?? null, weighedGrams: item.yieldGrams || null, ...density };
   }
   return measureOf(item);
 }
@@ -395,6 +402,7 @@ export function rowToDish(row: unknown[], columnIndex: ColumnIndex = DEFAULT_COL
     yieldGrams: toNumber(cell(row, columnIndex, "YieldGrams")),
     basis: toBasis(cell(row, columnIndex, "Basis")),
     yieldPieces: positiveOrNull(cell(row, columnIndex, "YieldPieces")),
+    yieldMl: positiveOrNull(cell(row, columnIndex, "YieldMl")),
     weighedPieces: positiveOrNull(cell(row, columnIndex, "WeighedPieces")),
     weighedGrams: positiveOrNull(cell(row, columnIndex, "WeighedGrams")),
     portionSizes: parsePortionSizes(cell(row, columnIndex, "PortionSizes")),
@@ -422,8 +430,9 @@ export function dishFields(dish: Dish): Record<string, unknown> {
       NameEn: dish.nameEn,
       IngredientsJson: serializeIngredientsJson(dish.ingredients),
       YieldGrams: dish.yieldGrams || "",
-      Basis: dish.basis === "piece" ? "piece" : "",
+      Basis: dish.basis === "100g" ? "" : dish.basis,
       YieldPieces: dish.yieldPieces ?? "",
+      YieldMl: dish.yieldMl === undefined ? undefined : (dish.yieldMl ?? ""),
       WeighedPieces: dish.weighedPieces ?? "",
       WeighedGrams: dish.weighedGrams ?? "",
       PortionSizes: serializePortionSizes(dish.portionSizes),
