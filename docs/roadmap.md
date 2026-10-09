@@ -99,6 +99,14 @@ Spec: "Planned: spreadsheet detection + Google Picker". Detection and removing t
 ### 2.5 — Food families in the dish composer · 📝 planned
 Spec: "Planned: food families with cooking states". Raw weight + state in the finished dish; carbs by mass balance, GI from the cooked state; published whole-dish GI shown only as a check. The data already exists from 1.8/2.0.
 - **Dry products get their GI through the family** (developer, 2026-10-05): until 2.5, dry grains, pasta and legumes carry the GI of their cooked form (labelled «після варіння»), so dishes composed from pack values keep a GI. With families, the composer asks how the product is cooked and takes the GI from the family's cooked entry; the dry entries then stop storing a GI of their own (one source per value).
+- **Flour is the first family with dish states** (developer, 2026-10-09, from 2.2.1's research): the flour entries (2.2.1) carry nutrients only, GI «немає даних», because the same flour becomes porridge, pancakes, dumplings or bread. In the composer a flour line also says what's made from it, and the GI comes from that state (same upper-quartile rule, each with its source). Measurements found in the 2021 tables for wheat flour:
+  - raw, stirred into water: 20, 22 (ST1 #706, #707) — not how it's eaten; shows why the state matters (the same Coles plain flour as pancakes is 61, #52);
+  - pancakes (млинці, оладки): 61, 80 (ST1 #52, #55); with coconut flour 46 (#51), from a shake mix 67 (#53);
+  - porridge from white flour: 55 (ST2 #2503);
+  - unleavened flatbread / chapatti: 45 wholemeal roti (ST1 #350), chapatti 50–68 (#2076–#2078);
+  - dumplings with cheese curd (pierogi ≈ вареники з сиром): white flour 42–61, wholegrain 25–34 (ST2 #3954–#3958, Poland);
+  - white bread: summary row «White wheat flour bread, mean of 35 foods» (73; the existing bread entry uses it, 76).
+  Other flours: maize-flour porridge (мамалига, кулеша) 71 whole / 75 refined (ST1 #1954, #1955); wholemeal oat-flour porridge 75 (ST2 #2506); rye only mixed with wheat (porridges 50–51, ST2 #2504, #2505); buckwheat and rice flour only in products (buckwheat pancakes from a gluten-free mix 102, ST1 #57 — a packet mix, not a home recipe). A state without a measurement stays «немає даних».
 
 ### 2.6 — Reading labels from a photo · 📝 planned
 - A photo of the pack → the nutrition table and «Склад» are read on the device (text recognition, free and offline) → she checks every value before saving; «неперевірено» stays.
