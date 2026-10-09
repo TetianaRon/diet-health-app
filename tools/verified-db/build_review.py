@@ -139,6 +139,17 @@ CHANGES["B0097"] = ("Новий запис (1.9): кава, зварена в д
 CHANGES["B0098"] = ("Новий запис (1.9): еспресо — міцніший варіант; ГІ «не застосовується», хоча вуглеводів 1,67 г — див. пояснення.", True)
 CHANGES["B0048"] = ("Тепер це запис для груші невідомої стиглості; додано окремі записи «стигла» і «недостигла».", True)
 
+# 2.2.1 (2026-10-09): the base ingredients, and densities for liquids.
+ROUND8_AT = "2026-10-09T19:00:00Z"
+BASE_IDS = [f"B{n:04d}" for n in range(117, 134)]
+DENSITY_IDS = ["B0012", "B0013", "B0056", "B0057", "B0096", "B0097", "B0098"]
+ROUND8_IDS = set(BASE_IDS) | set(DENSITY_IDS)
+for _id in BASE_IDS:
+    CHANGES[_id] = ("Новий запис (2.2.1): базові інгредієнти для рецептів — борошно, крохмаль, цукор і мед, насіння, сіль, какао.", True)
+CHANGES["B0127"] = ("Новий запис (2.2.1): мед — з ГІ за зведеним рядком таблиці (17 сортів) і співвідношенням мілілітрів і грамів.", True)
+for _id in DENSITY_IDS:
+    CHANGES[_id] = ("Додано співвідношення мілілітрів і грамів з даних USDA, щоб записувати в мл (значення не змінювалися).", True)
+
 FIELD_MAP = {"carbsG": "carbsG", "fiberG": "fiberG", "sugarsG": "sugarsG", "proteinG": "proteinG", "fatG": "fatG", "caloriesKcal": "caloriesKcal", "sodiumMg": "sodiumMg"}
 
 
@@ -168,7 +179,7 @@ def main():
     for e in db["entries"]:
         o = old.get(e["id"])
         change = CHANGES.get(e["id"])
-        changed_at = ROUND7_AT if e["id"] in ROUND7_IDS else ROUND6_AT if e["id"] in ROUND6_IDS else ROUND5_AT if e["id"] in ROUND5_IDS else ROUND_AT
+        changed_at = ROUND8_AT if e["id"] in ROUND8_IDS else ROUND7_AT if e["id"] in ROUND7_IDS else ROUND6_AT if e["id"] in ROUND6_IDS else ROUND5_AT if e["id"] in ROUND5_IDS else ROUND_AT
         entries.append({**e, "oldName": o["name"] if o else None, "oldGi": o["gi"] if o else None, "old": o["vals"] if o else None,
                         **({"change": change[0], "reopen": change[1], "changedAt": changed_at} if change else {})})
     data = {"sources": db["sources"], "categories": db["categories"], "entries": entries, "questions": QUESTIONS, "roundAt": ROUND_AT}

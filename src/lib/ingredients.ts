@@ -215,10 +215,14 @@ export function sortFavoritesFirst<T extends { favorite: boolean }>(items: T[]):
  * own, that it isn't a real saved row.
  */
 export function mergeWithBuiltInFoods(sheetIngredients: Ingredient[]): Ingredient[] {
-  // Her copy of a database product keeps the database's portion sizes, with hers added (2.0.2).
-  return mergeBuiltInsById(BUILT_IN_FOODS, sheetIngredients, BUILT_IN_ALIASES).map((item) =>
-    item.basedOn ? { ...item, portionSizes: mergePortionSizes(databasePortionSizes(verifiedEntry(item.basedOn)), item.portionSizes) } : item,
-  );
+  // Her copy of a database product keeps the database's portion sizes, with hers added (2.0.2),
+  // and its density when she hasn't measured her own (2.2.1: a copy made before densities existed).
+  return mergeBuiltInsById(BUILT_IN_FOODS, sheetIngredients, BUILT_IN_ALIASES).map((item) => {
+    if (!item.basedOn) return item;
+    const entry = verifiedEntry(item.basedOn);
+    const density = !item.densityMl && entry?.density ? { densityMl: entry.density.ml, densityGrams: entry.density.grams } : {};
+    return { ...item, ...density, portionSizes: mergePortionSizes(databasePortionSizes(entry), item.portionSizes) };
+  });
 }
 
 // Since 2.1 products and dishes share the Products tab (products.ts); until the

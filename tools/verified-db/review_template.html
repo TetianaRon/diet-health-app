@@ -238,6 +238,13 @@ function entryCard(e) {
           el("span", { class: "gi-val", text: String(p.grams).replace(".", ",") + " г" }),
           el("span", { class: "badge " + p.reliability, text: REL[p.reliability] })),
         sourceDetails(p, datasetName))),
+      // A liquid's volume to weight (2.2.1): «100 мл ≈ 103 г».
+      e.density ? el("div", { class: "part" },
+        el("div", { class: "line" },
+          el("strong", { text: "Мілілітри й грами" }),
+          el("span", { class: "gi-val", text: "100 мл ≈ " + String(Math.round((e.density.grams / e.density.ml) * 1000) / 10).replace(".", ",") + " г" }),
+          el("span", { class: "badge " + e.density.reliability, text: REL[e.density.reliability] })),
+        sourceDetails(e.density, datasetName)) : null,
     ),
   );
   const note = el("textarea", { id: "note-" + e.id, placeholder: "Що змінити (обов'язково для доопрацювання)", "aria-label": "Коментар до " + e.nameUk });

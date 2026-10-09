@@ -70,6 +70,17 @@ export interface PortionPart extends Provenance {
   source: SourceRef;
 }
 
+/**
+ * How a poured or spooned food's volume relates to its weight (release
+ * 2.2.1): «100 мл = 103 г», from a household measure (USDA: 1 cup = 244 g,
+ * 1 cup = 236,6 ml), with its own provenance. Lets it be logged in ml.
+ */
+export interface DensityPart extends Provenance {
+  ml: number;
+  grams: number;
+  source: SourceRef;
+}
+
 export interface VerifiedFoodEntry {
   /** Permanent built-in ID (B + 4 digits): never changed, never reused. */
   id: string;
@@ -93,6 +104,8 @@ export interface VerifiedFoodEntry {
   gi: GiPart;
   /** Typical portion sizes («середнє ≈ 182 г», «1 мигдалина ≈ 1,29 г»), each sourced. */
   portions?: PortionPart[];
+  /** Volume to weight, for liquids («100 мл = 103 г», 2.2.1). */
+  density?: DensityPart;
 }
 
 export const FOOD_STATES = ["raw", "dry", "boiled", "baked", "fried", "roasted", "steamed", "canned", "dried", "fermented", "processed", "brewed"] as const;
@@ -201,6 +214,17 @@ export function validateVerifiedFoods(file: VerifiedFoodsFile, today: string): s
       if (typeof portion.grams !== "number" || !Number.isFinite(portion.grams) || portion.grams <= 0) problems.push(`${where}: grams must be a number > 0`);
       checkSource(where, portion.source);
       checkProvenance(where, portion);
+    }
+
+    if (e.density) {
+      const d = e.density;
+      for (const field of ["ml", "grams"] as const) {
+        if (typeof d[field] !== "number" || !Number.isFinite(d[field]) || d[field] <= 0) problems.push(`${at} density: ${field} must be a number > 0`);
+      }
+      // Foods sold by volume weigh between 0.5 and 2 g per ml (oil ≈ 0.92, honey ≈ 1.42).
+      if (d.ml > 0 && d.grams > 0 && (d.grams / d.ml < 0.5 || d.grams / d.ml > 2)) problems.push(`${at} density: ${d.grams} g per ${d.ml} ml is outside 0.5–2 g per ml`);
+      checkSource(`${at} density`, d.source);
+      checkProvenance(`${at} density`, d);
     }
 
     const gi = e.gi;
