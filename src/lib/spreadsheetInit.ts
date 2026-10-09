@@ -11,6 +11,7 @@
 // its own single default tab, so every read this app makes fails. The init
 // flow only ever adds the tabs this app expects — never touches or removes
 // anything a sheet already has.
+import { isAppWrittenLabel } from "./sheetLabels";
 import { mergeProductsIfNeeded } from "./productsMerge";
 import { isSheetTooNew, SheetTooNewError } from "./sheetFormat";
 import { PRODUCTS_HEADERS } from "./products";
@@ -324,14 +325,15 @@ const SILENT_BLOCKING_KINDS: ReadonlySet<TabIssue["kind"]> = new Set(["missingTa
 
 /** Readable-name cells (row 2) that are stale only because they're blank — filling them changes nothing that's there. */
 /**
- * Readable-name cells the silent upgrade may fill: blank ones, and ones that
- * only repeat the column's key (2.1 and 2.1.1 added columns before their
- * Ukrainian names existed, so their name cells got the key, e.g. «YieldMl»).
+ * Readable-name cells the silent upgrade may (re)write: blank ones, and ones
+ * the app wrote itself — an earlier name, or the bare key (2.1 and 2.1.1 added
+ * columns before their Ukrainian names existed, e.g. «YieldMl»). A person's
+ * own wording is never replaced.
  */
 function blankLabelColumns(rows: unknown[][], columns: number[]): number[] {
   return columns.filter((col) => {
     const label = String(rows[1]?.[col] ?? "").trim();
-    return label === "" || label === String(rows[0]?.[col] ?? "").trim();
+    return label === "" || isAppWrittenLabel(String(rows[0]?.[col] ?? "").trim(), label);
   });
 }
 

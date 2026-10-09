@@ -13,4 +13,10 @@ describe("readable column names", () => {
     const all = [PRODUCTS_HEADERS, DAILY_LOG_HEADERS, BLOOD_SUGAR_HEADERS, MEDICATIONS_HEADERS, MEDICATION_LOG_HEADERS, WEIGHT_HEADERS, DELETED_HEADERS].flat();
     expect(all.filter((h) => labelFor(h) === h || labelFor(h).trim() === "")).toEqual([]);
   });
+
+  it("replaces names the app wrote (earlier names, bare keys) but never a person's own", async () => {
+    const { staleLabelColumns } = await import("./sheetLabels");
+    const index = new Map([["YieldMl", 0], ["Basis", 1], ["NameUk", 2]]);
+    expect(staleLabelColumns(["YieldMl", "Значення на (100g — 100 г, piece — 1 шт.)", "Моя назва"], index, ["YieldMl", "Basis", "NameUk"])).toEqual([0, 1]);
+  });
 });

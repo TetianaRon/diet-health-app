@@ -26,6 +26,25 @@ export function labelFor(header: string, language: SheetLanguage = CURRENT_SHEET
   return LABEL_SETS[language][header] ?? header;
 }
 
+/**
+ * Names the app itself wrote earlier, which a newer name replaces silently
+ * (a person's own wording is never touched). 2.1.1 changed these two to
+ * mention millilitres.
+ */
+const PREVIOUS_LABELS: Record<string, readonly string[]> = {
+  Basis: ["Значення на (100g — 100 г, piece — 1 шт.)"],
+  ValuesPer: ["Значення на (г або шт.)"],
+};
+
+/**
+ * Whether a name cell holds something the app wrote and a newer name may
+ * replace: a name from another language, an earlier name, or the bare key —
+ * written when a column was added before its name existed (2.1, 2.1.1).
+ */
+export function isAppWrittenLabel(header: string, value: string): boolean {
+  return value === header || (PREVIOUS_LABELS[header] ?? []).includes(value) || isKnownLabelFor(header, value);
+}
+
 function isKnownLabelFor(header: string, value: string): boolean {
   return Object.values(LABEL_SETS).some((set) => set[header] === value);
 }
@@ -72,7 +91,7 @@ export function staleLabelColumns(
     const text = cellText(row[col]);
     const wanted = labelFor(header, language);
     if (text === wanted) continue;
-    if (!text || isKnownLabelFor(header, text)) stale.push(col);
+    if (!text || isAppWrittenLabel(header, text)) stale.push(col);
   }
   return stale;
 }
