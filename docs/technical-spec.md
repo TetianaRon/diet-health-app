@@ -768,7 +768,8 @@ The split into «Продукти» and «Страви» mixed two independent t
 - **Recipes:** a line can be typed in ml (`ml` in the recipe JSON); nutrients add up from the line, and the final weight is weighed as before.
 - **Portion sizes** can be in ml («склянка ≈ 250 мл»).
 - **The list** says «на 100 мл» for such items (per 100 g stays unspoken).
-- **Not in 2.1.1:** densities for the database's drinks (milk, kefir, coffee — USDA household measures with source and reliability) come with **2.2.1's review round**; until then a database drink is logged in grams. Composed items stay in grams or pieces.
+- **Not in 2.1.1:** densities for the database's drinks (milk, kefir, coffee — USDA household measures with source and reliability) come with **2.2.1's review round**; until then a database drink is logged in grams.
+- **Composed items in ml (2.1.2, developer: mixed drinks like airan — yogurt, sparkling water, mustard and salt):** the composer's yield has a third amount, «Вийшло, мл» (`YieldMl`), beside the weight and the count; whichever is main decides the basis (per 100 ml when it's the volume). When both the volume and the weight of the batch are measured, they are the item's density, so it can be logged in ml and in g and its sizes can be in ml — no separate density fields.
 
 ### Screens (as built)
 - **The tab is «Продукти»** (developer): one list, composed items first (marked «· за рецептом»), then typed ones (favourites first; best match first while searching). Filter chips: Усі · Інгредієнти · Страви · Напої · Соуси · Перекуси · За рецептом.

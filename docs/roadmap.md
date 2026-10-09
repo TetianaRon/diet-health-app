@@ -60,7 +60,7 @@ The person decides where their data lives, with plain wording about each choice.
 - A third basis, «на 100 мл» (or «на 250 мл» as a label gives it), for her own items; logging in ml (a `PortionMl` meal-log column, so a drink without a known density keeps its amount); recipe lines in ml.
 - An optional density «100 мл = 103 г» linking ml and grams. **Database densities for drinks** (milk, kefir, coffee; USDA household measures, with source and reliability) go through **2.2.1's review round**.
 
-### 2.1.2 — Drinks you mix, and the status bar · 📝 planned (developer, 2026-10-09, from Intake)
+### 2.1.2 — Drinks you mix, and the status bar · 🔨 in progress (2026-10-09)
 - **Composed items in millilitres** (2026-10-08, developer): mixed drinks are composed — airan (yogurt, sparkling water, mustard and salt), smoothies, homemade dressings, soups by the ladle. A yield in ml («Вийшло, мл») beside the weight and the count; values per 100 ml when that's the main yield; the optional «мл = г» density; then ml sizes and logging follow (2.1.1's maths).
 - **Content shows through the Android status bar** (2026-10-08): when a list scrolls, rows pass under the clock and battery icons; the safe-area fix (1.5) padded the content but left the bar transparent. A solid bar behind the status bar on Android.
 
