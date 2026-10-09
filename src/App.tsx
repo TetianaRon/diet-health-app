@@ -8,6 +8,7 @@ import { LocalNotifications } from "@capacitor/local-notifications";
 import { StatusBar, Style } from "@capacitor/status-bar";
 import { uk } from "./i18n/uk";
 import AppNotifications from "./screens/AppNotifications";
+import MedicationsScreen from "./screens/MedicationsScreen";
 import ReminderPopups from "./screens/ReminderPopups";
 import Toaster from "./screens/Toaster";
 import { NotificationsProvider } from "./context/NotificationsContext";
@@ -22,7 +23,7 @@ import FoodsScreen from "./screens/FoodsScreen";
 import HistoryScreen from "./screens/HistoryScreen";
 import SettingsScreen from "./screens/SettingsScreen";
 
-type TabId = "today" | "history" | "foods" | "settings";
+type TabId = "today" | "history" | "foods" | "medications" | "settings";
 
 // Settings lives behind the gear icon in the top-right corner, not in this
 // bottom bar — it's a device/account-config screen, not a peer of the three
@@ -35,6 +36,7 @@ const TABS: { id: TabId; label: string }[] = [
   { id: "today", label: uk.tabs.today },
   { id: "history", label: uk.tabs.history },
   { id: "foods", label: uk.tabs.foods },
+  { id: "medications", label: uk.tabs.medications },
 ];
 
 export default function App() {
@@ -132,6 +134,7 @@ export default function App() {
             />
           )}
           {activeTab === "foods" && <FoodsScreen />}
+          {activeTab === "medications" && <MedicationsScreen />}
           {activeTab === "history" && <HistoryScreen />}
           {activeTab === "settings" && <SettingsScreen />}
         </main>

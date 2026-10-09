@@ -1649,16 +1649,18 @@ select {
 .local-ack p {
   margin: 0;
 }
-/* Beside its label everywhere, also inside Settings' stacked field labels. */
+/* Beside its label everywhere, also inside Settings' and forms' stacked field labels («Приймаю зараз», 2.1.4). */
 .remember-me,
-.settings-account label.remember-me {
+.settings-account label.remember-me,
+.food-form label.remember-me {
   display: flex;
   flex-direction: row;
   align-items: center;
   gap: 0.6rem;
   min-height: 44px;
 }
-.remember-me input {
+.remember-me input,
+.food-form .remember-me input {
   flex: none;
   width: 1.4rem;
   height: 1.4rem;

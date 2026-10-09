@@ -10,7 +10,27 @@ export const uk = {
     today: "Сьогодні",
     history: "Історія",
     foods: "Продукти",
+    medications: "Ліки",
     settings: "Налаштування",
+  },
+  // The «Ліки» tab (2.1.4): her medicines, like Продукти — for now a plain list to edit.
+  medicationsScreen: {
+    title: "Ліки",
+    loading: "Завантаження...",
+    signIn: "Увійдіть через Google, щоб бачити свої ліки.",
+    addButton: "+ Додати ліки",
+    addTitle: "Нові ліки",
+    editTitle: "Редагувати ліки",
+    editLabel: "Редагувати",
+    empty: "Ліків ще немає. Їх можна додати тут або під час запису прийому ліків на «Сьогодні».",
+    stoppedTitle: "Більше не приймаю",
+    nameLabel: "Назва",
+    doseLabel: "Звичайна доза",
+    unitLabel: "Одиниця (мг, таб., мл…)",
+    notesLabel: "Примітка",
+    activeLabel: "Приймаю зараз",
+    activeHint: "Якщо зняти позначку, ліки не пропонуватимуться під час запису й не показуватимуться в «Востаннє» на «Сьогодні». Записані прийоми залишаться.",
+    doseInvalid: "Доза — це число, наприклад 10 або 2,5.",
   },
   // Release 1.7 — the day's body records on Сьогодні and in Історія.
   records: {
