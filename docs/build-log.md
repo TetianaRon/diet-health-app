@@ -458,3 +458,18 @@ Answering "did we review only products?": the 69 home dishes were on the page bu
 - 437 tests, `tsc -b`, `npm run build`. Version 2.1.1, versionCode 30.
 
 ✅ **2.1.1 released 2026-10-08:** main pushed (web) and the bundle uploaded to the internal testing track (versionCode 30).
+
+**Release 2.1.2 — drinks you mix, and the status bar (2026-10-09, branch `release/2.1.2`):**
+- **Built** (spec → "One product list (2.1)" → "Millilitres"):
+  - Composed items in ml: a yield «Вийшло, мл» beside the weight and the count (`YieldMl` in Products), «мілілітри» as the main yield giving values per 100 ml; the batch's ml and g, both given, are its density, so the item can be logged in ml and in g and used in other recipes either way.
+  - A new portion size starts in the item's main unit (ml for a drink per 100 ml); the list says «на 100 мл» once.
+  - A solid white strip behind Android's status bar, so rows no longer scroll under the clock and icons.
+  - **Readable names for the newer columns** (found while checking the dev sheet): `Values`, `Labels`, `WeighedMl`, `WeighedMlGrams`, `YieldMl` and `PortionMl` had no Ukrainian name, so row 2 showed the bare key; `Basis` and `ValuesPer` didn't mention ml. Every column now has a name (a test checks it), and the silent upgrade replaces any name the app wrote itself (a bare key or an earlier wording), leaving a person's own wording alone.
+- **Verified (developer's Pixel 10, debug build, dev sheet):**
+  - the status bar strip while scrolling;
+  - «Тест айран» composed from yogurt, sparkling water, mustard and salt, 600 мл / 612 г: the preview «На 100 мл… 6,2 г вуглеводів, 50 ккал»;
+  - the meal editor offered «Порція (г)» and «Порція (мл)»; a new portion size started in мл;
+  - after the reinstall, the silent upgrade wrote the names on the dev sheet: Products row 2 «Значення (typed — вказані, recipe — за рецептом)», «Мітки», «Відміряно, мл», «Вага відміряного, г», «Вихід, мл» and the new Basis/ValuesPer names; DailyLog «Порція, мл». The archive tabs keep their old names (not upgraded, by design);
+  - test data deleted afterwards.
+- **Not checked:** the web app (the status bar strip has zero height there); a composed drink used as a line in another recipe (covered by unit tests).
+- 440 tests, `tsc -b`, `npm run build`. Version 2.1.2, versionCode 31.
