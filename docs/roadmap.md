@@ -71,11 +71,11 @@ Today the reminders notice («Застосунок може нагадувати
 - **On, but a permission is missing** (e.g. revoked later in the phone's settings): not a silent note — a popup when the app opens, saying reminders can't arrive without the permission, with two choices: «Дозволити нагадування» (asks for what's missing) / «Вимкнути нагадування» (turns the toggle off). Settings also shows the toggle as on with the missing permission named. (Developer, 2026-10-09.)
 - **Mom and anyone with reminders already allowed:** the toggle starts on and the offer is skipped. (Developer, 2026-10-09.)
 
-### 2.1.4 — Yesterday's and the last records on Today · 📝 planned (developer, 2026-10-09, mom's request)
+### 2.1.4 — Yesterday's and the last records on Today · 🔨 in progress (2026-10-09)
 Mom asked to see the medicine she took last, not only yesterday's. Today's «Цукор і ліки» shows only yesterday's last medicine intake (small, read-only; `lastIntakeOfDay`), so after a day without one she sees nothing.
 - **All of yesterday's records:** every blood sugar reading and medicine intake from yesterday, compact and read-only, like yesterday's meals.
 - **And the last one:** the most recent medicine intake and the most recent sugar reading, with their date, when they're older than yesterday (today's and yesterday's are already shown).
-- Open for the design: "the last one" per medicine (e.g. two different medicines, each with its last date) or one overall; whether yesterday's records sit in the same block or a «Вчора» group like the meals.
+- Decided (developer, 2026-10-09): the last one **per medicine**; yesterday's records in their own «Учора» group, like the meals; the older ones under «Востаннє».
 
 ### 2.2 — Sets, clean start, moving mom over · 📝 planned (2.1's one product list first)
 The verified database offered as sets; new data starts empty; built-in items she used become her rows; the generalised update offer.
