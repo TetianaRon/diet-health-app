@@ -97,6 +97,9 @@ export default function App() {
       <NotificationsProvider>
       <AppNotifications />
       <div className="app">
+        {/* A solid strip behind Android's status bar, so a scrolled list doesn't show
+            through under the clock (2.1.2). Zero height where there's no status bar. */}
+        <div className="status-bar-backdrop" aria-hidden="true" />
         {!editorOpen && (
         <div className="app-header">
           <button

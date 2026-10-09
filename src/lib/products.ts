@@ -40,6 +40,8 @@ export const PRODUCTS_HEADERS = [
   "IngredientsJson",
   "YieldGrams",
   "YieldPieces",
+  // A composed item's yield in ml (2.1.2): «вийшло 1,2 л».
+  "YieldMl",
   "PortionSizes",
   "Source",
   "DateAdded",
