@@ -4,6 +4,7 @@
 // (not a medical app). Same header-name row mapping as the other tabs.
 import { newRecordId } from "./itemIds";
 import { upsertRecord } from "./recordStore";
+import { readRange } from "./sheets";
 import { buildColumnIndex, buildRow, cell, columnLetter, parseTab, SCAN_LAST_COLUMN, type ColumnIndex } from "./sheetRow";
 
 export interface Medication {
@@ -110,6 +111,16 @@ export function parseIntakes(rows: unknown[][]): MedicationIntake[] {
     .filter((r) => r.length > 0)
     .map((r) => rowToIntake(r, columnIndex))
     .filter((i) => i.timestamp !== "");
+}
+
+/** Her medicine list (the «Ліки» tab, 2.1.4). */
+export async function listMedications(): Promise<Medication[]> {
+  return parseMedications(await readRange("Medications", MEDICATIONS_RANGE));
+}
+
+/** Saves an edited medicine: name, usual dose, unit, notes and «Приймаю зараз». */
+export async function updateMedication(m: Medication): Promise<void> {
+  await upsertRecord("Medications", m.id, { Name: m.name, Dose: m.dose ?? "", Unit: m.unit, Notes: m.notes, Active: m.active });
 }
 
 /** Adds a medicine to her list with the next free `M…` ID and returns it as saved. */

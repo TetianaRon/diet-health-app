@@ -75,6 +75,7 @@ Today the reminders notice («Застосунок може нагадувати
 Mom asked to see the medicine she took last, not only yesterday's. Today's «Цукор і ліки» shows only yesterday's last medicine intake (small, read-only; `lastIntakeOfDay`), so after a day without one she sees nothing.
 - **All of yesterday's records:** every blood sugar reading and medicine intake from yesterday, compact and read-only, like yesterday's meals.
 - **And the last one:** the most recent medicine intake and the most recent sugar reading, with their date, when they're older than yesterday (today's and yesterday's are already shown).
+- **A «Ліки» tab** (developer, 2026-10-09), like Продукти: her medicines with a pencil, «+ Додати ліки», and «Приймаю зараз» — so a stopped medicine can leave «Востаннє» (before, that flag was only in the sheet). A first version; the developer will redesign it later.
 - Decided (developer, 2026-10-09): the last one **per medicine**; yesterday's records in their own «Учора» group, like the meals; the older ones under «Востаннє».
 
 ### 2.2 — Sets, clean start, moving mom over · 📝 planned (2.1's one product list first)
