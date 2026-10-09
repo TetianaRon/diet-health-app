@@ -323,8 +323,16 @@ export async function repairSpreadsheet(): Promise<void> {
 const SILENT_BLOCKING_KINDS: ReadonlySet<TabIssue["kind"]> = new Set(["missingTab", "missingColumns", "missingSettingsKeys"]);
 
 /** Readable-name cells (row 2) that are stale only because they're blank — filling them changes nothing that's there. */
+/**
+ * Readable-name cells the silent upgrade may fill: blank ones, and ones that
+ * only repeat the column's key (2.1 and 2.1.1 added columns before their
+ * Ukrainian names existed, so their name cells got the key, e.g. «YieldMl»).
+ */
 function blankLabelColumns(rows: unknown[][], columns: number[]): number[] {
-  return columns.filter((col) => String(rows[1]?.[col] ?? "").trim() === "");
+  return columns.filter((col) => {
+    const label = String(rows[1]?.[col] ?? "").trim();
+    return label === "" || label === String(rows[0]?.[col] ?? "").trim();
+  });
 }
 
 /** Whether every structural issue on this tab can be fixed silently (so a silent pass can repair it whole). */
