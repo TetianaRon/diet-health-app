@@ -490,3 +490,5 @@ Answering "did we review only products?": the 69 home dishes were on the page bu
 - **Not checked:** an actual reminder arriving after the toggle (the scheduling itself is unchanged from 2.0.3); notifications refused at the prompt (the «denied» hint); the web Settings (the section renders nothing there).
 - **Known limit:** after two refusals Android shows no prompt, so «Дозволити» can't help; the Settings hint names the phone's path.
 - 446 tests, `tsc -b`, `npm run build`. Version 2.1.3, versionCode 32.
+
+✅ **2.1.3 released 2026-10-09:** main pushed (web) and the bundle uploaded to the internal testing track (versionCode 32).
