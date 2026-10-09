@@ -89,3 +89,14 @@ export function fingerprintFills(sheetIngredients: readonly Ingredient[]): Ingre
     return valuesFingerprint(copy) === current ? [{ ...copy, basedOnValues: current }] : [];
   });
 }
+
+/**
+ * Database items picked in a search (a meal, a recipe line) that aren't hers
+ * yet — a `B…` ID still listed as itself among the merged items — so saving
+ * adds them to «Продукти» (2.2, "add on pick"). Links keep the `B…` ID: it
+ * resolves to her copy through BasedOn.
+ */
+export function idsNeedingCopies(pickedIds: readonly string[], mergedItems: readonly { id: string }[]): string[] {
+  const listedAsDatabase = new Set(mergedItems.filter((item) => isBuiltInId(item.id)).map((item) => item.id));
+  return [...new Set(pickedIds.filter((id) => listedAsDatabase.has(id)))];
+}

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { BUILT_IN_FOODS } from "../data/builtInFoods";
 import { copyUpdates } from "./builtInStatus";
-import { coveredDatabaseIds, databaseCopyFields, fingerprintFills, usedDatabaseIds, valuesFingerprint } from "./databaseItems";
+import { coveredDatabaseIds, databaseCopyFields, fingerprintFills, idsNeedingCopies, usedDatabaseIds, valuesFingerprint } from "./databaseItems";
 import type { Dish } from "./dishes";
 import type { Ingredient } from "./ingredients";
 
@@ -78,5 +78,12 @@ describe("copyUpdates for fingerprinted copies (2.2)", () => {
   it("offers nothing to a copy she changed, or one already current", () => {
     expect(copyUpdates([{ ...madeFromOld, fatG: 99 }])).toEqual([]);
     expect(copyUpdates([copyOf(buckwheat, { basedOnValues: valuesFingerprint(buckwheat) })])).toEqual([]);
+  });
+});
+
+describe("idsNeedingCopies", () => {
+  it("picks the database items still listed as themselves, once each", () => {
+    const merged = [{ id: "B0001" }, { id: "I3" }, { id: "B0002" }];
+    expect(idsNeedingCopies(["B0001", "I3", "B0001", "B0005", "D2"], merged)).toEqual(["B0001"]);
   });
 });

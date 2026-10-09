@@ -127,6 +127,7 @@ describe("rowToDish / dishToRow", () => {
       source: "starter",
       dateAdded: "2026-08-13",
       glycemicFlag: "watch",
+      favorite: false,
       giVerified: true,
       unknownFields: [],
     };
@@ -153,6 +154,7 @@ describe("rowToDish / dishToRow", () => {
       source: "starter",
       dateAdded: "2026-08-13",
       glycemicFlag: "watch",
+      favorite: false,
       giVerified: true,
       unknownFields: [],
     };
