@@ -165,7 +165,8 @@ Before building 2.7: run the method by hand on products sold in Ukraine that hav
 
 ## Intake (new feedback, not yet placed)
 
-(empty — everything is placed in the releases above, 2026-10-09)
+- **Cuisine sets** (2026-10-09, developer): sets by kind of kitchen, e.g. «Українська кухня», to start using the app right away; one product can be in several sets (2.2's sets file allows it). Proposed place: **2.3**, choosing the items from mom's data. No health-claim names («здоровий вибір» is out — standing rule 5).
+- **Dish sets and database recipes** (2026-10-09, developer): sets by kind of dish — baking, stews, soups, sauces. They need composed recipes in the database built from its products, which it doesn't have yet. Proposed place: **its own release after 2.5** (food families give recipes their cooking states).
 
 New items land here with a one-line note, then get placed above.
 

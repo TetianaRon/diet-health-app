@@ -79,7 +79,3 @@ export const BUILT_IN_ALIASES: ReadonlyMap<string, readonly string[]> = new Map(
   LEGACY_BUILT_INS.map((legacy) => [legacy.id, [legacy.nameUk]]),
 );
 
-/** The database as sets (2.2): each category with its active entries, in database order; empty ones left out. */
-export const DATABASE_SETS: readonly { id: string; nameUk: string; itemIds: readonly string[] }[] = DATABASE.categories
-  .map((c) => ({ id: c.id, nameUk: c.nameUk, itemIds: ACTIVE.filter((e) => e.category === c.id).map((e) => e.id) }))
-  .filter((set) => set.itemIds.length > 0);

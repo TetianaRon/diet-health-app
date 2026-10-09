@@ -1,10 +1,11 @@
 // «Набори з бази» (release 2.2, spec → "Sets and the clean start"): the
-// verified database by category. A set opens as a checklist with every item
+// verified database as sets, by group (databaseSets.ts). A set opens as a checklist with every item
 // she doesn't have yet ticked (developer, 2026-10-09); «Додати вибрані: N»
 // makes them her rows. Items she already has are shown as «вже додано».
 import { useState } from "react";
 import { uk } from "../i18n/uk";
-import { BUILT_IN_FOODS, DATABASE_SETS } from "../data/builtInFoods";
+import { BUILT_IN_FOODS } from "../data/builtInFoods";
+import { DATABASE_SETS, SET_GROUPS } from "../data/databaseSets";
 import { copyFromDatabase } from "../lib/databaseItems";
 import type { Ingredient } from "../lib/ingredients";
 import { formatDecimal } from "../lib/numberFormat";
@@ -16,21 +17,28 @@ export function SetsList({ covered, onOpen }: { covered: ReadonlySet<string>; on
   return (
     <>
       <p className="food-form-hint">{t.intro}</p>
-      <ul className="food-list">
-        {DATABASE_SETS.map((set) => {
-          const added = set.itemIds.filter((id) => covered.has(id)).length;
-          return (
-            <li key={set.id} className="food-list-item-with-action">
-              <span>
-                <strong>{set.nameUk}</strong> — {added === set.itemIds.length ? t.allAdded : t.setLine(set.itemIds.length, added)}
-              </span>
-              <button type="button" onClick={() => onOpen(set.id)}>
-                {t.openSet}
-              </button>
-            </li>
-          );
-        })}
-      </ul>
+      {SET_GROUPS.map((group) => (
+        <div key={group.id}>
+          {/* One group today (by kind of food); cuisines and dishes join as their sets are made. */}
+          {SET_GROUPS.length > 1 && <h2>{group.nameUk}</h2>}
+          <ul className="food-list">
+            {group.sets.map((set) => {
+              const added = set.itemIds.filter((id) => covered.has(id)).length;
+              return (
+                <li key={set.id} className="food-list-item-with-action">
+                  <span>
+                    <strong>{set.nameUk}</strong> — {added === set.itemIds.length ? t.allAdded : t.setLine(set.itemIds.length, added)}
+                    {set.descriptionUk && <span className="food-name-en"> · {set.descriptionUk}</span>}
+                  </span>
+                  <button type="button" onClick={() => onOpen(set.id)}>
+                    {t.openSet}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
     </>
   );
 }

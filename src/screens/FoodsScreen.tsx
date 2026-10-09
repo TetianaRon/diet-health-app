@@ -58,7 +58,7 @@ import Breadcrumb, { type Crumb } from "./Breadcrumb";
 import { SetChecklist, SetsList } from "./DatabaseSets";
 import { copyFromDatabase, coveredDatabaseIds, databaseCopyFields, idsNeedingCopies } from "../lib/databaseItems";
 import { onOpenSetsRequest, takeOpenSetsRequest } from "../lib/openSets";
-import { DATABASE_SETS } from "../data/builtInFoods";
+import { DATABASE_SETS } from "../data/databaseSets";
 import DuplicateNameNotice, { type NamedItem } from "./DuplicateNameNotice";
 import { findNameMatch, isBuiltInId, suggestFreeName } from "../lib/itemIds";
 import PackAmountFields, { measureFromPackFields, type PackFields } from "./PackAmountFields";
