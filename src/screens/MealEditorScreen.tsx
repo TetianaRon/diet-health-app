@@ -1,4 +1,6 @@
 import { fieldDecimal, formatDecimal } from "../lib/numberFormat";
+import { isBuiltInId } from "../lib/itemIds";
+import { copyFromDatabase, idsNeedingCopies } from "../lib/databaseItems";
 import { verifiedEntry } from "../data/builtInFoods";
 import { searchFoods } from "../lib/foodSearch";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -152,9 +154,13 @@ function AddDishToMealForm({
     setCustomValues(EMPTY_CUSTOM_VALUES);
   };
 
+  // Browsing shows her own items; a search also finds the database (marked «з бази»), and a
+  // picked database item joins her «Продукти» when the meal is saved (2.2).
   const matches =
     !selected || search !== selected.nameUk
-      ? searchFoods(search, foods, (f) => verifiedEntry(f.id))
+      ? search.trim()
+        ? searchFoods(search, foods, (f) => verifiedEntry(f.id))
+        : foods.filter((f) => !isBuiltInId(f.id))
       : [];
 
   const handlePick = (food: PickableFood) => {
@@ -333,7 +339,8 @@ function AddDishToMealForm({
                         {GLYCEMIC_FLAG_SYMBOL[food.glycemicFlag]}{" "}
                       </span>
                     )}
-                    <strong>{food.nameUk}</strong> {food.nameEn && <span className="food-name-en">({food.nameEn})</span>} —{" "}
+                    <strong>{food.nameUk}</strong> {food.nameEn && <span className="food-name-en">({food.nameEn})</span>}
+                    {isBuiltInId(food.id) && <span className="food-recipe-mark"> {uk.databaseSets.fromDatabase}</span>} —{" "}
                     {food.unknownFields.includes("carbsG")
                       ? `вуглеводи ${uk.today.unknownValueLabel}`
                       : `${formatDecimal(round2(food.per100g.carbsG))} г вуглеводів${uk.today.form.perBasis(food.measure.basis)}`}
@@ -724,6 +731,8 @@ export default function MealEditorScreen({
     setSaving(true);
     setError(null);
     try {
+      const needCopies = idsNeedingCopies(items.map((item) => item.entry.itemId), foods);
+      if (needCopies.length > 0) await copyFromDatabase(needCopies);
       await saveMeal(original?.entries ?? [], items);
       onSaved();
     } catch (err) {

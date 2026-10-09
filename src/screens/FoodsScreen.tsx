@@ -38,6 +38,7 @@ import {
   listDishes,
   resolveItemRef,
   setDishGlycemicFlag,
+  setDishFavorite,
   updateDish,
   updateDishes,
   type Dish,
@@ -54,6 +55,10 @@ import {
   type NutritionEstimate,
 } from "../lib/nutrition";
 import Breadcrumb, { type Crumb } from "./Breadcrumb";
+import { SetChecklist, SetsList } from "./DatabaseSets";
+import { copyFromDatabase, coveredDatabaseIds, databaseCopyFields, idsNeedingCopies } from "../lib/databaseItems";
+import { onOpenSetsRequest, takeOpenSetsRequest } from "../lib/openSets";
+import { DATABASE_SETS } from "../data/builtInFoods";
 import DuplicateNameNotice, { type NamedItem } from "./DuplicateNameNotice";
 import { findNameMatch, isBuiltInId, suggestFreeName } from "../lib/itemIds";
 import PackAmountFields, { measureFromPackFields, type PackFields } from "./PackAmountFields";
@@ -233,7 +238,7 @@ function SourceBadge({
 // takes the built-in item's place in lists (see mergeBuiltInsById).
 async function saveIngredientCopy(item: Ingredient): Promise<Ingredient> {
   const { id, basedOn: _basedOn, dateAdded: _dateAdded, favorite, glycemicFlag, ...fields } = item;
-  return addIngredient({ ...fields, basedOn: id }, favorite, glycemicFlag);
+  return addIngredient({ ...fields, basedOn: id, basedOnValues: databaseCopyFields(id)?.basedOnValues ?? "" }, favorite, glycemicFlag);
 }
 
 async function saveDishCopy(dish: Dish, glycemicFlag: GlycemicFlag): Promise<Dish> {
@@ -1037,6 +1042,8 @@ function ComposeDishForm({
                       )}
                       <strong>{ingredient.nameUk}</strong>{" "}
                       {ingredient.nameEn && <span className="food-name-en">({ingredient.nameEn})</span>}
+                      {/* Picked, it joins her «Продукти» when the recipe is saved (2.2). */}
+                      {isBuiltInId(ingredient.id) && <span className="food-recipe-mark"> {uk.databaseSets.fromDatabase}</span>}
                     </span>
                     <button
                       type="button"
@@ -1156,8 +1163,8 @@ function ComposeDishForm({
 // item, typed or composed, with filter chips by label; one editor where
 // «Значення: вказані / за рецептом» picks the form. Switching an existing item
 // keeps its ID — the save writes the other side's fields to the same row.
-type ListFilter = "all" | LabelKey | "recipe";
-const FILTERS: ListFilter[] = ["all", "ingredient", "dish", "drink", "sauce", "snack", "recipe"];
+type ListFilter = "all" | "favorite" | LabelKey | "recipe";
+const FILTERS: ListFilter[] = ["all", "favorite", "ingredient", "dish", "drink", "sauce", "snack", "recipe"];
 type Editing = { mode: "typed"; item: Ingredient } | { mode: "recipe"; item: Dish };
 
 /** A typed item seen as a composed one with an empty recipe (same ID) — for «Значення: за рецептом». */
@@ -1256,6 +1263,17 @@ export default function FoodsScreen() {
     if (item) startEditing({ mode: "typed", item });
   });
   const [infoEntry, setInfoEntry] = useState<{ entry: VerifiedFoodEntry; giOnly: boolean } | null>(null);
+  // «Набори з бази» (2.2): the list of sets, or one set's checklist; opened from the button or the first-run offer.
+  const [sets, setSets] = useState<"list" | { setId: string } | null>(() => (takeOpenSetsRequest() ? "list" : null));
+  const [setsNote, setSetsNote] = useState<string | null>(null);
+  useEffect(
+    () =>
+      onOpenSetsRequest(() => {
+        takeOpenSetsRequest();
+        setSets("list");
+      }),
+    [],
+  );
   const openInfo = (entry: VerifiedFoodEntry, giOnly = false) => setInfoEntry({ entry, giOnly });
 
   useEffect(() => {
@@ -1347,6 +1365,29 @@ export default function FoodsScreen() {
     }
   };
 
+  const handleToggleDishFavorite = async (dish: Dish) => {
+    const nextFavorite = !dish.favorite;
+    setDishes((prev) => (prev ?? []).map((d) => (d.id === dish.id ? { ...d, favorite: nextFavorite } : d)));
+    try {
+      await setDishFavorite(dish.id, nextFavorite);
+    } catch (err) {
+      setDishes((prev) => (prev ?? []).map((d) => (d.id === dish.id ? { ...d, favorite: dish.favorite } : d)));
+      setLoadError(err instanceof Error ? err.message : String(err));
+    }
+  };
+
+  // A database item becomes hers (2.2): from a search's «З бази», or picked as a recipe line.
+  const addFromDatabase = async (ids: readonly string[]) => {
+    const need = idsNeedingCopies(ids, mergeWithBuiltInFoods(ingredients ?? []));
+    if (need.length === 0) return;
+    try {
+      const copies = await copyFromDatabase(need);
+      setIngredients((prev) => [...(prev ?? []), ...copies]);
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : String(err));
+    }
+  };
+
   const handleCycleIngredientFlag = async (ingredient: Ingredient) => {
     const nextFlag = cycleGlycemicFlag(ingredient.glycemicFlag);
     if (isBuiltInId(ingredient.id)) {
@@ -1410,13 +1451,17 @@ export default function FoodsScreen() {
   const availableIngredients = mergeWithBuiltInFoods(ingredients ?? []);
   const availableDishes = dishes ?? [];
 
-  const matchesFilter = (labels: LabelKey[] | undefined, composed: boolean) =>
-    filter === "all" || (filter === "recipe" ? composed : (labels ?? []).includes(filter));
+  const matchesFilter = (labels: LabelKey[] | undefined, composed: boolean, favorite = false) =>
+    filter === "all" || (filter === "favorite" ? favorite : filter === "recipe" ? composed : (labels ?? []).includes(filter));
   // Composed items first (what most meals are), then typed ones — favourites first while browsing, best match first while searching (1.9).
-  const shownDishes = searchFoods(search, availableDishes, () => null).filter((d) => matchesFilter(d.labels, true));
-  const shownIngredients = (
+  const shownDishes = searchFoods(search, availableDishes, () => null).filter((d) => matchesFilter(d.labels, true, d.favorite));
+  // Her «Продукти» are her own rows (2.2); the database comes in as sets, or from a search.
+  const searchedIngredients = (
     search.trim() ? searchFoods(search, availableIngredients, (i) => verifiedEntry(i.basedOn || i.id)) : sortFavoritesFirst(availableIngredients)
-  ).filter((i) => matchesFilter(i.labels, false));
+  ).filter((i) => matchesFilter(i.labels, false, i.favorite));
+  const shownIngredients = searchedIngredients.filter((i) => !isBuiltInId(i.id));
+  const databaseMatches = search.trim() && filter !== "favorite" ? searchedIngredients.filter((i) => isBuiltInId(i.id)) : [];
+  const coveredIds = coveredDatabaseIds(ingredients ?? []);
 
   const lookupIngredientFlag = (ref: DishIngredientRef): GlycemicFlag | null => resolveItemRef(ref, availableIngredients)?.glycemicFlag ?? null;
 
@@ -1437,7 +1482,16 @@ export default function FoodsScreen() {
     setEditing(null);
   };
   let breadcrumb: { trail: Crumb[]; current: string } | null = null;
-  if (editing) breadcrumb = { trail: [{ label: uk.foods.title, onClick: () => setEditing(null) }], current: uk.foods.editForm.title };
+  if (sets === "list") breadcrumb = { trail: [{ label: uk.foods.title, onClick: () => setSets(null) }], current: uk.databaseSets.title };
+  else if (sets)
+    breadcrumb = {
+      trail: [
+        { label: uk.foods.title, onClick: () => setSets(null) },
+        { label: uk.databaseSets.title, onClick: () => setSets("list") },
+      ],
+      current: DATABASE_SETS.find((set) => set.id === sets.setId)?.nameUk ?? uk.databaseSets.title,
+    };
+  else if (editing) breadcrumb = { trail: [{ label: uk.foods.title, onClick: () => setEditing(null) }], current: uk.foods.editForm.title };
   else if (adding) breadcrumb = { trail: [{ label: uk.foods.title, onClick: () => setAdding(null) }], current: uk.foods.addButton };
 
   const formMode = editing?.mode ?? adding;
@@ -1450,6 +1504,32 @@ export default function FoodsScreen() {
         <Breadcrumb trail={breadcrumb.trail} current={breadcrumb.current} />
       ) : (
         <h1>{uk.foods.title}</h1>
+      )}
+
+      {sets === "list" && (
+        <>
+          {setsNote && <p className="food-form-notice">{setsNote}</p>}
+          <SetsList
+            covered={coveredIds}
+            onOpen={(setId) => {
+              setSetsNote(null);
+              setSets({ setId });
+            }}
+          />
+        </>
+      )}
+      {sets && sets !== "list" && (
+        <SetChecklist
+          key={sets.setId}
+          setId={sets.setId}
+          covered={coveredIds}
+          onAdded={(copies) => {
+            setIngredients((prev) => [...(prev ?? []), ...copies]);
+            setSetsNote(uk.databaseSets.added(copies.length));
+            setSets("list");
+          }}
+          onCancel={() => setSets("list")}
+        />
       )}
 
       {formMode && (
@@ -1501,6 +1581,7 @@ export default function FoodsScreen() {
           onSaved={(updated) => {
             placeDish(updated, editing.item.id);
             setEditing(null);
+            void addFromDatabase(updated.ingredients.map((ref) => ref.id ?? ""));
           }}
           onCancel={() => setEditing(null)}
         />
@@ -1543,12 +1624,13 @@ export default function FoodsScreen() {
             setDishes((prev) => [...(prev ?? []), dish]);
             closeForm();
             setSearch("");
+            void addFromDatabase(dish.ingredients.map((ref) => ref.id ?? ""));
           }}
           onCancel={closeForm}
         />
       )}
 
-      {!formMode && (
+      {!formMode && !sets && (
         <>
           <input
             className="food-search"
@@ -1571,12 +1653,22 @@ export default function FoodsScreen() {
             <button type="button" className="button-secondary" onClick={() => startAdding("recipe")}>
               {uk.foods.addRecipeButton}
             </button>
+            <button
+              type="button"
+              className="button-secondary"
+              onClick={() => {
+                setSetsNote(null);
+                setSets("list");
+              }}
+            >
+              {uk.databaseSets.addButton}
+            </button>
           </div>
           <p className="food-list-hint">{uk.foods.giLegend}</p>
 
           {loadError && <p className="food-form-error">{loadError}</p>}
           {carriedNote && <p className="food-form-notice">{carriedNote}</p>}
-          {shownDishes.length === 0 && shownIngredients.length === 0 && <p>{uk.foods.noResults}</p>}
+          {shownDishes.length === 0 && shownIngredients.length === 0 && databaseMatches.length === 0 && <p>{uk.foods.noResults}</p>}
 
           <ul className="food-list">
             {shownDishes.map((dish) => {
@@ -1600,6 +1692,15 @@ export default function FoodsScreen() {
                         title={uk.foods.glycemicFlag.toggleLabel(dish.glycemicFlag)}
                       >
                         {GLYCEMIC_FLAG_SYMBOL[dish.glycemicFlag]}
+                      </button>
+                      <button
+                        type="button"
+                        className={dish.favorite ? "favorite-toggle active" : "favorite-toggle"}
+                        onClick={() => void handleToggleDishFavorite(dish)}
+                        aria-label={dish.favorite ? uk.foods.unfavoriteLabel : uk.foods.favoriteLabel}
+                        title={dish.favorite ? uk.foods.unfavoriteLabel : uk.foods.favoriteLabel}
+                      >
+                        {dish.favorite ? "★" : "☆"}
                       </button>
                     </div>
                   </div>
@@ -1668,6 +1769,25 @@ export default function FoodsScreen() {
               );
             })}
           </ul>
+
+          {databaseMatches.length > 0 && (
+            <>
+              <h2>{uk.databaseSets.searchDatabaseTitle}</h2>
+              <ul className="food-list">
+                {databaseMatches.slice(0, 20).map((item) => (
+                  <li key={item.id} className="food-list-item-with-action">
+                    <span>
+                      <strong>{item.nameUk}</strong> — {foodMetaText(item, builtInMatch(item))}{" "}
+                      <SourceBadge entry={builtInMatch(item)} giEntry={null} name={item.nameUk} onOpen={openInfo} />
+                    </span>
+                    <button type="button" onClick={() => void addFromDatabase([item.id])}>
+                      {uk.databaseSets.addOne}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
         </>
       )}
       {infoEntry && <VerifiedInfoDialog entry={infoEntry.entry} giOnly={infoEntry.giOnly} onClose={() => setInfoEntry(null)} />}

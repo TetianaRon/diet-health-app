@@ -427,6 +427,7 @@ export const uk = {
     filters: {
       label: "Показати",
       all: "Усі",
+      favorite: "Улюблені",
       ingredient: "Інгредієнти",
       dish: "Страви",
       drink: "Напої",
