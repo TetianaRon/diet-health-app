@@ -492,3 +492,13 @@ Answering "did we review only products?": the 69 home dishes were on the page bu
 - 446 tests, `tsc -b`, `npm run build`. Version 2.1.3, versionCode 32.
 
 ✅ **2.1.3 released 2026-10-09:** main pushed (web) and the bundle uploaded to the internal testing track (versionCode 32).
+
+**Release 2.1.4 — yesterday's and the last records on Today (2026-10-09, branch `release/2.1.4`, mom's request):**
+- **Built** (spec → "Сьогодні — one surface…" → Records):
+  - «Учора»: all of yesterday's sugar readings and medicine, compact and read-only like yesterday's meals (before, only yesterday's last medicine).
+  - «Востаннє»: each medicine's last intake when it's older than yesterday, and the last sugar reading likewise, with dates (`lastEarlierRecords`, unit-tested). Medicines marked as no longer taken are left out (decided here: otherwise a stopped medicine would show forever).
+  - Newest first: today's, «Учора», «Востаннє»; oldest first reverses it. The «Сьогодні ще немає…» line sits with today's list.
+  - The dev server's `window.__tmm` now also has `medications`, `bloodSugar` and `recordStore` (for test records and their clean-up).
+- **Verified (local web app, dev sheet, the developer signed in):** test medicines A (5 and 7 Oct) and B (yesterday 21:00) and a sugar reading yesterday 20:00: «Учора» listed B and the reading; «Востаннє» listed only «07 жовтня о 08:00 · Тест ліки А 10 мг» (the 6 Oct reading hidden by yesterday's); oldest first reversed the groups. After deleting the test records: «Учора» gone, «Востаннє» showed the last real reading (5 Oct 20:52). Test records deleted from the sheet (checked live).
+- **Not checked:** the phone layout (the groups use the yesterday's-meals styles).
+- 449 tests, `tsc -b`, `npm run build`. Version 2.1.4, versionCode 33.

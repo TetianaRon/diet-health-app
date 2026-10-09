@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { datesWithRecords, dayRecords, inOrder, lastIntakeOfDay, previousDateKey } from "./records";
+import { datesWithRecords, dayRecords, inOrder, lastEarlierRecords, previousDateKey } from "./records";
 import type { BloodSugarEntry } from "./bloodSugar";
 import type { MedicationIntake } from "./medications";
 
@@ -43,11 +43,35 @@ describe("dayRecords", () => {
   });
 });
 
-describe("lastIntakeOfDay", () => {
-  it("finds the latest intake of that day", () => {
-    const intakes = [intake(at(2026, 10, 4, 8, 0), "A"), intake(at(2026, 10, 4, 21, 30), "B"), intake(at(2026, 10, 5, 7, 0), "C")];
-    expect(lastIntakeOfDay(intakes, "2026-10-04")?.medicationName).toBe("B");
-    expect(lastIntakeOfDay(intakes, "2026-10-03")).toBeNull();
+describe("lastEarlierRecords", () => {
+  const med = (timestamp: string, medicationId: string, medicationName: string) => ({ ...intake(timestamp, medicationName), medicationId });
+
+  it("gives each medicine's last intake when it's older than yesterday, newest first", () => {
+    const intakes = [
+      med(at(2026, 10, 1, 8), "M1", "Форксига"),
+      med(at(2026, 10, 2, 8), "M1", "Форксига"),
+      med(at(2026, 9, 28, 21), "M2", "Аторвастатин"),
+    ];
+    const records = lastEarlierRecords([], intakes, "2026-10-04");
+    expect(records.map((r) => (r.kind === "medication" ? r.intake.medicationName : "")).join()).toBe("Форксига,Аторвастатин");
+    expect(records[0].timestamp).toBe(at(2026, 10, 2, 8));
+  });
+
+  it("leaves out a medicine taken yesterday or today", () => {
+    const intakes = [med(at(2026, 10, 1, 8), "M1", "Форксига"), med(at(2026, 10, 4, 8), "M1", "Форксига"), med(at(2026, 10, 5, 8), "M2", "Б")];
+    expect(lastEarlierRecords([], intakes, "2026-10-04")).toEqual([]);
+  });
+
+  it("leaves out medicines no longer taken", () => {
+    const intakes = [med(at(2026, 10, 1, 8), "M1", "Форксига"), med(at(2026, 10, 1, 9), "M2", "Б")];
+    const records = lastEarlierRecords([], intakes, "2026-10-04", new Set(["M2"]));
+    expect(records).toHaveLength(1);
+  });
+
+  it("adds the last sugar reading only when it's older than yesterday", () => {
+    const old = [sugar(at(2026, 10, 1, 7), 6.1), sugar(at(2026, 10, 2, 7), 5.9)];
+    expect(lastEarlierRecords(old, [], "2026-10-04").map((r) => r.kind === "sugar" && r.entry.valueMmolL)).toEqual([5.9]);
+    expect(lastEarlierRecords([...old, sugar(at(2026, 10, 4, 7), 6)], [], "2026-10-04")).toEqual([]);
   });
 });
 

@@ -852,16 +852,10 @@ select {
   color: #2f7a4f;
 }
 
-/* Yesterday's records: smaller and read-only, for context only. */
-.record-yesterday,
+/* Yesterday's meals and records, and the last ones before (2.1.4): smaller and read-only, for context only. */
 .meals-compact {
   font-size: 0.88rem;
   color: #6b6b6b;
-}
-
-.record-yesterday {
-  border-top: 1px dashed #d0d5d0;
-  padding-top: 6px;
 }
 
 .meals-compact {

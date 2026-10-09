@@ -1,11 +1,12 @@
 // Blood sugar readings and medicine intakes in one timeline (release 1.7) —
-// on Сьогодні (editable, with yesterday's last medicine small at the end of
-// the list) and in Історія (read-only). The former Цукор screen's "meals
+// on Сьогодні (editable) and in Історія (read-only). Сьогодні also shows
+// yesterday's records and the last of each from earlier days as small
+// read-only groups (CompactRecordsList, 2.1.4). The former Цукор screen's "meals
 // before this reading" expander is gone: the day's meals are on the same
 // screen now (developer, 2026-10-04).
 import { uk } from "../i18n/uk";
 import { checkBloodSugarRange } from "../lib/health";
-import { formatTime } from "../lib/dateFormat";
+import { formatDateTime, formatTime } from "../lib/dateFormat";
 import { formatDecimal } from "../lib/numberFormat";
 import { intakeLabel, type MedicationIntake } from "../lib/medications";
 import type { DayRecord } from "../lib/records";
@@ -23,29 +24,16 @@ function statusLabel(entry: BloodSugarEntry, settings: Settings): string | null 
 export default function DayRecordsList({
   records,
   settings,
-  yesterdayLastIntake,
-  yesterdayFirst = false,
   onEditSugar,
   onEditIntake,
 }: {
   records: DayRecord[];
   settings: Settings | null;
-  /** Shown small and read-only — yesterday's medicine affects today's sugar. */
-  yesterdayLastIntake?: MedicationIntake | null;
-  /** Oldest-first order puts yesterday's record before today's. */
-  yesterdayFirst?: boolean;
   onEditSugar?: (entry: BloodSugarEntry) => void;
   onEditIntake?: (intake: MedicationIntake) => void;
 }) {
-  const yesterday = yesterdayLastIntake ? (
-    <li key="yesterday" className="record-yesterday">
-      {uk.records.yesterdayMedication(formatTime(yesterdayLastIntake.timestamp), intakeLabel(yesterdayLastIntake))}
-    </li>
-  ) : null;
-
   return (
     <ul className="food-list records-list">
-      {yesterdayFirst && yesterday}
       {records.map((record, i) => {
         const time = formatTime(record.timestamp);
         if (record.kind === "medication") {
@@ -77,7 +65,33 @@ export default function DayRecordsList({
           </li>
         );
       })}
-      {!yesterdayFirst && yesterday}
     </ul>
+  );
+}
+
+/**
+ * Small read-only records under a title, like yesterday's meals: «Учора»
+ * (times only) and «Востаннє» (each with its date) on Сьогодні (2.1.4).
+ */
+export function CompactRecordsList({ records, title, withDate = false }: { records: DayRecord[]; title: string; withDate?: boolean }) {
+  if (records.length === 0) return null;
+  return (
+    <div className="meals-compact">
+      <p className="meals-compact-title">{title}</p>
+      <ul className="food-list">
+        {records.map((record, i) => {
+          const when = withDate ? formatDateTime(record.timestamp) : formatTime(record.timestamp);
+          const what =
+            record.kind === "medication"
+              ? intakeLabel(record.intake)
+              : uk.records.sugarLine(formatDecimal(record.entry.valueMmolL), uk.bloodSugar.context[record.entry.context]);
+          return (
+            <li key={`${record.kind}-${record.timestamp}-${i}`} className="meal-compact-row">
+              <span className="entry-time">{when}</span> · {what}
+            </li>
+          );
+        })}
+      </ul>
+    </div>
   );
 }

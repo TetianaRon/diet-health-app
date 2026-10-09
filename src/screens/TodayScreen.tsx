@@ -1,7 +1,7 @@
 // Сьогодні — one surface for entering and reading the day (release 1.7,
 // spec → "Daily records and the new Today"). Top to bottom: daily status,
-// weight bar, blood sugar + medicine in one timeline (yesterday's last
-// medicine small and read-only), today's meals (yesterday's as a compact
+// weight bar, blood sugar + medicine in one timeline (yesterday's records and
+// the last of each from earlier days small and read-only, 2.1.4), today's meals (yesterday's as a compact
 // read-only list). An on-screen order toggle decides newest/oldest first;
 // yesterday's records sit at the end of their block (or the start, oldest
 // first). Everything is read in one batch request (loadDayData).
@@ -19,7 +19,7 @@ import { formatTime } from "../lib/dateFormat";
 import { scheduleMealReminder } from "../lib/reminderScheduler";
 import { useReminderChoice } from "../lib/reminderChoice";
 import { loadDayData, type DayData } from "../lib/dayData";
-import { dayRecords, inOrder, lastIntakeOfDay, previousDateKey } from "../lib/records";
+import { dayRecords, inOrder, lastEarlierRecords, previousDateKey } from "../lib/records";
 import { groupIntoMeals, isSameLocalDate, localDateKey, sumKnownField, type DailyLogEntry, type MealGroup } from "../lib/dailyLog";
 import type { BloodSugarEntry } from "../lib/bloodSugar";
 import type { MedicationIntake } from "../lib/medications";
@@ -31,7 +31,7 @@ import BloodSugarForm from "./BloodSugarForm";
 import MedicationIntakeForm from "./MedicationIntakeForm";
 import WeightForm from "./WeightForm";
 import WeightBar from "./WeightBar";
-import DayRecordsList from "./DayRecordsList";
+import DayRecordsList, { CompactRecordsList } from "./DayRecordsList";
 import OrderToggle, { useDisplayOrder } from "./OrderToggle";
 import { CompactMealsList } from "./MealsReadOnly";
 import EditIconButton from "./EditIconButton";
@@ -261,7 +261,9 @@ export default function TodayScreen({
   const todayMeals = inOrder(groupIntoMeals(todayEntries), order);
   const yesterdayMeals = inOrder(groupIntoMeals(allEntries.filter((e) => isSameLocalDate(e.timestamp, yesterdayKey))), order);
   const records = dayRecords(data?.bloodSugar ?? [], data?.intakes ?? [], todayKey, order);
-  const yesterdayLastIntake = lastIntakeOfDay(data?.intakes ?? [], yesterdayKey);
+  const yesterdayRecords = dayRecords(data?.bloodSugar ?? [], data?.intakes ?? [], yesterdayKey, order);
+  const inactiveMedicationIds = new Set((data?.medications ?? []).filter((m) => !m.active).map((m) => m.id));
+  const earlierRecords = inOrder(lastEarlierRecords(data?.bloodSugar ?? [], data?.intakes ?? [], yesterdayKey, inactiveMedicationIds), order);
   const mealsLeft = settings ? mealsLeftToday(settings.mealsPerDay, todayMeals.length) : null;
 
   // sumKnownField leaves out an entry whose field is unknown rather than counting it as 0.
@@ -285,7 +287,9 @@ export default function TodayScreen({
   const lastEntry = allEntries.reduce<DailyLogEntry | null>((latest, e) => (!latest || e.timestamp > latest.timestamp ? e : latest), null);
   const gapWarning = lastEntry && settings ? mealGapWarning(new Date(lastEntry.timestamp), new Date(), settings.maxGapHours) : null;
 
-  const yesterdayMealsList = <CompactMealsList meals={yesterdayMeals} settings={settings} title={uk.yesterday.mealsTitle} />;
+  const yesterdayRecordsList = <CompactRecordsList records={yesterdayRecords} title={uk.yesterday.title} />;
+  const earlierRecordsList = <CompactRecordsList records={earlierRecords} title={uk.records.earlierTitle} withDate />;
+  const yesterdayMealsList = <CompactMealsList meals={yesterdayMeals} settings={settings} title={uk.yesterday.title} />;
 
   return (
     <section className="screen">
@@ -345,17 +349,20 @@ export default function TodayScreen({
                 </button>
               </div>
             </div>
+            {/* Earlier days read like a timeline too: «Востаннє», «Учора», today (or the reverse). */}
+            {data && order === "oldest" && earlierRecordsList}
+            {data && order === "oldest" && yesterdayRecordsList}
             {data && records.length === 0 && <p className="food-form-hint">{uk.records.empty}</p>}
             {data && (
               <DayRecordsList
                 records={records}
                 settings={settings}
-                yesterdayLastIntake={yesterdayLastIntake}
-                yesterdayFirst={order === "oldest"}
                 onEditSugar={(entry) => setForm({ kind: "sugar", original: entry })}
                 onEditIntake={(intake) => setForm({ kind: "medication", original: intake })}
               />
             )}
+            {data && order === "newest" && yesterdayRecordsList}
+            {data && order === "newest" && earlierRecordsList}
           </div>
         </div>
 

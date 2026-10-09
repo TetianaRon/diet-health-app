@@ -48,10 +48,36 @@ export function dayRecords(
   return inOrder(records, order);
 }
 
-/** The last medicine taken on a given day (yesterday's affects today's sugar), or null. */
-export function lastIntakeOfDay(intakes: readonly MedicationIntake[], dateKey: string): MedicationIntake | null {
-  const ofDay = inOrder(intakes.filter((i) => onDay(i.timestamp, dateKey)), "newest");
-  return ofDay[0] ?? null;
+/**
+ * The last of each, when it's older than `yesterdayKey` (release 2.1.4, mom's
+ * request: "when did I last take it"): each medicine's last intake, and the
+ * last sugar reading. Today's and yesterday's are on Today already. Medicines
+ * marked as no longer taken are left out. Newest first.
+ */
+export function lastEarlierRecords(
+  sugar: readonly BloodSugarEntry[],
+  intakes: readonly MedicationIntake[],
+  yesterdayKey: string,
+  inactiveMedicationIds: ReadonlySet<string> = new Set(),
+): DayRecord[] {
+  const before = (timestamp: string) => {
+    const t = new Date(timestamp);
+    return !Number.isNaN(t.getTime()) && localDateKey(t) < yesterdayKey;
+  };
+  const records: DayRecord[] = [];
+  const lastPerMedicine = new Map<string, MedicationIntake>();
+  for (const intake of intakes) {
+    const key = intake.medicationId || intake.medicationName;
+    const seen = lastPerMedicine.get(key);
+    if (!seen || time(intake.timestamp) > time(seen.timestamp)) lastPerMedicine.set(key, intake);
+  }
+  for (const intake of lastPerMedicine.values()) {
+    if (inactiveMedicationIds.has(intake.medicationId) || !before(intake.timestamp)) continue;
+    records.push({ kind: "medication", timestamp: intake.timestamp, intake });
+  }
+  const lastSugar = inOrder(sugar, "newest")[0];
+  if (lastSugar && before(lastSugar.timestamp)) records.push({ kind: "sugar", timestamp: lastSugar.timestamp, entry: lastSugar });
+  return inOrder(records, "newest");
 }
 
 /** The local date keys that have any of the given records, newest first. */

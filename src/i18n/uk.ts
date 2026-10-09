@@ -22,7 +22,8 @@ export const uk = {
     typeMedication: "Ліки",
     empty: "Сьогодні ще немає вимірювань цукру чи прийому ліків.",
     sugarLine: (value: string, contextLabel: string) => `Цукор ${value} ммоль/л (${contextLabel})`,
-    yesterdayMedication: (time: string, label: string) => `Учора ${time} · ${label}`,
+    // The last of each from before yesterday (2.1.4): each medicine, and the sugar reading.
+    earlierTitle: "Востаннє",
     editMedicationLabel: (time: string) => `Редагувати ліки о ${time}`,
   },
   medication: {
@@ -75,7 +76,7 @@ export const uk = {
     },
   },
   yesterday: {
-    mealsTitle: "Учора",
+    title: "Учора",
   },
   order: {
     newest: "Спочатку нові",
