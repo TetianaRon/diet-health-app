@@ -1586,7 +1586,7 @@ export default function FoodsScreen() {
                   <div className="food-list-item-with-action">
                     <span>
                       <strong>{dish.nameUk}</strong> {dish.nameEn && <span className="food-name-en">({dish.nameEn})</span>} — {foodMetaText(dish)}
-                      {dish.basis !== "piece" && ` (${uk.foods.pack.per(dish.basis)})`} <span className="food-recipe-mark">{uk.foods.recipeMark}</span>
+                      {dish.basis === "100g" && ` (${uk.foods.pack.per("100g")})`} <span className="food-recipe-mark">{uk.foods.recipeMark}</span>
                     </span>
                     <div className="food-list-actions">
                       <button type="button" className="edit-toggle" onClick={() => startEditing({ mode: "recipe", item: dish })} aria-label={uk.dishes.editLabel} title={uk.dishes.editLabel}>
