@@ -54,6 +54,7 @@ export default function PortionSizesFields({
   allowGrams,
   allowPieces,
   allowMl = false,
+  preferredUnit,
 }: {
   rows: SizeRow[];
   onChange: (rows: SizeRow[]) => void;
@@ -62,8 +63,11 @@ export default function PortionSizesFields({
   allowPieces: boolean;
   /** Millilitres (2.1.1): for an item measured per 100 ml, or with a density. */
   allowMl?: boolean;
+  /** The unit a new size starts in: the item's main one (2.1.2: a drink per 100 ml starts in ml). */
+  preferredUnit?: SizeRow["unit"];
 }) {
-  const units = ([["grams", allowGrams], ["ml", allowMl], ["pieces", allowPieces]] as const).filter(([, ok]) => ok).map(([u]) => u);
+  const allowed = ([["grams", allowGrams], ["ml", allowMl], ["pieces", allowPieces]] as const).filter(([, ok]) => ok).map(([u]) => u);
+  const units = preferredUnit && allowed.includes(preferredUnit) ? [preferredUnit, ...allowed.filter((u) => u !== preferredUnit)] : allowed;
   const update = (index: number, patch: Partial<SizeRow>) => onChange(rows.map((r, i) => (i === index ? { ...r, ...patch } : r)));
   const add = () =>
     onChange([...rows, { label: DEFAULT_SIZE_LABELS[rows.length] ?? "", amount: "", unit: units[0] ?? "grams" }]);

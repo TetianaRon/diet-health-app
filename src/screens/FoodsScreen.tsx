@@ -60,7 +60,7 @@ import PackAmountFields, { measureFromPackFields, type PackFields } from "./Pack
 import ProductMeasureFields, { isMeasure, measureFromProductFields, productFieldsFromMeasure, type ProductFields } from "./ProductMeasureFields";
 import PortionSizesFields, { sizeRowsFrom, sizesFromRows, type SizeRow } from "./PortionSizesFields";
 import WeighedPiecesFields, { weighedPair } from "./WeighedPiecesFields";
-import { gramsPerMl, pieceGrams, round2, toStoredValues, toTypedValues, valuesAmount, PER_100G, type Measure } from "../lib/measure";
+import { gramsPerMl, pieceGrams, round2, toStoredValues, toTypedValues, valuesAmount, PER_100G, type Basis, type Measure } from "../lib/measure";
 import { measureOf, refFactor } from "../lib/dishes";
 
 const NUMERIC_FIELDS = ["carbsG", "gi", "fiberG", "sugarsG", "proteinG", "fatG", "caloriesKcal", "sodiumMg"] as const;
@@ -124,8 +124,13 @@ function PackSummary({ pack, values }: { pack: ProductFields; values: FormValues
   return <p className="food-form-source">{uk.foods.pack.storedPreview(measure.basis, carbs, calories)}</p>;
 }
 
+/** The size unit that matches a basis (2.1.2): a new size starts in the item's main unit. */
+function basisUnit(basis: Basis): SizeRow["unit"] {
+  return basis === "piece" ? "pieces" : basis === "100ml" ? "ml" : "grams";
+}
+
 // Which units her portion sizes can use: grams unless counted per piece without a weight, pieces when per piece or weighed.
-function sizeUnits(pack: ProductFields): { allowGrams: boolean; allowPieces: boolean; allowMl: boolean } {
+function sizeUnits(pack: ProductFields): { allowGrams: boolean; allowPieces: boolean; allowMl: boolean; preferredUnit: SizeRow["unit"] } {
   const measure = measureFromProductFields(pack);
   const weighed = isMeasure(measure) && pieceGrams(measure) !== null;
   const density = isMeasure(measure) && gramsPerMl(measure) !== null;
@@ -133,6 +138,7 @@ function sizeUnits(pack: ProductFields): { allowGrams: boolean; allowPieces: boo
     allowGrams: pack.main === "100g" || weighed || density,
     allowPieces: pack.main === "piece" || weighed,
     allowMl: pack.main === "100ml" || density,
+    preferredUnit: basisUnit(pack.main),
   };
 }
 
@@ -1107,6 +1113,7 @@ function ComposeDishForm({
         allowGrams={yieldFields.main === "100g" || dishHasPieceWeight || dishHasDensity}
         allowPieces={yieldFields.main === "piece" || dishHasPieceWeight}
         allowMl={yieldFields.main === "100ml" || dishHasDensity}
+        preferredUnit={basisUnit(yieldFields.main)}
       />
 
       {preview && (
