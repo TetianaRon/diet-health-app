@@ -504,3 +504,5 @@ Answering "did we review only products?": the 69 home dishes were on the page bu
 - **Verified, the «Ліки» tab (local web app, dev sheet):** «Тест ліки В» added (2,5 мг) and shown in the list; with a test intake on 6 Oct it appeared under «Востаннє»; unticked «Приймаю зараз» → moved under «Більше не приймаю» and left «Востаннє» (the real 5 Oct reading stayed). Test records deleted (checked live). On the developer's Pixel 10 (debug build): the four tabs fit the bottom bar; «Востаннє» on the phone layout.
 - **Not checked:** the intake picker leaving out a stopped medicine (unchanged filter since 1.7).
 - 449 tests, `tsc -b`, `npm run build`. Version 2.1.4, versionCode 33.
+
+✅ **2.1.4 released 2026-10-09:** main pushed (web) and the bundle uploaded to the internal testing track (versionCode 33), with the «Ліки» tab.
