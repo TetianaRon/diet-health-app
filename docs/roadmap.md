@@ -68,7 +68,8 @@ The person decides where their data lives, with plain wording about each choice.
 Today the reminders notice («Застосунок може нагадувати…», `ReminderAccessNotice`) sits in Today's main body: long, not dismissable, and there's no way to say "no reminders" — they're simply on once allowed.
 - **A reminders toggle in Settings** («Нагадування про їжу»): turning it on asks for the missing phone permissions (notifications, then «Будильники й нагадування»); turning it off cancels the scheduled reminders. The setting is kept per device, like «Запам'ятати мене».
 - **An offer instead of the notice:** after the first sign-in, a popup in the same style as the other notices offers to turn reminders on, with buttons naming the outcome (e.g. «Увімкнути нагадування» / «Не зараз»). Dismissed, it says reminders can always be turned on in Settings, and it never appears again. The notice leaves Today's body.
-- Open for the design: what the toggle shows when it's on but a permission was later revoked in the phone's settings; whether mom (reminders already on) sees the offer — proposed: no, her toggle starts on.
+- **On, but a permission is missing** (e.g. revoked later in the phone's settings): not a silent note — a popup when the app opens, saying reminders can't arrive without the permission, with two choices: «Дозволити нагадування» (asks for what's missing) / «Вимкнути нагадування» (turns the toggle off). Settings also shows the toggle as on with the missing permission named. (Developer, 2026-10-09.)
+- **Mom and anyone with reminders already allowed:** the toggle starts on and the offer is skipped. (Developer, 2026-10-09.)
 
 ### 2.2 — Sets, clean start, moving mom over · 📝 planned (2.1's one product list first)
 The verified database offered as sets; new data starts empty; built-in items she used become her rows; the generalised update offer.
