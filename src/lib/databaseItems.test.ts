@@ -3,7 +3,7 @@ import { BUILT_IN_FOODS } from "../data/builtInFoods";
 import { copyUpdates } from "./builtInStatus";
 import { coveredDatabaseIds, databaseCopyFields, fingerprintFills, idsNeedingCopies, usedDatabaseIds, valuesFingerprint } from "./databaseItems";
 import type { Dish } from "./dishes";
-import type { Ingredient } from "./ingredients";
+import { mergeWithBuiltInFoods, type Ingredient } from "./ingredients";
 
 const buckwheat = BUILT_IN_FOODS.find((f) => f.id === "B0001") as Ingredient;
 const rice = BUILT_IN_FOODS.find((f) => f.id === "B0002") as Ingredient;
@@ -99,5 +99,23 @@ describe("idsNeedingCopies", () => {
   it("picks the database items still listed as themselves, once each", () => {
     const merged = [{ id: "B0001" }, { id: "I3" }, { id: "B0002" }];
     expect(idsNeedingCopies(["B0001", "I3", "B0001", "B0005", "D2"], merged)).toEqual(["B0001"]);
+  });
+});
+
+describe("database densities (2.2.1)", () => {
+  const milk = BUILT_IN_FOODS.find((f) => f.id === "B0013") as Ingredient;
+
+  it("reach the database item and a new copy, so a liquid can be logged in ml", () => {
+    expect(milk.densityMl).toBe(236.6);
+    expect(milk.densityGrams).toBe(244);
+    expect(databaseCopyFields("B0013")?.densityGrams).toBe(244);
+  });
+
+  it("fill in for an older copy without one, but never replace her own measurement", () => {
+    const older = copyOf(milk, { densityMl: null, densityGrams: null });
+    const hers = copyOf(milk, { id: "I4", densityMl: 100, densityGrams: 105 });
+    const merged = mergeWithBuiltInFoods([older]);
+    expect(merged.find((i) => i.id === "I3")?.densityGrams).toBe(244);
+    expect(mergeWithBuiltInFoods([hers]).find((i) => i.id === "I4")?.densityGrams).toBe(105);
   });
 });

@@ -1,19 +1,160 @@
 {
   "groups": [
-    { "id": "food", "nameUk": "За видом продукту", "nameEn": "By kind of food" },
-    { "id": "cuisine", "nameUk": "Кухні", "nameEn": "Cuisines" },
-    { "id": "dishes", "nameUk": "Страви", "nameEn": "Dishes" }
+    {
+      "id": "food",
+      "nameUk": "За видом продукту",
+      "nameEn": "By kind of food"
+    },
+    {
+      "id": "cuisine",
+      "nameUk": "Кухні",
+      "nameEn": "Cuisines"
+    },
+    {
+      "id": "dishes",
+      "nameUk": "Страви",
+      "nameEn": "Dishes"
+    }
   ],
   "sets": [
-    { "id": "grains", "group": "food", "nameUk": "Крупи та макарони", "nameEn": "Grains and pasta", "categories": ["grains"] },
-    { "id": "bread", "group": "food", "nameUk": "Хліб", "nameEn": "Bread", "categories": ["bread"] },
-    { "id": "dairy-eggs", "group": "food", "nameUk": "Молочні продукти та яйця", "nameEn": "Dairy and eggs", "categories": ["dairy", "eggs"] },
-    { "id": "meat-fish", "group": "food", "nameUk": "М'ясо, птиця й риба", "nameEn": "Meat, poultry and fish", "categories": ["meat", "fish"] },
-    { "id": "legumes", "group": "food", "nameUk": "Бобові", "nameEn": "Legumes", "categories": ["legumes"] },
-    { "id": "vegetables-mushrooms", "group": "food", "nameUk": "Овочі та гриби", "nameEn": "Vegetables and mushrooms", "categories": ["vegetables", "mushrooms"] },
-    { "id": "fruit", "group": "food", "nameUk": "Фрукти та ягоди", "nameEn": "Fruit and berries", "categories": ["fruit"] },
-    { "id": "nuts", "group": "food", "nameUk": "Горіхи", "nameEn": "Nuts", "categories": ["nuts"] },
-    { "id": "fats", "group": "food", "nameUk": "Олії та жири", "nameEn": "Oils and fats", "categories": ["fats"] },
-    { "id": "drinks", "group": "food", "nameUk": "Напої", "nameEn": "Drinks", "categories": ["drinks"] }
+    {
+      "id": "grains",
+      "group": "food",
+      "nameUk": "Крупи та макарони",
+      "nameEn": "Grains and pasta",
+      "categories": [
+        "grains"
+      ]
+    },
+    {
+      "id": "bread",
+      "group": "food",
+      "nameUk": "Хліб",
+      "nameEn": "Bread",
+      "categories": [
+        "bread"
+      ]
+    },
+    {
+      "id": "dairy-eggs",
+      "group": "food",
+      "nameUk": "Молочні продукти та яйця",
+      "nameEn": "Dairy and eggs",
+      "categories": [
+        "dairy",
+        "eggs"
+      ]
+    },
+    {
+      "id": "meat-fish",
+      "group": "food",
+      "nameUk": "М'ясо, птиця й риба",
+      "nameEn": "Meat, poultry and fish",
+      "categories": [
+        "meat",
+        "fish"
+      ]
+    },
+    {
+      "id": "legumes",
+      "group": "food",
+      "nameUk": "Бобові",
+      "nameEn": "Legumes",
+      "categories": [
+        "legumes"
+      ]
+    },
+    {
+      "id": "vegetables-mushrooms",
+      "group": "food",
+      "nameUk": "Овочі та гриби",
+      "nameEn": "Vegetables and mushrooms",
+      "categories": [
+        "vegetables",
+        "mushrooms"
+      ]
+    },
+    {
+      "id": "fruit",
+      "group": "food",
+      "nameUk": "Фрукти та ягоди",
+      "nameEn": "Fruit and berries",
+      "categories": [
+        "fruit"
+      ]
+    },
+    {
+      "id": "nuts",
+      "group": "food",
+      "nameUk": "Горіхи та насіння",
+      "nameEn": "Nuts and seeds",
+      "categories": [
+        "nuts"
+      ]
+    },
+    {
+      "id": "flour",
+      "group": "food",
+      "nameUk": "Борошно та крохмаль",
+      "nameEn": "Flour and starch",
+      "categories": [
+        "flour"
+      ]
+    },
+    {
+      "id": "sweeteners",
+      "group": "food",
+      "nameUk": "Цукор і мед",
+      "nameEn": "Sugar and honey",
+      "categories": [
+        "sweeteners"
+      ]
+    },
+    {
+      "id": "fats",
+      "group": "food",
+      "nameUk": "Олії та жири",
+      "nameEn": "Oils and fats",
+      "categories": [
+        "fats"
+      ]
+    },
+    {
+      "id": "drinks",
+      "group": "food",
+      "nameUk": "Напої",
+      "nameEn": "Drinks",
+      "categories": [
+        "drinks"
+      ]
+    },
+    {
+      "id": "pantry",
+      "group": "food",
+      "nameUk": "Сіль, какао та інше",
+      "nameEn": "Salt, cocoa and other",
+      "categories": [
+        "pantry"
+      ]
+    },
+    {
+      "id": "baking",
+      "group": "food",
+      "nameUk": "Для випічки",
+      "nameEn": "For baking",
+      "descriptionUk": "борошно, цукор, яйця, масло…",
+      "categories": [
+        "flour",
+        "sweeteners"
+      ],
+      "items": [
+        "B0018",
+        "B0024",
+        "B0013",
+        "B0056",
+        "B0132",
+        "B0133"
+      ]
+    }
   ]
 }

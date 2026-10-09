@@ -103,6 +103,21 @@
       "id": "drinks",
       "nameUk": "Напої",
       "nameEn": "Drinks"
+    },
+    {
+      "id": "flour",
+      "nameUk": "Борошно та крохмаль",
+      "nameEn": "Flour and starch"
+    },
+    {
+      "id": "sweeteners",
+      "nameUk": "Цукор і мед",
+      "nameEn": "Sugar and honey"
+    },
+    {
+      "id": "pantry",
+      "nameUk": "Сіль, какао та інше",
+      "nameEn": "Salt, cocoa and other"
     }
   ],
   "entries": [
@@ -756,7 +771,22 @@
             "description": "1 cup = 243 g"
           }
         }
-      ]
+      ],
+      "density": {
+        "ml": 236.6,
+        "grams": 243,
+        "reliability": "high",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Вага склянки з даних USDA для цього ж запису; склянка США — 236,6 мл.",
+          "en": "A cup's weight from USDA's data for this same entry; a US cup is 236.6 ml."
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "170904",
+          "description": "1 cup = 243 g"
+        }
+      }
     },
     {
       "id": "B0013",
@@ -820,7 +850,22 @@
             "description": "1 cup = 244 g"
           }
         }
-      ]
+      ],
+      "density": {
+        "ml": 236.6,
+        "grams": 244,
+        "reliability": "high",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Вага склянки з даних USDA для цього ж запису; склянка США — 236,6 мл.",
+          "en": "A cup's weight from USDA's data for this same entry; a US cup is 236.6 ml."
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "171267",
+          "description": "1 cup = 244 g"
+        }
+      }
     },
     {
       "id": "B0014",
@@ -3109,6 +3154,21 @@
           "uk": "Вуглеводів практично немає: ГІ не визначається, ГН дорівнює 0.",
           "en": "Practically no carbohydrate: GI isn't defined and GL is 0."
         }
+      },
+      "density": {
+        "ml": 236.6,
+        "grams": 218,
+        "reliability": "high",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Вага склянки з даних USDA для цього ж запису; склянка США — 236,6 мл.",
+          "en": "A cup's weight from USDA's data for this same entry; a US cup is 236.6 ml."
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "171017",
+          "description": "1 cup = 218 g"
+        }
       }
     },
     {
@@ -3150,6 +3210,21 @@
         "reason": {
           "uk": "Вуглеводів практично немає: ГІ не визначається, ГН дорівнює 0.",
           "en": "Practically no carbohydrate: GI isn't defined and GL is 0."
+        }
+      },
+      "density": {
+        "ml": 236.6,
+        "grams": 216,
+        "reliability": "high",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Вага склянки з даних USDA для цього ж запису; склянка США — 236,6 мл.",
+          "en": "A cup's weight from USDA's data for this same entry; a US cup is 236.6 ml."
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "171413",
+          "description": "1 cup = 216 g"
         }
       }
     },
@@ -5331,7 +5406,22 @@
             "description": "1 cup = 243 g"
           }
         }
-      ]
+      ],
+      "density": {
+        "ml": 236.6,
+        "grams": 243,
+        "reliability": "medium",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Вага склянки кефіру 1% з даних USDA; жирність на вагу склянки майже не впливає. Склянка США — 236,6 мл.",
+          "en": "The weight of a cup of 1% kefir from USDA; fat content barely changes it. A US cup is 236.6 ml."
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "170904",
+          "description": "1 cup = 243 g"
+        }
+      }
     },
     {
       "id": "B0097",
@@ -5373,6 +5463,21 @@
         "reason": {
           "uk": "Вуглеводів практично немає: ГІ не визначається, ГН дорівнює 0.",
           "en": "Practically no carbohydrate: GI isn't defined and GL is 0."
+        }
+      },
+      "density": {
+        "ml": 236.6,
+        "grams": 237,
+        "reliability": "high",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Вага склянки з даних USDA для цього ж запису; склянка США — 236,6 мл.",
+          "en": "A cup's weight from USDA's data for this same entry; a US cup is 236.6 ml."
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "171890",
+          "description": "1 cup (8 fl oz) = 237 g"
         }
       }
     },
@@ -5416,6 +5521,21 @@
         "reason": {
           "uk": "ГІ для чорної кави не вимірюють: у ній немає цукрів (0 г) і крохмалю. 1,67 г «вуглеводів» у записі USDA — це розрахунок «за різницею» (усе, що не вода, білок, жир і зола), а не цукор чи крохмаль. ГН дорівнює 0.",
           "en": "GI isn't measured for black coffee: it has no sugars (0 g) and no starch. USDA's 1.67 g of \"carbohydrate\" is calculated \"by difference\" (everything that isn't water, protein, fat or ash), not sugar or starch. GL is 0."
+        }
+      },
+      "density": {
+        "ml": 29.57,
+        "grams": 29.6,
+        "reliability": "high",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Вага рідкої унції з даних USDA для цього ж запису; рідка унція — 29,57 мл.",
+          "en": "A fluid ounce's weight from USDA's data for this same entry; a fluid ounce is 29.57 ml."
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "171891",
+          "description": "1 fl oz = 29.6 g"
         }
       }
     },
@@ -6550,6 +6670,758 @@
           }
         }
       ]
+    },
+    {
+      "id": "B0117",
+      "status": "active",
+      "category": "flour",
+      "family": "wheat-flour",
+      "variant": "white",
+      "state": "processed",
+      "nameUk": "Борошно пшеничне біле (вищого ґатунку)",
+      "nameEn": "Wheat flour, white, all-purpose, unenriched",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 364.0,
+          "carbsG": 76.31,
+          "fiberG": 2.7,
+          "sugarsG": 0.27,
+          "proteinG": 10.33,
+          "fatG": 0.98,
+          "sodiumMg": 2.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "169761",
+          "description": "Wheat flour, white, all-purpose, unenriched"
+        },
+        "reliability": "medium",
+        "reason": {
+          "uk": "Найближчий запис USDA — див. примітку. Запис USDA — біле пшеничне борошно загального призначення без додавання вітамінів, як і українське борошно вищого ґатунку; за складом вони дуже близькі.",
+          "en": "The closest USDA entry — see the note. The USDA entry is all-purpose white wheat flour without added vitamins, like Ukrainian top-grade flour (вищого ґатунку); their composition is very close."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "unknown",
+        "value": null,
+        "source": null,
+        "reliability": "low",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Пшеничне борошно самого по собі не їдять; ГІ вимірюють для страв із нього (хліб, млинці, каші), і він залежить від рецепта та приготування. Вимірювання для самого борошна в таблицях 2021 року немає.",
+          "en": "Wheat flour isn't eaten as it is; GI is measured for dishes made with it (bread, pancakes, porridge), and it depends on the recipe and cooking. The 2021 tables have no measurement of the flour itself."
+        }
+      }
+    },
+    {
+      "id": "B0118",
+      "status": "active",
+      "category": "flour",
+      "family": "wheat-flour",
+      "variant": "whole-grain",
+      "state": "processed",
+      "nameUk": "Борошно пшеничне цільнозернове",
+      "nameEn": "Wheat flour, whole-grain",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 340.0,
+          "carbsG": 71.97,
+          "fiberG": 10.7,
+          "sugarsG": 0.41,
+          "proteinG": 13.21,
+          "fatG": 2.5,
+          "sodiumMg": 2.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "168893",
+          "description": "Wheat flour, whole-grain (Includes foods for USDA's Food Distribution Program)"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "unknown",
+        "value": null,
+        "source": null,
+        "reliability": "low",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Цільнозернове борошно самого по собі не їдять; ГІ вимірюють для страв із нього (хліб, млинці, каші), і він залежить від рецепта та приготування. Вимірювання для самого борошна в таблицях 2021 року немає.",
+          "en": "Whole-grain flour isn't eaten as it is; GI is measured for dishes made with it (bread, pancakes, porridge), and it depends on the recipe and cooking. The 2021 tables have no measurement of the flour itself."
+        }
+      }
+    },
+    {
+      "id": "B0119",
+      "status": "active",
+      "category": "flour",
+      "family": "rye-flour",
+      "state": "processed",
+      "nameUk": "Борошно житнє (обдирне)",
+      "nameEn": "Rye flour, medium",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 349.0,
+          "carbsG": 75.43,
+          "fiberG": 11.8,
+          "sugarsG": 1.1,
+          "proteinG": 10.88,
+          "fatG": 1.52,
+          "sodiumMg": 2.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "168886",
+          "description": "Rye flour, medium"
+        },
+        "reliability": "medium",
+        "reason": {
+          "uk": "Найближчий запис USDA — див. примітку. USDA розрізняє світле, середнє й темне житнє борошно; українське обдирне найближче до середнього (сіяне — світліше, із меншою кількістю клітковини).",
+          "en": "The closest USDA entry — see the note. USDA has light, medium and dark rye flour; Ukrainian обдирне is closest to medium (сіяне is lighter, with less fibre)."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "unknown",
+        "value": null,
+        "source": null,
+        "reliability": "low",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Житнє борошно самого по собі не їдять; ГІ вимірюють для страв із нього (хліб, млинці, каші), і він залежить від рецепта та приготування. Вимірювання для самого борошна в таблицях 2021 року немає.",
+          "en": "Rye flour isn't eaten as it is; GI is measured for dishes made with it (bread, pancakes, porridge), and it depends on the recipe and cooking. The 2021 tables have no measurement of the flour itself."
+        }
+      }
+    },
+    {
+      "id": "B0120",
+      "status": "active",
+      "category": "flour",
+      "family": "buckwheat-flour",
+      "state": "processed",
+      "nameUk": "Борошно гречане",
+      "nameEn": "Buckwheat flour, whole-groat",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 335.0,
+          "carbsG": 70.59,
+          "fiberG": 10.0,
+          "sugarsG": 2.6,
+          "proteinG": 12.62,
+          "fatG": 3.1,
+          "sodiumMg": 11.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "170687",
+          "description": "Buckwheat flour, whole-groat"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "unknown",
+        "value": null,
+        "source": null,
+        "reliability": "low",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Гречане борошно самого по собі не їдять; ГІ вимірюють для страв із нього (хліб, млинці, каші), і він залежить від рецепта та приготування. Вимірювання для самого борошна в таблицях 2021 року немає.",
+          "en": "Buckwheat flour isn't eaten as it is; GI is measured for dishes made with it (bread, pancakes, porridge), and it depends on the recipe and cooking. The 2021 tables have no measurement of the flour itself."
+        }
+      }
+    },
+    {
+      "id": "B0121",
+      "status": "active",
+      "category": "flour",
+      "family": "corn-flour",
+      "state": "processed",
+      "nameUk": "Борошно кукурудзяне",
+      "nameEn": "Corn flour, whole-grain, yellow",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 361.0,
+          "carbsG": 76.85,
+          "fiberG": 7.3,
+          "sugarsG": 0.64,
+          "proteinG": 6.93,
+          "fatG": 3.86,
+          "sodiumMg": 5.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "170290",
+          "description": "Corn flour, whole-grain, yellow"
+        },
+        "reliability": "medium",
+        "reason": {
+          "uk": "Найближчий запис USDA — див. примітку. Запис USDA — цільнозернове жовте кукурудзяне борошно. Борошно без зародка (degermed) має трохи більше вуглеводів і менше жиру й клітковини.",
+          "en": "The closest USDA entry — see the note. The USDA entry is whole-grain yellow corn flour. Degermed flour has a little more carbohydrate and less fat and fibre."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "unknown",
+        "value": null,
+        "source": null,
+        "reliability": "low",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Кукурудзяне борошно самого по собі не їдять; ГІ вимірюють для страв із нього (хліб, млинці, каші), і він залежить від рецепта та приготування. Вимірювання для самого борошна в таблицях 2021 року немає.",
+          "en": "Corn flour isn't eaten as it is; GI is measured for dishes made with it (bread, pancakes, porridge), and it depends on the recipe and cooking. The 2021 tables have no measurement of the flour itself."
+        }
+      }
+    },
+    {
+      "id": "B0122",
+      "status": "active",
+      "category": "flour",
+      "family": "oat-flour",
+      "state": "processed",
+      "nameUk": "Борошно вівсяне",
+      "nameEn": "Oat flour, partially debranned",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 404.0,
+          "carbsG": 65.7,
+          "fiberG": 6.5,
+          "sugarsG": 0.8,
+          "proteinG": 14.66,
+          "fatG": 9.12,
+          "sodiumMg": 19.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "169741",
+          "description": "Oat flour, partially debranned"
+        },
+        "reliability": "medium",
+        "reason": {
+          "uk": "Найближчий запис USDA — див. примітку. Запис USDA — вівсяне борошно з частково видаленими висівками; борошно, змелене з цілих пластівців удома, має більше клітковини.",
+          "en": "The closest USDA entry — see the note. The USDA entry is oat flour with part of the bran removed; flour ground at home from whole flakes has more fibre."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "unknown",
+        "value": null,
+        "source": null,
+        "reliability": "low",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Вівсяне борошно самого по собі не їдять; ГІ вимірюють для страв із нього (хліб, млинці, каші), і він залежить від рецепта та приготування. Вимірювання для самого борошна в таблицях 2021 року немає.",
+          "en": "Oat flour isn't eaten as it is; GI is measured for dishes made with it (bread, pancakes, porridge), and it depends on the recipe and cooking. The 2021 tables have no measurement of the flour itself."
+        }
+      }
+    },
+    {
+      "id": "B0123",
+      "status": "active",
+      "category": "flour",
+      "family": "rice-flour",
+      "state": "processed",
+      "nameUk": "Борошно рисове",
+      "nameEn": "Rice flour, white, unenriched",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 366.0,
+          "carbsG": 80.13,
+          "fiberG": 2.4,
+          "sugarsG": 0.12,
+          "proteinG": 5.95,
+          "fatG": 1.42,
+          "sodiumMg": 0.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "169714",
+          "description": "Rice flour, white, unenriched"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "unknown",
+        "value": null,
+        "source": null,
+        "reliability": "low",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Рисове борошно самого по собі не їдять; ГІ вимірюють для страв із нього (хліб, млинці, каші), і він залежить від рецепта та приготування. Вимірювання для самого борошна в таблицях 2021 року немає.",
+          "en": "Rice flour isn't eaten as it is; GI is measured for dishes made with it (bread, pancakes, porridge), and it depends on the recipe and cooking. The 2021 tables have no measurement of the flour itself."
+        }
+      }
+    },
+    {
+      "id": "B0124",
+      "status": "active",
+      "category": "flour",
+      "family": "corn-starch",
+      "state": "processed",
+      "nameUk": "Крохмаль кукурудзяний",
+      "nameEn": "Cornstarch",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 381.0,
+          "carbsG": 91.27,
+          "fiberG": 0.9,
+          "sugarsG": 0.0,
+          "proteinG": 0.26,
+          "fatG": 0.05,
+          "sodiumMg": 9.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "169698",
+          "description": "Cornstarch"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "unknown",
+        "value": null,
+        "source": null,
+        "reliability": "low",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Звичайного кукурудзяного крохмалю в таблицях 2021 року немає: виміряно лише воскоподібний (92–101) і модифікований (55–62) — це інші продукти.",
+          "en": "The 2021 tables have no ordinary cornstarch: only waxy (92–101) and modified (55–62) starch were measured — different products."
+        }
+      }
+    },
+    {
+      "id": "B0125",
+      "status": "active",
+      "category": "sweeteners",
+      "family": "sugar",
+      "variant": "white",
+      "state": "processed",
+      "nameUk": "Цукор білий",
+      "nameEn": "Sugar, white, granulated",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 387.0,
+          "carbsG": 99.98,
+          "fiberG": 0.0,
+          "sugarsG": 99.8,
+          "proteinG": 0.0,
+          "fatG": 0.0,
+          "sodiumMg": 1.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "169655",
+          "description": "Sugars, granulated"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 68,
+        "reliability": "high",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (7 записів, які підсумовує рядок таблиці «Sucrose, mean of seven studies»; середнє авторів — 66, діапазон 59–84). Білий цукор — це сахароза.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (7 entries covered by the table's row 'Sucrose, mean of seven studies'; the authors' mean is 66, range 59–84). White sugar is sucrose."
+        },
+        "source": {
+          "dataset": "gi-2021-st1",
+          "entryId": "summary row; #1768–#1774",
+          "description": "Sucrose, mean of seven studies — GI 66 (summary row). Entries used: #1768 59, #1769 60, #1770 61, #1771 64, #1772 66, #1773 69, #1774 84"
+        }
+      }
+    },
+    {
+      "id": "B0126",
+      "status": "active",
+      "category": "sweeteners",
+      "family": "sugar",
+      "variant": "brown",
+      "state": "processed",
+      "nameUk": "Цукор коричневий",
+      "nameEn": "Sugar, brown",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 380.0,
+          "carbsG": 98.09,
+          "fiberG": 0.0,
+          "sugarsG": 97.02,
+          "proteinG": 0.12,
+          "fatG": 0.0,
+          "sodiumMg": 28.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "168833",
+          "description": "Sugars, brown"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 71,
+        "reliability": "low",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Значення запису (Таблиця 2, менш надійні методи). Одне дослідження коричневого цукру (Китай, 2020), менш надійний метод. Коричневий цукор — це сахароза з невеликою часткою патоки.",
+          "en": "The entry's value (Table 2, less robust methods). A single study of brown sugar (China, 2020), less robust method. Brown sugar is sucrose with a little molasses."
+        },
+        "source": {
+          "dataset": "gi-2021-st2",
+          "entryId": "#3535",
+          "description": "#3535 Brown Sugar (HongMian, Guangzhou Light Industry & Trade Group, Guangzhou, China) (China, 2020) — GI 71±5"
+        }
+      }
+    },
+    {
+      "id": "B0127",
+      "status": "active",
+      "category": "sweeteners",
+      "family": "honey",
+      "state": "processed",
+      "nameUk": "Мед",
+      "nameEn": "Honey",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 304.0,
+          "carbsG": 82.4,
+          "fiberG": 0.2,
+          "sugarsG": 82.12,
+          "proteinG": 0.3,
+          "fatG": 0.0,
+          "sodiumMg": 4.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "169640",
+          "description": "Honey"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 72,
+        "reliability": "medium",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (17 записів, які підсумовує рядок таблиці «Honey, mean of 17 types of honey»; середнє авторів — 60, діапазон 35–74). ГІ меду сильно залежить від сорту (35–74): що більше в ньому фруктози, то нижчий ГІ. Сорт меду на упаковці зазвичай указано, але частку фруктози — ні.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (17 entries covered by the table's row 'Honey, mean of 17 types of honey'; the authors' mean is 60, range 35–74). Honey's GI depends strongly on the type (35–74): the more fructose, the lower the GI. Packs usually name the type, but not the fructose share."
+        },
+        "source": {
+          "dataset": "gi-2021-st1",
+          "entryId": "summary row; #1748–#1764",
+          "description": "Honey, mean of 17 types of honey — GI 60 (summary row). Entries used: #1748 35, #1749 44, #1750 46, #1751 48, #1752 51, #1753 52, #1754 53, #1755 60, #1756 62, #1757 64, #1758 65, #1759 69, #1760 72, #1761 73, #1762 74, #1763 74, #1764 74"
+        }
+      },
+      "density": {
+        "ml": 236.6,
+        "grams": 339,
+        "reliability": "high",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Вага склянки з даних USDA для цього ж запису; склянка США — 236,6 мл.",
+          "en": "A cup's weight from USDA's data for this same entry; a US cup is 236.6 ml."
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "169640",
+          "description": "1 cup = 339 g"
+        }
+      }
+    },
+    {
+      "id": "B0128",
+      "status": "active",
+      "category": "sweeteners",
+      "family": "fructose",
+      "state": "processed",
+      "nameUk": "Фруктоза",
+      "nameEn": "Fructose, dry powder",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 368.0,
+          "carbsG": 100.0,
+          "fiberG": 0.0,
+          "sugarsG": 92.7,
+          "proteinG": 0.0,
+          "fatG": 0.0,
+          "sodiumMg": 12.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "169896",
+          "description": "Sweeteners, tabletop, fructose, dry, powder"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 25,
+        "reliability": "high",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (2 записи, які підсумовує рядок таблиці «Fructose, mean of two studies»; середнє авторів — 24, діапазон 23–25). Фруктоза підвищує глюкозу в крові повільно; її калорійність така сама, як у цукру.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (2 entries covered by the table's row 'Fructose, mean of two studies'; the authors' mean is 24, range 23–25). Fructose raises blood glucose slowly; its calories are the same as sugar's."
+        },
+        "source": {
+          "dataset": "gi-2021-st1",
+          "entryId": "summary row; #1743–#1744",
+          "description": "Fructose, mean of two studies — GI 24 (summary row). Entries used: #1743 23, #1744 25"
+        }
+      }
+    },
+    {
+      "id": "B0129",
+      "status": "active",
+      "category": "nuts",
+      "family": "flaxseed",
+      "state": "raw",
+      "nameUk": "Насіння льону",
+      "nameEn": "Seeds, flaxseed",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 534.0,
+          "carbsG": 28.88,
+          "fiberG": 27.3,
+          "sugarsG": 1.55,
+          "proteinG": 18.29,
+          "fatG": 42.16,
+          "sodiumMg": 30.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "169414",
+          "description": "Seeds, flaxseed"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "unknown",
+        "value": null,
+        "source": null,
+        "reliability": "low",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Досліджень ГІ для насіння льону немає в міжнародних таблицях 2021 року.",
+          "en": "The 2021 international tables have no GI study of flaxseed."
+        }
+      }
+    },
+    {
+      "id": "B0130",
+      "status": "active",
+      "category": "nuts",
+      "family": "sesame",
+      "state": "dried",
+      "nameUk": "Кунжут (насіння, цілі, сушені)",
+      "nameEn": "Seeds, sesame seeds, whole, dried",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 573.0,
+          "carbsG": 23.45,
+          "fiberG": 11.8,
+          "sugarsG": 0.3,
+          "proteinG": 17.73,
+          "fatG": 49.67,
+          "sodiumMg": 11.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "170150",
+          "description": "Seeds, sesame seeds, whole, dried"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "unknown",
+        "value": null,
+        "source": null,
+        "reliability": "low",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Досліджень ГІ для кунжуту немає в міжнародних таблицях 2021 року.",
+          "en": "The 2021 international tables have no GI study of sesame seeds."
+        }
+      }
+    },
+    {
+      "id": "B0131",
+      "status": "active",
+      "category": "nuts",
+      "family": "chia",
+      "state": "dried",
+      "nameUk": "Насіння чіа, сушене",
+      "nameEn": "Seeds, chia seeds, dried",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 486.0,
+          "carbsG": 42.12,
+          "fiberG": 34.4,
+          "sugarsG": 0,
+          "proteinG": 16.54,
+          "fatG": 30.74,
+          "sodiumMg": 16.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "170554",
+          "description": "Seeds, chia seeds, dried"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09",
+        "unknown": [
+          "sugarsG"
+        ]
+      },
+      "gi": {
+        "status": "unknown",
+        "value": null,
+        "source": null,
+        "reliability": "low",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Досліджень ГІ для насіння чіа немає в міжнародних таблицях 2021 року.",
+          "en": "The 2021 international tables have no GI study of chia seeds."
+        }
+      }
+    },
+    {
+      "id": "B0132",
+      "status": "active",
+      "category": "pantry",
+      "family": "salt",
+      "state": "processed",
+      "nameUk": "Сіль кухонна",
+      "nameEn": "Salt, table",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 0.0,
+          "carbsG": 0.0,
+          "fiberG": 0.0,
+          "sugarsG": 0.0,
+          "proteinG": 0.0,
+          "fatG": 0.0,
+          "sodiumMg": 38758.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "173468",
+          "description": "Salt, table"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "notApplicable",
+        "value": null,
+        "source": null,
+        "reliability": "high",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Вуглеводів практично немає: ГІ не визначається, ГН дорівнює 0.",
+          "en": "Practically no carbohydrate: GI isn't defined and GL is 0."
+        }
+      }
+    },
+    {
+      "id": "B0133",
+      "status": "active",
+      "category": "pantry",
+      "family": "cocoa",
+      "state": "processed",
+      "nameUk": "Какао-порошок без цукру",
+      "nameEn": "Cocoa, dry powder, unsweetened",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 228.0,
+          "carbsG": 57.9,
+          "fiberG": 37.0,
+          "sugarsG": 1.75,
+          "proteinG": 19.6,
+          "fatG": 13.7,
+          "sodiumMg": 21.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "169593",
+          "description": "Cocoa, dry powder, unsweetened"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані. Чисте какао без цукру. Какао-напої й суміші («какао з цукром») — інший продукт, у них переважно цукор.",
+          "en": "The USDA entry describes exactly this food in this state. Plain cocoa without sugar. Cocoa drinks and mixes (\"cocoa with sugar\") are a different product, mostly sugar."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "unknown",
+        "value": null,
+        "source": null,
+        "reliability": "low",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Досліджень ГІ для самого какао-порошку в таблицях 2021 року немає.",
+          "en": "The 2021 tables have no GI study of cocoa powder itself."
+        }
+      }
     }
   ]
 }

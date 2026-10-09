@@ -473,6 +473,83 @@ for pear in ("B0094", "B0095"):
     PORTIONS[pear] = PORTIONS["B0048"]
 
 
+# --- 2.2.1 additions (developer, 2026-10-09): the base ingredients — flours and
+# starch, sugars and honey, seeds, salt and cocoa — for composing recipes (and
+# needed by 2.7, GI from ingredients). Potato starch isn't added: USDA SR Legacy
+# has only potato flour, a different product (no substitutes). Flour, starch,
+# seeds and cocoa have no GI study of their own in the 2021 tables: flour isn't
+# eaten as it is, and its dishes' GI depends on the recipe.
+BASE_VER = "2026-10-09"
+NO_FLOUR_GI = lambda what_uk, what_en: ("u", (f"{what_uk[0].upper() + what_uk[1:]} самого по собі не їдять; ГІ вимірюють для страв із нього (хліб, млинці, каші), і він залежить від рецепта та приготування. Вимірювання для самого борошна в таблицях 2021 року немає.",
+                                              f"{what_en[0].upper() + what_en[1:]} isn't eaten as it is; GI is measured for dishes made with it (bread, pancakes, porridge), and it depends on the recipe and cooking. The 2021 tables have no measurement of the flour itself."))
+BASE_ITEMS = [
+    dict(id="B0117", ver=BASE_VER, cat="flour", fam="wheat-flour", variant="white", st="processed", uk="Борошно пшеничне біле (вищого ґатунку)", en="Wheat flour, white, all-purpose, unenriched", n=169761, nr="medium",
+         nn=("Запис USDA — біле пшеничне борошно загального призначення без додавання вітамінів, як і українське борошно вищого ґатунку; за складом вони дуже близькі.", "The USDA entry is all-purpose white wheat flour without added vitamins, like Ukrainian top-grade flour (вищого ґатунку); their composition is very close."),
+         gi=NO_FLOUR_GI("пшеничне борошно", "wheat flour")),
+    dict(id="B0118", ver=BASE_VER, cat="flour", fam="wheat-flour", variant="whole-grain", st="processed", uk="Борошно пшеничне цільнозернове", en="Wheat flour, whole-grain", n=168893, nr="high",
+         gi=NO_FLOUR_GI("цільнозернове борошно", "whole-grain flour")),
+    dict(id="B0119", ver=BASE_VER, cat="flour", fam="rye-flour", st="processed", uk="Борошно житнє (обдирне)", en="Rye flour, medium", n=168886, nr="medium",
+         nn=("USDA розрізняє світле, середнє й темне житнє борошно; українське обдирне найближче до середнього (сіяне — світліше, із меншою кількістю клітковини).", "USDA has light, medium and dark rye flour; Ukrainian обдирне is closest to medium (сіяне is lighter, with less fibre)."),
+         gi=NO_FLOUR_GI("житнє борошно", "rye flour")),
+    dict(id="B0120", ver=BASE_VER, cat="flour", fam="buckwheat-flour", st="processed", uk="Борошно гречане", en="Buckwheat flour, whole-groat", n=170687, nr="high",
+         gi=NO_FLOUR_GI("гречане борошно", "buckwheat flour")),
+    dict(id="B0121", ver=BASE_VER, cat="flour", fam="corn-flour", st="processed", uk="Борошно кукурудзяне", en="Corn flour, whole-grain, yellow", n=170290, nr="medium",
+         nn=("Запис USDA — цільнозернове жовте кукурудзяне борошно. Борошно без зародка (degermed) має трохи більше вуглеводів і менше жиру й клітковини.", "The USDA entry is whole-grain yellow corn flour. Degermed flour has a little more carbohydrate and less fat and fibre."),
+         gi=NO_FLOUR_GI("кукурудзяне борошно", "corn flour")),
+    dict(id="B0122", ver=BASE_VER, cat="flour", fam="oat-flour", st="processed", uk="Борошно вівсяне", en="Oat flour, partially debranned", n=169741, nr="medium",
+         nn=("Запис USDA — вівсяне борошно з частково видаленими висівками; борошно, змелене з цілих пластівців удома, має більше клітковини.", "The USDA entry is oat flour with part of the bran removed; flour ground at home from whole flakes has more fibre."),
+         gi=NO_FLOUR_GI("вівсяне борошно", "oat flour")),
+    dict(id="B0123", ver=BASE_VER, cat="flour", fam="rice-flour", st="processed", uk="Борошно рисове", en="Rice flour, white, unenriched", n=169714, nr="high",
+         gi=NO_FLOUR_GI("рисове борошно", "rice flour")),
+    dict(id="B0124", ver=BASE_VER, cat="flour", fam="corn-starch", st="processed", uk="Крохмаль кукурудзяний", en="Cornstarch", n=169698, nr="high",
+         gi=("u", ("Звичайного кукурудзяного крохмалю в таблицях 2021 року немає: виміряно лише воскоподібний (92–101) і модифікований (55–62) — це інші продукти.",
+                   "The 2021 tables have no ordinary cornstarch: only waxy (92–101) and modified (55–62) starch were measured — different products."))),
+    dict(id="B0125", ver=BASE_VER, cat="sweeteners", fam="sugar", variant="white", st="processed", uk="Цукор білий", en="Sugar, white, granulated", n=169655, nr="high",
+         gi=("s", "ST1", "Sucrose, mean of seven studies", 66, 7, "high", ("Білий цукор — це сахароза.", "White sugar is sucrose."))),
+    dict(id="B0126", ver=BASE_VER, cat="sweeteners", fam="sugar", variant="brown", st="processed", uk="Цукор коричневий", en="Sugar, brown", n=168833, nr="high",
+         gi=("m", "ST2", [3535], "low", ("Одне дослідження коричневого цукру (Китай, 2020), менш надійний метод. Коричневий цукор — це сахароза з невеликою часткою патоки.", "A single study of brown sugar (China, 2020), less robust method. Brown sugar is sucrose with a little molasses."))),
+    dict(id="B0127", ver=BASE_VER, cat="sweeteners", fam="honey", st="processed", uk="Мед", en="Honey", n=169640, nr="high",
+         gi=("s", "ST1", "Honey, mean of 17 types of honey", 60, 17, "medium", ("ГІ меду сильно залежить від сорту (35–74): що більше в ньому фруктози, то нижчий ГІ. Сорт меду на упаковці зазвичай указано, але частку фруктози — ні.", "Honey's GI depends strongly on the type (35–74): the more fructose, the lower the GI. Packs usually name the type, but not the fructose share."))),
+    dict(id="B0128", ver=BASE_VER, cat="sweeteners", fam="fructose", st="processed", uk="Фруктоза", en="Fructose, dry powder", n=169896, nr="high",
+         gi=("s", "ST1", "Fructose, mean of two studies", 24, 2, "high", ("Фруктоза підвищує глюкозу в крові повільно; її калорійність така сама, як у цукру.", "Fructose raises blood glucose slowly; its calories are the same as sugar's."))),
+    dict(id="B0129", ver=BASE_VER, cat="nuts", fam="flaxseed", st="raw", uk="Насіння льону", en="Seeds, flaxseed", n=169414, nr="high", gi=NO_GI_STUDY("насіння льону", "flaxseed")),
+    dict(id="B0130", ver=BASE_VER, cat="nuts", fam="sesame", st="dried", uk="Кунжут (насіння, цілі, сушені)", en="Seeds, sesame seeds, whole, dried", n=170150, nr="high", gi=NO_GI_STUDY("кунжуту", "sesame seeds")),
+    dict(id="B0131", ver=BASE_VER, cat="nuts", fam="chia", st="dried", uk="Насіння чіа, сушене", en="Seeds, chia seeds, dried", n=170554, nr="high", gi=NO_GI_STUDY("насіння чіа", "chia seeds")),
+    dict(id="B0132", ver=BASE_VER, cat="pantry", fam="salt", st="processed", uk="Сіль кухонна", en="Salt, table", n=173468, nr="high", gi=("na",)),
+    dict(id="B0133", ver=BASE_VER, cat="pantry", fam="cocoa", st="processed", uk="Какао-порошок без цукру", en="Cocoa, dry powder, unsweetened", n=169593, nr="high",
+         nn=("Чисте какао без цукру. Какао-напої й суміші («какао з цукром») — інший продукт, у них переважно цукор.", "Plain cocoa without sugar. Cocoa drinks and mixes (\"cocoa with sugar\") are a different product, mostly sugar."),
+         gi=("u", ("Досліджень ГІ для самого какао-порошку в таблицях 2021 року немає.", "The 2021 tables have no GI study of cocoa powder itself."))),
+]
+NEW_ITEMS += BASE_ITEMS
+NEW_CATEGORIES = [
+    {"id": "flour", "nameUk": "Борошно та крохмаль", "nameEn": "Flour and starch"},
+    {"id": "sweeteners", "nameUk": "Цукор і мед", "nameEn": "Sugar and honey"},
+    {"id": "pantry", "nameUk": "Сіль, какао та інше", "nameEn": "Salt, cocoa and other"},
+]
+
+# Densities (2.2.1): a liquid's volume to weight, so it can be logged in ml — from
+# USDA's household measures for the same entry (1 US cup = 236.6 ml, 1 fl oz =
+# 29.57 ml). (ml, grams, reliability, (dataset, entry, USDA's portion text), reason).
+CUP_SAME = ("Вага склянки з даних USDA для цього ж запису; склянка США — 236,6 мл.", "A cup's weight from USDA's data for this same entry; a US cup is 236.6 ml.")
+DENSITIES = {
+    "B0013": (236.6, 244, "high", usda_portion(171267, "1 cup = 244 g"), CUP_SAME),
+    "B0012": (236.6, 243, "high", usda_portion(170904, "1 cup = 243 g"), CUP_SAME),
+    "B0096": (236.6, 243, "medium", usda_portion(170904, "1 cup = 243 g"), ("Вага склянки кефіру 1% з даних USDA; жирність на вагу склянки майже не впливає. Склянка США — 236,6 мл.", "The weight of a cup of 1% kefir from USDA; fat content barely changes it. A US cup is 236.6 ml.")),
+    "B0097": (236.6, 237, "high", usda_portion(171890, "1 cup (8 fl oz) = 237 g"), CUP_SAME),
+    "B0098": (29.57, 29.6, "high", usda_portion(171891, "1 fl oz = 29.6 g"), ("Вага рідкої унції з даних USDA для цього ж запису; рідка унція — 29,57 мл.", "A fluid ounce's weight from USDA's data for this same entry; a fluid ounce is 29.57 ml.")),
+    "B0056": (236.6, 218, "high", usda_portion(171017, "1 cup = 218 g"), CUP_SAME),
+    "B0057": (236.6, 216, "high", usda_portion(171413, "1 cup = 216 g"), CUP_SAME),
+    "B0127": (236.6, 339, "high", usda_portion(169640, "1 cup = 339 g"), CUP_SAME),
+}
+
+
+def density_part(entry_id):
+    ml, grams, rel, src, reason = DENSITIES[entry_id]
+    return {"ml": ml, "grams": grams, "reliability": rel, "verified": BASE_VER,
+            "reason": {"uk": reason[0], "en": reason[1]},
+            "source": {"dataset": src[0], "entryId": src[1], "description": src[2]}}
+
+
 def portions_part(entry_id):
     return [{"labelUk": uk, "labelEn": en, "grams": grams, "reliability": rel, "verified": NUT_VER,
              "reason": {"uk": reason[0], "en": reason[1]},
@@ -647,11 +724,14 @@ def main():
             nutrients["verified"] = gi["verified"] = item["ver"]
         out.append({"id": item["id"], "status": "active", "category": item["cat"], "family": item["fam"], **({"variant": item["variant"]} if item.get("variant") else {}), "state": item["st"],
                     "nameUk": item["uk"], "nameEn": item["en"], "nutrients": nutrients, "gi": gi,
-                    **({"portions": portions_part(item["id"])} if item["id"] in PORTIONS else {})})
+                    **({"portions": portions_part(item["id"])} if item["id"] in PORTIONS else {}),
+                    **({"density": density_part(item["id"])} if item["id"] in DENSITIES else {})})
     db = json.load(open(DB, encoding="utf-8"))
     db["sources"]["usda-fndds"] = {"name": "USDA FoodData Central — Food and Nutrient Database for Dietary Studies (FNDDS)", "version": "2021-2023",
                                    "citation": "U.S. Department of Agriculture, Agricultural Research Service. FoodData Central: Food and Nutrient Database for Dietary Studies 2021-2023.",
                                    "url": "https://fdc.nal.usda.gov/"}
+    known = {c["id"] for c in db["categories"]}
+    db["categories"] += [c for c in NEW_CATEGORIES if c["id"] not in known]
     db["entries"] = out
     json.dump(db, open(DB, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
     open(DB, "a", encoding="utf-8").write("\n")

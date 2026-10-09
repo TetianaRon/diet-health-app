@@ -52,6 +52,9 @@ export function entryToIngredient(entry: VerifiedFoodEntry): Ingredient {
     weighedGrams: null,
     portionSizes: databasePortionSizes(entry),
     labels: databaseLabels(entry.category, entry.state),
+    // A liquid's volume to weight (2.2.1): it can be logged in ml.
+    densityMl: entry.density?.ml ?? null,
+    densityGrams: entry.density?.grams ?? null,
   };
 }
 
