@@ -473,3 +473,5 @@ Answering "did we review only products?": the 69 home dishes were on the page bu
   - test data deleted afterwards.
 - **Not checked:** the web app (the status bar strip has zero height there); a composed drink used as a line in another recipe (covered by unit tests).
 - 440 tests, `tsc -b`, `npm run build`. Version 2.1.2, versionCode 31.
+
+✅ **2.1.2 released 2026-10-09:** main pushed (web) and the bundle uploaded to the internal testing track (versionCode 31).
