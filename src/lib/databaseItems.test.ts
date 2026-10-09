@@ -12,7 +12,12 @@ function copyOf(base: Ingredient, overrides: Partial<Ingredient> = {}): Ingredie
   return { ...base, id: "I3", basedOn: base.id, dateAdded: "2026-10-09", favorite: false, ...overrides };
 }
 
-const dishWith = (refs: Dish["ingredients"]): Pick<Dish, "ingredients"> => ({ ingredients: refs });
+const dishWith = (refs: Dish["ingredients"], extra: Partial<Pick<Dish, "basedOn" | "nameUk">> = {}): Pick<Dish, "ingredients" | "basedOn" | "nameUk"> => ({
+  ingredients: refs,
+  basedOn: "",
+  nameUk: "Страва",
+  ...extra,
+});
 
 describe("databaseCopyFields", () => {
   it("makes her row from the database item, with the values it came from", () => {
@@ -44,6 +49,15 @@ describe("usedDatabaseIds", () => {
     const log = [{ itemId: "B0001", itemName: buckwheat.nameUk }];
     expect(usedDatabaseIds(log, [], [copyOf(buckwheat)])).toEqual([]);
     expect(coveredDatabaseIds([copyOf(buckwheat)]).has("B0001")).toBe(true);
+  });
+
+  it("counts her composed copy of a pre-1.8 built-in dish, and her own items' names, as hers", () => {
+    const herDish = dishWith([{ id: "B0001", nameUk: buckwheat.nameUk, grams: 100 }], { basedOn: "B0058", nameUk: "Гречка варена" });
+    const log = [
+      { itemId: "", itemName: "Гречка варена" },
+      { itemId: "B0058", itemName: "Гречка варена" },
+    ];
+    expect(usedDatabaseIds(log, [herDish], [])).toEqual(["B0001"]);
   });
 
   it("ignores names and IDs the database doesn't know", () => {

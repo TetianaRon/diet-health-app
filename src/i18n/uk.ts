@@ -4,6 +4,15 @@ import { formatDecimal as n } from "../lib/numberFormat";
 type Basis = "100g" | "piece" | "100ml";
 /** «на 100 г», «на 1 шт.», «на 100 мл» (2.1.1). */
 const perText = (basis: Basis) => (basis === "piece" ? "на 1 шт." : basis === "100ml" ? "на 100 мл" : "на 100 г");
+/** «1 продукт», «3 продукти», «7 продуктів», «12 продуктів» — the nominative count form. */
+function productsCount(n: number): string {
+  const tens = n % 100;
+  const ones = n % 10;
+  if (ones === 1 && tens !== 11) return `${n} продукт`;
+  if (ones >= 2 && ones <= 4 && (tens < 12 || tens > 14)) return `${n} продукти`;
+  return `${n} продуктів`;
+}
+
 export const uk = {
   appName: "Трекер харчування",
   tabs: {
@@ -18,7 +27,7 @@ export const uk = {
     addButton: "+ Додати з бази",
     title: "Набори з бази",
     intro: "Перевірені продукти, згруповані за видом. Додані стають вашими — їх можна змінювати. Під час пошуку продукти з бази теж знаходяться.",
-    setLine: (total: number, added: number) => (added > 0 ? `${total} продуктів, додано ${added}` : `${total} продуктів`),
+    setLine: (total: number, added: number) => (added > 0 ? `${productsCount(total)}, додано ${added}` : productsCount(total)),
     allAdded: "усі додано",
     alreadyAdded: "вже додано",
     addSelected: (n: number) => `Додати вибрані: ${n}`,

@@ -58,20 +58,29 @@ const DATABASE_ID_BY_NAME: ReadonlyMap<string, string> = new Map(
 /**
  * The database items she has used — in a meal (by ID, or by name on rows from
  * before IDs) or in a recipe — that have no row of hers yet, in first-use
- * order. These become her rows when she moves to 2.2.
+ * order. These become her rows when she moves to 2.2. A name that is one of
+ * her own items (a product or a composed item, e.g. her copy of a pre-1.8
+ * built-in dish «Гречка варена») is hers, not the database's; so is a
+ * database ID one of her composed items is a copy of.
  */
 export function usedDatabaseIds(
   logEntries: readonly Pick<DailyLogEntry, "itemId" | "itemName">[],
-  dishes: readonly Pick<Dish, "ingredients">[],
+  dishes: readonly Pick<Dish, "ingredients" | "basedOn" | "nameUk">[],
   sheetIngredients: readonly Ingredient[],
 ): string[] {
   const covered = coveredDatabaseIds(sheetIngredients);
+  for (const dish of dishes) if (isBuiltInId(dish.basedOn)) covered.add(dish.basedOn);
+  const ownNames = new Set([...sheetIngredients, ...dishes].map((item) => normalizeItemName(item.nameUk)));
+  const byName = (name: string) => {
+    const key = normalizeItemName(name);
+    return ownNames.has(key) ? undefined : DATABASE_ID_BY_NAME.get(key);
+  };
   const used: string[] = [];
   const add = (id: string | undefined) => {
     if (id && isBuiltInId(id) && verifiedEntry(id) && !covered.has(id) && !used.includes(id)) used.push(id);
   };
-  for (const entry of logEntries) add(entry.itemId ? entry.itemId : DATABASE_ID_BY_NAME.get(normalizeItemName(entry.itemName)));
-  for (const dish of dishes) for (const ref of dish.ingredients) add(ref.id ? ref.id : DATABASE_ID_BY_NAME.get(normalizeItemName(ref.nameUk)));
+  for (const entry of logEntries) add(entry.itemId ? entry.itemId : byName(entry.itemName));
+  for (const dish of dishes) for (const ref of dish.ingredients) add(ref.id ? ref.id : byName(ref.nameUk));
   return used;
 }
 

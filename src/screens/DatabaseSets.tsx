@@ -83,8 +83,8 @@ export function SetChecklist({
               <label className="remember-me">
                 <input type="checkbox" checked={have || ticked.has(id)} disabled={have || saving} onChange={() => toggle(id)} />
                 <span>
-                  <strong>{item.nameUk}</strong> — {formatDecimal(item.carbsG)} г вуглеводів, {formatDecimal(item.caloriesKcal)} ккал
-                  {uk.today.form.perBasis(item.basis)}
+                  <strong>{item.nameUk}</strong> — {formatDecimal(item.carbsG)} г вуглеводів, {formatDecimal(item.caloriesKcal)} ккал (
+                  {uk.foods.pack.per(item.basis)})
                   {have && <span className="food-name-en"> · {t.alreadyAdded}</span>}
                 </span>
               </label>
