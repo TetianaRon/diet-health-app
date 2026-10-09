@@ -515,3 +515,5 @@ Answering "did we review only products?": the 69 home dishes were on the page bu
 - **Verified (developer's Pixel 10, debug build, without Google, from a fresh install):** the first-run offer appeared; «Переглянути набори» opened the sets; adding from «Овочі»; after the regrouping, «Овочі та гриби» showed her vegetables greyed «вже додано» and the rest ticked; the layout on the phone.
 - **A mistake on the phone:** an install of the debug build failed over the Play build (signatures differ), and the command went on to clear the app's data — the developer's Play app, not a test build (its sign-in and device copy; the sheet untouched). Each phone step's result is now checked before the next.
 - **Not checked:** add-on-pick from the recipe composer (same helper as the meal editor, unit-tested); the generalised update offer firing (the database hasn't changed yet — unit-tested; it first matters in 2.2.1); the move on mom's sheet (it runs when her phone updates — expected: the database items she logged become her rows, with the notice).
+
+✅ **2.2 released 2026-10-09:** main pushed (web) and the bundle uploaded to the internal testing track (versionCode 34).
