@@ -643,6 +643,31 @@ MOM_ITEMS = [
 ]
 NEW_ITEMS += MOM_ITEMS
 
+
+# --- 2.3.1 additions (2026-10-10): trout (her «риба червона» answer was trout and
+# salmon; 2.3 missed trout) and what her recipes use that the database lacked —
+# so the imported recipes can be composed from database entries.
+RECIPE_VER = "2026-10-10"
+RECIPE_ITEMS = [
+    dict(id="B0194", ver=RECIPE_VER, cat="fish", fam="trout", st="raw", uk="Форель райдужна (вирощена), сира", en="Trout, rainbow, farmed, raw", n=173717, nr="high", gi=("na",)),
+    dict(id="B0195", ver=RECIPE_VER, cat="fish", fam="trout", st="baked", uk="Форель райдужна (вирощена), запечена", en="Trout, rainbow, farmed, cooked, dry heat", n=173718, nr="high", gi=("na",)),
+    dict(id="B0196", ver=RECIPE_VER, cat="pantry", fam="gelatin", st="dried", uk="Желатин харчовий (порошок)", en="Gelatin, dry powder, unsweetened", n=169599, nr="high",
+         gi=("na", ("Желатин — білок, вуглеводів у ньому немає: ГІ не визначається, ГН дорівнює 0.", "Gelatin is protein with no carbohydrate: GI isn't defined and GL is 0."))),
+    dict(id="B0197", ver=RECIPE_VER, cat="vegetables", fam="basil", st="raw", uk="Базилік (зелень)", en="Basil, fresh", n=172232, nr="high", gi=("c",)),
+    dict(id="B0198", ver=RECIPE_VER, cat="dairy", fam="parmesan", st="processed", uk="Сир пармезан", en="Cheese, parmesan, hard", n=170848, nr="high", gi=("c",)),
+    dict(id="B0199", ver=RECIPE_VER, cat="drinks", fam="apple-juice", st="processed", uk="Сік яблучний без цукру", en="Apple juice, unsweetened", n=173933, nr="high",
+         gi=("s", "ST1", "Apple juice, mean of five foods", 46, 5, "medium", ("Яблучний сік без доданого цукру.", "Apple juice without added sugar."))),
+    dict(id="B0200", ver=RECIPE_VER, cat="vegetables", fam="pumpkin", st="raw", uk="Гарбуз, сирий", en="Pumpkin, raw", n=168448, nr="high",
+         gi=("u", ("Сирий гарбуз не їдять і не вимірювали; варений — 66 (запис «Гарбуз варений»). Сира вага потрібна для рецептів, де гарбуз запікають чи варять разом з іншим.", "Raw pumpkin isn't eaten and wasn't measured; boiled is 66 (the entry «Гарбуз варений»). The raw weight is for recipes where it's baked or cooked with other things."))),
+    dict(id="B0201", ver=RECIPE_VER, cat="eggs", fam="egg", st="raw", uk="Яйце куряче, сире", en="Egg, whole, raw, fresh", n=171287, nr="high", gi=("na",)),
+    dict(id="B0202", ver=RECIPE_VER, cat="pantry", fam="chicken-stock", st="boiled", uk="Бульйон курячий домашній", en="Soup, stock, chicken, home-prepared", n=172884, nr="medium",
+         nn=("Запис USDA — домашній курячий бульйон без солі; жирність залежить від курки й того, чи знято жир.", "The USDA entry is homemade chicken stock without salt; fat depends on the chicken and whether it's skimmed."),
+         gi=("u", ("Досліджень ГІ для бульйону в таблицях 2021 року немає; вуглеводів у ньому мало.", "The 2021 tables have no GI study of stock; it has little carbohydrate."))),
+    dict(id="B0203", ver=RECIPE_VER, cat="vegetables", fam="leek", st="raw", uk="Цибуля-порей, сира", en="Leeks, raw", n=169246, nr="high",
+         gi=("u", ("Досліджень ГІ для цибулі-порею в таблицях 2021 року немає.", "The 2021 tables have no GI study of leeks."))),
+]
+NEW_ITEMS += RECIPE_ITEMS
+
 NEW_CATEGORIES = [
     {"id": "flour", "nameUk": "Борошно та крохмаль", "nameEn": "Flour and starch"},
     {"id": "sweeteners", "nameUk": "Цукор і мед", "nameEn": "Sugar and honey"},
