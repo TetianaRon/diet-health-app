@@ -521,6 +521,128 @@ BASE_ITEMS = [
          gi=("u", ("Досліджень ГІ для самого какао-порошку в таблицях 2021 року немає: є лише шоколад і вироби з какао, де основне — цукор і жир.", "The 2021 tables have no GI study of cocoa powder itself: only chocolate and cocoa products, which are mostly sugar and fat."))),
 ]
 NEW_ITEMS += BASE_ITEMS
+
+# --- 2.3 additions (developer, 2026-10-09): mom's verified items that weren't in
+# the database yet (her September review, contributions/2026-09-mom-old-sheet), each
+# re-checked against today's rules: SR Legacy entries only (September's Foundation
+# picks swapped), no stand-ins (bilberries «чорниці» have no USDA entry — left to her
+# own rows), and the raw/cooked partner wherever USDA has both. Items she has that
+# the database already holds under another USDA entry (orange, cabbage, garlic,
+# radish, raw broccoli, kidney beans, baked turkey and salmon, oil, peanuts, sesame,
+# basmati) link to those entries instead.
+MOM_VER = "2026-10-09"
+NO_FRUIT_GI = lambda what_uk, what_en, found_uk="", found_en="": ("u", (f"Досліджень ГІ для свіжих {what_uk} в таблицях 2021 року немає" + (f"; є лише {found_uk}" if found_uk else "") + ".",
+                                                                         f"The 2021 tables have no GI study of fresh {what_en}" + (f"; only {found_en}" if found_en else "") + "."))
+MOM_ITEMS = [
+    # fruit and berries
+    dict(id="B0134", ver=MOM_VER, cat="fruit", fam="grapefruit", st="raw", uk="Грейпфрут, сирий", en="Grapefruit, raw", n=173033, nr="high",
+         gi=("m", "ST2", [2954], "low", ("Одне давнє дослідження (1977) у людей з діабетом, менш надійний метод. Грейпфрут у соку з банки (Таблиця 1) — 47, але це інший продукт.", "A single old study (1977) in people with diabetes, less robust method. Grapefruit canned in juice (Table 1) is 47, but that's a different product."))),
+    dict(id="B0135", ver=MOM_VER, cat="fruit", fam="kiwi", st="raw", uk="Ківі зелений", en="Kiwifruit, green, raw", n=168153, nr="high",
+         gi=("m", "ST2", [2965, 2968], "low", ("Лише Таблиця 2: зелений ківі (Hayward) і ківі без зазначеного сорту; золотий ківі (47) не враховано.", "Table 2 only: green kiwi (Hayward) and kiwi of an unstated type; golden kiwi (47) not counted."))),
+    dict(id="B0136", ver=MOM_VER, cat="fruit", fam="lemon", st="raw", uk="Лимон без шкірки", en="Lemons, raw, without peel", n=167746, nr="high",
+         gi=NO_FRUIT_GI("лимонів", "lemons", "лимонні напої й батончики", "lemon drinks and bars")),
+    dict(id="B0137", ver=MOM_VER, cat="fruit", fam="lemon", variant="juice", st="raw", uk="Сік лимонний свіжий", en="Lemon juice, raw", n=167747, nr="high",
+         gi=("u", ("Досліджень ГІ для лимонного соку в таблицях 2021 року немає.", "The 2021 tables have no GI study of lemon juice."))),
+    dict(id="B0138", ver=MOM_VER, cat="fruit", fam="orange", variant="peel", st="raw", uk="Цедра апельсина", en="Orange peel, raw", n=169103, nr="high",
+         gi=("u", ("Досліджень ГІ для апельсинової цедри в таблицях 2021 року немає.", "The 2021 tables have no GI study of orange peel."))),
+    dict(id="B0139", ver=MOM_VER, cat="fruit", fam="gooseberry", st="raw", uk="Агрус", en="Gooseberries, raw", n=173030, nr="high", gi=NO_FRUIT_GI("аґрусу", "gooseberries")),
+    dict(id="B0140", ver=MOM_VER, cat="fruit", fam="peach", st="raw", uk="Персик", en="Peaches, yellow, raw", n=169928, nr="high",
+         gi=("m", "ST1", [1155], "medium", ("Одне дослідження (Італія) свіжого персика. У Таблиці 2 є давнє вимірювання (1977, люди з діабетом) — 28, але за правилом спершу береться надійніша Таблиця 1; персики з банки в соку — 46.", "A single study (Italy) of fresh peach. Table 2 has an old measurement (1977, people with diabetes) — 28, but by the rule the more reliable Table 1 comes first; peaches canned in juice are 46."))),
+    dict(id="B0141", ver=MOM_VER, cat="fruit", fam="apricot", st="raw", uk="Абрикос", en="Apricots, raw", n=171697, nr="high",
+         gi=("m", "ST1", [1083, 1084], "medium", ("Два дослідження свіжих абрикосів (Австралія, Канада).", "Two studies of fresh apricots (Australia, Canada)."))),
+    dict(id="B0142", ver=MOM_VER, cat="fruit", fam="sour-cherry", st="raw", uk="Вишня свіжа", en="Cherries, sour, red, raw", n=173954, nr="high",
+         gi=("m", "ST2", [2928], "low", ("Одне давнє дослідження свіжої вишні (1977), менш надійний метод; вишня з банки — 41.", "A single old study of fresh sour cherries (1977), less robust method; canned sour cherries are 41."))),
+    dict(id="B0143", ver=MOM_VER, cat="fruit", fam="sour-cherry", variant="frozen", st="raw", uk="Вишня заморожена, без цукру", en="Cherries, sour, red, frozen, unsweetened", n=171718, nr="high",
+         gi=("m", "ST2", [2928], "low", ("Заморожена вишня без цукру — та сама ягода, що й свіжа; ГІ — зі свіжої вишні (одне давнє дослідження, 1977).", "Frozen sour cherries without sugar are the same fruit as fresh; the GI is fresh sour cherries' (a single old study, 1977)."))),
+    dict(id="B0144", ver=MOM_VER, cat="fruit", fam="watermelon", st="raw", uk="Кавун", en="Watermelon, raw", n=167765, nr="high",
+         gi=("s", "ST1", "Watermelon, mean of four foods", 50, 4, "medium", ("Кавун має високий ГІ, але мало вуглеводів на 100 г (7,6 г), тому ГН звичайної порції невелике.", "Watermelon has a high GI but little carbohydrate per 100 g (7.6 g), so a usual portion's GL is small."))),
+    dict(id="B0145", ver=MOM_VER, cat="fruit", fam="mandarin", st="raw", uk="Мандарин", en="Tangerines (mandarin oranges), raw", n=169105, nr="high",
+         gi=("m", "ST1", [1140], "medium", ("Одне дослідження свіжого мандарина (Італія); мандарини з банки в соку — 47.", "A single study of fresh mandarin (Italy); mandarin segments canned in juice are 47."))),
+    dict(id="B0146", ver=MOM_VER, cat="fruit", fam="pomegranate", st="raw", uk="Гранат", en="Pomegranates, raw", n=169134, nr="high", gi=NO_FRUIT_GI("гранатів", "pomegranates")),
+    dict(id="B0147", ver=MOM_VER, cat="fruit", fam="raspberry", st="raw", uk="Малина", en="Raspberries, raw", n=167755, nr="high",
+         gi=NO_FRUIT_GI("малини", "raspberries", "джеми, батончики й суміші з малиною", "jams, bars and mixes with raspberries")),
+    dict(id="B0148", ver=MOM_VER, cat="fruit", fam="currant", variant="red", st="raw", uk="Порічки (червоні або білі)", en="Currants, red and white, raw", n=173964, nr="high", gi=NO_FRUIT_GI("порічок", "red currants")),
+    dict(id="B0149", ver=MOM_VER, cat="fruit", fam="currant", variant="black", st="raw", uk="Смородина чорна", en="Currants, European black, raw", n=173963, nr="high",
+         gi=NO_FRUIT_GI("чорної смородини", "blackcurrants", "сиропи, соки й вироби з нею", "syrups, juices and products with it")),
+    dict(id="B0150", ver=MOM_VER, cat="fruit", fam="physalis", st="raw", uk="Фізаліс", en="Groundcherries (cape-gooseberries), raw", n=173043, nr="high", gi=NO_FRUIT_GI("фізалісу", "physalis")),
+    dict(id="B0151", ver=MOM_VER, cat="fruit", fam="melon", st="raw", uk="Диня", en="Melons, honeydew, raw", n=169911, nr="medium",
+         nn=("Запис USDA — диня медова (honeydew), найближча до звичайних солодких динь; канталупа (мускатна) трохи відрізняється.", "The USDA entry is honeydew melon, the closest to common sweet melons; cantaloupe differs a little."),
+         gi=("m", "ST1", [1144], "medium", ("Одне дослідження дині (Cucumis melo, Італія), сорт не вказано; канталупа в Таблиці 2 — 65–70.", "A single study of melon (Cucumis melo, Italy), type not stated; cantaloupe in Table 2 is 65–70."))),
+    dict(id="B0152", ver=MOM_VER, cat="fruit", fam="blueberry", st="raw", uk="Лохина (садова чорниця)", en="Blueberries, raw", n=171711, nr="high",
+         gi=("m", "ST1", [1092], "low", ("Одне дослідження дикої лохини (Канада); садову лохину окремо не вимірювали. Лісові чорниці — інша ягода, її в USDA немає.", "A single study of wild blueberries (Canada); cultivated blueberries weren't measured separately. Bilberries (лісові чорниці) are a different berry, not in USDA."))),
+    dict(id="B0153", ver=MOM_VER, cat="fruit", fam="avocado", st="raw", uk="Авокадо", en="Avocados, raw", n=171705, nr="high",
+         gi=("u", ("Досліджень ГІ авокадо в таблицях 2021 року немає; вуглеводи в ньому — переважно клітковина (6,7 з 8,5 г).", "The 2021 tables have no GI study of avocado; its carbohydrate is mostly fibre (6.7 of 8.5 g)."))),
+    dict(id="B0154", ver=MOM_VER, cat="vegetables", fam="rhubarb", st="raw", uk="Ревінь", en="Rhubarb, raw", n=167758, nr="high", gi=("c",)),
+    # vegetables and greens
+    dict(id="B0155", ver=MOM_VER, cat="vegetables", fam="parsley", st="raw", uk="Петрушка (зелень)", en="Parsley, fresh", n=170416, nr="high", gi=("c",)),
+    dict(id="B0156", ver=MOM_VER, cat="vegetables", fam="dill", st="raw", uk="Кріп (зелень)", en="Dill weed, fresh", n=172233, nr="high", gi=("c",)),
+    dict(id="B0157", ver=MOM_VER, cat="vegetables", fam="green-onion", st="raw", uk="Цибуля зелена", en="Onions, spring or scallions, raw", n=170005, nr="high", gi=("c",)),
+    dict(id="B0158", ver=MOM_VER, cat="vegetables", fam="arugula", st="raw", uk="Рукола", en="Arugula, raw", n=169387, nr="high", gi=("c",)),
+    dict(id="B0159", ver=MOM_VER, cat="vegetables", fam="chinese-cabbage", st="raw", uk="Капуста пекінська", en="Cabbage, chinese (pe-tsai), raw", n=169979, nr="high", gi=("c",)),
+    dict(id="B0160", ver=MOM_VER, cat="vegetables", fam="cabbage", variant="sauerkraut", st="fermented", uk="Капуста квашена", en="Sauerkraut", n=169279, nr="medium",
+         nn=("Запис USDA — квашена капуста з банки разом із розсолом; домашня квашена капуста близька за складом, солоність буває різною.", "The USDA entry is canned sauerkraut with its brine; homemade sauerkraut is close in composition, saltiness varies."), gi=("c",)),
+    dict(id="B0161", ver=MOM_VER, cat="vegetables", fam="cucumber", variant="pickled", st="fermented", uk="Огірок солоний (квашений)", en="Pickles, cucumber, sour", n=169379, nr="high",
+         nn=("Квашені огірки (без оцту). Мариновані з оцтом — інший продукт, у солодких маринадах є цукор.", "Fermented pickles (no vinegar). Vinegar-marinated pickles are a different product; sweet ones contain sugar."), gi=("c",)),
+    dict(id="B0162", ver=MOM_VER, cat="vegetables", fam="beet", st="raw", uk="Буряк сирий", en="Beets, raw", n=169145, nr="high",
+         gi=("u", ("Сирий буряк окремо не вимірювали; варений — 64 (одне давнє дослідження, запис «Буряк варений»).", "Raw beet wasn't measured on its own; boiled is 64 (a single old study, the entry «Буряк варений»)."))),
+    dict(id="B0163", ver=MOM_VER, cat="vegetables", fam="celeriac", st="raw", uk="Селера коренева, сира", en="Celeriac, raw", n=170400, nr="high",
+         gi=("u", ("Досліджень ГІ для кореневої селери в таблицях 2021 року немає.", "The 2021 tables have no GI study of celeriac."))),
+    dict(id="B0164", ver=MOM_VER, cat="vegetables", fam="celeriac", st="boiled", uk="Селера коренева варена, без солі", en="Celeriac, cooked, boiled, without salt", n=169987, nr="high",
+         gi=("u", ("Досліджень ГІ для кореневої селери в таблицях 2021 року немає.", "The 2021 tables have no GI study of celeriac."))),
+    dict(id="B0165", ver=MOM_VER, cat="vegetables", fam="jerusalem-artichoke", st="raw", uk="Топінамбур, сирий", en="Jerusalem-artichokes, raw", n=169236, nr="high",
+         gi=("u", ("Досліджень ГІ для топінамбура в таблицях 2021 року немає. Його вуглеводи — значною мірою інулін, який не підвищує глюкозу так, як крохмаль.", "The 2021 tables have no GI study of Jerusalem artichoke. Much of its carbohydrate is inulin, which doesn't raise glucose the way starch does."))),
+    dict(id="B0166", ver=MOM_VER, cat="vegetables", fam="broccoli", st="boiled", uk="Броколі варена, без солі", en="Broccoli, cooked, boiled, without salt", n=169967, nr="high", gi=("c",)),
+    dict(id="B0167", ver=MOM_VER, cat="vegetables", fam="cauliflower", st="raw", uk="Капуста цвітна, сира", en="Cauliflower, raw", n=169986, nr="high", gi=("c",)),
+    dict(id="B0168", ver=MOM_VER, cat="vegetables", fam="cauliflower", st="boiled", uk="Капуста цвітна варена, без солі", en="Cauliflower, cooked, boiled, without salt", n=170397, nr="high", gi=("c",)),
+    dict(id="B0169", ver=MOM_VER, cat="vegetables", fam="sweet-potato", st="raw", uk="Батат, сирий", en="Sweet potato, raw", n=168482, nr="high",
+         gi=("u", ("Сирий батат не їдять і не вимірювали; ГІ залежить від приготування: варений — 46, запечений — 86 (окремі записи).", "Raw sweet potato isn't eaten and wasn't measured; GI depends on cooking: boiled 46, roasted 86 (their own entries)."))),
+    dict(id="B0170", ver=MOM_VER, cat="vegetables", fam="sweet-potato", st="boiled", uk="Батат варений без шкірки, без солі", en="Sweet potato, boiled, without skin, without salt", n=168484, nr="high",
+         gi=("m", "ST1", list(range(1885, 1898)), "medium", ("Ямайські сорти — 41–50; батат із помаранчевою м'якоттю, якого найбільше в наших магазинах, — 61 (#1896), з білою м'якоттю й фіолетовою шкіркою — 75 (#1897). Сорт на етикетці зазвичай не вказують. Варіння дає батату набагато нижчий ГІ, ніж запікання.", "Jamaican cultivars are 41–50; orange-fleshed sweet potato, the most common in Ukrainian shops, is 61 (#1896), white-fleshed with purple skin 75 (#1897). Labels rarely state the type. Boiling gives sweet potato a much lower GI than roasting."))),
+    dict(id="B0171", ver=MOM_VER, cat="vegetables", fam="sweet-potato", st="baked", uk="Батат запечений у шкірці, без солі", en="Sweet potato, baked in skin, without salt", n=168483, nr="high",
+         gi=("s", "ST1", "Roasted sweet potato, mean of 11 studies", 86, 11, "medium", ("Усі вимірювання — ямайські сорти, запечені в шкірці на вугіллі; запікання в духовці окремо не вимірювали. Запікання дає високий ГІ (варений батат — 49).", "All measurements are Jamaican cultivars roasted in their skin over charcoal; oven baking wasn't measured separately. Roasting gives a high GI (boiled sweet potato is 49)."))),
+    dict(id="B0172", ver=MOM_VER, cat="drinks", fam="tomato-juice", st="processed", uk="Сік томатний без солі", en="Tomato juice, canned, without salt added", n=170545, nr="high",
+         gi=("m", "ST1", [1201, 1202], "medium", ("Два дослідження томатного соку без доданого цукру (Канада, Австралія).", "Two studies of tomato juice without added sugar (Canada, Australia)."))),
+    dict(id="B0173", ver=MOM_VER, cat="pantry", fam="garlic", variant="powder", st="dried", uk="Часник сушений (порошок)", en="Spices, garlic powder", n=171325, nr="high",
+         gi=("u", ("Досліджень ГІ для сушеного часнику в таблицях 2021 року немає; його кладуть щіпками, тож на ГН страви він майже не впливає.", "The 2021 tables have no GI study of garlic powder; it's used by the pinch, so it barely affects a dish's GL."))),
+    # legumes
+    dict(id="B0174", ver=MOM_VER, cat="legumes", fam="split-pea", st="dry", uk="Горох лущений (половинки), сухий", en="Peas, split, mature seeds, raw", n=172428, nr="high",
+         gi=("m", "ST2", [3171, 3172], "low", ("Лише Таблиця 2: жовтий лущений горох, варений (запис USDA — зелений; вид той самий).", "Table 2 only: yellow split peas, boiled (the USDA entry is green; the same species)."))),
+    dict(id="B0175", ver=MOM_VER, cat="legumes", fam="split-pea", st="boiled", uk="Горох лущений варений (пюре), без солі", en="Peas, split, mature seeds, boiled, without salt", n=172429, nr="high",
+         gi=("m", "ST2", [3171, 3172], "low", ("Лише Таблиця 2: жовтий лущений горох, варений (запис USDA — зелений; вид той самий).", "Table 2 only: yellow split peas, boiled (the USDA entry is green; the same species)."))),
+    # meat, fish, eggs
+    dict(id="B0176", ver=MOM_VER, cat="meat", fam="chicken-breast", st="raw", uk="Куряче філе (грудка), сире", en="Chicken breast, meat only, raw", n=171077, nr="high", gi=("na",)),
+    dict(id="B0177", ver=MOM_VER, cat="meat", fam="chicken-breast", st="baked", uk="Куряче філе (грудка), запечене", en="Chicken breast, meat only, roasted", n=171477, nr="high", gi=("na",)),
+    dict(id="B0178", ver=MOM_VER, cat="meat", fam="pork-fat", st="raw", uk="Сало свиняче, сире (без солі)", en="Pork, fresh, backfat, raw", n=167811, nr="medium",
+         nn=("Запис USDA — свіже несолоне сало. У солоному салі значно більше натрію — дивіться етикетку.", "The USDA entry is fresh unsalted backfat. Salted сало has much more sodium — see the label."), gi=("na",)),
+    dict(id="B0179", ver=MOM_VER, cat="meat", fam="beef-heart", st="raw", uk="Серце яловиче, сире", en="Beef heart, raw", n=168625, nr="high", gi=("na",)),
+    dict(id="B0180", ver=MOM_VER, cat="meat", fam="beef-heart", st="boiled", uk="Серце яловиче варене", en="Beef heart, cooked, simmered", n=169448, nr="high", gi=("na",)),
+    dict(id="B0181", ver=MOM_VER, cat="meat", fam="pork-heart", st="raw", uk="Серце свиняче, сире", en="Pork heart, raw", n=168267, nr="high",
+         gi=("na", ("Вуглеводів практично немає (1,3 г «за різницею», цукрів 0): ГІ не визначається, ГН дорівнює 0.", "Practically no carbohydrate (1.3 g \"by difference\", no sugars): GI isn't defined and GL is 0."))),
+    dict(id="B0182", ver=MOM_VER, cat="meat", fam="pork-heart", st="boiled", uk="Серце свиняче тушковане", en="Pork heart, cooked, braised", n=168268, nr="high",
+         nn=("USDA має свиняче серце лише тушковане (braised), не варене; за складом вони близькі.", "USDA has pork heart only braised, not boiled; they're close in composition."), gi=("na",)),
+    dict(id="B0183", ver=MOM_VER, cat="fish", fam="shrimp", st="raw", uk="Креветки сирі", en="Shrimp, raw", n=175179, nr="high", gi=("na",)),
+    dict(id="B0184", ver=MOM_VER, cat="fish", fam="shrimp", st="boiled", uk="Креветки варені", en="Shrimp, cooked", n=175180, nr="high", gi=("na",)),
+    dict(id="B0185", ver=MOM_VER, cat="fish", fam="tuna", variant="canned-water", st="canned", uk="Тунець консервований у власному соку", en="Tuna, light, canned in water, drained", n=171986, nr="medium", unk=["sodiumMg"],
+         nn=("USDA має легкий тунець у воді лише без солі, а в звичайних консервах сіль є, тому натрій позначено як невідомий — дивіться етикетку. Решта значень не залежить від солі.", "USDA has light tuna in water only without salt, while ordinary tins are salted, so sodium is marked unknown — see the label. The other values don't depend on salt."), gi=("na",)),
+    dict(id="B0186", ver=MOM_VER, cat="fish", fam="sardine", variant="tomato", st="canned", uk="Сардини в томатному соусі (консерви)", en="Sardines, canned in tomato sauce, drained, with bone", n=175140, nr="high", gi=("na",)),
+    dict(id="B0187", ver=MOM_VER, cat="eggs", fam="quail-egg", st="raw", uk="Яйце перепелине", en="Egg, quail, whole, raw", n=172191, nr="high", gi=("na",)),
+    # dairy
+    dict(id="B0188", ver=MOM_VER, cat="dairy", fam="brie", st="processed", uk="Сир брі", en="Cheese, brie", n=172177, nr="high", gi=("na",)),
+    dict(id="B0189", ver=MOM_VER, cat="dairy", fam="buttermilk", st="fermented", uk="Кисляк (кисле молоко)", en="Buttermilk, whole", n=172225, nr="medium",
+         nn=("Запис USDA — незбиране сквашене молоко (buttermilk); домашній кисляк близький за складом, жирність буває різною.", "The USDA entry is whole cultured buttermilk; homemade кисляк is close in composition, fat content varies."), gi=("c",)),
+    dict(id="B0190", ver=MOM_VER, cat="dairy", fam="greek-yogurt", st="fermented", uk="Йогурт грецький нежирний (≈3%)", en="Yogurt, Greek, plain, lowfat", n=170903, nr="medium",
+         nn=("Запис USDA — нежирний грецький йогурт (близько 2% жиру); жирність українських буває різною, дивіться етикетку.", "The USDA entry is lowfat Greek yogurt (about 2% fat); Ukrainian ones vary in fat, see the label."),
+         gi=("m", "ST2", [2881], "low", ("Одне дослідження грецького йогурту (Австралія), менш надійний метод.", "A single study of Greek-style yogurt (Australia), less robust method."))),
+    # other
+    dict(id="B0191", ver=MOM_VER, cat="pantry", fam="soy-sauce", st="fermented", uk="Соєвий соус", en="Soy sauce (shoyu)", n=174277, nr="high",
+         gi=("u", ("Досліджень ГІ для соєвого соусу в таблицях 2021 року немає; його кладуть ложками, тож на ГН страви він майже не впливає (натрій — суттєвий).", "The 2021 tables have no GI study of soy sauce; it's used by the spoonful, so it barely affects a dish's GL (its sodium matters)."))),
+    dict(id="B0192", ver=MOM_VER, cat="pantry", fam="olive", variant="black", st="canned", uk="Оливки чорні (маслини), консервовані", en="Olives, ripe, canned", n=169094, nr="high",
+         gi=("u", ("Досліджень ГІ для оливок у таблицях 2021 року немає; вуглеводів у них мало, і це переважно клітковина.", "The 2021 tables have no GI study of olives; they have little carbohydrate, mostly fibre."))),
+    dict(id="B0193", ver=MOM_VER, cat="pantry", fam="olive", variant="green", st="canned", uk="Оливки зелені, консервовані", en="Olives, pickled, green", n=169096, nr="high",
+         gi=("u", ("Досліджень ГІ для оливок у таблицях 2021 року немає; вуглеводів у них мало, і це переважно клітковина.", "The 2021 tables have no GI study of olives; they have little carbohydrate, mostly fibre."))),
+]
+NEW_ITEMS += MOM_ITEMS
+
 NEW_CATEGORIES = [
     {"id": "flour", "nameUk": "Борошно та крохмаль", "nameEn": "Flour and starch"},
     {"id": "sweeteners", "nameUk": "Цукор і мед", "nameEn": "Sugar and honey"},
@@ -709,6 +831,9 @@ def main():
                 warnings.append(f"{item['id']}: USDA {item['n']} not returned")
                 continue
             vals, unknown = per100g(u["per100g"])
+            for field in item.get("unk", []):
+                vals[field] = 0
+                unknown = unknown + [field] if field not in unknown else unknown
             source = {"dataset": "usda-sr-legacy", "entryId": str(item["n"]), "description": u["description"]}
             if u["dataType"] != "SR Legacy":
                 warnings.append(f"{item['id']}: {item['n']} is {u['dataType']}")

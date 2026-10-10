@@ -7422,6 +7422,2637 @@
           "en": "The 2021 tables have no GI study of cocoa powder itself: only chocolate and cocoa products, which are mostly sugar and fat."
         }
       }
+    },
+    {
+      "id": "B0134",
+      "status": "active",
+      "category": "fruit",
+      "family": "grapefruit",
+      "state": "raw",
+      "nameUk": "Грейпфрут, сирий",
+      "nameEn": "Grapefruit, raw",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 32.0,
+          "carbsG": 8.08,
+          "fiberG": 1.1,
+          "sugarsG": 6.98,
+          "proteinG": 0.63,
+          "fatG": 0.1,
+          "sodiumMg": 0.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "173033",
+          "description": "Grapefruit, raw, pink and red and white, all areas"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 26,
+        "reliability": "low",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Значення запису (Таблиця 2, менш надійні методи). Одне давнє дослідження (1977) у людей з діабетом, менш надійний метод. Грейпфрут у соку з банки (Таблиця 1) — 47, але це інший продукт.",
+          "en": "The entry's value (Table 2, less robust methods). A single old study (1977) in people with diabetes, less robust method. Grapefruit canned in juice (Table 1) is 47, but that's a different product."
+        },
+        "source": {
+          "dataset": "gi-2021-st2",
+          "entryId": "#2954",
+          "description": "#2954 Grapefruit, raw (Germany, 1977) — GI 26"
+        }
+      }
+    },
+    {
+      "id": "B0135",
+      "status": "active",
+      "category": "fruit",
+      "family": "kiwi",
+      "state": "raw",
+      "nameUk": "Ківі зелений",
+      "nameEn": "Kiwifruit, green, raw",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 61.0,
+          "carbsG": 14.66,
+          "fiberG": 3.0,
+          "sugarsG": 8.99,
+          "proteinG": 1.14,
+          "fatG": 0.52,
+          "sodiumMg": 3.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "168153",
+          "description": "Kiwifruit, green, raw"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 55,
+        "reliability": "low",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (2 записи, Таблиця 2, менш надійні методи; діапазон 47–58, середнє 52). Лише Таблиця 2: зелений ківі (Hayward) і ківі без зазначеного сорту; золотий ківі (47) не враховано.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (2 entries, Table 2, less robust methods; range 47–58, mean 52). Table 2 only: green kiwi (Hayward) and kiwi of an unstated type; golden kiwi (47) not counted."
+        },
+        "source": {
+          "dataset": "gi-2021-st2",
+          "entryId": "#2965, #2968",
+          "description": "#2965 Kiwi fruit, Hayward (New Zealand, 1991) — GI 47±4; #2968 Kiwi fruit, NS (Australia, 1994) — GI 58±7"
+        }
+      }
+    },
+    {
+      "id": "B0136",
+      "status": "active",
+      "category": "fruit",
+      "family": "lemon",
+      "state": "raw",
+      "nameUk": "Лимон без шкірки",
+      "nameEn": "Lemons, raw, without peel",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 29.0,
+          "carbsG": 9.32,
+          "fiberG": 2.8,
+          "sugarsG": 2.5,
+          "proteinG": 1.1,
+          "fatG": 0.3,
+          "sodiumMg": 2.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "167746",
+          "description": "Lemons, raw, without peel"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "unknown",
+        "value": null,
+        "source": null,
+        "reliability": "low",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Досліджень ГІ для свіжих лимонів в таблицях 2021 року немає; є лише лимонні напої й батончики.",
+          "en": "The 2021 tables have no GI study of fresh lemons; only lemon drinks and bars."
+        }
+      }
+    },
+    {
+      "id": "B0137",
+      "status": "active",
+      "category": "fruit",
+      "family": "lemon",
+      "variant": "juice",
+      "state": "raw",
+      "nameUk": "Сік лимонний свіжий",
+      "nameEn": "Lemon juice, raw",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 22.0,
+          "carbsG": 6.9,
+          "fiberG": 0.3,
+          "sugarsG": 2.52,
+          "proteinG": 0.35,
+          "fatG": 0.24,
+          "sodiumMg": 1.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "167747",
+          "description": "Lemon juice, raw"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "unknown",
+        "value": null,
+        "source": null,
+        "reliability": "low",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Досліджень ГІ для лимонного соку в таблицях 2021 року немає.",
+          "en": "The 2021 tables have no GI study of lemon juice."
+        }
+      }
+    },
+    {
+      "id": "B0138",
+      "status": "active",
+      "category": "fruit",
+      "family": "orange",
+      "variant": "peel",
+      "state": "raw",
+      "nameUk": "Цедра апельсина",
+      "nameEn": "Orange peel, raw",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 97.0,
+          "carbsG": 25.0,
+          "fiberG": 10.6,
+          "sugarsG": 0,
+          "proteinG": 1.5,
+          "fatG": 0.2,
+          "sodiumMg": 3.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "169103",
+          "description": "Orange peel, raw"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09",
+        "unknown": [
+          "sugarsG"
+        ]
+      },
+      "gi": {
+        "status": "unknown",
+        "value": null,
+        "source": null,
+        "reliability": "low",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Досліджень ГІ для апельсинової цедри в таблицях 2021 року немає.",
+          "en": "The 2021 tables have no GI study of orange peel."
+        }
+      }
+    },
+    {
+      "id": "B0139",
+      "status": "active",
+      "category": "fruit",
+      "family": "gooseberry",
+      "state": "raw",
+      "nameUk": "Агрус",
+      "nameEn": "Gooseberries, raw",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 44.0,
+          "carbsG": 10.18,
+          "fiberG": 4.3,
+          "sugarsG": 0,
+          "proteinG": 0.88,
+          "fatG": 0.58,
+          "sodiumMg": 1.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "173030",
+          "description": "Gooseberries, raw"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09",
+        "unknown": [
+          "sugarsG"
+        ]
+      },
+      "gi": {
+        "status": "unknown",
+        "value": null,
+        "source": null,
+        "reliability": "low",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Досліджень ГІ для свіжих аґрусу в таблицях 2021 року немає.",
+          "en": "The 2021 tables have no GI study of fresh gooseberries."
+        }
+      }
+    },
+    {
+      "id": "B0140",
+      "status": "active",
+      "category": "fruit",
+      "family": "peach",
+      "state": "raw",
+      "nameUk": "Персик",
+      "nameEn": "Peaches, yellow, raw",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 39.0,
+          "carbsG": 9.54,
+          "fiberG": 1.5,
+          "sugarsG": 8.39,
+          "proteinG": 0.91,
+          "fatG": 0.25,
+          "sodiumMg": 0.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "169928",
+          "description": "Peaches, yellow, raw"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 76,
+        "reliability": "medium",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Значення запису (Таблиця 1, метод ISO). Одне дослідження (Італія) свіжого персика. У Таблиці 2 є давнє вимірювання (1977, люди з діабетом) — 28, але за правилом спершу береться надійніша Таблиця 1; персики з банки в соку — 46.",
+          "en": "The entry's value (Table 1, ISO method). A single study (Italy) of fresh peach. Table 2 has an old measurement (1977, people with diabetes) — 28, but by the rule the more reliable Table 1 comes first; peaches canned in juice are 46."
+        },
+        "source": {
+          "dataset": "gi-2021-st1",
+          "entryId": "#1155",
+          "description": "#1155 Peach (Prunus persica) (Italy, 2004) — GI 76±9"
+        }
+      }
+    },
+    {
+      "id": "B0141",
+      "status": "active",
+      "category": "fruit",
+      "family": "apricot",
+      "state": "raw",
+      "nameUk": "Абрикос",
+      "nameEn": "Apricots, raw",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 48.0,
+          "carbsG": 11.12,
+          "fiberG": 2.0,
+          "sugarsG": 9.24,
+          "proteinG": 1.4,
+          "fatG": 0.39,
+          "sodiumMg": 1.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "171697",
+          "description": "Apricots, raw"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 40,
+        "reliability": "medium",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (2 записи, Таблиця 1, метод ISO; діапазон 34–42, середнє 38). Два дослідження свіжих абрикосів (Австралія, Канада).",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (2 entries, Table 1, ISO method; range 34–42, mean 38). Two studies of fresh apricots (Australia, Canada)."
+        },
+        "source": {
+          "dataset": "gi-2021-st1",
+          "entryId": "#1083, #1084",
+          "description": "#1083 Apricots, raw, NS (Australia, 2007) — GI 34±3; #1084 Apricots, raw, NS (Canada, 2018) — GI 42±5"
+        }
+      }
+    },
+    {
+      "id": "B0142",
+      "status": "active",
+      "category": "fruit",
+      "family": "sour-cherry",
+      "state": "raw",
+      "nameUk": "Вишня свіжа",
+      "nameEn": "Cherries, sour, red, raw",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 50.0,
+          "carbsG": 12.18,
+          "fiberG": 1.6,
+          "sugarsG": 8.49,
+          "proteinG": 1.0,
+          "fatG": 0.3,
+          "sodiumMg": 3.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "173954",
+          "description": "Cherries, sour, red, raw"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 22,
+        "reliability": "low",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Значення запису (Таблиця 2, менш надійні методи). Одне давнє дослідження свіжої вишні (1977), менш надійний метод; вишня з банки — 41.",
+          "en": "The entry's value (Table 2, less robust methods). A single old study of fresh sour cherries (1977), less robust method; canned sour cherries are 41."
+        },
+        "source": {
+          "dataset": "gi-2021-st2",
+          "entryId": "#2928",
+          "description": "#2928 Cherries, raw, sour (Germany, 1977) — GI 22"
+        }
+      }
+    },
+    {
+      "id": "B0143",
+      "status": "active",
+      "category": "fruit",
+      "family": "sour-cherry",
+      "variant": "frozen",
+      "state": "raw",
+      "nameUk": "Вишня заморожена, без цукру",
+      "nameEn": "Cherries, sour, red, frozen, unsweetened",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 46.0,
+          "carbsG": 11.02,
+          "fiberG": 1.6,
+          "sugarsG": 9.02,
+          "proteinG": 0.92,
+          "fatG": 0.44,
+          "sodiumMg": 1.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "171718",
+          "description": "Cherries, sour, red, frozen, unsweetened (Includes foods for USDA's Food Distribution Program)"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 22,
+        "reliability": "low",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Значення запису (Таблиця 2, менш надійні методи). Заморожена вишня без цукру — та сама ягода, що й свіжа; ГІ — зі свіжої вишні (одне давнє дослідження, 1977).",
+          "en": "The entry's value (Table 2, less robust methods). Frozen sour cherries without sugar are the same fruit as fresh; the GI is fresh sour cherries' (a single old study, 1977)."
+        },
+        "source": {
+          "dataset": "gi-2021-st2",
+          "entryId": "#2928",
+          "description": "#2928 Cherries, raw, sour (Germany, 1977) — GI 22"
+        }
+      }
+    },
+    {
+      "id": "B0144",
+      "status": "active",
+      "category": "fruit",
+      "family": "watermelon",
+      "state": "raw",
+      "nameUk": "Кавун",
+      "nameEn": "Watermelon, raw",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 30.0,
+          "carbsG": 7.55,
+          "fiberG": 0.4,
+          "sugarsG": 6.2,
+          "proteinG": 0.61,
+          "fatG": 0.15,
+          "sodiumMg": 1.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "167765",
+          "description": "Watermelon, raw"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 52,
+        "reliability": "medium",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (4 записи, які підсумовує рядок таблиці «Watermelon, mean of four foods»; середнє авторів — 50, діапазон 47–55). Кавун має високий ГІ, але мало вуглеводів на 100 г (7,6 г), тому ГН звичайної порції невелике.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (4 entries covered by the table's row 'Watermelon, mean of four foods'; the authors' mean is 50, range 47–55). Watermelon has a high GI but little carbohydrate per 100 g (7.6 g), so a usual portion's GL is small."
+        },
+        "source": {
+          "dataset": "gi-2021-st1",
+          "entryId": "summary row; #1145–#1148",
+          "description": "Watermelon, mean of four foods — GI 50 (summary row). Entries used: #1145 55, #1146 48, #1147 51, #1148 47"
+        }
+      }
+    },
+    {
+      "id": "B0145",
+      "status": "active",
+      "category": "fruit",
+      "family": "mandarin",
+      "state": "raw",
+      "nameUk": "Мандарин",
+      "nameEn": "Tangerines (mandarin oranges), raw",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 53.0,
+          "carbsG": 13.34,
+          "fiberG": 1.8,
+          "sugarsG": 10.58,
+          "proteinG": 0.81,
+          "fatG": 0.31,
+          "sodiumMg": 2.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "169105",
+          "description": "Tangerines, (mandarin oranges), raw"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 52,
+        "reliability": "medium",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Значення запису (Таблиця 1, метод ISO). Одне дослідження свіжого мандарина (Італія); мандарини з банки в соку — 47.",
+          "en": "The entry's value (Table 1, ISO method). A single study of fresh mandarin (Italy); mandarin segments canned in juice are 47."
+        },
+        "source": {
+          "dataset": "gi-2021-st1",
+          "entryId": "#1140",
+          "description": "#1140 Mandarin orange (Citrus reticulata) (Italy, 2004) — GI 52±8"
+        }
+      }
+    },
+    {
+      "id": "B0146",
+      "status": "active",
+      "category": "fruit",
+      "family": "pomegranate",
+      "state": "raw",
+      "nameUk": "Гранат",
+      "nameEn": "Pomegranates, raw",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 83.0,
+          "carbsG": 18.7,
+          "fiberG": 4.0,
+          "sugarsG": 13.67,
+          "proteinG": 1.67,
+          "fatG": 1.17,
+          "sodiumMg": 3.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "169134",
+          "description": "Pomegranates, raw"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "unknown",
+        "value": null,
+        "source": null,
+        "reliability": "low",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Досліджень ГІ для свіжих гранатів в таблицях 2021 року немає.",
+          "en": "The 2021 tables have no GI study of fresh pomegranates."
+        }
+      }
+    },
+    {
+      "id": "B0147",
+      "status": "active",
+      "category": "fruit",
+      "family": "raspberry",
+      "state": "raw",
+      "nameUk": "Малина",
+      "nameEn": "Raspberries, raw",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 52.0,
+          "carbsG": 11.94,
+          "fiberG": 6.5,
+          "sugarsG": 4.42,
+          "proteinG": 1.2,
+          "fatG": 0.65,
+          "sodiumMg": 1.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "167755",
+          "description": "Raspberries, raw"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "unknown",
+        "value": null,
+        "source": null,
+        "reliability": "low",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Досліджень ГІ для свіжих малини в таблицях 2021 року немає; є лише джеми, батончики й суміші з малиною.",
+          "en": "The 2021 tables have no GI study of fresh raspberries; only jams, bars and mixes with raspberries."
+        }
+      }
+    },
+    {
+      "id": "B0148",
+      "status": "active",
+      "category": "fruit",
+      "family": "currant",
+      "variant": "red",
+      "state": "raw",
+      "nameUk": "Порічки (червоні або білі)",
+      "nameEn": "Currants, red and white, raw",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 56.0,
+          "carbsG": 13.8,
+          "fiberG": 4.3,
+          "sugarsG": 7.37,
+          "proteinG": 1.4,
+          "fatG": 0.2,
+          "sodiumMg": 1.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "173964",
+          "description": "Currants, red and white, raw"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "unknown",
+        "value": null,
+        "source": null,
+        "reliability": "low",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Досліджень ГІ для свіжих порічок в таблицях 2021 року немає.",
+          "en": "The 2021 tables have no GI study of fresh red currants."
+        }
+      }
+    },
+    {
+      "id": "B0149",
+      "status": "active",
+      "category": "fruit",
+      "family": "currant",
+      "variant": "black",
+      "state": "raw",
+      "nameUk": "Смородина чорна",
+      "nameEn": "Currants, European black, raw",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 63.0,
+          "carbsG": 15.38,
+          "fiberG": 0,
+          "sugarsG": 0,
+          "proteinG": 1.4,
+          "fatG": 0.41,
+          "sodiumMg": 2.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "173963",
+          "description": "Currants, european black, raw"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09",
+        "unknown": [
+          "fiberG",
+          "sugarsG"
+        ]
+      },
+      "gi": {
+        "status": "unknown",
+        "value": null,
+        "source": null,
+        "reliability": "low",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Досліджень ГІ для свіжих чорної смородини в таблицях 2021 року немає; є лише сиропи, соки й вироби з нею.",
+          "en": "The 2021 tables have no GI study of fresh blackcurrants; only syrups, juices and products with it."
+        }
+      }
+    },
+    {
+      "id": "B0150",
+      "status": "active",
+      "category": "fruit",
+      "family": "physalis",
+      "state": "raw",
+      "nameUk": "Фізаліс",
+      "nameEn": "Groundcherries (cape-gooseberries), raw",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 53.0,
+          "carbsG": 11.2,
+          "fiberG": 0,
+          "sugarsG": 0,
+          "proteinG": 1.9,
+          "fatG": 0.7,
+          "sodiumMg": 0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "173043",
+          "description": "Groundcherries, (cape-gooseberries or poha), raw"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09",
+        "unknown": [
+          "fiberG",
+          "sugarsG",
+          "sodiumMg"
+        ]
+      },
+      "gi": {
+        "status": "unknown",
+        "value": null,
+        "source": null,
+        "reliability": "low",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Досліджень ГІ для свіжих фізалісу в таблицях 2021 року немає.",
+          "en": "The 2021 tables have no GI study of fresh physalis."
+        }
+      }
+    },
+    {
+      "id": "B0151",
+      "status": "active",
+      "category": "fruit",
+      "family": "melon",
+      "state": "raw",
+      "nameUk": "Диня",
+      "nameEn": "Melons, honeydew, raw",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 36.0,
+          "carbsG": 9.09,
+          "fiberG": 0.8,
+          "sugarsG": 8.12,
+          "proteinG": 0.54,
+          "fatG": 0.14,
+          "sodiumMg": 18.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "169911",
+          "description": "Melons, honeydew, raw"
+        },
+        "reliability": "medium",
+        "reason": {
+          "uk": "Найближчий запис USDA — див. примітку. Запис USDA — диня медова (honeydew), найближча до звичайних солодких динь; канталупа (мускатна) трохи відрізняється.",
+          "en": "The closest USDA entry — see the note. The USDA entry is honeydew melon, the closest to common sweet melons; cantaloupe differs a little."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 60,
+        "reliability": "medium",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Значення запису (Таблиця 1, метод ISO). Одне дослідження дині (Cucumis melo, Італія), сорт не вказано; канталупа в Таблиці 2 — 65–70.",
+          "en": "The entry's value (Table 1, ISO method). A single study of melon (Cucumis melo, Italy), type not stated; cantaloupe in Table 2 is 65–70."
+        },
+        "source": {
+          "dataset": "gi-2021-st1",
+          "entryId": "#1144",
+          "description": "#1144 Melon (Cucumis melon) (Italy, 2004) — GI 60±9"
+        }
+      }
+    },
+    {
+      "id": "B0152",
+      "status": "active",
+      "category": "fruit",
+      "family": "blueberry",
+      "state": "raw",
+      "nameUk": "Лохина (садова чорниця)",
+      "nameEn": "Blueberries, raw",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 57.0,
+          "carbsG": 14.49,
+          "fiberG": 2.4,
+          "sugarsG": 9.96,
+          "proteinG": 0.74,
+          "fatG": 0.33,
+          "sodiumMg": 1.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "171711",
+          "description": "Blueberries, raw"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 53,
+        "reliability": "low",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Значення запису (Таблиця 1, метод ISO). Одне дослідження дикої лохини (Канада); садову лохину окремо не вимірювали. Лісові чорниці — інша ягода, її в USDA немає.",
+          "en": "The entry's value (Table 1, ISO method). A single study of wild blueberries (Canada); cultivated blueberries weren't measured separately. Bilberries (лісові чорниці) are a different berry, not in USDA."
+        },
+        "source": {
+          "dataset": "gi-2021-st1",
+          "entryId": "#1092",
+          "description": "#1092 Blueberries, wild (Wild Blueberries Association, Canada) Canada 2004- 2007 53±7 8 Normal,  — GI 53±7"
+        }
+      }
+    },
+    {
+      "id": "B0153",
+      "status": "active",
+      "category": "fruit",
+      "family": "avocado",
+      "state": "raw",
+      "nameUk": "Авокадо",
+      "nameEn": "Avocados, raw",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 160.0,
+          "carbsG": 8.53,
+          "fiberG": 6.7,
+          "sugarsG": 0.66,
+          "proteinG": 2.0,
+          "fatG": 14.66,
+          "sodiumMg": 7.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "171705",
+          "description": "Avocados, raw, all commercial varieties"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "unknown",
+        "value": null,
+        "source": null,
+        "reliability": "low",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Досліджень ГІ авокадо в таблицях 2021 року немає; вуглеводи в ньому — переважно клітковина (6,7 з 8,5 г).",
+          "en": "The 2021 tables have no GI study of avocado; its carbohydrate is mostly fibre (6.7 of 8.5 g)."
+        }
+      }
+    },
+    {
+      "id": "B0154",
+      "status": "active",
+      "category": "vegetables",
+      "family": "rhubarb",
+      "state": "raw",
+      "nameUk": "Ревінь",
+      "nameEn": "Rhubarb, raw",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 21.0,
+          "carbsG": 4.54,
+          "fiberG": 1.8,
+          "sugarsG": 1.1,
+          "proteinG": 0.9,
+          "fatG": 0.2,
+          "sodiumMg": 4.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "167758",
+          "description": "Rhubarb, raw"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "conventional",
+        "value": 15,
+        "source": null,
+        "reliability": "low",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Вуглеводів дуже мало, тому ГІ не вимірюють; умовне значення 15, щоб ці вуглеводи все одно враховувалися в ГН.",
+          "en": "Too little carbohydrate for GI to be measured; a conventional value of 15 so these carbohydrates still count in GL."
+        }
+      }
+    },
+    {
+      "id": "B0155",
+      "status": "active",
+      "category": "vegetables",
+      "family": "parsley",
+      "state": "raw",
+      "nameUk": "Петрушка (зелень)",
+      "nameEn": "Parsley, fresh",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 36.0,
+          "carbsG": 6.33,
+          "fiberG": 3.3,
+          "sugarsG": 0.85,
+          "proteinG": 2.97,
+          "fatG": 0.79,
+          "sodiumMg": 56.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "170416",
+          "description": "Parsley, fresh"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "conventional",
+        "value": 15,
+        "source": null,
+        "reliability": "low",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Вуглеводів дуже мало, тому ГІ не вимірюють; умовне значення 15, щоб ці вуглеводи все одно враховувалися в ГН.",
+          "en": "Too little carbohydrate for GI to be measured; a conventional value of 15 so these carbohydrates still count in GL."
+        }
+      }
+    },
+    {
+      "id": "B0156",
+      "status": "active",
+      "category": "vegetables",
+      "family": "dill",
+      "state": "raw",
+      "nameUk": "Кріп (зелень)",
+      "nameEn": "Dill weed, fresh",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 43.0,
+          "carbsG": 7.02,
+          "fiberG": 2.1,
+          "sugarsG": 0,
+          "proteinG": 3.46,
+          "fatG": 1.12,
+          "sodiumMg": 61.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "172233",
+          "description": "Dill weed, fresh"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09",
+        "unknown": [
+          "sugarsG"
+        ]
+      },
+      "gi": {
+        "status": "conventional",
+        "value": 15,
+        "source": null,
+        "reliability": "low",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Вуглеводів дуже мало, тому ГІ не вимірюють; умовне значення 15, щоб ці вуглеводи все одно враховувалися в ГН.",
+          "en": "Too little carbohydrate for GI to be measured; a conventional value of 15 so these carbohydrates still count in GL."
+        }
+      }
+    },
+    {
+      "id": "B0157",
+      "status": "active",
+      "category": "vegetables",
+      "family": "green-onion",
+      "state": "raw",
+      "nameUk": "Цибуля зелена",
+      "nameEn": "Onions, spring or scallions, raw",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 32.0,
+          "carbsG": 7.34,
+          "fiberG": 2.6,
+          "sugarsG": 2.33,
+          "proteinG": 1.83,
+          "fatG": 0.19,
+          "sodiumMg": 16.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "170005",
+          "description": "Onions, spring or scallions (includes tops and bulb), raw"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "conventional",
+        "value": 15,
+        "source": null,
+        "reliability": "low",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Вуглеводів дуже мало, тому ГІ не вимірюють; умовне значення 15, щоб ці вуглеводи все одно враховувалися в ГН.",
+          "en": "Too little carbohydrate for GI to be measured; a conventional value of 15 so these carbohydrates still count in GL."
+        }
+      }
+    },
+    {
+      "id": "B0158",
+      "status": "active",
+      "category": "vegetables",
+      "family": "arugula",
+      "state": "raw",
+      "nameUk": "Рукола",
+      "nameEn": "Arugula, raw",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 25.0,
+          "carbsG": 3.65,
+          "fiberG": 1.6,
+          "sugarsG": 2.05,
+          "proteinG": 2.58,
+          "fatG": 0.66,
+          "sodiumMg": 27.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "169387",
+          "description": "Arugula, raw"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "conventional",
+        "value": 15,
+        "source": null,
+        "reliability": "low",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Вуглеводів дуже мало, тому ГІ не вимірюють; умовне значення 15, щоб ці вуглеводи все одно враховувалися в ГН.",
+          "en": "Too little carbohydrate for GI to be measured; a conventional value of 15 so these carbohydrates still count in GL."
+        }
+      }
+    },
+    {
+      "id": "B0159",
+      "status": "active",
+      "category": "vegetables",
+      "family": "chinese-cabbage",
+      "state": "raw",
+      "nameUk": "Капуста пекінська",
+      "nameEn": "Cabbage, chinese (pe-tsai), raw",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 16.0,
+          "carbsG": 3.23,
+          "fiberG": 1.2,
+          "sugarsG": 1.41,
+          "proteinG": 1.2,
+          "fatG": 0.2,
+          "sodiumMg": 9.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "169979",
+          "description": "Cabbage, chinese (pe-tsai), raw"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "conventional",
+        "value": 15,
+        "source": null,
+        "reliability": "low",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Вуглеводів дуже мало, тому ГІ не вимірюють; умовне значення 15, щоб ці вуглеводи все одно враховувалися в ГН.",
+          "en": "Too little carbohydrate for GI to be measured; a conventional value of 15 so these carbohydrates still count in GL."
+        }
+      }
+    },
+    {
+      "id": "B0160",
+      "status": "active",
+      "category": "vegetables",
+      "family": "cabbage",
+      "variant": "sauerkraut",
+      "state": "fermented",
+      "nameUk": "Капуста квашена",
+      "nameEn": "Sauerkraut",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 19.0,
+          "carbsG": 4.28,
+          "fiberG": 2.9,
+          "sugarsG": 1.78,
+          "proteinG": 0.91,
+          "fatG": 0.14,
+          "sodiumMg": 661.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "169279",
+          "description": "Sauerkraut, canned, solids and liquids"
+        },
+        "reliability": "medium",
+        "reason": {
+          "uk": "Найближчий запис USDA — див. примітку. Запис USDA — квашена капуста з банки разом із розсолом; домашня квашена капуста близька за складом, солоність буває різною.",
+          "en": "The closest USDA entry — see the note. The USDA entry is canned sauerkraut with its brine; homemade sauerkraut is close in composition, saltiness varies."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "conventional",
+        "value": 15,
+        "source": null,
+        "reliability": "low",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Вуглеводів дуже мало, тому ГІ не вимірюють; умовне значення 15, щоб ці вуглеводи все одно враховувалися в ГН.",
+          "en": "Too little carbohydrate for GI to be measured; a conventional value of 15 so these carbohydrates still count in GL."
+        }
+      }
+    },
+    {
+      "id": "B0161",
+      "status": "active",
+      "category": "vegetables",
+      "family": "cucumber",
+      "variant": "pickled",
+      "state": "fermented",
+      "nameUk": "Огірок солоний (квашений)",
+      "nameEn": "Pickles, cucumber, sour",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 11.0,
+          "carbsG": 2.26,
+          "fiberG": 1.2,
+          "sugarsG": 1.06,
+          "proteinG": 0.33,
+          "fatG": 0.2,
+          "sodiumMg": 1208.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "169379",
+          "description": "Pickles, cucumber, sour"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані. Квашені огірки (без оцту). Мариновані з оцтом — інший продукт, у солодких маринадах є цукор.",
+          "en": "The USDA entry describes exactly this food in this state. Fermented pickles (no vinegar). Vinegar-marinated pickles are a different product; sweet ones contain sugar."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "conventional",
+        "value": 15,
+        "source": null,
+        "reliability": "low",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Вуглеводів дуже мало, тому ГІ не вимірюють; умовне значення 15, щоб ці вуглеводи все одно враховувалися в ГН.",
+          "en": "Too little carbohydrate for GI to be measured; a conventional value of 15 so these carbohydrates still count in GL."
+        }
+      }
+    },
+    {
+      "id": "B0162",
+      "status": "active",
+      "category": "vegetables",
+      "family": "beet",
+      "state": "raw",
+      "nameUk": "Буряк сирий",
+      "nameEn": "Beets, raw",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 43.0,
+          "carbsG": 9.56,
+          "fiberG": 2.8,
+          "sugarsG": 6.76,
+          "proteinG": 1.61,
+          "fatG": 0.17,
+          "sodiumMg": 78.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "169145",
+          "description": "Beets, raw"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "unknown",
+        "value": null,
+        "source": null,
+        "reliability": "low",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Сирий буряк окремо не вимірювали; варений — 64 (одне давнє дослідження, запис «Буряк варений»).",
+          "en": "Raw beet wasn't measured on its own; boiled is 64 (a single old study, the entry «Буряк варений»)."
+        }
+      }
+    },
+    {
+      "id": "B0163",
+      "status": "active",
+      "category": "vegetables",
+      "family": "celeriac",
+      "state": "raw",
+      "nameUk": "Селера коренева, сира",
+      "nameEn": "Celeriac, raw",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 42.0,
+          "carbsG": 9.2,
+          "fiberG": 1.8,
+          "sugarsG": 1.6,
+          "proteinG": 1.5,
+          "fatG": 0.3,
+          "sodiumMg": 100.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "170400",
+          "description": "Celeriac, raw"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "unknown",
+        "value": null,
+        "source": null,
+        "reliability": "low",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Досліджень ГІ для кореневої селери в таблицях 2021 року немає.",
+          "en": "The 2021 tables have no GI study of celeriac."
+        }
+      }
+    },
+    {
+      "id": "B0164",
+      "status": "active",
+      "category": "vegetables",
+      "family": "celeriac",
+      "state": "boiled",
+      "nameUk": "Селера коренева варена, без солі",
+      "nameEn": "Celeriac, cooked, boiled, without salt",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 27.0,
+          "carbsG": 5.9,
+          "fiberG": 1.2,
+          "sugarsG": 0,
+          "proteinG": 0.96,
+          "fatG": 0.19,
+          "sodiumMg": 61.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "169987",
+          "description": "Celeriac, cooked, boiled, drained, without salt"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09",
+        "unknown": [
+          "sugarsG"
+        ]
+      },
+      "gi": {
+        "status": "unknown",
+        "value": null,
+        "source": null,
+        "reliability": "low",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Досліджень ГІ для кореневої селери в таблицях 2021 року немає.",
+          "en": "The 2021 tables have no GI study of celeriac."
+        }
+      }
+    },
+    {
+      "id": "B0165",
+      "status": "active",
+      "category": "vegetables",
+      "family": "jerusalem-artichoke",
+      "state": "raw",
+      "nameUk": "Топінамбур, сирий",
+      "nameEn": "Jerusalem-artichokes, raw",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 73.0,
+          "carbsG": 17.44,
+          "fiberG": 1.6,
+          "sugarsG": 9.6,
+          "proteinG": 2.0,
+          "fatG": 0.01,
+          "sodiumMg": 4.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "169236",
+          "description": "Jerusalem-artichokes, raw"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "unknown",
+        "value": null,
+        "source": null,
+        "reliability": "low",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Досліджень ГІ для топінамбура в таблицях 2021 року немає. Його вуглеводи — значною мірою інулін, який не підвищує глюкозу так, як крохмаль.",
+          "en": "The 2021 tables have no GI study of Jerusalem artichoke. Much of its carbohydrate is inulin, which doesn't raise glucose the way starch does."
+        }
+      }
+    },
+    {
+      "id": "B0166",
+      "status": "active",
+      "category": "vegetables",
+      "family": "broccoli",
+      "state": "boiled",
+      "nameUk": "Броколі варена, без солі",
+      "nameEn": "Broccoli, cooked, boiled, without salt",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 35.0,
+          "carbsG": 7.18,
+          "fiberG": 3.3,
+          "sugarsG": 1.39,
+          "proteinG": 2.38,
+          "fatG": 0.41,
+          "sodiumMg": 41.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "169967",
+          "description": "Broccoli, cooked, boiled, drained, without salt"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "conventional",
+        "value": 15,
+        "source": null,
+        "reliability": "low",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Вуглеводів дуже мало, тому ГІ не вимірюють; умовне значення 15, щоб ці вуглеводи все одно враховувалися в ГН.",
+          "en": "Too little carbohydrate for GI to be measured; a conventional value of 15 so these carbohydrates still count in GL."
+        }
+      }
+    },
+    {
+      "id": "B0167",
+      "status": "active",
+      "category": "vegetables",
+      "family": "cauliflower",
+      "state": "raw",
+      "nameUk": "Капуста цвітна, сира",
+      "nameEn": "Cauliflower, raw",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 25.0,
+          "carbsG": 4.97,
+          "fiberG": 2.0,
+          "sugarsG": 1.91,
+          "proteinG": 1.92,
+          "fatG": 0.28,
+          "sodiumMg": 30.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "169986",
+          "description": "Cauliflower, raw"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "conventional",
+        "value": 15,
+        "source": null,
+        "reliability": "low",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Вуглеводів дуже мало, тому ГІ не вимірюють; умовне значення 15, щоб ці вуглеводи все одно враховувалися в ГН.",
+          "en": "Too little carbohydrate for GI to be measured; a conventional value of 15 so these carbohydrates still count in GL."
+        }
+      }
+    },
+    {
+      "id": "B0168",
+      "status": "active",
+      "category": "vegetables",
+      "family": "cauliflower",
+      "state": "boiled",
+      "nameUk": "Капуста цвітна варена, без солі",
+      "nameEn": "Cauliflower, cooked, boiled, without salt",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 23.0,
+          "carbsG": 4.11,
+          "fiberG": 2.3,
+          "sugarsG": 2.08,
+          "proteinG": 1.84,
+          "fatG": 0.45,
+          "sodiumMg": 15.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "170397",
+          "description": "Cauliflower, cooked, boiled, drained, without salt"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "conventional",
+        "value": 15,
+        "source": null,
+        "reliability": "low",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Вуглеводів дуже мало, тому ГІ не вимірюють; умовне значення 15, щоб ці вуглеводи все одно враховувалися в ГН.",
+          "en": "Too little carbohydrate for GI to be measured; a conventional value of 15 so these carbohydrates still count in GL."
+        }
+      }
+    },
+    {
+      "id": "B0169",
+      "status": "active",
+      "category": "vegetables",
+      "family": "sweet-potato",
+      "state": "raw",
+      "nameUk": "Батат, сирий",
+      "nameEn": "Sweet potato, raw",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 86.0,
+          "carbsG": 20.12,
+          "fiberG": 3.0,
+          "sugarsG": 4.18,
+          "proteinG": 1.57,
+          "fatG": 0.05,
+          "sodiumMg": 55.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "168482",
+          "description": "Sweet potato, raw, unprepared (Includes foods for USDA's Food Distribution Program)"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "unknown",
+        "value": null,
+        "source": null,
+        "reliability": "low",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Сирий батат не їдять і не вимірювали; ГІ залежить від приготування: варений — 46, запечений — 86 (окремі записи).",
+          "en": "Raw sweet potato isn't eaten and wasn't measured; GI depends on cooking: boiled 46, roasted 86 (their own entries)."
+        }
+      }
+    },
+    {
+      "id": "B0170",
+      "status": "active",
+      "category": "vegetables",
+      "family": "sweet-potato",
+      "state": "boiled",
+      "nameUk": "Батат варений без шкірки, без солі",
+      "nameEn": "Sweet potato, boiled, without skin, without salt",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 76.0,
+          "carbsG": 17.72,
+          "fiberG": 2.5,
+          "sugarsG": 5.74,
+          "proteinG": 1.37,
+          "fatG": 0.14,
+          "sodiumMg": 27.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "168484",
+          "description": "Sweet potato, cooked, boiled, without skin"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 49,
+        "reliability": "medium",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (13 записів, Таблиця 1, метод ISO; діапазон 41–75, середнє 50). Ямайські сорти — 41–50; батат із помаранчевою м'якоттю, якого найбільше в наших магазинах, — 61 (#1896), з білою м'якоттю й фіолетовою шкіркою — 75 (#1897). Сорт на етикетці зазвичай не вказують. Варіння дає батату набагато нижчий ГІ, ніж запікання.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (13 entries, Table 1, ISO method; range 41–75, mean 50). Jamaican cultivars are 41–50; orange-fleshed sweet potato, the most common in Ukrainian shops, is 61 (#1896), white-fleshed with purple skin 75 (#1897). Labels rarely state the type. Boiling gives sweet potato a much lower GI than roasting."
+        },
+        "source": {
+          "dataset": "gi-2021-st1",
+          "entryId": "#1885, #1886, #1887, #1888, #1889, #1890, #1891, #1892, #1893, #1894, #1895, #1896, #1897",
+          "description": "#1885 Sweet potato (Ipomoea batatas), Dor cultivar, peeled, cut into 25 mm slices, boiled in water for 20 min (Jamaica, 2008) — GI 47±3; #1886 Sweet potato (Ipomoea batatas), Clarendon cultivar, peeled, cut into 25 mm slices, boiled in water for 20 min (Jamaica, 2008) — GI 46±5; #1887 Sweet potato (Ipomoea batatas), Eustace cultivar, peeled, cut into 25 mm slices, boiled in water for 20 min (Jamaica, 2008) — GI 49±5; #1888 Sweet potato (Ipomoea batatas), Fire on Land cultivar, peeled, cut into 25 mm slices, boiled in water for 20 min (Jamaica, 2008) — GI 46±4; #1889 Sweet potato (Ipomoea batatas), Ganja cultivar, peeled, cut into 25 mm slices, boiled in water for 20 min (Jamaica, 2008) — GI 41±5; #1890 Sweet potato (Ipomoea batatas), Ms Mac cultivar, peeled, cut into 25 mm slices, boiled in water for 20 min (Jamaica, 2008) — GI 45±3; #1891 Sweet potato (Ipomoea batatas), Minda cultivar, peeled, cut into 25 mm slices, boiled in water for 20 min (Jamaica, 2008) — GI 49±4; #1892 Sweet potato (Ipomoea batatas), Quarter Million cultivar, peeled, cut into 25 mm slices, boiled in water for 20 min (Jamaica, 2008) — GI 49±4; #1893 Sweet potato (Ipomoea batatas), Watson cultivar, peeled, cut into 25 mm slices, boiled in water for 20 min (Jamaica, 2008) — GI 43±4; #1894 Sweet potato (Ipomoea batatas), Yellow Belly cultivar, peeled, cut into 25 mm slices, boiled in water for 20 min (Jamaica, 2008) — GI 50±3; #1895 Sweet potato (Ipomoea batatas), NS, peeled, cubed, boiled 30 min (Jamaica, 2005) — GI 46±5; #1896 Sweet potato, orange flesh, NS, peeled, cut into pieces, boiled for 8 min (Australia, 2006) — GI 61±6; #1897 Sweet potato, purple skin white flesh, peeled, cut into pieces, boiled for 8 min (Australia, 2006) — GI 75±5"
+        }
+      }
+    },
+    {
+      "id": "B0171",
+      "status": "active",
+      "category": "vegetables",
+      "family": "sweet-potato",
+      "state": "baked",
+      "nameUk": "Батат запечений у шкірці, без солі",
+      "nameEn": "Sweet potato, baked in skin, without salt",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 90.0,
+          "carbsG": 20.71,
+          "fiberG": 3.3,
+          "sugarsG": 6.48,
+          "proteinG": 2.01,
+          "fatG": 0.15,
+          "sodiumMg": 36.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "168483",
+          "description": "Sweet potato, cooked, baked in skin, flesh, without salt"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 90,
+        "reliability": "medium",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (11 записів, які підсумовує рядок таблиці «Roasted sweet potato, mean of 11 studies»; середнє авторів — 86, діапазон 79–93). Усі вимірювання — ямайські сорти, запечені в шкірці на вугіллі; запікання в духовці окремо не вимірювали. Запікання дає високий ГІ (варений батат — 49).",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (11 entries covered by the table's row 'Roasted sweet potato, mean of 11 studies'; the authors' mean is 86, range 79–93). All measurements are Jamaican cultivars roasted in their skin over charcoal; oven baking wasn't measured separately. Roasting gives a high GI (boiled sweet potato is 49)."
+        },
+        "source": {
+          "dataset": "gi-2021-st1",
+          "entryId": "summary row; #1911–#1921",
+          "description": "Roasted sweet potato, mean of 11 studies — GI 86 (summary row). Entries used: #1911 86, #1912 81, #1913 93, #1914 90, #1915 79, #1916 85, #1917 89, #1918 91, #1919 87, #1920 85, #1921 82"
+        }
+      }
+    },
+    {
+      "id": "B0172",
+      "status": "active",
+      "category": "drinks",
+      "family": "tomato-juice",
+      "state": "processed",
+      "nameUk": "Сік томатний без солі",
+      "nameEn": "Tomato juice, canned, without salt added",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 17.0,
+          "carbsG": 3.53,
+          "fiberG": 0.4,
+          "sugarsG": 2.58,
+          "proteinG": 0.85,
+          "fatG": 0.29,
+          "sodiumMg": 10.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "170545",
+          "description": "Tomato juice, canned, without salt added"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 34,
+        "reliability": "medium",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (2 записи, Таблиця 1, метод ISO; діапазон 23–38, середнє 30). Два дослідження томатного соку без доданого цукру (Канада, Австралія).",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (2 entries, Table 1, ISO method; range 23–38, mean 30). Two studies of tomato juice without added sugar (Canada, Australia)."
+        },
+        "source": {
+          "dataset": "gi-2021-st1",
+          "entryId": "#1201, #1202",
+          "description": "#1201 Tomato juice, low sodium, President's Choice± Blue MenuTM (Loblaw Brands Limited, Canada)  — GI 23±6; #1202 Tomato juice, canned, no added sugar (Berri Ltd, Australia) (Australia, 2002) — GI 38±4"
+        }
+      }
+    },
+    {
+      "id": "B0173",
+      "status": "active",
+      "category": "pantry",
+      "family": "garlic",
+      "variant": "powder",
+      "state": "dried",
+      "nameUk": "Часник сушений (порошок)",
+      "nameEn": "Spices, garlic powder",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 331.0,
+          "carbsG": 72.73,
+          "fiberG": 9.0,
+          "sugarsG": 2.43,
+          "proteinG": 16.55,
+          "fatG": 0.73,
+          "sodiumMg": 60.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "171325",
+          "description": "Spices, garlic powder"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "unknown",
+        "value": null,
+        "source": null,
+        "reliability": "low",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Досліджень ГІ для сушеного часнику в таблицях 2021 року немає; його кладуть щіпками, тож на ГН страви він майже не впливає.",
+          "en": "The 2021 tables have no GI study of garlic powder; it's used by the pinch, so it barely affects a dish's GL."
+        }
+      }
+    },
+    {
+      "id": "B0174",
+      "status": "active",
+      "category": "legumes",
+      "family": "split-pea",
+      "state": "dry",
+      "nameUk": "Горох лущений (половинки), сухий",
+      "nameEn": "Peas, split, mature seeds, raw",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 364.0,
+          "carbsG": 61.63,
+          "fiberG": 22.2,
+          "sugarsG": 3.14,
+          "proteinG": 23.12,
+          "fatG": 3.89,
+          "sodiumMg": 5.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "172428",
+          "description": "Peas, green, split, mature seeds, raw"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 30,
+        "reliability": "low",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (2 записи, Таблиця 2, менш надійні методи; діапазон 25–32, середнє 28). Лише Таблиця 2: жовтий лущений горох, варений (запис USDA — зелений; вид той самий). Значення для звареного продукту; ГН від ваги сухого продукту рахує той самий вуглевод.",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (2 entries, Table 2, less robust methods; range 25–32, mean 28). Table 2 only: yellow split peas, boiled (the USDA entry is green; the same species). Value for the cooked food; GL from the dry weight counts the same carbohydrate."
+        },
+        "source": {
+          "dataset": "gi-2021-st2",
+          "entryId": "#3171, #3172",
+          "description": "#3171 Split peas, yellow, boiled 20 min (Nupack, Mississauga, Canada)18 Canada 1984- 1992 32±3 5 — GI 32±3; #3172 Split peas, yellow, dried, soaked overnight, boiled 55 min (UK, 2005) — GI 25±6"
+        }
+      }
+    },
+    {
+      "id": "B0175",
+      "status": "active",
+      "category": "legumes",
+      "family": "split-pea",
+      "state": "boiled",
+      "nameUk": "Горох лущений варений (пюре), без солі",
+      "nameEn": "Peas, split, mature seeds, boiled, without salt",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 118.0,
+          "carbsG": 21.1,
+          "fiberG": 8.3,
+          "sugarsG": 2.9,
+          "proteinG": 8.34,
+          "fatG": 0.39,
+          "sodiumMg": 2.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "172429",
+          "description": "Peas, split, mature seeds, cooked, boiled, without salt"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 30,
+        "reliability": "low",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Верхня оцінка: ¾ вимірювань не вищі за це значення (2 записи, Таблиця 2, менш надійні методи; діапазон 25–32, середнє 28). Лише Таблиця 2: жовтий лущений горох, варений (запис USDA — зелений; вид той самий).",
+          "en": "Upper estimate: ¾ of the measurements are at or below this value (2 entries, Table 2, less robust methods; range 25–32, mean 28). Table 2 only: yellow split peas, boiled (the USDA entry is green; the same species)."
+        },
+        "source": {
+          "dataset": "gi-2021-st2",
+          "entryId": "#3171, #3172",
+          "description": "#3171 Split peas, yellow, boiled 20 min (Nupack, Mississauga, Canada)18 Canada 1984- 1992 32±3 5 — GI 32±3; #3172 Split peas, yellow, dried, soaked overnight, boiled 55 min (UK, 2005) — GI 25±6"
+        }
+      }
+    },
+    {
+      "id": "B0176",
+      "status": "active",
+      "category": "meat",
+      "family": "chicken-breast",
+      "state": "raw",
+      "nameUk": "Куряче філе (грудка), сире",
+      "nameEn": "Chicken breast, meat only, raw",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 120.0,
+          "carbsG": 0.0,
+          "fiberG": 0.0,
+          "sugarsG": 0.0,
+          "proteinG": 22.5,
+          "fatG": 2.62,
+          "sodiumMg": 45.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "171077",
+          "description": "Chicken, broiler or fryers, breast, skinless, boneless, meat only, raw"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "notApplicable",
+        "value": null,
+        "source": null,
+        "reliability": "high",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Вуглеводів практично немає: ГІ не визначається, ГН дорівнює 0.",
+          "en": "Practically no carbohydrate: GI isn't defined and GL is 0."
+        }
+      }
+    },
+    {
+      "id": "B0177",
+      "status": "active",
+      "category": "meat",
+      "family": "chicken-breast",
+      "state": "baked",
+      "nameUk": "Куряче філе (грудка), запечене",
+      "nameEn": "Chicken breast, meat only, roasted",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 165.0,
+          "carbsG": 0.0,
+          "fiberG": 0.0,
+          "sugarsG": 0.0,
+          "proteinG": 31.02,
+          "fatG": 3.57,
+          "sodiumMg": 74.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "171477",
+          "description": "Chicken, broilers or fryers, breast, meat only, cooked, roasted"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "notApplicable",
+        "value": null,
+        "source": null,
+        "reliability": "high",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Вуглеводів практично немає: ГІ не визначається, ГН дорівнює 0.",
+          "en": "Practically no carbohydrate: GI isn't defined and GL is 0."
+        }
+      }
+    },
+    {
+      "id": "B0178",
+      "status": "active",
+      "category": "meat",
+      "family": "pork-fat",
+      "state": "raw",
+      "nameUk": "Сало свиняче, сире (без солі)",
+      "nameEn": "Pork, fresh, backfat, raw",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 812.0,
+          "carbsG": 0.0,
+          "fiberG": 0.0,
+          "sugarsG": 0.0,
+          "proteinG": 2.92,
+          "fatG": 88.69,
+          "sodiumMg": 11.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "167811",
+          "description": "Pork, fresh, backfat, raw"
+        },
+        "reliability": "medium",
+        "reason": {
+          "uk": "Найближчий запис USDA — див. примітку. Запис USDA — свіже несолоне сало. У солоному салі значно більше натрію — дивіться етикетку.",
+          "en": "The closest USDA entry — see the note. The USDA entry is fresh unsalted backfat. Salted сало has much more sodium — see the label."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "notApplicable",
+        "value": null,
+        "source": null,
+        "reliability": "high",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Вуглеводів практично немає: ГІ не визначається, ГН дорівнює 0.",
+          "en": "Practically no carbohydrate: GI isn't defined and GL is 0."
+        }
+      }
+    },
+    {
+      "id": "B0179",
+      "status": "active",
+      "category": "meat",
+      "family": "beef-heart",
+      "state": "raw",
+      "nameUk": "Серце яловиче, сире",
+      "nameEn": "Beef heart, raw",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 112.0,
+          "carbsG": 0.14,
+          "fiberG": 0.0,
+          "sugarsG": 0.0,
+          "proteinG": 17.72,
+          "fatG": 3.94,
+          "sodiumMg": 98.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "168625",
+          "description": "Beef, variety meats and by-products, heart, raw"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "notApplicable",
+        "value": null,
+        "source": null,
+        "reliability": "high",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Вуглеводів практично немає: ГІ не визначається, ГН дорівнює 0.",
+          "en": "Practically no carbohydrate: GI isn't defined and GL is 0."
+        }
+      }
+    },
+    {
+      "id": "B0180",
+      "status": "active",
+      "category": "meat",
+      "family": "beef-heart",
+      "state": "boiled",
+      "nameUk": "Серце яловиче варене",
+      "nameEn": "Beef heart, cooked, simmered",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 165.0,
+          "carbsG": 0.15,
+          "fiberG": 0.0,
+          "sugarsG": 0.0,
+          "proteinG": 28.48,
+          "fatG": 4.73,
+          "sodiumMg": 59.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "169448",
+          "description": "Beef, variety meats and by-products, heart, cooked, simmered"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "notApplicable",
+        "value": null,
+        "source": null,
+        "reliability": "high",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Вуглеводів практично немає: ГІ не визначається, ГН дорівнює 0.",
+          "en": "Practically no carbohydrate: GI isn't defined and GL is 0."
+        }
+      }
+    },
+    {
+      "id": "B0181",
+      "status": "active",
+      "category": "meat",
+      "family": "pork-heart",
+      "state": "raw",
+      "nameUk": "Серце свиняче, сире",
+      "nameEn": "Pork heart, raw",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 118.0,
+          "carbsG": 1.33,
+          "fiberG": 0.0,
+          "sugarsG": 0.0,
+          "proteinG": 17.27,
+          "fatG": 4.36,
+          "sodiumMg": 56.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "168267",
+          "description": "Pork, fresh, variety meats and by-products, heart, raw"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "notApplicable",
+        "value": null,
+        "source": null,
+        "reliability": "high",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Вуглеводів практично немає (1,3 г «за різницею», цукрів 0): ГІ не визначається, ГН дорівнює 0.",
+          "en": "Practically no carbohydrate (1.3 g \"by difference\", no sugars): GI isn't defined and GL is 0."
+        }
+      }
+    },
+    {
+      "id": "B0182",
+      "status": "active",
+      "category": "meat",
+      "family": "pork-heart",
+      "state": "boiled",
+      "nameUk": "Серце свиняче тушковане",
+      "nameEn": "Pork heart, cooked, braised",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 148.0,
+          "carbsG": 0.4,
+          "fiberG": 0.0,
+          "sugarsG": 0,
+          "proteinG": 23.6,
+          "fatG": 5.05,
+          "sodiumMg": 35.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "168268",
+          "description": "Pork, fresh, variety meats and by-products, heart, cooked, braised"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані. USDA має свиняче серце лише тушковане (braised), не варене; за складом вони близькі.",
+          "en": "The USDA entry describes exactly this food in this state. USDA has pork heart only braised, not boiled; they're close in composition."
+        },
+        "verified": "2026-10-09",
+        "unknown": [
+          "sugarsG"
+        ]
+      },
+      "gi": {
+        "status": "notApplicable",
+        "value": null,
+        "source": null,
+        "reliability": "high",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Вуглеводів практично немає: ГІ не визначається, ГН дорівнює 0.",
+          "en": "Practically no carbohydrate: GI isn't defined and GL is 0."
+        }
+      }
+    },
+    {
+      "id": "B0183",
+      "status": "active",
+      "category": "fish",
+      "family": "shrimp",
+      "state": "raw",
+      "nameUk": "Креветки сирі",
+      "nameEn": "Shrimp, raw",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 85.0,
+          "carbsG": 0.0,
+          "fiberG": 0,
+          "sugarsG": 0,
+          "proteinG": 20.1,
+          "fatG": 0.51,
+          "sodiumMg": 119.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "175179",
+          "description": "Crustaceans, shrimp, raw"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09",
+        "unknown": [
+          "fiberG",
+          "sugarsG"
+        ]
+      },
+      "gi": {
+        "status": "notApplicable",
+        "value": null,
+        "source": null,
+        "reliability": "high",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Вуглеводів практично немає: ГІ не визначається, ГН дорівнює 0.",
+          "en": "Practically no carbohydrate: GI isn't defined and GL is 0."
+        }
+      }
+    },
+    {
+      "id": "B0184",
+      "status": "active",
+      "category": "fish",
+      "family": "shrimp",
+      "state": "boiled",
+      "nameUk": "Креветки варені",
+      "nameEn": "Shrimp, cooked",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 99.0,
+          "carbsG": 0.2,
+          "fiberG": 0,
+          "sugarsG": 0,
+          "proteinG": 23.98,
+          "fatG": 0.28,
+          "sodiumMg": 111.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "175180",
+          "description": "Crustaceans, shrimp, cooked"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09",
+        "unknown": [
+          "fiberG",
+          "sugarsG"
+        ]
+      },
+      "gi": {
+        "status": "notApplicable",
+        "value": null,
+        "source": null,
+        "reliability": "high",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Вуглеводів практично немає: ГІ не визначається, ГН дорівнює 0.",
+          "en": "Practically no carbohydrate: GI isn't defined and GL is 0."
+        }
+      }
+    },
+    {
+      "id": "B0185",
+      "status": "active",
+      "category": "fish",
+      "family": "tuna",
+      "variant": "canned-water",
+      "state": "canned",
+      "nameUk": "Тунець консервований у власному соку",
+      "nameEn": "Tuna, light, canned in water, drained",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 116.0,
+          "carbsG": 0.0,
+          "fiberG": 0.0,
+          "sugarsG": 0.0,
+          "proteinG": 25.51,
+          "fatG": 0.82,
+          "sodiumMg": 0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "171986",
+          "description": "Fish, tuna, light, canned in water, without salt, drained solids"
+        },
+        "reliability": "medium",
+        "reason": {
+          "uk": "Найближчий запис USDA — див. примітку. USDA має легкий тунець у воді лише без солі, а в звичайних консервах сіль є, тому натрій позначено як невідомий — дивіться етикетку. Решта значень не залежить від солі.",
+          "en": "The closest USDA entry — see the note. USDA has light tuna in water only without salt, while ordinary tins are salted, so sodium is marked unknown — see the label. The other values don't depend on salt."
+        },
+        "verified": "2026-10-09",
+        "unknown": [
+          "sodiumMg"
+        ]
+      },
+      "gi": {
+        "status": "notApplicable",
+        "value": null,
+        "source": null,
+        "reliability": "high",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Вуглеводів практично немає: ГІ не визначається, ГН дорівнює 0.",
+          "en": "Practically no carbohydrate: GI isn't defined and GL is 0."
+        }
+      }
+    },
+    {
+      "id": "B0186",
+      "status": "active",
+      "category": "fish",
+      "family": "sardine",
+      "variant": "tomato",
+      "state": "canned",
+      "nameUk": "Сардини в томатному соусі (консерви)",
+      "nameEn": "Sardines, canned in tomato sauce, drained, with bone",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 185.0,
+          "carbsG": 0.54,
+          "fiberG": 0.1,
+          "sugarsG": 0.43,
+          "proteinG": 20.86,
+          "fatG": 10.45,
+          "sodiumMg": 414.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "175140",
+          "description": "Fish, sardine, Pacific, canned in tomato sauce, drained solids with bone"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "notApplicable",
+        "value": null,
+        "source": null,
+        "reliability": "high",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Вуглеводів практично немає: ГІ не визначається, ГН дорівнює 0.",
+          "en": "Practically no carbohydrate: GI isn't defined and GL is 0."
+        }
+      }
+    },
+    {
+      "id": "B0187",
+      "status": "active",
+      "category": "eggs",
+      "family": "quail-egg",
+      "state": "raw",
+      "nameUk": "Яйце перепелине",
+      "nameEn": "Egg, quail, whole, raw",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 158.0,
+          "carbsG": 0.41,
+          "fiberG": 0.0,
+          "sugarsG": 0.4,
+          "proteinG": 13.05,
+          "fatG": 11.09,
+          "sodiumMg": 141.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "172191",
+          "description": "Egg, quail, whole, fresh, raw"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "notApplicable",
+        "value": null,
+        "source": null,
+        "reliability": "high",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Вуглеводів практично немає: ГІ не визначається, ГН дорівнює 0.",
+          "en": "Practically no carbohydrate: GI isn't defined and GL is 0."
+        }
+      }
+    },
+    {
+      "id": "B0188",
+      "status": "active",
+      "category": "dairy",
+      "family": "brie",
+      "state": "processed",
+      "nameUk": "Сир брі",
+      "nameEn": "Cheese, brie",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 334.0,
+          "carbsG": 0.45,
+          "fiberG": 0.0,
+          "sugarsG": 0.45,
+          "proteinG": 20.75,
+          "fatG": 27.68,
+          "sodiumMg": 629.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "172177",
+          "description": "Cheese, brie"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "notApplicable",
+        "value": null,
+        "source": null,
+        "reliability": "high",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Вуглеводів практично немає: ГІ не визначається, ГН дорівнює 0.",
+          "en": "Practically no carbohydrate: GI isn't defined and GL is 0."
+        }
+      }
+    },
+    {
+      "id": "B0189",
+      "status": "active",
+      "category": "dairy",
+      "family": "buttermilk",
+      "state": "fermented",
+      "nameUk": "Кисляк (кисле молоко)",
+      "nameEn": "Buttermilk, whole",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 62.0,
+          "carbsG": 4.88,
+          "fiberG": 0.0,
+          "sugarsG": 4.88,
+          "proteinG": 3.21,
+          "fatG": 3.31,
+          "sodiumMg": 105.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "172225",
+          "description": "Milk, buttermilk, fluid, whole"
+        },
+        "reliability": "medium",
+        "reason": {
+          "uk": "Найближчий запис USDA — див. примітку. Запис USDA — незбиране сквашене молоко (buttermilk); домашній кисляк близький за складом, жирність буває різною.",
+          "en": "The closest USDA entry — see the note. The USDA entry is whole cultured buttermilk; homemade кисляк is close in composition, fat content varies."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "conventional",
+        "value": 15,
+        "source": null,
+        "reliability": "low",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Вуглеводів дуже мало, тому ГІ не вимірюють; умовне значення 15, щоб ці вуглеводи все одно враховувалися в ГН.",
+          "en": "Too little carbohydrate for GI to be measured; a conventional value of 15 so these carbohydrates still count in GL."
+        }
+      }
+    },
+    {
+      "id": "B0190",
+      "status": "active",
+      "category": "dairy",
+      "family": "greek-yogurt",
+      "state": "fermented",
+      "nameUk": "Йогурт грецький нежирний (≈3%)",
+      "nameEn": "Yogurt, Greek, plain, lowfat",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 73.0,
+          "carbsG": 3.94,
+          "fiberG": 0.0,
+          "sugarsG": 3.56,
+          "proteinG": 9.95,
+          "fatG": 1.92,
+          "sodiumMg": 34.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "170903",
+          "description": "Yogurt, Greek, plain, lowfat"
+        },
+        "reliability": "medium",
+        "reason": {
+          "uk": "Найближчий запис USDA — див. примітку. Запис USDA — нежирний грецький йогурт (близько 2% жиру); жирність українських буває різною, дивіться етикетку.",
+          "en": "The closest USDA entry — see the note. The USDA entry is lowfat Greek yogurt (about 2% fat); Ukrainian ones vary in fat, see the label."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "measured",
+        "value": 12,
+        "reliability": "low",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Значення запису (Таблиця 2, менш надійні методи). Одне дослідження грецького йогурту (Австралія), менш надійний метод.",
+          "en": "The entry's value (Table 2, less robust methods). A single study of Greek-style yogurt (Australia), less robust method."
+        },
+        "source": {
+          "dataset": "gi-2021-st2",
+          "entryId": "#2881",
+          "description": "#2881 Greek Style yoghurt, Premium blend (Jalna Dairy Foods, Australia) (Australia, 2004) — GI 12±4"
+        }
+      }
+    },
+    {
+      "id": "B0191",
+      "status": "active",
+      "category": "pantry",
+      "family": "soy-sauce",
+      "state": "fermented",
+      "nameUk": "Соєвий соус",
+      "nameEn": "Soy sauce (shoyu)",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 53.0,
+          "carbsG": 4.93,
+          "fiberG": 0.8,
+          "sugarsG": 0.4,
+          "proteinG": 8.14,
+          "fatG": 0.57,
+          "sodiumMg": 5493.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "174277",
+          "description": "Soy sauce made from soy and wheat (shoyu)"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "unknown",
+        "value": null,
+        "source": null,
+        "reliability": "low",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Досліджень ГІ для соєвого соусу в таблицях 2021 року немає; його кладуть ложками, тож на ГН страви він майже не впливає (натрій — суттєвий).",
+          "en": "The 2021 tables have no GI study of soy sauce; it's used by the spoonful, so it barely affects a dish's GL (its sodium matters)."
+        }
+      }
+    },
+    {
+      "id": "B0192",
+      "status": "active",
+      "category": "pantry",
+      "family": "olive",
+      "variant": "black",
+      "state": "canned",
+      "nameUk": "Оливки чорні (маслини), консервовані",
+      "nameEn": "Olives, ripe, canned",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 116.0,
+          "carbsG": 6.04,
+          "fiberG": 1.6,
+          "sugarsG": 0.0,
+          "proteinG": 0.84,
+          "fatG": 10.9,
+          "sodiumMg": 735.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "169094",
+          "description": "Olives, ripe, canned (small-extra large)"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "unknown",
+        "value": null,
+        "source": null,
+        "reliability": "low",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Досліджень ГІ для оливок у таблицях 2021 року немає; вуглеводів у них мало, і це переважно клітковина.",
+          "en": "The 2021 tables have no GI study of olives; they have little carbohydrate, mostly fibre."
+        }
+      }
+    },
+    {
+      "id": "B0193",
+      "status": "active",
+      "category": "pantry",
+      "family": "olive",
+      "variant": "green",
+      "state": "canned",
+      "nameUk": "Оливки зелені, консервовані",
+      "nameEn": "Olives, pickled, green",
+      "nutrients": {
+        "per100g": {
+          "caloriesKcal": 145.0,
+          "carbsG": 3.84,
+          "fiberG": 3.3,
+          "sugarsG": 0.54,
+          "proteinG": 1.03,
+          "fatG": 15.32,
+          "sodiumMg": 1556.0
+        },
+        "source": {
+          "dataset": "usda-sr-legacy",
+          "entryId": "169096",
+          "description": "Olives, pickled, canned or bottled, green"
+        },
+        "reliability": "high",
+        "reason": {
+          "uk": "Запис USDA точно описує цей продукт у цьому стані.",
+          "en": "The USDA entry describes exactly this food in this state."
+        },
+        "verified": "2026-10-09"
+      },
+      "gi": {
+        "status": "unknown",
+        "value": null,
+        "source": null,
+        "reliability": "low",
+        "verified": "2026-10-09",
+        "reason": {
+          "uk": "Досліджень ГІ для оливок у таблицях 2021 року немає; вуглеводів у них мало, і це переважно клітковина.",
+          "en": "The 2021 tables have no GI study of olives; they have little carbohydrate, mostly fibre."
+        }
+      }
     }
   ]
 }

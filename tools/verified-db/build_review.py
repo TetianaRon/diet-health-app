@@ -150,6 +150,12 @@ CHANGES["B0127"] = ("Новий запис (2.2.1): мед — з ГІ за зв
 for _id in DENSITY_IDS:
     CHANGES[_id] = ("Додано співвідношення мілілітрів і грамів з даних USDA, щоб записувати в мл (значення не змінювалися).", True)
 
+# 2.3 (2026-10-09): mom's verified items not yet in the database, with raw/cooked partners.
+ROUND9_AT = "2026-10-09T21:00:00Z"
+MOM_IDS = [f"B{n:04d}" for n in range(134, 194)]
+for _id in MOM_IDS:
+    CHANGES[_id] = ("Новий запис (2.3): продукти зі старої таблиці мами, перевірені за USDA, і їхні сирі чи варені пари.", True)
+
 FIELD_MAP = {"carbsG": "carbsG", "fiberG": "fiberG", "sugarsG": "sugarsG", "proteinG": "proteinG", "fatG": "fatG", "caloriesKcal": "caloriesKcal", "sodiumMg": "sodiumMg"}
 
 
@@ -179,7 +185,7 @@ def main():
     for e in db["entries"]:
         o = old.get(e["id"])
         change = CHANGES.get(e["id"])
-        changed_at = ROUND8_AT if e["id"] in ROUND8_IDS else ROUND7_AT if e["id"] in ROUND7_IDS else ROUND6_AT if e["id"] in ROUND6_IDS else ROUND5_AT if e["id"] in ROUND5_IDS else ROUND_AT
+        changed_at = ROUND9_AT if e["id"] in MOM_IDS else ROUND8_AT if e["id"] in ROUND8_IDS else ROUND7_AT if e["id"] in ROUND7_IDS else ROUND6_AT if e["id"] in ROUND6_IDS else ROUND5_AT if e["id"] in ROUND5_IDS else ROUND_AT
         entries.append({**e, "oldName": o["name"] if o else None, "oldGi": o["gi"] if o else None, "old": o["vals"] if o else None,
                         **({"change": change[0], "reopen": change[1], "changedAt": changed_at} if change else {})})
     data = {"sources": db["sources"], "categories": db["categories"], "entries": entries, "questions": QUESTIONS, "roundAt": ROUND_AT}
