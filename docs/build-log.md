@@ -548,3 +548,5 @@ Answering "did we review only products?": the 69 home dishes were on the page bu
 - **Not checked:** composing a marked dish clears the mark (a one-line change in the recipe save); the full file on a sheet (her sheet is the first real run).
 - **To do after the release:** the developer runs the import on mom's sheet from `https://track-my-meals.roncreator.com/?import` with `mom-import.json`.
 - 472 tests, `tsc -b`, `npm run build`. Version 2.3.1, versionCode 37.
+
+✅ **2.3.1 released 2026-10-10:** main pushed (web) and the bundle uploaded to the internal testing track (versionCode 37). The import on mom's sheet waits until her phone has 2.3.1 (developer).
