@@ -4,13 +4,18 @@ import { formatDecimal as n } from "../lib/numberFormat";
 type Basis = "100g" | "piece" | "100ml";
 /** «на 100 г», «на 1 шт.», «на 100 мл» (2.1.1). */
 const perText = (basis: Basis) => (basis === "piece" ? "на 1 шт." : basis === "100ml" ? "на 100 мл" : "на 100 г");
-/** «1 продукт», «3 продукти», «7 продуктів», «12 продуктів» — the nominative count form. */
-function productsCount(n: number): string {
+/** «1 рядок», «3 рядки», «7 рядків», «12 рядків» — a number with its nominative count form. */
+function countForm(n: number, one: string, few: string, many: string): string {
   const tens = n % 100;
   const ones = n % 10;
-  if (ones === 1 && tens !== 11) return `${n} продукт`;
-  if (ones >= 2 && ones <= 4 && (tens < 12 || tens > 14)) return `${n} продукти`;
-  return `${n} продуктів`;
+  if (ones === 1 && tens !== 11) return `${n} ${one}`;
+  if (ones >= 2 && ones <= 4 && (tens < 12 || tens > 14)) return `${n} ${few}`;
+  return `${n} ${many}`;
+}
+
+/** «1 продукт», «3 продукти», «7 продуктів». */
+function productsCount(n: number): string {
+  return countForm(n, "продукт", "продукти", "продуктів");
 }
 
 export const uk = {
@@ -34,14 +39,14 @@ export const uk = {
     copies: (n: number) => `Продукти з бази, які стануть її: ${n}`,
     newItems: (n: number) => `Нові записи: ${n}`,
     recipes: (n: number) => `Рецепти (значення розраховано з продуктів): ${n}`,
-    lines: "рядків",
+    lines: (n: number) => countForm(n, "рядок", "рядки", "рядків"),
     duplicates: (n: number) => `Уже є в таблиці: ${n}`,
     hers: (name: string) => `у неї: «${name}»`,
     keepHers: "Залишити її запис",
     replace: "Замінити значеннями з файлу",
     duplicatesHint: "Без вибору залишається її запис. Заміна зберігає назву й ідентифікатор, тож записані прийоми їжі не зміняться.",
     backupHint: "Перед записом копія всієї таблиці зберігається в її Google Drive.",
-    run: (n: number, sheet: string) => `Імпортувати ${n} записів у «${sheet}»`,
+    run: (n: number, sheet: string) => `Імпортувати ${countForm(n, "запис", "записи", "записів")} у «${sheet}»`,
     working: "Імпортуємо…",
     done: (copies: number, added: number, recipes: number, replaced: number) =>
       `Готово: продуктів із бази — ${copies}, нових записів — ${added}, рецептів — ${recipes}, замінено — ${replaced}. На її пристроях з'явиться повідомлення після синхронізації.`,

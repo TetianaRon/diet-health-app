@@ -28,7 +28,7 @@ function stamp(d = new Date()): string {
 
 export default function ImportScreen() {
   const { signedIn, localMode } = useAuth();
-  const { hasSpreadsheet, spreadsheetName, reloadScreens } = useSheetHealth();
+  const { hasSpreadsheet, spreadsheetName } = useSheetHealth();
   const [file, setFile] = useState<ImportFile | null>(null);
   const [problems, setProblems] = useState<string[]>([]);
   const [current, setCurrent] = useState<{ ingredients: Ingredient[]; dishes: Dish[] } | null>(null);
@@ -87,8 +87,9 @@ export default function ImportScreen() {
       const done = await runImport(file, plan, replace, current.ingredients, current.dishes);
       await syncNow();
       await writeImportNotice(file.notice);
+      // No reloadScreens(): it remounts this screen and the result would be lost; the
+      // other screens aren't shown in import mode and read the sheet when opened.
       setResult(done);
-      reloadScreens();
     } catch (err) {
       setError(t.failed(err instanceof Error ? err.message : String(err)));
     } finally {
@@ -154,7 +155,7 @@ export default function ImportScreen() {
             <ul>
               {plan.newRecipes.map((recipe) => (
                 <li key={recipe.key}>
-                  <strong>{recipe.nameUk}</strong> — {recipe.lines.length} {t.lines}
+                  <strong>{recipe.nameUk}</strong> — {t.lines(recipe.lines.length)}
                 </li>
               ))}
             </ul>
