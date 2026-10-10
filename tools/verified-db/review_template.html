@@ -112,8 +112,8 @@ textarea { font: inherit; font-size: 0.9rem; width: 100%; min-height: 60px; padd
       <span>Жовтим виділено значення, що змінилися більш ніж на 10%.</span>
     </div>
     <div class="filters" role="group" aria-label="Фільтр">
-      <button class="chip" data-filter="all" aria-pressed="true">Усі</button>
-      <button class="chip" data-filter="open" aria-pressed="false">Ще не вирішені</button>
+      <button class="chip" data-filter="all" aria-pressed="false">Усі</button>
+      <button class="chip" data-filter="open" aria-pressed="true">Ще не вирішені</button>
       <button class="chip" data-filter="rework" aria-pressed="false">На доопрацювання</button>
       <button class="chip" data-filter="low" aria-pressed="false">З низькою надійністю</button>
     </div>
@@ -136,7 +136,7 @@ const ENTRY = Object.fromEntries(DATA.entries.map((e) => [e.id, e]));
 const isStale = (id) => { const d = decisions[id], e = ENTRY[id]; return !!d && !!e && !!e.reopen && !!d.at && d.at < (e.changedAt || DATA.roundAt); };
 const isDecided = (id) => { const d = decisions[id]; return !!d && !(d.choice === "rework" && d.reply) && !isStale(id); };
 const answers = {};   // question id -> choice
-let db = null, filter = "all";
+let db = null, filter = "open"; // opens on what still needs a decision: with 200+ entries, «Усі» is slow
 
 const el = (tag, attrs = {}, ...kids) => {
   const n = document.createElement(tag);
