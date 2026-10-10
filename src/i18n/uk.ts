@@ -22,6 +22,34 @@ export const uk = {
     medications: "Ліки",
     settings: "Налаштування",
   },
+  // The developer import (2.3.1): a hidden screen (?import), not a feature.
+  importTool: {
+    title: "Імпорт продуктів (інструмент розробника)",
+    signIn: "Увійдіть через Google і підключіть таблицю, у яку імпортувати.",
+    noSheet: "Спершу підключіть таблицю в Налаштуваннях.",
+    sheet: (name: string) => `Імпорт у таблицю «${name}». Перевірте, що це та таблиця.`,
+    intro: "Файл готуємо ми; спершу показано, що буде зроблено, і нічого не записується, доки ви не натиснете кнопку внизу.",
+    pickFile: "Файл імпорту (.json)",
+    invalid: "Файл не можна імпортувати:",
+    copies: (n: number) => `Продукти з бази, які стануть її: ${n}`,
+    newItems: (n: number) => `Нові записи: ${n}`,
+    recipes: (n: number) => `Рецепти (значення розраховано з продуктів): ${n}`,
+    lines: "рядків",
+    duplicates: (n: number) => `Уже є в таблиці: ${n}`,
+    hers: (name: string) => `у неї: «${name}»`,
+    keepHers: "Залишити її запис",
+    replace: "Замінити значеннями з файлу",
+    duplicatesHint: "Без вибору залишається її запис. Заміна зберігає назву й ідентифікатор, тож записані прийоми їжі не зміняться.",
+    backupHint: "Перед записом копія всієї таблиці зберігається в її Google Drive.",
+    run: (n: number, sheet: string) => `Імпортувати ${n} записів у «${sheet}»`,
+    working: "Імпортуємо…",
+    done: (copies: number, added: number, recipes: number, replaced: number) =>
+      `Готово: продуктів із бази — ${copies}, нових записів — ${added}, рецептів — ${recipes}, замінено — ${replaced}. На її пристроях з'явиться повідомлення після синхронізації.`,
+    failed: (reason: string) => `Імпорт зупинився: ${reason}. Копію таблиці збережено до запису; що встигло записатися — видно в «Продуктах».`,
+  },
+  importNotice: {
+    dismiss: "Зрозуміло",
+  },
   // The verified database as sets (2.2): her «Продукти» hold only her own rows.
   databaseSets: {
     addButton: "+ Додати з бази",
