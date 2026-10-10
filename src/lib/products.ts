@@ -56,6 +56,10 @@ export const PRODUCTS_HEADERS = [
   // The database values a copy was made from (2.2, databaseItems.ts): while her copy still
   // holds them, a later database correction is offered to it.
   "BasedOnValues",
+  // An imported dish kept at her own values until she composes it (2.3.1): «скласти рецепт».
+  "RecipeNeeded",
+  // A note to check, e.g. her calories differ strongly from an estimate (2.3.1).
+  "CheckNote",
 ] as const;
 
 export const PRODUCTS_COLUMN_INDEX: ColumnIndex = buildColumnIndex(PRODUCTS_HEADERS);

@@ -976,6 +976,8 @@ function ComposeDishForm({
         source: existingDish?.source ?? "manual",
         giVerified: giVerified && !unknownFields.includes("gi"),
         unknownFields,
+        // Composed from a recipe now: «скласти рецепт» and its note are done (2.3.1).
+        ...(refs.length > 0 ? { recipeNeeded: false, checkNote: "" } : {}),
       };
       const glycemicFlag = existingDish?.glycemicFlag ?? "none";
       if (existingDish && !isBuiltInId(existingDish.id)) {
@@ -1163,8 +1165,8 @@ function ComposeDishForm({
 // item, typed or composed, with filter chips by label; one editor where
 // «Значення: вказані / за рецептом» picks the form. Switching an existing item
 // keeps its ID — the save writes the other side's fields to the same row.
-type ListFilter = "all" | "favorite" | LabelKey | "recipe";
-const FILTERS: ListFilter[] = ["all", "favorite", "ingredient", "dish", "drink", "sauce", "snack", "recipe"];
+type ListFilter = "all" | "favorite" | "needsRecipe" | LabelKey | "recipe";
+const FILTERS: ListFilter[] = ["all", "favorite", "needsRecipe", "ingredient", "dish", "drink", "sauce", "snack", "recipe"];
 type Editing = { mode: "typed"; item: Ingredient } | { mode: "recipe"; item: Dish };
 
 /** A typed item seen as a composed one with an empty recipe (same ID) — for «Значення: за рецептом». */
@@ -1451,14 +1453,17 @@ export default function FoodsScreen() {
   const availableIngredients = mergeWithBuiltInFoods(ingredients ?? []);
   const availableDishes = dishes ?? [];
 
-  const matchesFilter = (labels: LabelKey[] | undefined, composed: boolean, favorite = false) =>
-    filter === "all" || (filter === "favorite" ? favorite : filter === "recipe" ? composed : (labels ?? []).includes(filter));
+  const matchesFilter = (labels: LabelKey[] | undefined, composed: boolean, favorite = false, needsRecipe = false) =>
+    filter === "all" ||
+    (filter === "favorite" ? favorite : filter === "needsRecipe" ? needsRecipe : filter === "recipe" ? composed : (labels ?? []).includes(filter));
   // Composed items first (what most meals are), then typed ones — favourites first while browsing, best match first while searching (1.9).
-  const shownDishes = searchFoods(search, availableDishes, () => null).filter((d) => matchesFilter(d.labels, true, d.favorite));
+  const shownDishes = searchFoods(search, availableDishes, () => null).filter((d) => matchesFilter(d.labels, true, d.favorite, d.recipeNeeded));
   // Her «Продукти» are her own rows (2.2); the database comes in as sets, or from a search.
   const searchedIngredients = (
     search.trim() ? searchFoods(search, availableIngredients, (i) => verifiedEntry(i.basedOn || i.id)) : sortFavoritesFirst(availableIngredients)
-  ).filter((i) => matchesFilter(i.labels, false, i.favorite));
+  ).filter((i) => matchesFilter(i.labels, false, i.favorite, i.recipeNeeded));
+  // «Скласти рецепт» is offered only while some item still needs a recipe (2.3.1).
+  const anyNeedsRecipe = [...availableDishes, ...availableIngredients].some((item) => item.recipeNeeded);
   const shownIngredients = searchedIngredients.filter((i) => !isBuiltInId(i.id));
   const databaseMatches = search.trim() && filter !== "favorite" ? searchedIngredients.filter((i) => isBuiltInId(i.id)) : [];
   const coveredIds = coveredDatabaseIds(ingredients ?? []);
@@ -1532,6 +1537,8 @@ export default function FoodsScreen() {
         />
       )}
 
+      {editing?.item.recipeNeeded && <p className="food-form-notice">{uk.foods.needsRecipe.hint}</p>}
+      {editing?.item.checkNote && <p className="glycemic-hint">{editing.item.checkNote}</p>}
       {formMode && (
         <>
           {canSwitch && <ValuesModeSwitch mode={formMode} onChange={switchMode} />}
@@ -1640,7 +1647,7 @@ export default function FoodsScreen() {
             onChange={(e) => setSearch(e.target.value)}
           />
           <div className="food-filters" role="group" aria-label={uk.foods.filters.label}>
-            {FILTERS.map((f) => (
+            {FILTERS.filter((f) => f !== "needsRecipe" || anyNeedsRecipe || filter === "needsRecipe").map((f) => (
               <button key={f} type="button" className={filter === f ? "food-subtab active" : "food-subtab"} aria-pressed={filter === f} onClick={() => setFilter(f)}>
                 {uk.foods.filters[f]}
               </button>
@@ -1679,6 +1686,7 @@ export default function FoodsScreen() {
                     <span>
                       <strong>{dish.nameUk}</strong> {dish.nameEn && <span className="food-name-en">({dish.nameEn})</span>} — {foodMetaText(dish)}
                       {dish.basis === "100g" && ` (${uk.foods.pack.per("100g")})`} <span className="food-recipe-mark">{uk.foods.recipeMark}</span>
+                      {dish.recipeNeeded && <span className="food-recipe-mark"> · {uk.foods.needsRecipe.mark}</span>}
                     </span>
                     <div className="food-list-actions">
                       <button type="button" className="edit-toggle" onClick={() => startEditing({ mode: "recipe", item: dish })} aria-label={uk.dishes.editLabel} title={uk.dishes.editLabel}>
@@ -1705,6 +1713,7 @@ export default function FoodsScreen() {
                     </div>
                   </div>
                   {containsFlagged && <p className="glycemic-hint">{uk.dishes.containsFlaggedIngredientHint}</p>}
+                  {dish.checkNote && <p className="glycemic-hint">{dish.checkNote}</p>}
                   {dish.glycemicFlag !== "none" && dish.ingredients.length > 0 && (
                     <div className="dish-ingredient-flags">
                       <p className="food-form-hint">{uk.dishes.flagIngredientsPrompt.title}</p>
@@ -1741,6 +1750,8 @@ export default function FoodsScreen() {
                   <span>
                     <strong>{ingredient.nameUk}</strong> {ingredient.nameEn && <span className="food-name-en">({ingredient.nameEn})</span>} —{" "}
                     {foodMetaText(ingredient, entry ?? giEntry)} <SourceBadge entry={entry} giEntry={giEntry} name={ingredient.nameUk} onOpen={openInfo} />
+                    {ingredient.recipeNeeded && <span className="food-recipe-mark"> · {uk.foods.needsRecipe.mark}</span>}
+                    {ingredient.checkNote && <span className="glycemic-hint"> {ingredient.checkNote}</span>}
                   </span>
                   <div className="food-list-actions">
                     <button type="button" className="edit-toggle" onClick={() => startEditing({ mode: "typed", item: ingredient })} aria-label={uk.foods.editLabel} title={uk.foods.editLabel}>

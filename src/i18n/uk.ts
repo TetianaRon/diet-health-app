@@ -4,13 +4,18 @@ import { formatDecimal as n } from "../lib/numberFormat";
 type Basis = "100g" | "piece" | "100ml";
 /** «на 100 г», «на 1 шт.», «на 100 мл» (2.1.1). */
 const perText = (basis: Basis) => (basis === "piece" ? "на 1 шт." : basis === "100ml" ? "на 100 мл" : "на 100 г");
-/** «1 продукт», «3 продукти», «7 продуктів», «12 продуктів» — the nominative count form. */
-function productsCount(n: number): string {
+/** «1 рядок», «3 рядки», «7 рядків», «12 рядків» — a number with its nominative count form. */
+function countForm(n: number, one: string, few: string, many: string): string {
   const tens = n % 100;
   const ones = n % 10;
-  if (ones === 1 && tens !== 11) return `${n} продукт`;
-  if (ones >= 2 && ones <= 4 && (tens < 12 || tens > 14)) return `${n} продукти`;
-  return `${n} продуктів`;
+  if (ones === 1 && tens !== 11) return `${n} ${one}`;
+  if (ones >= 2 && ones <= 4 && (tens < 12 || tens > 14)) return `${n} ${few}`;
+  return `${n} ${many}`;
+}
+
+/** «1 продукт», «3 продукти», «7 продуктів». */
+function productsCount(n: number): string {
+  return countForm(n, "продукт", "продукти", "продуктів");
 }
 
 export const uk = {
@@ -21,6 +26,34 @@ export const uk = {
     foods: "Продукти",
     medications: "Ліки",
     settings: "Налаштування",
+  },
+  // The developer import (2.3.1): a hidden screen (?import), not a feature.
+  importTool: {
+    title: "Імпорт продуктів (інструмент розробника)",
+    signIn: "Увійдіть через Google і підключіть таблицю, у яку імпортувати.",
+    noSheet: "Спершу підключіть таблицю в Налаштуваннях.",
+    sheet: (name: string) => `Імпорт у таблицю «${name}». Перевірте, що це та таблиця.`,
+    intro: "Файл готуємо ми; спершу показано, що буде зроблено, і нічого не записується, доки ви не натиснете кнопку внизу.",
+    pickFile: "Файл імпорту (.json)",
+    invalid: "Файл не можна імпортувати:",
+    copies: (n: number) => `Продукти з бази, які стануть її: ${n}`,
+    newItems: (n: number) => `Нові записи: ${n}`,
+    recipes: (n: number) => `Рецепти (значення розраховано з продуктів): ${n}`,
+    lines: (n: number) => countForm(n, "рядок", "рядки", "рядків"),
+    duplicates: (n: number) => `Уже є в таблиці: ${n}`,
+    hers: (name: string) => `у неї: «${name}»`,
+    keepHers: "Залишити її запис",
+    replace: "Замінити значеннями з файлу",
+    duplicatesHint: "Без вибору залишається її запис. Заміна зберігає назву й ідентифікатор, тож записані прийоми їжі не зміняться.",
+    backupHint: "Перед записом копія всієї таблиці зберігається в її Google Drive.",
+    run: (n: number, sheet: string) => `Імпортувати ${countForm(n, "запис", "записи", "записів")} у «${sheet}»`,
+    working: "Імпортуємо…",
+    done: (copies: number, added: number, recipes: number, replaced: number) =>
+      `Готово: продуктів із бази — ${copies}, нових записів — ${added}, рецептів — ${recipes}, замінено — ${replaced}. На її пристроях з'явиться повідомлення після синхронізації.`,
+    failed: (reason: string) => `Імпорт зупинився: ${reason}. Копію таблиці збережено до запису; що встигло записатися — видно в «Продуктах».`,
+  },
+  importNotice: {
+    dismiss: "Зрозуміло",
   },
   // The verified database as sets (2.2): her «Продукти» hold only her own rows.
   databaseSets: {
@@ -433,10 +466,16 @@ export const uk = {
   foods: {
     title: "Продукти",
     // One list since 2.1 (FoodsScreen.tsx).
+    // Imported dishes kept at her own values until composed (2.3.1).
+    needsRecipe: {
+      mark: "скласти рецепт",
+      hint: "Значення цієї страви — з вашої старої таблиці. Щоб уточнити їх, складіть рецепт: оберіть угорі «Значення: за рецептом» і додайте продукти. Після збереження позначка зникне.",
+    },
     filters: {
       label: "Показати",
       all: "Усі",
       favorite: "Улюблені",
+      needsRecipe: "Скласти рецепт",
       ingredient: "Інгредієнти",
       dish: "Страви",
       drink: "Напої",
@@ -831,6 +870,8 @@ export const uk = {
       DeletedAt: "Видалено",
       BasedOn: "Копія вбудованого",
       BasedOnValues: "Значення бази на час копіювання",
+      RecipeNeeded: "Потрібно скласти рецепт",
+      CheckNote: "Примітка для перевірки",
       GiFrom: "ГІ з бази",
       ItemId: "Ідентифікатор продукту/страви",
       Name: "Назва",

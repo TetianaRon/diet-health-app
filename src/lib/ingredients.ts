@@ -72,6 +72,10 @@ export interface Ingredient {
   densityGrams?: number | null;
   // The database values this copy was made from (2.2, `valuesFingerprint`); "" or absent when unknown.
   basedOnValues?: string;
+  // «Скласти рецепт» (2.3.1): an imported dish kept at her own values until she composes it; undefined = not read.
+  recipeNeeded?: boolean;
+  // A note shown with the item, e.g. «калорії сильно відрізняються від оцінки…» (2.3.1); "" or undefined = none.
+  checkNote?: string;
 }
 
 // Canonical column order — what a brand-new sheet gets initialized with (see
@@ -155,6 +159,8 @@ export function rowToIngredient(row: unknown[], columnIndex: ColumnIndex = DEFAU
     densityMl: positiveOrNull(cell(row, columnIndex, "WeighedMl")),
     densityGrams: positiveOrNull(cell(row, columnIndex, "WeighedMlGrams")),
     basedOnValues: String(cell(row, columnIndex, "BasedOnValues") ?? "").trim(),
+    recipeNeeded: toBoolean(cell(row, columnIndex, "RecipeNeeded")),
+    checkNote: String(cell(row, columnIndex, "CheckNote") ?? "").trim(),
   };
 }
 
@@ -190,6 +196,8 @@ export function ingredientFields(ingredient: Ingredient): Record<string, unknown
       WeighedMl: ingredient.densityMl === undefined ? undefined : (ingredient.densityMl ?? ""),
       WeighedMlGrams: ingredient.densityGrams === undefined ? undefined : (ingredient.densityGrams ?? ""),
       BasedOnValues: ingredient.basedOnValues === undefined ? undefined : ingredient.basedOnValues,
+      RecipeNeeded: ingredient.recipeNeeded === undefined ? undefined : ingredient.recipeNeeded,
+      CheckNote: ingredient.checkNote === undefined ? undefined : ingredient.checkNote,
   };
 }
 
@@ -247,7 +255,7 @@ function productFields(ingredient: Ingredient): Record<string, unknown> {
 /** Adds a new ingredient with a new `I…` ID and returns it as saved. */
 export async function addIngredient(
   ingredient: Omit<Ingredient, "dateAdded" | "favorite" | "glycemicFlag" | "id" | "basedOn" | "giFrom" | "basis" | "valuesPer" | "weighedPieces" | "weighedGrams" | "portionSizes"> &
-    Partial<Pick<Ingredient, "basedOn" | "giFrom" | "basis" | "valuesPer" | "weighedPieces" | "weighedGrams" | "portionSizes" | "labels" | "densityMl" | "densityGrams" | "basedOnValues">>,
+    Partial<Pick<Ingredient, "basedOn" | "giFrom" | "basis" | "valuesPer" | "weighedPieces" | "weighedGrams" | "portionSizes" | "labels" | "densityMl" | "densityGrams" | "basedOnValues" | "recipeNeeded" | "checkNote">>,
   favorite = false,
   glycemicFlag: GlycemicFlag = "none",
 ): Promise<Ingredient> {

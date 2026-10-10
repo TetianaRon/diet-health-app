@@ -18,6 +18,8 @@ import SheetHealthDialog from "./screens/SheetHealthDialog";
 import ConnectSheetDialog from "./screens/ConnectSheetDialog";
 import CopyUpdateOffer from "./screens/CopyUpdateOffer";
 import DatabaseMove from "./screens/DatabaseMove";
+import ImportNoticeShow from "./screens/ImportNoticeShow";
+import ImportScreen from "./screens/ImportScreen";
 import { initMealReminders } from "./lib/reminderScheduler";
 import TodayScreen from "./screens/TodayScreen";
 import FoodsScreen from "./screens/FoodsScreen";
@@ -39,6 +41,8 @@ const TABS: { id: TabId; label: string }[] = [
   { id: "foods", label: uk.tabs.foods },
   { id: "medications", label: uk.tabs.medications },
 ];
+
+const IMPORT_MODE = typeof window !== "undefined" && new URLSearchParams(window.location.search).has("import");
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabId>("today");
@@ -130,17 +134,19 @@ export default function App() {
         {/* Keyed on the repair count: a repaired spreadsheet remounts the screens so they re-read it. */}
         <ScreensAfterRepair>
         <main className={editorOpen ? "app-content editor-open" : "app-content"}>
-          {activeTab === "today" && (
+          {/* The developer import (2.3.1): only with ?import in the address; never linked from the app. */}
+          {IMPORT_MODE && <ImportScreen />}
+          {!IMPORT_MODE && activeTab === "today" && (
             <TodayScreen
               autoOpenAddForm={autoOpenAddForm}
               onAutoOpenAddFormConsumed={() => setAutoOpenAddForm(false)}
               onEditorOpenChange={setEditorOpen}
             />
           )}
-          {activeTab === "foods" && <FoodsScreen />}
-          {activeTab === "medications" && <MedicationsScreen />}
-          {activeTab === "history" && <HistoryScreen />}
-          {activeTab === "settings" && <SettingsScreen />}
+          {!IMPORT_MODE && activeTab === "foods" && <FoodsScreen />}
+          {!IMPORT_MODE && activeTab === "medications" && <MedicationsScreen />}
+          {!IMPORT_MODE && activeTab === "history" && <HistoryScreen />}
+          {!IMPORT_MODE && activeTab === "settings" && <SettingsScreen />}
         </main>
         </ScreensAfterRepair>
 
@@ -148,6 +154,7 @@ export default function App() {
         <ConnectSheetDialog />
         <CopyUpdateOffer />
         <DatabaseMove onOpenSets={openSets} />
+        <ImportNoticeShow />
         <OtherTabNotice />
         <DuplicatesDialog />
         <Toaster />
