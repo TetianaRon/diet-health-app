@@ -527,3 +527,12 @@ Answering "did we review only products?": the 69 home dishes were on the page bu
 - 467 tests, `tsc -b`, `npm run build`. Version 2.2.1, versionCode 35.
 
 ✅ **2.2.1 released 2026-10-09:** main pushed (web) and the bundle uploaded to the internal testing track (versionCode 35).
+
+**Release 2.3 — mom's items in the verified database (2026-10-09/10, branch `release/2.3`):**
+- **Decided (developer):** 2.3 is the database round; **2.3.1** brings her own rows in (branded, unverified, flagged dishes, recipes) with a hidden developer import run on the developer's computer (mom does nothing; her account can edit mom's sheet); flagged dishes get a mark and a filter; cuisine sets move to the dish-sets release; a public import is its own Intake item (users' data isn't in our format).
+- **Built:** 60 entries B0134–B0193 (fruit and berries; greens and vegetables with partners — celeriac, cauliflower, sweet potato raw/boiled/baked; split peas dry and boiled; chicken breast raw and baked, beef and pork hearts raw and cooked, shrimp raw and boiled, tuna in water, sardines in tomato, сало, quail egg; brie, кисляк, Greek yogurt; soy sauce, olives black and green). Choices against September: Foundation → SR Legacy (cabbage, garlic, radish, kiwi, tuna); «огірок солоний» → fermented sour pickles, not vinegar dill; «чорниці» left out (no bilberries in USDA; huckleberries are another plant).
+- **Found while building:** the GI summary row for boiled sweet potato covers 11 Jamaican cultivars (authors' mean 46), while the parsed list had two Australian ones too (orange-fleshed 61, the kind sold in Ukraine; purple-skinned 75); the entry uses all 13 as individual entries, upper estimate 49, the reason naming the spread. **Search:** «чорниці» put rye bread and black coffee first (the short stem «чорни» meets «чорний», «чорна»); the ranking now counts how close each match is.
+- **Review round 9** (versions 14): all 60 accepted, no comments. No existing entry changed; 0 warnings.
+- **Verified (local dev server, no sign-in, the app's own modules):** 193 database items; the sets' new counts (Фрукти та ягоди 32, Овочі та гриби 41, М'ясо, птиця й риба 16, Молочні продукти та яйця 12…); searches «кавун», «батат», «серце», «лохина», «тунець» find the new entries; «чорниці» → «Лохина (садова чорниця)» first after the fix; «гречки», «чорний хліб», «кава», «рис варений» unchanged.
+- **Not checked:** the screens on a device (only data and search changed; the developer's phone has the Play build).
+- 468 tests, `tsc -b`, `npm run build`. Version 2.3, versionCode 36.

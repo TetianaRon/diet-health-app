@@ -45,6 +45,15 @@ describe("searchFoods", () => {
     expect(names("ананас")).toEqual([]);
   });
 
+  it("puts a close match before one that only shares a short stem: «чорниці» finds «чорниця» before «чорний»", () => {
+    const items = [
+      { id: "I1", nameUk: "Хліб чорний" },
+      { id: "I2", nameUk: "Кава чорна" },
+      { id: "I3", nameUk: "Лохина (садова чорниця)" },
+    ];
+    expect(searchFoods("чорниці", items, () => null)[0].id).toBe("I3");
+  });
+
   it("puts database entries before her own items at equal match", () => {
     const own = { ...BUILT_IN_FOODS[0], id: "I1", nameUk: "Гречка Хуторок" };
     const result = searchFoods("гречка", [own, ...BUILT_IN_FOODS], (f) => verifiedEntry(f.id));
