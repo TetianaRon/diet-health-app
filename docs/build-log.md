@@ -525,3 +525,5 @@ Answering "did we review only products?": the 69 home dishes were on the page bu
 - **Verified (developer's Pixel 10, debug build, without Google):** «Набори з бази» lists the new sets with the right counts («Борошно та крохмаль — 8 продуктів», «Цукор і мед — 4», «Горіхи та насіння — 23», «Для випічки — 18»); the meal editor offers «Порція (мл)» for milk, and 200 мл fills 206,26 г (244 g per 236,6 мл); nothing saved.
 - **Not checked:** an older copy picking up the database density in the running app (unit-tested); adding the new items from a set (same path as 2.2).
 - 467 tests, `tsc -b`, `npm run build`. Version 2.2.1, versionCode 35.
+
+✅ **2.2.1 released 2026-10-09:** main pushed (web) and the bundle uploaded to the internal testing track (versionCode 35).
