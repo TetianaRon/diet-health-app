@@ -128,6 +128,10 @@ export interface Dish extends IngredientNutrition {
   glycemicFlag: GlycemicFlag;
   // ☆ for composed items too (2.2, the favourites redesign); undefined = not read (nothing is written).
   favorite?: boolean;
+  // «Скласти рецепт» (2.3.1): an imported dish kept at her own values until she composes it; undefined = not read.
+  recipeNeeded?: boolean;
+  // A note shown with the item, e.g. «калорії сильно відрізняються від оцінки…» (2.3.1); "" or undefined = none.
+  checkNote?: string;
   // Same meaning as Ingredient.giVerified — true only once a person has
   // explicitly confirmed this GI against a trusted source. Defaults false
   // even for starter dishes, since a computed carb-weighted average (see
@@ -405,6 +409,8 @@ export function rowToDish(row: unknown[], columnIndex: ColumnIndex = DEFAULT_COL
     basis: toBasis(cell(row, columnIndex, "Basis")),
     yieldPieces: positiveOrNull(cell(row, columnIndex, "YieldPieces")),
     yieldMl: positiveOrNull(cell(row, columnIndex, "YieldMl")),
+    recipeNeeded: toBoolean(cell(row, columnIndex, "RecipeNeeded")),
+    checkNote: String(cell(row, columnIndex, "CheckNote") ?? "").trim(),
     weighedPieces: positiveOrNull(cell(row, columnIndex, "WeighedPieces")),
     weighedGrams: positiveOrNull(cell(row, columnIndex, "WeighedGrams")),
     portionSizes: parsePortionSizes(cell(row, columnIndex, "PortionSizes")),
@@ -436,6 +442,8 @@ export function dishFields(dish: Dish): Record<string, unknown> {
       Basis: dish.basis === "100g" ? "" : dish.basis,
       YieldPieces: dish.yieldPieces ?? "",
       YieldMl: dish.yieldMl === undefined ? undefined : (dish.yieldMl ?? ""),
+      RecipeNeeded: dish.recipeNeeded === undefined ? undefined : dish.recipeNeeded,
+      CheckNote: dish.checkNote === undefined ? undefined : dish.checkNote,
       WeighedPieces: dish.weighedPieces ?? "",
       WeighedGrams: dish.weighedGrams ?? "",
       PortionSizes: serializePortionSizes(dish.portionSizes),

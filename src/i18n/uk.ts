@@ -433,10 +433,16 @@ export const uk = {
   foods: {
     title: "Продукти",
     // One list since 2.1 (FoodsScreen.tsx).
+    // Imported dishes kept at her own values until composed (2.3.1).
+    needsRecipe: {
+      mark: "скласти рецепт",
+      hint: "Значення цієї страви — з вашої старої таблиці. Щоб уточнити їх, складіть рецепт: оберіть угорі «Значення: за рецептом» і додайте продукти. Після збереження позначка зникне.",
+    },
     filters: {
       label: "Показати",
       all: "Усі",
       favorite: "Улюблені",
+      needsRecipe: "Скласти рецепт",
       ingredient: "Інгредієнти",
       dish: "Страви",
       drink: "Напої",
@@ -831,6 +837,8 @@ export const uk = {
       DeletedAt: "Видалено",
       BasedOn: "Копія вбудованого",
       BasedOnValues: "Значення бази на час копіювання",
+      RecipeNeeded: "Потрібно скласти рецепт",
+      CheckNote: "Примітка для перевірки",
       GiFrom: "ГІ з бази",
       ItemId: "Ідентифікатор продукту/страви",
       Name: "Назва",
