@@ -89,7 +89,11 @@ Spec rules: memory of the import decisions (2026-09-29) + the review page.
 - **Database content:** every item of hers with a genuine match (~90, incl. olives black + green, trout + salmon, beef/pork heart raw + boiled, cocoa), under proper names — **plus the raw/cooked partner** of each wherever the source has both.
 - **Ingredients her dishes likely need** — estimated from each dish, added to the database so she can compose them later. **Her dishes themselves are not recalculated:** her value is kept and the dish is flagged «потрібно скласти рецепт».
 - **Her own sheet:** branded packaging items (her values) and values we couldn't verify (kept as she has them, marked «неперевірено»); her dishes with the flag. **Not added:** items without a genuine match and the dropped ones (кукурудза варена, гірчиця американська, тунець, fructose sweets, calculation leftovers).
-- Import mechanism (how the rows get into her sheet) to be decided at the start of this release.
+- **Decided at the start (developer, 2026-10-09):**
+  - **Split:** 2.3 is the database round (her ~60 verified items not yet in the database, plus raw/cooked partners, through the review page); **2.3.1** brings her own rows into her sheet.
+  - **The import (2.3.1) is a developer tool, not a feature:** hidden, opened only by a special link in the web app; the developer runs it on her own computer with mom's sheet connected (her account can edit it) — mom does nothing. It reads a file we build (kept local, never in the repo), shows a preview with outcome buttons (new rows; rows she already has — «Залишити її запис» / «Замінити значеннями з файлу»; flagged dishes), saves a copy of her sheet first, then writes. Her phone gets the rows on the next sync, with a one-time notice «Додано ваші продукти зі старої таблиці». A public import needs its own design (Intake).
+  - **Flagged dishes:** a mark «скласти рецепт» on the row and in the editor, a «Скласти рецепт» filter in Продукти; it clears once she composes the dish; the 10 with a big difference from the estimate say so.
+  - **Cuisine sets** move to the dish-sets release (Intake).
 
 ### 2.4 — Google Picker · 📝 planned (needed for the public launch)
 - **The connected sheet in the connect window** (developer, 2026-10-06): listed first, marked «Підключена зараз», with no connect button. Today it's left out, so it looks missing.
@@ -173,7 +177,8 @@ Before building 2.7: run the method by hand on products sold in Ukraine that hav
 
 ## Intake (new feedback, not yet placed)
 
-- **Cuisine sets** (2026-10-09, developer): sets by kind of kitchen, e.g. «Українська кухня», to start using the app right away; one product can be in several sets (2.2's sets file allows it). Proposed place: **2.3**, choosing the items from mom's data. No health-claim names («здоровий вибір» is out — standing rule 5).
+- **Cuisine sets** (2026-10-09, developer): sets by kind of kitchen, e.g. «Українська кухня», to start using the app right away; one product can be in several sets (2.2's sets file allows it). Proposed place: **with the dish sets** (developer, 2026-10-09: most useful with ready dishes). No health-claim names («здоровий вибір» is out — standing rule 5).
+- **Importing a user's own data, for the public** (2026-10-09, developer): users' data is in Excel, other apps or paper, not in our file format; 2.3.1's import is a developer tool only. Proposed place: **before 3.0** (e.g. a spreadsheet column mapper), alongside 2.6's label photos.
 - **Dish sets and database recipes** (2026-10-09, developer): sets by kind of dish — baking, stews, soups, sauces. They need composed recipes in the database built from its products, which it doesn't have yet. Proposed place: **its own release after 2.5** (food families give recipes their cooking states).
 
 New items land here with a one-line note, then get placed above.
