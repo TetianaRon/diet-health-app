@@ -102,6 +102,18 @@ function wordMatches(query: string, word: string): boolean {
   return qs.length >= 4 && ws.length >= 4 && (word.startsWith(qs) || query.startsWith(ws));
 }
 
+/**
+ * How closely a query word matches a name word (2.3): 3 — the name word starts
+ * with it; 2 — they differ only in the last letter or two («чорниці» ↔ «чорниця»,
+ * «гречки» ↔ «гречка»); 1 — only the short stems meet («чорниці» ↔ «чорний»).
+ */
+function closeness(query: string, word: string): number {
+  if (word.startsWith(query)) return 3;
+  let shared = 0;
+  while (shared < query.length && shared < word.length && query[shared] === word[shared]) shared++;
+  return shared >= query.length - 1 && shared >= 4 ? 2 : 1;
+}
+
 export interface Searchable {
   id: string;
   nameUk: string;
@@ -111,6 +123,8 @@ interface Scored<T> {
   item: T;
   matched: number;
   total: number;
+  /** The sum of each matched word's best closeness (3, 2 or 1). */
+  close: number;
   startsWithFirst: boolean;
   fromDatabase: boolean;
   order: number;
@@ -118,7 +132,8 @@ interface Scored<T> {
 
 /**
  * Items matching the query, best first: all words matched, then more words
- * matched, then a match at the name's start, then database entries (in
+ * matched, then closer word matches (2.3: «чорниці» finds «чорниця» before
+ * «чорний»), then a match at the name's start, then database entries (in
  * database order, so a family's types stay together), then the rest in their
  * own order. An empty query returns the items as they are.
  */
@@ -137,13 +152,20 @@ export function searchFoods<T extends Searchable>(query: string, items: readonly
     // State words she typed still count if the name has them («гречка варена» prefers the cooked entry).
     const stateWords = nameWords.filter((w) => STATE_WORDS.has(w));
     let matched = 0;
-    for (const q of words) if (matchable.some((w) => wordMatches(q, w))) matched++;
+    let close = 0;
+    for (const q of words) {
+      const hits = matchable.filter((w) => wordMatches(q, w));
+      if (hits.length === 0) continue;
+      matched++;
+      close += Math.max(...hits.map((w) => closeness(q, w)));
+    }
     if (matched === 0) return;
     const stateBonus = queryWords.filter((q) => STATE_WORDS.has(q) && stateWords.some((w) => wordMatches(q, w))).length;
     scored.push({
       item,
       matched: matched + stateBonus * 0.5,
       total: words.length,
+      close,
       startsWithFirst: nameWords.length > 0 && wordMatches(words[0], nameWords[0]),
       fromDatabase: entry !== null && entry.id === item.id,
       order: index,
@@ -155,6 +177,7 @@ export function searchFoods<T extends Searchable>(query: string, items: readonly
       (a, b) =>
         Number(b.matched >= b.total) - Number(a.matched >= a.total) ||
         b.matched - a.matched ||
+        b.close - a.close ||
         Number(b.startsWithFirst) - Number(a.startsWithFirst) ||
         Number(b.fromDatabase) - Number(a.fromDatabase) ||
         a.order - b.order,
