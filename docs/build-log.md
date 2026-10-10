@@ -536,3 +536,5 @@ Answering "did we review only products?": the 69 home dishes were on the page bu
 - **Verified (local dev server, no sign-in, the app's own modules):** 193 database items; the sets' new counts (Фрукти та ягоди 32, Овочі та гриби 41, М'ясо, птиця й риба 16, Молочні продукти та яйця 12…); searches «кавун», «батат», «серце», «лохина», «тунець» find the new entries; «чорниці» → «Лохина (садова чорниця)» first after the fix; «гречки», «чорний хліб», «кава», «рис варений» unchanged.
 - **Not checked:** the screens on a device (only data and search changed; the developer's phone has the Play build).
 - 468 tests, `tsc -b`, `npm run build`. Version 2.3, versionCode 36.
+
+✅ **2.3 released 2026-10-10:** main pushed (web) and the bundle uploaded to the internal testing track (versionCode 36).
