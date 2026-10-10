@@ -157,7 +157,7 @@ for _id in MOM_IDS:
     CHANGES[_id] = ("Новий запис (2.3): продукти зі старої таблиці мами, перевірені за USDA, і їхні сирі чи варені пари.", True)
 
 # 2.3.1 (2026-10-10): trout, and what mom's recipes need.
-ROUND10_AT = "2026-10-10T08:00:00Z"
+ROUND10_AT = "2026-10-10T04:30:00Z"  # before the decisions (a future time kept reopening them)
 RECIPE_IDS = [f"B{n:04d}" for n in range(194, 204)]
 for _id in RECIPE_IDS:
     CHANGES[_id] = ("Новий запис (2.3.1): форель (відповідь на «риба червона») і продукти з маминих рецептів.", True)
