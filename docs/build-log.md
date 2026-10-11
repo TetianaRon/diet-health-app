@@ -550,3 +550,5 @@ Answering "did we review only products?": the 69 home dishes were on the page bu
 - 472 tests, `tsc -b`, `npm run build`. Version 2.3.1, versionCode 37.
 
 ✅ **2.3.1 released 2026-10-10:** main pushed (web) and the bundle uploaded to the internal testing track (versionCode 37). The import on mom's sheet waits until her phone has 2.3.1 (developer).
+
+✅ **Mom's import done 2026-10-11:** the developer ran `?import` with `mom-import.json` on her sheet from the live web app (after a hard refresh — the browser had been serving a pre-2.0.4 cached version; fix placed in 2.3.2). Still to check: her phone's sync brings the rows and shows the one-time notice.
