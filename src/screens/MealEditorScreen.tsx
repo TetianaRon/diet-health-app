@@ -40,6 +40,7 @@ import { DateTimeInput } from "./TimeInput";
 import Breadcrumb from "./Breadcrumb";
 import { formatStats } from "./MealStatsLine";
 import { entryStatItems } from "../lib/mealStats";
+import FormError from "./FormError";
 
 export interface PickableFood {
   // `B…` / `I…` / `D…` — stored on the meal row (DailyLog.ItemId, 1.6).
@@ -460,7 +461,7 @@ function AddDishToMealForm({
         <input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={uk.today.form.notesPlaceholder} />
       </label>
 
-      {error && <p className="food-form-error">{error}</p>}
+      <FormError message={error} />
 
       <div className="food-form-actions">
         <button type="button" onClick={() => void handleAdd()} disabled={saving}>
@@ -580,7 +581,7 @@ function EditDishForm({
         {uk.today.form.notesLabel}
         <input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={uk.today.form.notesPlaceholder} />
       </label>
-      {error && <p className="food-form-error">{error}</p>}
+      <FormError message={error} />
       <div className="food-form-actions">
         <button type="button" onClick={handleSave}>
           {uk.today.mealEditor.editDish.saveButton}
@@ -992,7 +993,7 @@ export default function MealEditorScreen({
         </div>
       )}
 
-      {error && <p className="food-form-error">{error}</p>}
+      <FormError message={error} />
 
       {original && confirming !== "deleteMeal" && (
         <button

@@ -9,6 +9,7 @@ import { DATABASE_SETS, SET_GROUPS } from "../data/databaseSets";
 import { copyFromDatabase } from "../lib/databaseItems";
 import type { Ingredient } from "../lib/ingredients";
 import { formatDecimal } from "../lib/numberFormat";
+import FormError from "./FormError";
 
 const t = uk.databaseSets;
 const BY_ID = new Map(BUILT_IN_FOODS.map((item) => [item.id, item]));
@@ -100,7 +101,7 @@ export function SetChecklist({
           );
         })}
       </ul>
-      {error && <p className="food-form-error">{error}</p>}
+      <FormError message={error} />
       <div className="food-form-actions">
         <button type="button" onClick={() => void add()} disabled={saving || ticked.size === 0}>
           {ticked.size === 0 ? t.nothingSelected : t.addSelected(ticked.size)}

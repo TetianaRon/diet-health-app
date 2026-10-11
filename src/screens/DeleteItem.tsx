@@ -9,6 +9,7 @@ import { useState } from "react";
 import { uk } from "../i18n/uk";
 import { useBackHandler } from "../lib/useBackHandler";
 import type { Dish } from "../lib/dishes";
+import FormError from "./FormError";
 
 const t = uk.deleteItem;
 
@@ -82,7 +83,7 @@ export default function DeleteItem({
             <p>{t.final}</p>
             {isCopy && <p>{t.copyNote}</p>}
             {kind === "dish" && <p>{t.mealsKept}</p>}
-            {error && <p className="food-form-error">{error}</p>}
+            <FormError message={error} />
             <div className="modal-actions">
               <button type="button" className="button-danger" onClick={() => void confirm()} disabled={busy}>
                 {busy ? t.deleting : t.confirm(name)}

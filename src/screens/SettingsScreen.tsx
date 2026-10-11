@@ -16,6 +16,7 @@ import { useNotifications } from "../context/NotificationsContext";
 import { SheetHealthIssueList, summarizeIssues } from "./SheetHealthIssues";
 import SignInPanel, { RememberMeSetting } from "./SignInPanel";
 import ReminderSetting from "./ReminderSetting";
+import FormError from "./FormError";
 
 const NUMERIC_FIELDS = [
   "dailyCarbsTarget",
@@ -138,7 +139,7 @@ function SyncLine() {
       <button type="button" className="button-secondary" onClick={() => void sync()} disabled={syncing}>
         {syncing ? s.syncing : s.syncButton}
       </button>
-      {error && <p className="food-form-error">{error}</p>}
+      <FormError message={error} />
     </div>
   );
 }
@@ -395,7 +396,7 @@ export default function SettingsScreen() {
                 ),
               )}
 
-              {saveError && <p className="food-form-error">{saveError}</p>}
+              <FormError message={saveError} />
               {saved && <p>{uk.settings.saved}</p>}
 
               <button type="button" onClick={() => void handleSave()} disabled={saving}>

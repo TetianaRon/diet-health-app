@@ -9,6 +9,7 @@ import { useSheetHealth } from "../context/SheetHealthContext";
 import { decisionsComplete, type Decision, type Duplicate } from "../lib/localAttach";
 import { normalizeItemName } from "../lib/itemIds";
 import { formatDecimal } from "../lib/numberFormat";
+import FormError from "./FormError";
 
 const t = uk.localMode.duplicates;
 
@@ -113,7 +114,7 @@ export default function DuplicatesDialog() {
             );
           })}
         </ul>
-        {error && <p className="food-form-error">{error}</p>}
+        <FormError message={error} />
         {!complete && <p className="food-form-hint">{t.continueHint}</p>}
         <div className="modal-actions">
           <button type="button" onClick={() => void confirm()} disabled={!complete || busy}>

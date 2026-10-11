@@ -18,6 +18,7 @@ import { listIngredients, type Ingredient } from "../lib/ingredients";
 import { fetchTabsLive, listSheetTitles } from "../lib/sheets";
 import { syncNow } from "../lib/sync";
 import SignInPanel from "./SignInPanel";
+import FormError from "./FormError";
 
 const t = uk.importTool;
 
@@ -125,7 +126,7 @@ export default function ImportScreen() {
           </ul>
         </div>
       )}
-      {error && <p className="food-form-error">{error}</p>}
+      <FormError message={error} />
 
       {plan && file && !result && (
         <div className="food-form">

@@ -6,6 +6,7 @@ import { uk } from "../i18n/uk";
 import { useAuth } from "../context/AuthContext";
 import { useSheetHealth } from "../context/SheetHealthContext";
 import * as sheets from "../lib/sheets";
+import FormError from "./FormError";
 
 const t = uk.localMode.settings;
 
@@ -33,7 +34,7 @@ export default function LocalDataSection() {
         {t.syncButton}
       </button>
       <p className="food-form-hint">{t.syncHint}</p>
-      {error && <p className="food-form-error">{error}</p>}
+      <FormError message={error} />
     </div>
   );
 }

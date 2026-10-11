@@ -16,6 +16,7 @@ import { listIngredients, updateIngredients } from "../lib/ingredients";
 import { listDishes, updateDishes } from "../lib/dishes";
 import { copyUpdates, dishCopyUpdates, type CopyUpdate, type DishCopyUpdate } from "../lib/builtInStatus";
 import { formatDecimal } from "../lib/numberFormat";
+import FormError from "./FormError";
 
 const t = uk.copyUpdate;
 const DISMISSED_PREFIX = "trackmymeals.copyUpdate.kept.";
@@ -118,7 +119,7 @@ export default function CopyUpdateOffer() {
             </li>
           ))}
         </ul>
-        {error && <p className="food-form-error">{error}</p>}
+        <FormError message={error} />
         <div className="modal-actions">
           <button type="button" onClick={() => void apply()} disabled={busy}>
             {busy ? t.updating : t.update(updates.length)}
