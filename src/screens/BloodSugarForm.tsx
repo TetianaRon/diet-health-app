@@ -14,6 +14,7 @@ import {
   type BloodSugarContext,
   type BloodSugarEntry,
 } from "../lib/bloodSugar";
+import FormError from "./FormError";
 
 export default function BloodSugarForm({
   original,
@@ -93,7 +94,7 @@ export default function BloodSugarForm({
         <input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={uk.bloodSugar.form.notesPlaceholder} />
       </label>
 
-      {error && <p className="food-form-error">{error}</p>}
+      <FormError message={error} />
 
       <div className="food-form-actions">
         <button type="button" onClick={() => void handleSave()} disabled={saving}>

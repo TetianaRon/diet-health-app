@@ -18,6 +18,7 @@ import {
 } from "../lib/sheets";
 import { initializeSpreadsheet } from "../lib/spreadsheetInit";
 import { connectOptions, forgetRecentSheet, loadRecentSheets, saveRecentSheets, type RecentSheet, type SheetOption } from "../lib/sheetConnections";
+import FormError from "./FormError";
 
 const t = uk.connectSheet;
 
@@ -161,7 +162,7 @@ export default function ConnectSheetDialog() {
     <div className="modal-backdrop">
       <div className="modal connect-sheet" role="dialog" aria-modal="true" aria-labelledby="connect-sheet-title">
         <h2 id="connect-sheet-title">{t.title}</h2>
-        {error && <p className="food-form-error">{error}</p>}
+        <FormError message={error} />
 
         {loading ? (
           <p className="food-form-hint">{t.searching}</p>
@@ -208,7 +209,7 @@ export default function ConnectSheetDialog() {
                 {t.linkLabel}
                 <input value={link} placeholder={t.linkPlaceholder} onChange={(e) => setLink(e.target.value)} />
               </label>
-              {linkError && <p className="food-form-error">{linkError}</p>}
+              <FormError message={linkError} />
               <button type="button" className="button-secondary" disabled={busy} onClick={connectLink}>
                 {t.connectThis}
               </button>

@@ -18,6 +18,7 @@ import { wasLastReadFromCache } from "../lib/sheets";
 import { formatTime } from "../lib/dateFormat";
 import { scheduleMealReminder } from "../lib/reminderScheduler";
 import { useReminderChoice } from "../lib/reminderChoice";
+import { PORTION_LABEL, recentCustomFoods } from "../lib/customEntry";
 import { loadDayData, type DayData } from "../lib/dayData";
 import { dayRecords, inOrder, lastEarlierRecords, previousDateKey } from "../lib/records";
 import { groupIntoMeals, isSameLocalDate, localDateKey, sumKnownField, type DailyLogEntry, type MealGroup } from "../lib/dailyLog";
@@ -165,8 +166,22 @@ export default function TodayScreen({
     const typed = sortFavoritesFirst(mergeWithBuiltInFoods(data?.ingredients ?? []));
     const isHerDish = (i: (typeof typed)[number]) => !isBuiltInId(i.id) && (i.labels ?? []).includes("dish");
     const composed = sortFavoritesFirst((data?.dishes ?? []).map((d) => ({ ...d, favorite: d.favorite ?? false })));
-    return [...composed, ...typed.filter(isHerDish), ...typed.filter((i) => !isHerDish(i))].map(toPickable);
-  }, [data]);
+    // Her custom entries from the last 14 days, after her own items (2.3.2): «нещодавнє».
+    const ownNames = [...(data?.ingredients ?? []), ...(data?.dishes ?? [])].map((i) => i.nameUk);
+    const recent: PickableFood[] = recentCustomFoods(entries ?? [], ownNames, new Date()).map((r) => ({
+      id: r.id,
+      nameUk: r.nameUk,
+      nameEn: "",
+      glycemicFlag: "none",
+      per100g: r.values,
+      unknownFields: r.unknownFields,
+      measure: r.measure,
+      portionSizes: [{ label: PORTION_LABEL, pieces: 1 }],
+    }));
+    const own = [...composed, ...typed.filter(isHerDish), ...typed.filter((i) => !isHerDish(i))].map(toPickable);
+    const firstDatabase = own.findIndex((food) => isBuiltInId(food.id));
+    return firstDatabase === -1 ? [...own, ...recent] : [...own.slice(0, firstDatabase), ...recent, ...own.slice(firstDatabase)];
+  }, [data, entries]);
 
   if (initializing) {
     return (

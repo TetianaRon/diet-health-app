@@ -67,6 +67,7 @@ import PortionSizesFields, { sizeRowsFrom, sizesFromRows, type SizeRow } from ".
 import WeighedPiecesFields, { weighedPair } from "./WeighedPiecesFields";
 import { gramsPerMl, pieceGrams, round2, toStoredValues, toTypedValues, valuesAmount, PER_100G, type Basis, type Measure } from "../lib/measure";
 import { measureOf, refFactor } from "../lib/dishes";
+import FormError from "./FormError";
 
 const NUMERIC_FIELDS = ["carbsG", "gi", "fiberG", "sugarsG", "proteinG", "fatG", "caloriesKcal", "sodiumMg"] as const;
 type NumericField = (typeof NUMERIC_FIELDS)[number];
@@ -627,7 +628,7 @@ function AddFoodForm({
         {uk.foods.form.giVerifiedLabel}
       </label>
 
-      {error && <p className="food-form-error">{error}</p>}
+      <FormError message={error} />
       <div className="food-form-actions">
         <button type="button" onClick={() => void handleSave()} disabled={saving || nameMatch !== null}>
           {uk.foods.form.saveButton}
@@ -785,7 +786,7 @@ function EditIngredientForm({
         {uk.foods.form.giVerifiedLabel}
       </label>
 
-      {error && <p className="food-form-error">{error}</p>}
+      <FormError message={error} />
 
       <div className="food-form-actions">
         <button type="button" onClick={() => void handleSave()} disabled={saving || nameMatch !== null}>
@@ -1147,7 +1148,7 @@ function ComposeDishForm({
         {uk.foods.form.giVerifiedLabel}
       </label>
 
-      {error && <p className="food-form-error">{error}</p>}
+      <FormError message={error} />
 
       <div className="food-form-actions">
         <button type="button" onClick={() => void handleSave()} disabled={saving || nameMatch !== null}>

@@ -8,6 +8,7 @@ import { fromDatetimeLocalValue, toDatetimeLocalValue } from "../lib/dateFormat"
 import type { Settings } from "../lib/settings";
 import { addIntake, addMedication, parseDose, updateIntake, type Medication, type MedicationIntake } from "../lib/medications";
 import { DateTimeInput } from "./TimeInput";
+import FormError from "./FormError";
 
 const NEW = "__new__";
 
@@ -148,7 +149,7 @@ export default function MedicationIntakeForm({
         <input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={uk.medication.notesPlaceholder} />
       </label>
 
-      {error && <p className="food-form-error">{error}</p>}
+      <FormError message={error} />
 
       <div className="food-form-actions">
         <button type="button" onClick={() => void handleSave()} disabled={saving}>

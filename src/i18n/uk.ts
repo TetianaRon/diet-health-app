@@ -55,6 +55,11 @@ export const uk = {
   importNotice: {
     dismiss: "Зрозуміло",
   },
+  // A new release of the web app took over while it was open (2.3.2).
+  newVersion: {
+    title: "Вийшла нова версія застосунку. Збережіть те, що вводите, і оновіть сторінку.",
+    reload: "Оновити зараз",
+  },
   // The verified database as sets (2.2): her «Продукти» hold only her own rows.
   databaseSets: {
     addButton: "+ Додати з бази",
@@ -328,7 +333,40 @@ export const uk = {
       portionMlOnlyHint: "Скільки грамів у мілілітрі, невідомо — вкажіть мілілітри.",
       notesLabel: "Примітка",
       notesPlaceholder: "необов'язково",
-      noMatches: "Нічого не знайдено. Спочатку додайте продукт на вкладці «Продукти».",
+      noMatches: "Нічого не знайдено — можна додати власний запис.",
+      // One meal-entry editor (2.3.2).
+      recentMark: "нещодавнє",
+      perPortion: "на порцію",
+      addCustom: "+ Власний запис",
+      addCustomNamed: (name: string) => `+ Додати «${name}» як власний запис`,
+      backToSearch: "← Шукати в списку",
+      pickFirst: "Оберіть продукт зі списку або додайте власний запис.",
+      portionMissing: "Вкажіть, скільки з'їли.",
+      portionCountLabel: "Порцій (шт.)",
+      checkMarked: "Не додано: перевірте позначені поля.",
+      problems: {
+        missing: "Вкажіть назву.",
+        notNumber: "Тут має бути число більше 0.",
+        needOneValue: "Вкажіть хоча б одне значення — наприклад, калорії.",
+        needGrams: "Значення на 100 г — вкажіть, скільки грамів з'їли.",
+        needMl: "Значення на 100 мл — вкажіть, скільки мілілітрів.",
+        needAmount: "Вкажіть кількість.",
+      },
+      customBasisLegend: "Значення вказано на",
+      customBasis: { portion: "усю порцію", "100g": "100 г", "100ml": "100 мл" },
+      customBasisHint: {
+        portion: "Значення — на все, що ви з'їли (наприклад, на склянку). Вагу чи об'єм можна не вказувати.",
+        "100g": "Значення на 100 г, як на етикетці, — вкажіть, скільки грамів з'їли.",
+        "100ml": "Значення на 100 мл, як на етикетці, — вкажіть, скільки мілілітрів.",
+      },
+      amountLegend: "Скільки з'їли",
+      amountLabels: { grams: "Грами", ml: "Мілілітри", pieces: "Штуки" },
+      saveToListLabel: "Зберегти в мої продукти — наступного разу обрати зі списку",
+      saveToListHint: {
+        portion: "Збережеться як страва на 1 порцію (з вагою, якщо ви її вказали). Потім можна записати 1 порцію, половину (0,5) тощо.",
+        "100g": "Збережеться як продукт зі значеннями на 100 г.",
+        "100ml": "Збережеться як продукт зі значеннями на 100 мл.",
+      },
       // Pre-formatted pieces (see carbsValue/caloriesValue/unknownValueLabel)
       // so an unknown value shows "невідомо" rather than a misleading 0.
       preview: (carbsText: string, caloriesText: string, glText: string) => `${carbsText}, ${caloriesText}, ГЛ ${glText}`,
@@ -343,7 +381,7 @@ export const uk = {
       customNameLabel: "Назва страви",
       saveAsDishLabel: "Також зберегти в «Страви» — наступного разу обрати зі списку",
       saveAsDishHint: "Збережеться як страва на 1 порцію (з цією вагою). Потім можна записати 1 порцію, половину (0,5) тощо.",
-      saveAsDishNameTaken: "Страва чи продукт із такою назвою вже є — змініть назву або зніміть позначку.",
+      saveAsDishNameTaken: "Продукт або страва з такою назвою вже є в списку — змініть назву або зніміть позначку «Зберегти».",
       portionSizeLabel: "порція",
       customNamePlaceholder: "напр. Борщ у ресторані",
       customHint: "Заповніть відомі значення, невідомі залиште порожніми — вони не враховуватимуться в денних підсумках.",

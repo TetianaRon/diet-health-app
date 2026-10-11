@@ -21,5 +21,45 @@ export function setUpServiceWorker(): void {
     return;
   }
 
-  registerSW({ immediate: true });
+  // Look for a new release on start, when she comes back to the tab, and hourly (2.3.2): a
+  // browser checks on its own only now and then, so an open or installed app could stay on an
+  // old version for weeks. The new worker takes over at once (skipWaiting, vite.config.ts);
+  // when it does, the page reloads to the new version — once.
+  registerSW({
+    immediate: true,
+    onRegisteredSW(_url, registration) {
+      if (!registration) return;
+      const check = () => void registration.update().catch(() => undefined);
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") check();
+      });
+      setInterval(check, 60 * 60 * 1000);
+    },
+  });
+  const startedAt = Date.now();
+  const hadController = navigator.serviceWorker.controller !== null;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    // The first worker taking control isn't an update.
+    if (!hadController || newVersionReady) return;
+    // Right after opening, nothing is in progress yet: reload to the new version at once.
+    // Later, a reload could drop a meal being entered (and, on the web, the sign-in), so
+    // the app offers «Оновити зараз» instead (AppNotifications).
+    if (Date.now() - startedAt < QUIET_START_MS) {
+      window.location.reload();
+      return;
+    }
+    newVersionReady = true;
+    for (const listener of listeners) listener();
+  });
+}
+
+const QUIET_START_MS = 8000;
+let newVersionReady = false;
+const listeners = new Set<() => void>();
+
+/** Calls `listener` when a new release has taken over while the app was in use. */
+export function onNewVersion(listener: () => void): () => void {
+  listeners.add(listener);
+  if (newVersionReady) listener();
+  return () => listeners.delete(listener);
 }

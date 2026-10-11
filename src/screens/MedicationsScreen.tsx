@@ -9,6 +9,7 @@ import { uk } from "../i18n/uk";
 import { addMedication, listMedications, parseDose, updateMedication, type Medication } from "../lib/medications";
 import Breadcrumb from "./Breadcrumb";
 import SignInPanel from "./SignInPanel";
+import FormError from "./FormError";
 
 const t = uk.medicationsScreen;
 
@@ -80,7 +81,7 @@ function MedicationForm({ original, onSaved, onCancel }: { original: Medication 
           <p className="food-form-hint">{t.activeHint}</p>
         </>
       )}
-      {error && <p className="food-form-error">{error}</p>}
+      <FormError message={error} />
       <div className="food-form-actions">
         <button type="button" onClick={() => void save()} disabled={saving}>
           {uk.medication.saveButton}

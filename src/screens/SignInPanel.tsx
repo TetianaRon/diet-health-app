@@ -10,6 +10,7 @@ import { useAuth } from "../context/AuthContext";
 import { canOfferLocalMode } from "../lib/localMode";
 import { rememberMe } from "../lib/rememberMe";
 import { applyRememberMe, getRememberedEmail } from "../lib/sheets";
+import FormError from "./FormError";
 
 const t = uk.auth;
 
@@ -73,7 +74,7 @@ export default function SignInPanel({ buttonLabel, offerLocalMode = true }: { bu
         {t.rememberMe}
       </label>
       <p className="food-form-hint">{remember ? (native ? t.rememberOnPhone : t.rememberOnWeb) : native ? t.forgetOnPhone : t.forgetOnWeb}</p>
-      {error && <p className="food-form-error">{error}</p>}
+      <FormError message={error} />
       {offerLocalMode && canOfferLocalMode() && (
         <button type="button" className="button-secondary" onClick={() => setConfirmingLocal(true)}>
           {uk.localMode.startButton}

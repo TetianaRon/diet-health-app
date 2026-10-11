@@ -1726,3 +1726,17 @@ select {
   z-index: 50;
   pointer-events: none;
 }
+
+/* A field that stops saving (2.3.2: «forms reject silently»): outlined, its problem under it. */
+.field-invalid input,
+.field-invalid select,
+.field-invalid textarea {
+  border-color: #a3302a;
+  box-shadow: 0 0 0 1px #a3302a;
+}
+.field-error {
+  display: block;
+  color: #a3302a;
+  font-size: 0.9rem;
+  margin-top: 2px;
+}

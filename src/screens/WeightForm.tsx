@@ -6,6 +6,7 @@ import { uk } from "../i18n/uk";
 import { localDateKey } from "../lib/dailyLog";
 import { parseDecimal } from "../lib/numberFormat";
 import { saveWeightEntry, type WeightEntry } from "../lib/weight";
+import FormError from "./FormError";
 
 export default function WeightForm({
   original,
@@ -61,7 +62,7 @@ export default function WeightForm({
         <input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t.notesPlaceholder} />
       </label>
 
-      {error && <p className="food-form-error">{error}</p>}
+      <FormError message={error} />
 
       <div className="food-form-actions">
         <button type="button" onClick={() => void handleSave()} disabled={saving}>

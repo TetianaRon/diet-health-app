@@ -61,7 +61,10 @@ export default defineConfig(({ mode }) => {
     react(),
     devTranslateApi(env.GOOGLE_TRANSLATE_API_KEY || ""),
     VitePWA({
-      registerType: "autoUpdate",
+      // "prompt": the plugin never reloads the page itself (with "autoUpdate" it did, on every new
+      // release — mid-entry too); src/lib/serviceWorker.ts decides: reload right after opening,
+      // otherwise «Оновити зараз» (2.3.2). The worker still takes over at once (workbox below).
+      registerType: "prompt",
       // Registered from src/lib/serviceWorker.ts, on the web only: inside the
       // Android app the worker kept serving the previous version's screens
       // after an update (2026-09-29). The Android build (`npm run
@@ -69,6 +72,9 @@ export default defineConfig(({ mode }) => {
       // the one already installed on existing phones.
       injectRegister: false,
       selfDestroying: mode === "android",
+      // A new release takes over at once and drops the old cache (2.3.2): the web app had kept
+      // serving a version from before 2.0.4 while 2.3.1 was live.
+      workbox: { skipWaiting: true, clientsClaim: true, cleanupOutdatedCaches: true },
       includeAssets: ["icon.svg"],
       manifest: {
         name: "Трекер харчування",
