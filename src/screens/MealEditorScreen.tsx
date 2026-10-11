@@ -1,6 +1,18 @@
 import { fieldDecimal, formatDecimal } from "../lib/numberFormat";
 import { isBuiltInId } from "../lib/itemIds";
 import { copyFromDatabase, idsNeedingCopies } from "../lib/databaseItems";
+import {
+  NUTRITION_FIELDS,
+  PORTION_LABEL,
+  checkCustom,
+  customLogEntry,
+  isRecentId,
+  portionInput,
+  saveCustomAsItem,
+  type CustomBasis,
+  type CustomInput,
+  type CustomProblems,
+} from "../lib/customEntry";
 import { verifiedEntry } from "../data/builtInFoods";
 import { searchFoods } from "../lib/foodSearch";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -10,7 +22,6 @@ import { evaluateInput } from "../lib/mathInput";
 import { useBackHandler } from "../lib/useBackHandler";
 import { classifyGl } from "../lib/health";
 import { itemMeasure, type IngredientNutrition, type NutritionKey } from "../lib/dishes";
-import { addIngredient } from "../lib/ingredients";
 import { normalizeItemName } from "../lib/itemIds";
 import { gramsPerMl, pieceGrams, positiveOrNull, round2, type Measure } from "../lib/measure";
 import { sizeAmount, sizeLabel, type PortionSize } from "../lib/portionSizes";
@@ -103,11 +114,13 @@ const EMPTY_CUSTOM_VALUES: Record<keyof IngredientNutrition, string> = {
 
 // --- Add a dish to the meal being composed -------------------------------
 //
-// A step of its own (not an always-open panel) so "add this dish" and "save
-// the whole meal" can never be mistaken for each other: this view has only
-// dish-level buttons, the meal view has only meal-level ones. Nothing here
-// touches the spreadsheet — it just hands a finished entry back to the
-// editor's draft list.
+// One view (release 2.3.2, «Meal entry, one editor»): a search over her
+// items, recent custom entries («нещодавнє», the last 14 days) and the
+// database («з бази»). Picking one asks how much; typing something that isn't
+// there offers «+ Додати «…» як власний запис» right here, with the same
+// conventions as her items (values for the whole portion, per 100 г or per
+// 100 мл). A custom or recent entry can be saved to «мої продукти». A step
+// of its own, so "add this dish" and "save the whole meal" are never mixed up.
 function AddDishToMealForm({
   foods,
   mealType,
@@ -123,6 +136,7 @@ function AddDishToMealForm({
   onAdd: (entry: DailyLogEntry) => void;
   onBack: () => void;
 }) {
+  const f = uk.today.form;
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<PickableFood | null>(null);
   const [portionGrams, setPortionGrams] = useState("");
@@ -135,33 +149,39 @@ function AddDishToMealForm({
   const [sizeCount, setSizeCount] = useState("1");
   const [notes, setNotes] = useState("");
   const [error, setError] = useState<string | null>(null);
-
-  // "custom" is for a genuinely one-off item not in the database (restaurant
-  // food, a homemade dish with no exact recipe) — never saved to Ingredients,
-  // it only ever produces a DailyLog row.
-  const [mode, setMode] = useState<"pick" | "custom">("pick");
-  const [customName, setCustomName] = useState("");
-  // «Також зберегти в «Страви»» (2.0.2): the custom entry becomes a dish of 1 portion.
-  const [saveAsDish, setSaveAsDish] = useState(false);
   const [saving, setSaving] = useState(false);
+  // «Зберегти в мої продукти» for a custom or a recent entry (2.3.2).
+  const [saveToList, setSaveToList] = useState(false);
+  // The custom entry, open in place of the search (2.3.2).
+  const [custom, setCustom] = useState(false);
+  const [customName, setCustomName] = useState("");
+  const [customBasis, setCustomBasis] = useState<CustomBasis>("portion");
+  const [customAmount, setCustomAmount] = useState({ grams: "", ml: "", pieces: "" });
   const [customValues, setCustomValues] = useState<Record<keyof IngredientNutrition, string>>(EMPTY_CUSTOM_VALUES);
+  const [problems, setProblems] = useState<CustomProblems>({});
+  const [portionProblem, setPortionProblem] = useState(false);
 
-  const switchMode = (next: "pick" | "custom") => {
-    setMode(next);
-    setError(null);
+  const openCustom = () => {
+    setCustom(true);
     setSelected(null);
-    setSearch("");
-    setCustomName("");
-    setCustomValues(EMPTY_CUSTOM_VALUES);
+    setCustomName(search.trim());
+    setError(null);
+    setProblems({});
+    setSaveToList(false);
+  };
+  const backToSearch = () => {
+    setCustom(false);
+    setError(null);
+    setProblems({});
   };
 
-  // Browsing shows her own items; a search also finds the database (marked «з бази»), and a
-  // picked database item joins her «Продукти» when the meal is saved (2.2).
+  // Browsing shows her own items and recent entries; a search also finds the database (marked «з бази»),
+  // and a picked database item joins her «Продукти» when the meal is saved (2.2).
   const matches =
     !selected || search !== selected.nameUk
       ? search.trim()
-        ? searchFoods(search, foods, (f) => verifiedEntry(f.id))
-        : foods.filter((f) => !isBuiltInId(f.id))
+        ? searchFoods(search, foods, (food) => verifiedEntry(food.id))
+        : foods.filter((food) => !isBuiltInId(food.id))
       : [];
 
   const handlePick = (food: PickableFood) => {
@@ -172,18 +192,17 @@ function AddDishToMealForm({
     setPortionMl("");
     setPickedSize(null);
     setSizeCount("1");
+    setSaveToList(false);
+    setPortionProblem(false);
+    setError(null);
   };
 
-  // Number("") is 0, so a blank portion must be rejected explicitly.
-  const parsedPortion = portionGrams.trim() === "" ? NaN : (evaluateInput(portionGrams) ?? NaN);
-  const portionValid = Number.isFinite(parsedPortion) && parsedPortion > 0;
-
   // Which amount fields the picked item takes: both (linked) with a piece weight, else its own unit only.
-  const weightOfPiece = mode === "pick" && selected ? pieceGrams(selected.measure) : null;
-  const weightOfMl = mode === "pick" && selected ? gramsPerMl(selected.measure) : null;
-  const showGrams = mode === "custom" || !selected || selected.measure.basis === "100g" || weightOfPiece !== null || weightOfMl !== null;
-  const showPieces = mode === "pick" && selected !== null && (selected.measure.basis === "piece" || weightOfPiece !== null);
-  const showMl = mode === "pick" && selected !== null && (selected.measure.basis === "100ml" || weightOfMl !== null);
+  const weightOfPiece = selected ? pieceGrams(selected.measure) : null;
+  const weightOfMl = selected ? gramsPerMl(selected.measure) : null;
+  const showGrams = !selected || selected.measure.basis === "100g" || weightOfPiece !== null || weightOfMl !== null;
+  const showPieces = selected !== null && (selected.measure.basis === "piece" || weightOfPiece !== null);
+  const showMl = selected !== null && (selected.measure.basis === "100ml" || weightOfMl !== null);
   // Every linked field from a weight in grams (when the item links them).
   const fillFromGrams = (grams: number | null, except: "pieces" | "ml" | null) => {
     if (weightOfPiece !== null && except !== "pieces") setPortionPieces(grams === null ? "" : fieldDecimal(round2(grams / weightOfPiece)));
@@ -194,18 +213,21 @@ function AddDishToMealForm({
     const count = positiveOrNull(countText) ?? 1;
     const amount = sizeAmount(size, count, selected.measure);
     if (!amount) return;
+    setPortionProblem(false);
     setPortionGrams(amount.grams === null ? "" : fieldDecimal(round2(amount.grams)));
     setPortionPieces(amount.pieces === null ? "" : fieldDecimal(round2(amount.pieces)));
     setPortionMl(amount.ml === null ? "" : fieldDecimal(round2(amount.ml)));
   };
-  const usableSizes = mode === "pick" && selected ? selected.portionSizes.filter((s) => sizeAmount(s, 1, selected.measure) !== null) : [];
+  const usableSizes = selected ? selected.portionSizes.filter((s) => sizeAmount(s, 1, selected.measure) !== null) : [];
   const changeGrams = (value: string) => {
     setPickedSize(null);
+    setPortionProblem(false);
     setPortionGrams(value);
     fillFromGrams(positiveOrNull(value), null);
   };
   const changePieces = (value: string) => {
     setPickedSize(null);
+    setPortionProblem(false);
     setPortionPieces(value);
     const pieces = positiveOrNull(value);
     if (weightOfPiece === null) return;
@@ -215,6 +237,7 @@ function AddDishToMealForm({
   };
   const changeMl = (value: string) => {
     setPickedSize(null);
+    setPortionProblem(false);
     setPortionMl(value);
     const ml = positiveOrNull(value);
     if (weightOfMl === null) return;
@@ -222,111 +245,123 @@ function AddDishToMealForm({
     setPortionGrams(grams === null ? "" : fieldDecimal(round2(grams)));
     fillFromGrams(grams, "ml");
   };
-  const pickedEntry =
-    mode === "pick" && selected
-      ? buildLogEntryForAmount(
-          mealType,
-          { id: selected.id, nameUk: selected.nameUk, stored: selected.per100g, unknownFields: selected.unknownFields, measure: selected.measure },
-          { grams: positiveOrNull(portionGrams), pieces: positiveOrNull(portionPieces), ml: positiveOrNull(portionMl) },
-          notes.trim(),
-          mealId,
-          timestamp,
-        )
-      : null;
+  const pickedEntry = selected
+    ? buildLogEntryForAmount(
+        mealType,
+        { id: selected.id, nameUk: selected.nameUk, stored: selected.per100g, unknownFields: selected.unknownFields, measure: selected.measure },
+        { grams: positiveOrNull(portionGrams), pieces: positiveOrNull(portionPieces), ml: positiveOrNull(portionMl) },
+        notes.trim(),
+        mealId,
+        timestamp,
+      )
+    : null;
 
   let previewText: string | null = null;
   if (pickedEntry && selected) {
     const glUnknown = pickedEntry.unknownFields.includes("gl");
-    previewText = uk.today.form.preview(
+    previewText = f.preview(
       selected.unknownFields.includes("carbsG") ? uk.today.unknownValueLabel : uk.today.carbsValue(pickedEntry.carbsG),
-      selected.unknownFields.includes("caloriesKcal")
-        ? uk.today.unknownValueLabel
-        : uk.today.caloriesValue(pickedEntry.caloriesKcal),
+      selected.unknownFields.includes("caloriesKcal") ? uk.today.unknownValueLabel : uk.today.caloriesValue(pickedEntry.caloriesKcal),
       glUnknown ? uk.today.unknownValueLabel : `${formatDecimal(pickedEntry.gl)} (${uk.health.gl[classifyGl(pickedEntry.gl)]})`,
     );
   }
 
-  const filledCustomFields = CUSTOM_FIELDS.filter((field) => customValues[field].trim() !== "");
-  const customFieldsValid = filledCustomFields.every((field) => Number.isFinite((evaluateInput(customValues[field]) ?? NaN)));
+  const parse = (text: string): number | null => (text.trim() === "" ? null : (evaluateInput(text) ?? NaN));
+  const customInput = (): CustomInput => ({
+    name: customName,
+    basis: customBasis,
+    grams: parse(customAmount.grams),
+    ml: parse(customAmount.ml),
+    pieces: parse(customAmount.pieces),
+    values: Object.fromEntries(NUTRITION_FIELDS.map((k) => [k, parse(customValues[k])])) as CustomInput["values"],
+  });
+  const nameTaken = (name: string) => foods.some((food) => !isRecentId(food.id) && normalizeItemName(food.nameUk) === normalizeItemName(name));
 
   const handleAdd = async () => {
-    if (mode === "pick") {
-      if (!selected || !pickedEntry) {
-        setError(uk.today.form.validationError);
+    setError(null);
+    if (!custom) {
+      if (!selected) {
+        setError(f.pickFirst);
         return;
       }
-      onAdd(pickedSize ? { ...pickedEntry, portionSize: sizeLabel(pickedSize, positiveOrNull(sizeCount) ?? 1) } : pickedEntry);
-      return;
-    }
-
-    if (!customName.trim() || !portionValid || filledCustomFields.length === 0 || !customFieldsValid) {
-      setError(uk.today.form.customValidationError);
-      return;
-    }
-    const values: Partial<IngredientNutrition> = {};
-    for (const field of filledCustomFields) values[field] = (evaluateInput(customValues[field]) ?? NaN);
-    const entry = buildCustomLogEntry(mealType, customName.trim(), parsedPortion, values, notes.trim(), mealId, timestamp);
-    if (!saveAsDish) {
+      if (!pickedEntry) {
+        setPortionProblem(true);
+        setError(f.portionMissing);
+        return;
+      }
+      let entry: DailyLogEntry = pickedSize ? { ...pickedEntry, portionSize: sizeLabel(pickedSize, positiveOrNull(sizeCount) ?? 1) } : pickedEntry;
+      if (isRecentId(selected.id)) entry = { ...entry, itemId: "" };
+      if (isRecentId(selected.id) && saveToList) {
+        setSaving(true);
+        try {
+          const item = await saveCustomAsItem(
+            portionInput(selected.nameUk, selected.per100g, selected.unknownFields, selected.measure.weighedGrams, selected.measure.densityMl ?? null),
+          );
+          entry = { ...entry, itemId: item.id };
+        } catch (err) {
+          setError(err instanceof Error ? err.message : String(err));
+          setSaving(false);
+          return;
+        }
+        setSaving(false);
+      }
       onAdd(entry);
       return;
     }
-    // Saved as a dish measured per portion: values per 1 piece, where the piece is the whole portion.
-    const name = customName.trim();
-    if (foods.some((f) => normalizeItemName(f.nameUk) === normalizeItemName(name))) {
-      setError(uk.today.form.saveAsDishNameTaken);
+
+    const input = customInput();
+    const found = checkCustom(input);
+    setProblems(found);
+    if (Object.keys(found).length > 0) {
+      setError(f.checkMarked);
       return;
     }
-    setSaving(true);
-    try {
-      const unknownFields = CUSTOM_FIELDS.filter((field) => !filledCustomFields.includes(field));
-      // A typed item labelled страва, measured per portion (2.1; 2.0.2 saved a fixed-value dish).
-      const dish = await addIngredient({
-        nameUk: name,
-        nameEn: "",
-        basis: "piece",
-        weighedPieces: parsedPortion > 0 ? 1 : null,
-        weighedGrams: parsedPortion > 0 ? parsedPortion : null,
-        portionSizes: [{ label: uk.today.form.portionSizeLabel, pieces: 1 }],
-        labels: ["dish"],
-        carbsG: values.carbsG ?? 0,
-        gi: values.gi ?? 0,
-        fiberG: values.fiberG ?? 0,
-        sugarsG: values.sugarsG ?? 0,
-        proteinG: values.proteinG ?? 0,
-        fatG: values.fatG ?? 0,
-        caloriesKcal: values.caloriesKcal ?? 0,
-        sodiumMg: values.sodiumMg ?? 0,
-        source: "manual",
-        giVerified: false,
-        unknownFields,
-      });
-      onAdd({ ...entry, itemId: dish.id, portionPieces: 1, portionSize: uk.today.form.portionSizeLabel });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
+    if (saveToList && nameTaken(input.name)) {
+      setProblems({ name: "missing" });
+      setError(f.saveAsDishNameTaken);
+      return;
+    }
+    let entry = customLogEntry(input, mealType, notes.trim(), mealId, timestamp);
+    if (saveToList) {
+      setSaving(true);
+      try {
+        const item = await saveCustomAsItem(input);
+        entry = input.basis === "portion" ? { ...entry, itemId: item.id, portionPieces: 1, portionSize: PORTION_LABEL } : { ...entry, itemId: item.id };
+      } catch (err) {
+        setError(err instanceof Error ? err.message : String(err));
+        setSaving(false);
+        return;
+      }
       setSaving(false);
     }
+    onAdd(entry);
   };
+
+  // A label with its problem shown under it (2.3.2: «forms reject silently»).
+  const problemText = (field: keyof CustomProblems): string | null => {
+    const p = problems[field];
+    if (!p) return null;
+    if (p === "needAmount") return field === "ml" ? f.problems.needMl : f.problems.needGrams;
+    return f.problems[p];
+  };
+  const fieldClass = (field: keyof CustomProblems) => (problems[field] ? "field-invalid" : undefined);
+  const amountRequired = (unit: "grams" | "ml") => (customBasis === "100g" && unit === "grams") || (customBasis === "100ml" && unit === "ml");
 
   return (
     <div className="food-form">
       <h2>{uk.today.mealEditor.addDish.title}</h2>
 
-      <button type="button" className="button-secondary" onClick={() => switchMode(mode === "pick" ? "custom" : "pick")}>
-        {mode === "pick" ? uk.today.form.switchToCustomButton : uk.today.form.switchToPickButton}
-      </button>
-
-      {mode === "pick" ? (
+      {!custom ? (
         <>
           <label>
-            {uk.today.form.itemLabel}
+            {f.itemLabel}
             <input
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
                 setSelected(null);
               }}
-              placeholder={uk.today.form.itemPlaceholder}
+              placeholder={f.itemPlaceholder}
             />
           </label>
 
@@ -341,10 +376,11 @@ function AddDishToMealForm({
                       </span>
                     )}
                     <strong>{food.nameUk}</strong> {food.nameEn && <span className="food-name-en">({food.nameEn})</span>}
-                    {isBuiltInId(food.id) && <span className="food-recipe-mark"> {uk.databaseSets.fromDatabase}</span>} —{" "}
+                    {isBuiltInId(food.id) && <span className="food-recipe-mark"> {uk.databaseSets.fromDatabase}</span>}
+                    {isRecentId(food.id) && <span className="food-recipe-mark"> {f.recentMark}</span>} —{" "}
                     {food.unknownFields.includes("carbsG")
                       ? `вуглеводи ${uk.today.unknownValueLabel}`
-                      : `${formatDecimal(round2(food.per100g.carbsG))} г вуглеводів${uk.today.form.perBasis(food.measure.basis)}`}
+                      : `${formatDecimal(round2(food.per100g.carbsG))} г вуглеводів${isRecentId(food.id) ? ` ${f.perPortion}` : f.perBasis(food.measure.basis)}`}
                   </span>
                   <button type="button" onClick={() => handlePick(food)}>
                     {uk.foods.form.pickButton}
@@ -353,113 +389,150 @@ function AddDishToMealForm({
               ))}
             </ul>
           )}
-          {search && matches.length === 0 && !selected && <p>{uk.today.form.noMatches}</p>}
+          {search.trim() && matches.length === 0 && !selected && <p>{f.noMatches}</p>}
+          {!selected && (
+            <button type="button" className="button-secondary" onClick={openCustom}>
+              {search.trim() ? f.addCustomNamed(search.trim()) : f.addCustom}
+            </button>
+          )}
         </>
       ) : (
-        <label>
-          {uk.today.form.customNameLabel}
-          <input
-            value={customName}
-            onChange={(e) => setCustomName(e.target.value)}
-            placeholder={uk.today.form.customNamePlaceholder}
-          />
-        </label>
-      )}
-
-      {showGrams && (
-        <label>
-          {uk.today.form.portionLabel}
-          <MathInput value={portionGrams} onChange={(v) => changeGrams(v)} />
-        </label>
-      )}
-      {showMl && (
-        <label>
-          {uk.today.form.portionMlLabel}
-          <MathInput value={portionMl} onChange={(v) => changeMl(v)} />
-        </label>
-      )}
-      {showPieces && (
-        <label>
-          {uk.today.form.portionPiecesLabel}
-          <MathInput value={portionPieces} onChange={(v) => changePieces(v)} />
-        </label>
-      )}
-      {usableSizes.length > 0 && (
-        <div className="size-pick">
-          <span className="size-pick-label">{uk.foods.sizes.pickLabel}</span>
-          <div className="size-chips">
-            {usableSizes.map((size) => (
-              <button
-                key={size.label}
-                type="button"
-                className={pickedSize?.label === size.label ? undefined : "button-secondary"}
-                aria-pressed={pickedSize?.label === size.label}
-                onClick={() => {
-                  setPickedSize(size);
-                  fillFromSize(size, sizeCount);
-                }}
-              >
-                {uk.foods.sizes.chip(size.label, sizeAmountText(size))}
-              </button>
+        <>
+          <button type="button" className="button-secondary" onClick={backToSearch}>
+            {f.backToSearch}
+          </button>
+          <label className={fieldClass("name")}>
+            {f.customNameLabel}
+            <input value={customName} onChange={(e) => setCustomName(e.target.value)} placeholder={f.customNamePlaceholder} aria-invalid={!!problems.name} />
+            {problemText("name") && <span className="field-error">{problemText("name")}</span>}
+          </label>
+          <fieldset className="pack-fields">
+            <legend>{f.customBasisLegend}</legend>
+            <div className="pack-options" role="radiogroup">
+              {(["portion", "100g", "100ml"] as const).map((basis) => (
+                <label key={basis} className="pack-option">
+                  <input type="radio" checked={customBasis === basis} onChange={() => setCustomBasis(basis)} />
+                  {f.customBasis[basis]}
+                </label>
+              ))}
+            </div>
+            <p className="food-form-hint">{f.customBasisHint[customBasis]}</p>
+          </fieldset>
+          <fieldset className="pack-fields">
+            <legend>{f.amountLegend}</legend>
+            <div className="pack-amounts">
+              {(["grams", "ml", "pieces"] as const).map((unit) => (
+                <label key={unit} className={fieldClass(unit)}>
+                  {f.amountLabels[unit]}
+                  {!(unit !== "pieces" && amountRequired(unit)) && <span className="pack-optional"> {uk.foods.pack.optional}</span>}
+                  <MathInput value={customAmount[unit]} onChange={(v) => setCustomAmount((prev) => ({ ...prev, [unit]: v }))} />
+                  {problemText(unit) && <span className="field-error">{problemText(unit)}</span>}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+          <div className={problems.values ? "food-form-custom-fields field-invalid" : "food-form-custom-fields"}>
+            <p className="food-form-source">{f.customHint}</p>
+            {problemText("values") && <span className="field-error">{problemText("values")}</span>}
+            {CUSTOM_FIELDS.map((field) => (
+              <label key={field} className={fieldClass(field)}>
+                {f.customFieldLabels[field]}
+                <MathInput
+                  value={customValues[field]}
+                  placeholder={f.customFieldPlaceholder}
+                  onChange={(v) => setCustomValues((prev) => ({ ...prev, [field]: v }))}
+                />
+                {problemText(field) && <span className="field-error">{problemText(field)}</span>}
+              </label>
             ))}
           </div>
-          {pickedSize && (
-            <label className="size-count">
-              {uk.foods.sizes.countLabel}
-              <MathInput
-                value={sizeCount}
-                onChange={(v) => {
-                  setSizeCount(v);
-                  fillFromSize(pickedSize, v);
-                }}
-              />
-            </label>
-          )}
-        </div>
-      )}
-      {showPieces && (
-        <p className="food-form-hint">
-          {weightOfPiece !== null ? uk.today.form.portionLinkedHint(formatDecimal(round2(weightOfPiece))) : uk.today.form.portionPiecesOnlyHint}
-        </p>
-      )}
-      {showMl && (
-        <p className="food-form-hint">
-          {weightOfMl !== null ? uk.today.form.portionMlLinkedHint(formatDecimal(round2(weightOfMl), 3)) : uk.today.form.portionMlOnlyHint}
-        </p>
-      )}
-
-      {previewText && <p className="food-form-source">{previewText}</p>}
-
-      {mode === "custom" && (
-        <>
-          <label className="settings-checkbox">
-            <input type="checkbox" checked={saveAsDish} onChange={(e) => setSaveAsDish(e.target.checked)} />
-            {uk.today.form.saveAsDishLabel}
-          </label>
-          {saveAsDish && <p className="food-form-hint">{uk.today.form.saveAsDishHint}</p>}
         </>
       )}
 
-      {mode === "custom" && (
-        <div className="food-form-custom-fields">
-          <p className="food-form-source">{uk.today.form.customHint}</p>
-          {CUSTOM_FIELDS.map((field) => (
-            <label key={field}>
-              {uk.today.form.customFieldLabels[field]}
-              <MathInput
-                value={customValues[field]}
-                placeholder={uk.today.form.customFieldPlaceholder}
-                onChange={(v) => setCustomValues((prev) => ({ ...prev, [field]: v }))}
-              />
+      {!custom && selected && (
+        <>
+          {showGrams && (
+            <label className={portionProblem ? "field-invalid" : undefined}>
+              {f.portionLabel}
+              <MathInput value={portionGrams} onChange={(v) => changeGrams(v)} />
             </label>
-          ))}
-        </div>
+          )}
+          {showMl && (
+            <label className={portionProblem ? "field-invalid" : undefined}>
+              {f.portionMlLabel}
+              <MathInput value={portionMl} onChange={(v) => changeMl(v)} />
+            </label>
+          )}
+          {showPieces && (
+            <label className={portionProblem ? "field-invalid" : undefined}>
+              {isRecentId(selected.id) ? f.portionCountLabel : f.portionPiecesLabel}
+              <MathInput value={portionPieces} onChange={(v) => changePieces(v)} />
+            </label>
+          )}
+          {portionProblem && <span className="field-error">{f.portionMissing}</span>}
+          {usableSizes.length > 0 && (
+            <div className="size-pick">
+              <span className="size-pick-label">{uk.foods.sizes.pickLabel}</span>
+              <div className="size-chips">
+                {usableSizes.map((size) => (
+                  <button
+                    key={size.label}
+                    type="button"
+                    className={pickedSize?.label === size.label ? undefined : "button-secondary"}
+                    aria-pressed={pickedSize?.label === size.label}
+                    onClick={() => {
+                      setPickedSize(size);
+                      fillFromSize(size, sizeCount);
+                    }}
+                  >
+                    {uk.foods.sizes.chip(size.label, sizeAmountText(size))}
+                  </button>
+                ))}
+              </div>
+              {pickedSize && (
+                <label className="size-count">
+                  {uk.foods.sizes.countLabel}
+                  <MathInput
+                    value={sizeCount}
+                    onChange={(v) => {
+                      setSizeCount(v);
+                      fillFromSize(pickedSize, v);
+                    }}
+                  />
+                </label>
+              )}
+            </div>
+          )}
+          {showPieces && !isRecentId(selected.id) && (
+            <p className="food-form-hint">
+              {weightOfPiece !== null ? f.portionLinkedHint(formatDecimal(round2(weightOfPiece))) : f.portionPiecesOnlyHint}
+            </p>
+          )}
+          {showMl && (
+            <p className="food-form-hint">
+              {weightOfMl !== null ? f.portionMlLinkedHint(formatDecimal(round2(weightOfMl), 3)) : f.portionMlOnlyHint}
+            </p>
+          )}
+          {previewText && <p className="food-form-source">{previewText}</p>}
+        </>
       )}
 
-      <label>
-        {uk.today.form.notesLabel}
-        <input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={uk.today.form.notesPlaceholder} />
-      </label>
+      {(custom || (selected && isRecentId(selected.id))) && (
+        <>
+          <label className="settings-checkbox">
+            <input type="checkbox" checked={saveToList} onChange={(e) => setSaveToList(e.target.checked)} />
+            {f.saveToListLabel}
+          </label>
+          {saveToList && <p className="food-form-hint">{custom ? f.saveToListHint[customBasis] : f.saveToListHint.portion}</p>}
+        </>
+      )}
+
+      {(custom || selected) && (
+        <label>
+          {f.notesLabel}
+          <input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={f.notesPlaceholder} />
+        </label>
+      )}
 
       <FormError message={error} />
 
@@ -504,6 +577,10 @@ function EditDishForm({
   });
   const [notes, setNotes] = useState(entry.notes);
   const [error, setError] = useState<string | null>(null);
+  // A custom row can be saved to «мої продукти» later (2.3.2), as an item per portion.
+  const [saveToList, setSaveToList] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [problems, setProblems] = useState<{ name?: boolean; values?: boolean }>({});
 
   const parsedPortion = portionGrams.trim() === "" ? NaN : (evaluateInput(portionGrams) ?? NaN);
   const filledFields = CUSTOM_FIELDS.filter((field) => values[field].trim() !== "");
@@ -513,9 +590,12 @@ function EditDishForm({
   const ml = positiveOrNull(portionMl);
   const gramsKnown = Number.isFinite(parsedPortion) && parsedPortion > 0;
 
-  const handleSave = () => {
-    if (!itemName.trim() || (!gramsKnown && pieces === null && ml === null) || filledFields.length === 0 || !fieldsValid) {
-      setError(uk.today.form.customValidationError);
+  const handleSave = async () => {
+    // The amount is optional, as for a new custom entry (2.3.2): values are for the whole portion.
+    const found = { name: !itemName.trim(), values: filledFields.length === 0 || !fieldsValid };
+    setProblems(found);
+    if (found.name || found.values) {
+      setError(uk.today.form.checkMarked);
       return;
     }
     const nutritionValues: Partial<IngredientNutrition> = {};
@@ -530,20 +610,35 @@ function EditDishForm({
       entry.timestamp,
     );
     // A counted dish keeps its count, a poured one its ml; without a weight, the weight stays unknown (never 0).
-    onSave({
+    let result: DailyLogEntry = {
       ...updated,
+      itemId: entry.itemId,
       portionPieces: pieces,
       portionMl: ml,
       unknownFields: gramsKnown ? updated.unknownFields : [...updated.unknownFields, "portionGrams"],
-    });
+    };
+    if (saveToList && !entry.itemId) {
+      setSaving(true);
+      try {
+        const item = await saveCustomAsItem(portionInput(result.itemName, result, result.unknownFields, gramsKnown ? parsedPortion : null, ml));
+        result = { ...result, itemId: item.id };
+      } catch (err) {
+        setError(err instanceof Error ? err.message : String(err));
+        setSaving(false);
+        return;
+      }
+      setSaving(false);
+    }
+    onSave(result);
   };
 
   return (
     <div className="food-form">
       <h2>{uk.today.mealEditor.editDish.title}</h2>
-      <label>
+      <label className={problems.name ? "field-invalid" : undefined}>
         {uk.today.form.itemLabel}
-        <input value={itemName} onChange={(e) => setItemName(e.target.value)} />
+        <input value={itemName} onChange={(e) => setItemName(e.target.value)} aria-invalid={!!problems.name} />
+        {problems.name && <span className="field-error">{uk.today.form.problems.missing}</span>}
       </label>
       <label>
         {uk.today.form.portionLabel}
@@ -564,8 +659,9 @@ function EditDishForm({
           <MathInput value={portionPieces} onChange={(v) => setPortionPieces(v)} />
         </label>
       )}
-      <div className="food-form-custom-fields">
+      <div className={problems.values ? "food-form-custom-fields field-invalid" : "food-form-custom-fields"}>
         <p className="food-form-source">{uk.today.form.customHint}</p>
+        {problems.values && <span className="field-error">{uk.today.form.problems.needOneValue}</span>}
         {CUSTOM_FIELDS.map((field) => (
           <label key={field}>
             {uk.today.form.customFieldLabels[field]}
@@ -577,13 +673,22 @@ function EditDishForm({
           </label>
         ))}
       </div>
+      {!entry.itemId && (
+        <>
+          <label className="settings-checkbox">
+            <input type="checkbox" checked={saveToList} onChange={(e) => setSaveToList(e.target.checked)} />
+            {uk.today.form.saveToListLabel}
+          </label>
+          {saveToList && <p className="food-form-hint">{uk.today.form.saveToListHint.portion}</p>}
+        </>
+      )}
       <label>
         {uk.today.form.notesLabel}
         <input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={uk.today.form.notesPlaceholder} />
       </label>
       <FormError message={error} />
       <div className="food-form-actions">
-        <button type="button" onClick={handleSave}>
+        <button type="button" onClick={() => void handleSave()} disabled={saving}>
           {uk.today.mealEditor.editDish.saveButton}
         </button>
         <button type="button" onClick={onBack}>

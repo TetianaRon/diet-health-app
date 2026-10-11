@@ -11,6 +11,10 @@ import { normalizeItemName } from "./itemIds";
 import type { DailyLogEntry, MealType } from "./dailyLog";
 import type { IngredientNutrition, NutritionKey } from "./dishes";
 import type { Measure } from "./measure";
+import { addIngredient, type Ingredient } from "./ingredients";
+
+/** The size a saved whole-portion entry is logged by («1 порція»). */
+export const PORTION_LABEL = "порція";
 
 export type CustomBasis = "portion" | "100g" | "100ml";
 export type CustomField = "name" | "grams" | "ml" | "pieces" | "values" | NutritionKey;
@@ -137,4 +141,53 @@ export function recentCustomFoods(entries: readonly DailyLogEntry[], ownNames: r
 
 export function isRecentId(id: string): boolean {
   return id.startsWith(RECENT_PREFIX);
+}
+
+/**
+ * Saves a custom entry to her «Продукти», keeping its basis (developer,
+ * 2026-10-10): values for a whole portion → an item per portion (labelled
+ * страва, «порція» as its size, with the portion's weight when known); per
+ * 100 g or 100 ml → a product per 100 g or 100 ml. A weight and a volume
+ * given together link g and ml.
+ */
+export async function saveCustomAsItem(input: CustomInput): Promise<Ingredient> {
+  const unknownFields = NUTRITION_FIELDS.filter((f) => input.values[f] === null);
+  const value = (f: NutritionKey) => input.values[f] ?? 0;
+  const grams = input.grams && input.grams > 0 ? input.grams : null;
+  const ml = input.ml && input.ml > 0 ? input.ml : null;
+  const density = grams && ml ? { densityMl: ml, densityGrams: grams } : { densityMl: null, densityGrams: null };
+  const portion = input.basis === "portion";
+  return addIngredient({
+    nameUk: input.name.trim(),
+    nameEn: "",
+    carbsG: value("carbsG"),
+    gi: value("gi"),
+    fiberG: value("fiberG"),
+    sugarsG: value("sugarsG"),
+    proteinG: value("proteinG"),
+    fatG: value("fatG"),
+    caloriesKcal: value("caloriesKcal"),
+    sodiumMg: value("sodiumMg"),
+    unknownFields,
+    source: "manual",
+    giVerified: false,
+    basis: input.basis === "portion" ? "piece" : input.basis,
+    weighedPieces: portion && grams ? 1 : null,
+    weighedGrams: portion && grams ? grams : null,
+    ...density,
+    portionSizes: portion ? [{ label: PORTION_LABEL, pieces: 1 }] : [],
+    labels: portion ? ["dish"] : [],
+  });
+}
+
+/** A recent entry, or a logged custom row, as the input it was: its values for one whole portion. */
+export function portionInput(name: string, values: IngredientNutrition, unknownFields: readonly string[], grams: number | null, ml: number | null): CustomInput {
+  return {
+    name,
+    basis: "portion",
+    grams,
+    ml,
+    pieces: null,
+    values: Object.fromEntries(NUTRITION_FIELDS.map((f) => [f, unknownFields.includes(f) ? null : values[f]])) as Record<NutritionKey, number | null>,
+  };
 }
