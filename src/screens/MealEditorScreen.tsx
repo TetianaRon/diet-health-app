@@ -195,6 +195,14 @@ function AddDishToMealForm({
     setSaveToList(false);
     setPortionProblem(false);
     setError(null);
+    // A recent entry is 1 portion of what she logged: filled in, with its weight when known.
+    if (isRecentId(food.id)) {
+      setPortionPieces("1");
+      const grams = pieceGrams(food.measure);
+      if (grams !== null) setPortionGrams(fieldDecimal(round2(grams)));
+      const perMl = gramsPerMl(food.measure);
+      if (grams !== null && perMl !== null) setPortionMl(fieldDecimal(round2(grams / perMl)));
+    }
   };
 
   // Which amount fields the picked item takes: both (linked) with a piece weight, else its own unit only.
@@ -218,7 +226,8 @@ function AddDishToMealForm({
     setPortionPieces(amount.pieces === null ? "" : fieldDecimal(round2(amount.pieces)));
     setPortionMl(amount.ml === null ? "" : fieldDecimal(round2(amount.ml)));
   };
-  const usableSizes = selected ? selected.portionSizes.filter((s) => sizeAmount(s, 1, selected.measure) !== null) : [];
+  // A recent entry's only size is «порція», already filled in as 1 — no button for it.
+  const usableSizes = selected && !isRecentId(selected.id) ? selected.portionSizes.filter((s) => sizeAmount(s, 1, selected.measure) !== null) : [];
   const changeGrams = (value: string) => {
     setPickedSize(null);
     setPortionProblem(false);
@@ -290,7 +299,8 @@ function AddDishToMealForm({
         return;
       }
       let entry: DailyLogEntry = pickedSize ? { ...pickedEntry, portionSize: sizeLabel(pickedSize, positiveOrNull(sizeCount) ?? 1) } : pickedEntry;
-      if (isRecentId(selected.id)) entry = { ...entry, itemId: "" };
+      // A recent entry is logged as a custom one again, its amount in portions («порція», «2 × порція»).
+      if (isRecentId(selected.id)) entry = { ...entry, itemId: "", portionSize: sizeLabel({ label: PORTION_LABEL, pieces: 1 }, positiveOrNull(portionPieces) ?? 1) };
       if (isRecentId(selected.id) && saveToList) {
         setSaving(true);
         try {
