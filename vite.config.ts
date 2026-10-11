@@ -69,6 +69,9 @@ export default defineConfig(({ mode }) => {
       // the one already installed on existing phones.
       injectRegister: false,
       selfDestroying: mode === "android",
+      // A new release takes over at once and drops the old cache (2.3.2): the web app had kept
+      // serving a version from before 2.0.4 while 2.3.1 was live.
+      workbox: { skipWaiting: true, clientsClaim: true, cleanupOutdatedCaches: true },
       includeAssets: ["icon.svg"],
       manifest: {
         name: "Трекер харчування",

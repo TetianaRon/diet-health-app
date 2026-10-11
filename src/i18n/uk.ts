@@ -55,6 +55,11 @@ export const uk = {
   importNotice: {
     dismiss: "Зрозуміло",
   },
+  // A new release of the web app took over while it was open (2.3.2).
+  newVersion: {
+    title: "Вийшла нова версія застосунку. Збережіть те, що вводите, і оновіть сторінку.",
+    reload: "Оновити зараз",
+  },
   // The verified database as sets (2.2): her «Продукти» hold only her own rows.
   databaseSets: {
     addButton: "+ Додати з бази",

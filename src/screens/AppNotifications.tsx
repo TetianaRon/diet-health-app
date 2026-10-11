@@ -19,11 +19,26 @@ import { uk } from "../i18n/uk";
 import { summarizeIssues } from "./SheetHealthIssues";
 import { upgradeNoticeLines } from "./SheetUpgradeNotice";
 import { onBackupsTrashed } from "../lib/backups";
+import { onNewVersion } from "../lib/serviceWorker";
 
 export default function AppNotifications() {
   const { signedIn, sessionExpired, signIn, localMode } = useAuth();
   const { show, remove } = useNotifications();
   const health = useSheetHealth();
+
+  // A new release took over while the app was open (web, 2.3.2): offer the reload, never force it.
+  useEffect(
+    () =>
+      onNewVersion(() =>
+        show({
+          key: "new-version",
+          kind: "action",
+          title: uk.newVersion.title,
+          actions: [{ label: uk.newVersion.reload, onClick: () => window.location.reload() }],
+        }),
+      ),
+    [show],
+  );
 
   // A backup copy past its keeping time went to Drive's trash (release 2.0).
   useEffect(() => onBackupsTrashed((n) => show({ key: "backups-trashed", kind: "info", title: uk.backups.trashed(n) })), [show]);
