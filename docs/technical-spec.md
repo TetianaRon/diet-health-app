@@ -83,7 +83,7 @@ Every meal entry — one row per logged item (an ingredient/dish portion, or a c
 | MealId | Ties multiple item-rows eaten in one sitting together as a single meal *occasion*, distinct from MealType — added 2026-09-11 per mom's real-usage feedback: MealType alone can't tell two same-day snacks apart, and without a shared identifier a multi-dish meal only ever displayed as several unrelated items instead of one meal with a combined total. Generated once per "add meal" form session (`AddLogEntryForm` in `TodayScreen.tsx`) and reused across every item saved in that session; a fresh form open (after "Зберегти запис") starts a new meal. Additive column (same pattern as Favorite/GlycemicFlag elsewhere) — a blank cell (rows logged before this existed) falls back to that row's own Timestamp, so old rows each remain their own single-item meal exactly as they already behaved. See `groupIntoMeals()` in `src/lib/dailyLog.ts`. |
 | UnknownFields | Comma-separated list of which of this row's own nutrient fields (any of Carbs_g/GI/Fiber_g/Sugars_g/Protein_g/Fat_g/Calories_kcal/Sodium_mg, plus the derived GL) the person explicitly didn't know rather than a real value — added 2026-09-11 for custom/estimated entries (see below). The field itself still stores 0 (a safe, writable default); a blank cell means nothing is unknown, same additive-column convention as MealId. See `sumKnownField()`/`buildCustomLogEntry()` in `src/lib/dailyLog.ts`. |
 
-**Custom/estimated entries** (added 2026-09-11, real-usage feedback item #2): a genuinely one-off item not in the Ingredients/Dishes database — restaurant food, a homemade dish with no exact recipe. `AddLogEntryForm` in `TodayScreen.tsx` has a "Власний запис" toggle that switches from database-picking to typing the item's name and its actual totals-as-eaten directly (not a per-100g figure scaled by portion, since there's no database row to scale from). Any of the 8 nutrient fields can be left blank rather than guessed — recorded in UnknownFields — and `sumKnownField()` excludes that specific field from any total it's rolled into (meal-level via `groupIntoMeals()`, daily-level in `TodayScreen.tsx`) rather than letting a real gap silently read as zero. Design decisions (confirmed with the developer via `AskUserQuestion` before building): unknown fields are excluded from totals with a visible caveat, not silently zeroed; any field can be unknown independently, not all-or-nothing; a custom entry is always a one-off DailyLog row, never saved to Ingredients for reuse (avoids an Ingredients list bloated with one-time restaurant meals).
+**Custom/estimated entries** (added 2026-09-11, real-usage feedback item #2): a genuinely one-off item not in the Ingredients/Dishes database — restaurant food, a homemade dish with no exact recipe. `AddLogEntryForm` in `TodayScreen.tsx` has a "Власний запис" toggle that switches from database-picking to typing the item's name and its actual totals-as-eaten directly (not a per-100g figure scaled by portion, since there's no database row to scale from). Any of the 8 nutrient fields can be left blank rather than guessed — recorded in UnknownFields — and `sumKnownField()` excludes that specific field from any total it's rolled into (meal-level via `groupIntoMeals()`, daily-level in `TodayScreen.tsx`) rather than letting a real gap silently read as zero. Design decisions (confirmed with the developer via `AskUserQuestion` before building): unknown fields are excluded from totals with a visible caveat, not silently zeroed; any field can be unknown independently, not all-or-nothing; a custom entry is always a one-off DailyLog row, never saved to Ingredients for reuse (avoids an Ingredients list bloated with one-time restaurant meals). *Changed since: 2.0.2 added saving one as a dish; 2.3.2 made it a basis choice (portion, 100 г, 100 мл) with an optional amount, recent entries and saving later — see "Meal entry, one editor".*
 
 **Editing, deleting, and moving a logged entry** (added 2026-09-11, item #3): previously nothing in this app could change or remove an already-saved DailyLog row. `src/lib/dailyLog.ts` gained `updateLogEntry()`/`deleteLogEntry()`/`moveLogEntryToMeal()`, all built on `findLogEntryRow()` — DailyLog has no surrogate row ID, so a row is located by its (Timestamp, ItemName, MealId) triple, the same content-based-matching convention `findIngredientRow`/`findDishRow` already use for their own tabs. `updateLogEntry` overwrites the row in place; `deleteLogEntry` clears it (new `clearRange()` in `sheets.ts`) rather than shifting rows below it up — every `listX()` already filters out a row with `row.length > 0`, so a cleared row simply stops appearing, no different in effect from a real delete. `moveLogEntryToMeal` reassigns an entry's `MealId`/`MealType` to join an existing sibling meal occasion — the "two snacks 5 minutes apart should be one" case, chosen over a dedicated multi-select merge UI (confirmed via `AskUserQuestion`) since it covers the realistic scenario (adding one late item to an existing meal) with much less UI. `TodayScreen.tsx`'s `LogEntryRow` exposed all three as per-entry actions (Редагувати/Перенести/Видалити); edit reuses `buildCustomLogEntry()` to re-derive the row from typed values regardless of whether the entry was originally a database pick or custom, and delete requires an inline confirmation step first (this app's established pattern for an irreversible-feeling action on health data).
 
@@ -773,6 +773,7 @@ Four things that make logging quicker. Builds on 2.0.1's measures (`measure.ts`)
 - Built through `docs/tasks/dha-task-verified-db-change.md`, with the developer's review on the review page.
 
 ### Saving a custom entry to «Страви»
+- *2.3.2 replaced this with «Зберегти в мої продукти», keeping the entry's basis — see "Meal entry, one editor".*
 - The meal editor's custom entry («Власний запис») gets «Зберегти в мої страви».
 - It's saved as a dish measured **per portion**: values per 1 piece, where the piece is the whole portion (a meal box, a restaurant dish), with its weight if she typed one. Later she logs «1 порція», or ½ (0,5) — the 2.0.1 pieces maths.
 - The dish has no recipe; its values are hers («неперевірено»), editable like a product's.
@@ -812,7 +813,7 @@ The split into «Продукти» and «Страви» mixed two independent t
 - **Adding:** «Додати продукт» (typed values) and «Скласти за рецептом».
 - **One editor:** above the form, «Значення: Вказані / За рецептом» picks the form, and the label chips (інгредієнт, страва, напій, соус/заправка, перекус; «Лише для пошуку й фільтрів — на розрахунки не впливають»). A database item that isn't hers yet can't switch (editing it saves her copy first).
 - **Changing typed ↔ composed** on a saved item is a field change: it keeps its name, labels, ID and the meals logged with it. The other side's data is kept in its columns, so switching back loses nothing. Switching to «Вказані» starts from the item's current values; switching to «За рецептом» starts with an empty recipe. Nothing changes until it's saved.
-- **A fixed-value dish** (2.0.2's saved meal box) is a typed item labelled страва, measured per portion (its portion weight read from the former YieldGrams). «Також зберегти в «Страви»» in the meal editor now saves such an item.
+- **A fixed-value dish** (2.0.2's saved meal box) is a typed item labelled страва, measured per portion (its portion weight read from the former YieldGrams). «Також зберегти в «Страви»» in the meal editor now saves such an item. (2.3.2: «Зберегти в мої продукти», see "Meal entry, one editor".)
 - **The meal editor** lists composed items first, then her typed items labelled страва, then the rest.
 
 ### Storage: one tab (developer chose this, 2026-10-08)
@@ -834,3 +835,35 @@ The split into «Продукти» and «Страви» mixed two independent t
 ### Not in 2.1
 - Sets, the clean start and moving mom over: **2.2** (the earlier draft, adjusted to this model: picking a database item adds it to «Продукти»).
 - The base-ingredients set: **2.2.1**.
+
+## Meal entry, one editor (2.3.2, designed and built 2026-10-10)
+
+The meal editor's add-dish step becomes one place to pick or type a food; the custom entry follows the conventions of her own items. No change to the sheet's structure.
+
+### One editor
+- **Search** over her items, then her recent custom entries (marked «нещодавнє»), then the database («з бази»).
+- **«+ Власний запис»** under the results, or «+ Додати «…» як власний запис» with what she typed — the custom form opens in place, with the name filled in; «← Шукати в списку» goes back.
+
+### The custom entry (`src/lib/customEntry.ts`)
+- **«Значення вказано на»: усю порцію · 100 г · 100 мл** (developer: a choice like products'). The values are typed for that basis.
+- **«Скільки з'їли»:** грами, мілілітри and/or штуки. Optional for a whole portion (a café hot chocolate needn't be weighed: its weight is «невідомо», stored as `portionGrams` in `UnknownFields`); required in the values' unit for 100 г or 100 мл, and the values are scaled to it.
+- **At least one value**; empty values are unknown, as before (`unknownFields`).
+- **«Зберегти в мої продукти»** keeps its basis (developer): a whole portion → an item per portion (labelled страва, the size «порція», its weight if given); per 100 г / 100 мл → a product on that basis. Weight and volume given together become its density. Replaces 2.0.2's «Також зберегти в «Страви»».
+
+### Recent custom entries
+- Her custom meal rows (no `ItemId`) from the last 14 days, newest first, once per name, leaving out names that are now her items. No new storage: they're read from her meal rows.
+- Each is 1 «порція» with the values she logged; its weight (and volume) carry over when known. Picking one fills «1» portion (and the weight) with no size buttons; it's logged as a custom row with «порція» / «2 × порція».
+- «Зберегти в мої продукти» saves it as an item per portion.
+
+### Saving a logged custom row later
+- The edit-dish step of a custom row offers «Зберегти в мої продукти» too; the row is then linked to the new item (`ItemId`). Editing a row keeps its `ItemId` (earlier edits reset it).
+
+### Forms say why they don't save
+- **Every form:** its message (`FormError`) is announced and scrolled into view, so a rejected save never looks like nothing happened.
+- **The meal editor's custom and edit forms** outline each field that stops saving and say why under it (`.field-invalid`, `.field-error`): «Вкажіть назву.», «Значення на 100 г — вкажіть, скільки грамів з'їли.», «Вкажіть хоча б одне значення…»; the message by the buttons reads «Не додано: перевірте позначені поля.».
+
+### The web app picks up new releases (`src/lib/serviceWorker.ts`)
+- The PWA worker kept serving the cached app after a deploy (2.3.1 live, a browser on a pre-2.0.4 version). Now the new worker takes over at once and drops the old cache (`skipWaiting`, `clientsClaim`, `cleanupOutdatedCaches`); the plugin's own reload is off (`registerType: "prompt"`).
+- Update checks on start, on returning to the tab and hourly.
+- Within 8 s of opening, the page reloads to the new version by itself; later it shows «Вийшла нова версія застосунку. Збережіть те, що вводите, і оновіть сторінку.» with «Оновити зараз» — never a reload in the middle of an entry.
+- The Android app is unaffected (it ships a self-removing worker).
